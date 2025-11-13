@@ -1,6 +1,6 @@
 # Frontend Guideline Document
 
-This document explains, in simple terms, how the frontend of the `codeguide-starter` project is structured, styled, and built. Anyone—technical or not—can read this and understand which tools are used, how components fit together, and what practices keep the app fast, reliable, and easy to maintain.
+This document explains, in simple terms, how the frontend of the `Sim-Klinik` project is structured, styled, and built. Anyone—technical or not—can read this and understand which tools are used, how components fit together, and what practices keep the app fast, reliable, and easy to maintain.
 
 ---
 
@@ -110,7 +110,7 @@ This document explains, in simple terms, how the frontend of the `codeguide-star
 
 **Future Growth**
 - If complexity grows (deeply nested data, multiple user roles), consider:
-  - **Redux Toolkit** or **Zustand** for centralized state.
+  - **Zustand** for centralized state.
   - Query libraries like **React Query** or **SWR** for caching and re-fetch logic.
 
 ---
@@ -168,7 +168,7 @@ These steps ensure fast page loads and smooth interactions.
 
 ## 9. Conclusion and Overall Frontend Summary
 
-The `codeguide-starter` frontend is built on modern, well-established tools—Next.js, React, and TypeScript—and follows clear principles around usability, accessibility, and maintainability. Its file-based structure, component-driven approach, and CSS-variable theming keep things organized and consistent.
+The `Sim-Klinik` frontend is built on modern, well-established tools—Next.js, React, and TypeScript—and follows clear principles around usability, accessibility, and maintainability. Its file-based structure, component-driven approach, and CSS-variable theming keep things organized and consistent.
 
 Key takeaways:
 - **Scalable Structure**: Add new features by creating new folders under `app/` without touching a central router.

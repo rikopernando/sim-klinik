@@ -6,19 +6,20 @@ import Image from "next/image"
 import { useSession } from "@/lib/auth-client"
 import {
   IconCamera,
-  IconChartBar,
   IconDashboard,
   IconDatabase,
   IconFileAi,
   IconFileDescription,
   IconFileWord,
-  IconFolder,
   IconHelp,
-  IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
-  IconUsers,
+  IconUserPlus,
+  IconClipboardList,
+  IconStethoscope,
+  IconPill,
+  IconCash,
 } from "@tabler/icons-react"
 
 import { NavDocuments } from "@/components/nav-documents"
@@ -39,28 +40,57 @@ const staticData = {
   navMain: [
     {
       title: "Dashboard",
-      url: "#",
+      url: "/dashboard",
       icon: IconDashboard,
     },
     {
-      title: "Lifecycle",
-      url: "#",
-      icon: IconListDetails,
+      title: "Pendaftaran",
+      url: "/dashboard/registration",
+      icon: IconUserPlus,
     },
     {
-      title: "Analytics",
-      url: "#",
-      icon: IconChartBar,
+      title: "Antrian",
+      url: "/dashboard/queue",
+      icon: IconClipboardList,
     },
     {
-      title: "Projects",
+      title: "Rekam Medis",
       url: "#",
-      icon: IconFolder,
+      icon: IconStethoscope,
+      items: [
+        {
+          title: "Rawat Jalan",
+          url: "#",
+        },
+        {
+          title: "Rawat Inap",
+          url: "#",
+        },
+        {
+          title: "UGD",
+          url: "#",
+        },
+      ],
     },
     {
-      title: "Team",
+      title: "Farmasi",
       url: "#",
-      icon: IconUsers,
+      icon: IconPill,
+      items: [
+        {
+          title: "Resep Digital",
+          url: "#",
+        },
+        {
+          title: "Stok Obat",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Kasir & Billing",
+      url: "#",
+      icon: IconCash,
     },
   ],
   navClouds: [

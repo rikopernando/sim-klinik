@@ -1,41 +1,82 @@
-# App Flow Document
+Berikut adalah User Story (Kisah Pengguna) yang terperinci untuk setiap fitur pada **Fase 1 (MVP)**, disesuaikan dengan peran pengguna dan filosofi UX Sederhana.
 
-## Onboarding and Sign-In/Sign-Up
+---
 
-When a new visitor arrives at the application’s root URL, they land on a welcome page that offers clear buttons or links to either create an account or sign in. Clicking on the “Sign Up” link takes the visitor to a registration page where they enter their email address and choose a password. Once they submit the form, the application sends a POST request to the authentication API endpoint, which handles password hashing and user creation. If registration succeeds, the new user is automatically signed in and redirected to the dashboard. If there are validation errors, such as a password that is too short or an email already in use, the form reappears with inline messages explaining what must be corrected.
+## 📝 User Stories Detail (Phase 1 / MVP)
 
-For returning users, clicking the “Sign In” link from the welcome page or from a persistent header link opens the login form. They input their email and password, and upon submission the app sends a request to the same authentication API with login credentials. A successful login leads directly to the dashboard. If the credentials are invalid, the page reloads with a clear error message prompting the user to try again.
+### Modul 1: Pendaftaran & Registrasi (Role: Admin)
 
-Signing out is available from within the dashboard via a logout button in the main navigation or header. When clicked, the application clears the user’s session or token, and then navigates back to the welcome page. Currently, there is no built-in password recovery or reset flow in this version, so users who forget their password are prompted to contact support for assistance.
+| **No.** | **User Story** | Perubahan/Penambahan |
+| --- | --- | --- |
+| **1.1** | **Sebagai Admin**, saya ingin **mencari data pasien yang sudah ada** menggunakan Nomor RM, NIK, atau Nama pada satu *search bar* yang cepat, agar saya tidak perlu membuat data ganda dan proses registrasi menjadi efisien. |  |
+| **1.2** | **Sebagai Admin**, saya ingin **membuat data pasien baru** dengan mengisi formulir sederhana (2-step wizard) yang mencakup data demografi inti, agar pasien dapat segera memiliki Nomor RM unik. |  |
+| **1.3** | **Sebagai Admin**, saya ingin **mengedit data pasien yang sudah ada**, agar informasi kontak dan alamat pasien selalu *up-to-date*. |  |
+| **1.4** | **Sebagai Admin**, saya ingin **mendaftarkan pasien untuk kunjungan Rawat Jalan** dengan memilih Dokter/Poli yang dituju, agar pasien masuk ke antrian digital yang benar. |  |
+| **1.5** | **Sebagai Admin**, saya ingin **mendaftarkan pasien untuk Rawat Inap** dengan memilih Kamar dan Jenis Jaminan/Pembayaran, agar status kamar terisi dan alur *billing* dimulai. |  |
+| **1.6** | **Sebagai Admin**, saya ingin **mencetak kartu antrian sederhana** yang berisi Nama Pasien, Nomor Antrian, dan Poli, sebagai bukti registrasi. |  |
+| 1.7 | **Sebagai Admin/Perawat Triage**, saya ingin **melakukan pendaftaran cepat (One-Click Registration)** untuk kasus Gawat Darurat/Kecelakaan, hanya dengan memasukkan nama dan keluhan utama, agar penanganan medis tidak tertunda. | **Baru/Kritis:** Fitur *Express Registration* harus ada di *Header* aplikasi (misalnya, tombol **[UGD Cepat]**). |
+| 1.8 | **Sebagai Admin**, saya ingin **mengubah status kunjungan UGD** menjadi Rawat Jalan atau Rawat Inap, jika diperlukan, agar alur data pasien berpindah modul secara mulus. | Baru: Integrasi handover ke modul lain. |
 
-## Main Dashboard or Home Page
+### Modul 2: Rekam Medis Elektronik (RME) & Rawat Jalan (Role: Dokter, Perawat)
 
-After authentication, the user lands on the dashboard, which serves as the main home page. The dashboard is wrapped in a layout that displays a header bar and a sidebar navigation tailored for logged-in users. The header bar typically shows the application’s logo on the left and a Logout link on the right. The sidebar sits on the left side of the screen and may contain links back to the dashboard’s main panel or to future features.
+| **No.** | **User Story** |
+| --- | --- |
+| **2.1** | **Sebagai Dokter/Perawat**, saya ingin **melihat daftar pasien dalam antrian saya (poli)**, agar saya tahu siapa yang harus dipanggil selanjutnya dan status pasien (Sudah di-triage/Belum). |
+| **2.2** | **Sebagai Dokter**, saya ingin **mengakses RME pasien dari antrian saya** dengan satu kali klik, agar saya bisa langsung memulai pemeriksaan. |
+| **2.3** | **Sebagai Dokter**, saya ingin **mengisi data SOAP (Subjektif, Objektif, Analisis, Plan)** menggunakan *text area* yang jelas per bagian, agar dokumentasi terstruktur dan mudah dibaca. |
+| **2.4** | **Sebagai Dokter**, saya ingin **mencari dan memilih Diagnosis Akhir (ICD-10)** menggunakan fitur *autocomplete* pada Tab Diagnosis, agar koding diagnosis akurat dan cepat. |
+| **2.5** | **Sebagai Dokter**, saya ingin **melihat riwayat RME pasien sebelumnya** pada *sidebar* atau *pop-up* di layar RME saat ini, agar saya bisa membuat keputusan klinis berdasarkan riwayat. |
+| **2.6** | **Sebagai Dokter**, saya ingin **mencatat Rencana Tindakan/Prosedur (ICD-9)** yang dilakukan saat itu, agar tindakan tersebut otomatis masuk ke *billing* pasien. |
+| **2.7** | **Sebagai Dokter**, saya ingin **membuat resep digital** pada Tab Resep, mencakup Nama Obat, Dosis, Frekuensi, dan Kuantitas, agar resep otomatis terkirim ke Apotek. |
+| **2.8** | **Sebagai Dokter**, saya ingin **menyimpan RME sebagai 'Draf'**, agar saya bisa keluar dari layar tanpa kehilangan data dan melanjutkannya nanti. |
+| **2.9** | **Sebagai Dokter**, saya ingin **mengunci dan menyelesaikan RME**, agar data pasien menjadi permanen dan proses *billing* dapat dilanjutkan oleh Kasir. |
 
-The central area of the dashboard page displays data pulled from a static JSON file. This content might appear in cards or tables to give users a quick overview of information. All styling for this section comes from a dedicated theme stylesheet to keep the look consistent. Users can click items or links here, but those actions are placeholders for future dynamic data features.
+### Modul 3: Rawat Inap (Role: Perawat)
 
-From this dashboard view, users may revisit the welcome page or any other main area by selecting navigation items in the sidebar or header. The layout ensures that the logout link remains accessible at all times, and that the user cannot leave the authenticated area without signing out manually or having their session expire.
+| **No.** | **User Story** |
+| --- | --- |
+| **3.1** | **Sebagai Perawat**, saya ingin **melihat status hunian kamar/bed** dalam tampilan *visual dashboard* yang jelas (misalnya Hijau: Kosong, Kuning: Terisi), agar manajemen kamar mudah. |
+| **3.2** | **Sebagai Perawat**, saya ingin **mencatat Tanda-Tanda Vital (Suhu, Tekanan Darah, Nadi, Respirasi)** pasien Rawat Inap secara berkala, agar perkembangan kondisi pasien dapat dipantau. |
+| **3.3** | **Sebagai Perawat**, saya ingin **menambahkan Catatan Perkembangan Pasien Terintegrasi (CPPT)** harian, agar komunikasi antar-staf medis (dokter/perawat) terjamin. |
+| **3.4** | **Sebagai Perawat**, saya ingin **mencatat pemakaian alat atau material medis** saat melakukan tindakan kepada pasien Rawat Inap, agar biaya material tersebut masuk ke *billing*. |
 
-## Detailed Feature Flows and Page Transitions
+### Modul 4: Apotek/Farmasi (Role: Apoteker)
 
-When a visitor lands on the root page, JavaScript on the client reads the route and displays either the welcome interface or automatically redirects them to the dashboard if a valid session exists. For new user registration, the user clicks the Sign Up link and is taken to the sign-up page. The sign-up form collects email and password fields, and on submission it triggers a client-side POST to the API route. Once the API responds with success, the client redirects the user to the dashboard page.
+| **No.** | **User Story** |
+| --- | --- |
+| **4.1** | **Sebagai Apoteker**, saya ingin **menerima notifikasi *real-time* (Pop-up/Widget)** saat Dokter menerbitkan resep digital baru, agar saya bisa segera menyiapkan obat. |
+| **4.2** | **Sebagai Apoteker**, saya ingin **melihat daftar resep yang harus dilayani**, menampilkan nama pasien dan nama Dokter yang meresepkan, agar proses antrian resep terorganisir. |
+| **4.3** | **Sebagai Apoteker**, saya ingin **mengelola stok obat** dengan mencatat pemasukan baru (termasuk *batch number* dan tanggal kadaluarsa), agar inventaris akurat. |
+| **4.4** | **Sebagai Apoteker**, saya ingin **memproses resep digital** dan secara otomatis **mengurangi kuantitas stok** obat yang dikeluarkan, agar stok sistem selalu *update*. |
+| **4.5** | **Sebagai Apoteker**, saya ingin **melihat peringatan (highlight Merah/Kuning)** pada obat yang Stoknya di bawah batas minimum atau yang akan Kadaluarsa dalam 30 hari, agar saya bisa mengambil tindakan cepat. |
 
-Returning users choose the Sign In link and arrive at the sign-in page, which offers the same fields as the sign-up page but is wired to authenticate rather than create a new account. On form submit, the user sees a loading indication until the API confirms valid credentials. If successful, the client pushes the dashboard route and loads the dashboard layout and content.
+### Modul 5: Kasir & Billing (Role: Admin/Kasir)
 
-All authenticated pages reside under the `/dashboard` path. When the user attempts to navigate directly to `/dashboard` without a valid session, server-side redirection logic intercepts the request and sends the user back to the sign-in page. This ensures that protected content never shows to unauthorized visitors.
+| **No.** | **User Story** |
+| --- | --- |
+| **5.1** | **Sebagai Kasir**, saya ingin **mencari kunjungan pasien yang sudah selesai (RME/Pulang dikunci)**, agar saya bisa memulai proses perhitungan tagihan. |
+| **5.2** | **Sebagai Kasir**, saya ingin sistem **menarik dan mengagregasi semua biaya secara otomatis** (Administrasi, Layanan Dokter, Tindakan, Obat), agar perhitungan total biaya bebas dari kesalahan manual. |
+| **5.3** | **Sebagai Kasir**, saya ingin **mencatat diskon atau potongan asuransi/jaminan**, agar jumlah tagihan akhir yang harus dibayar pasien terhitung benar. |
+| **5.4** | **Sebagai Kasir**, saya ingin **memilih metode pembayaran (Tunai/Transfer)** dan jika tunai, **menginput jumlah uang yang diterima**, agar sistem menampilkan kembalian secara otomatis. |
+| **5.5** | **Sebagai Kasir**, saya ingin **menyelesaikan transaksi** dan mengubah status *billing* menjadi "Lunas", agar pasien dapat dipulangkan. |
+| **5.6** | **Sebagai Kasir**, saya ingin **mencetak kuitansi pembayaran** dengan rincian biaya, sebagai bukti transaksi yang sah. |
 
-Signing out happens entirely on the client side by calling an API or clearing a cookie, then navigating back to the welcome page. The client code listens for the logout action, invalidates the current session, and then reloads or reroutes the application state to the landing interface.
+### Modul 6: Pasien Pulang (Role: Dokter, Admin)
 
-## Settings and Account Management
+| **No.** | **User Story** |
+| --- | --- |
+| **6.1** | **Sebagai Dokter**, saya ingin **mengisi ringkasan medis pasien Rawat Inap** sebelum dipulangkan, agar pasien memiliki dokumen ringkasan perawatan. |
+| **6.2** | **Sebagai Dokter**, saya ingin **menentukan tanggal kontrol pasien berikutnya** dan mencatat instruksi kepulangan, agar kesinambungan perawatan terjaga. |
+| **6.3** | **Sebagai Admin**, saya ingin sistem **memblokir status 'Pasien Pulang'** jika status *billing* belum LUNAS, agar tidak ada pasien yang pulang tanpa menyelesaikan kewajiban pembayaran. |
+| **6.4** | **Sebagai Admin**, saya ingin **mengubah status kunjungan pasien menjadi 'Selesai/Pulang'** setelah semua proses (RME dan Billing) selesai, agar data kunjungan tercatat sebagai riwayat. |
 
-At present, users cannot change profile information, update their email, or configure notifications from within the interface. The only account management available is the ability to sign out from any dashboard view. In future iterations, a dedicated settings page could be added to let users update personal details or adjust preferences, but in this version, those capabilities are not provided. After signing out, users always return to the welcome page and must sign in again to regain access to the dashboard.
+### Modul 7: Unit Gawat Darurat (UGD) (Role: Dokter UGD, Perawat Triage)
 
-## Error States and Alternate Paths
-
-If a user types an incorrect email or password on the sign-in page, the authentication API responds with an error status and a message. The form then displays an inline alert near the input fields explaining the issue, such as “Invalid email or password,” allowing the user to correct and resubmit. During sign up, validation errors like a missing field or weak password appear immediately under the relevant input.
-
-Network failures trigger a generic error notification at the top of the form, informing the user that the request could not be completed and advising them to check their connection. If the dashboard content fails to load due to a broken or missing static data file, a fallback message appears in the main panel stating that data could not be loaded and suggesting a page refresh. Trying to access a protected route without a session sends the user to the sign-in page automatically, making it clear that authentication is required.
-
-## Conclusion and Overall App Journey
-
-A typical user journey starts with visiting the application’s root URL, signing up with an email and password, then being welcomed in the dashboard area that displays sample data. Returning users go directly through the sign-in page to the dashboard. Throughout each step, clear messages guide the user in case of errors or invalid input. The layout remains consistent, with a header and navigation ensuring that users always know where they are and can sign out at any time. This flow lays the foundation for adding dynamic data, user profile management, and richer features in future releases.
+| **No.** | **User Story** |
+| --- | --- |
+| **7.1** | **Sebagai Perawat Triage**, saya ingin **mencatat status Triage** (misalnya, Merah, Kuning, Hijau) pada saat kedatangan, agar Dokter UGD dapat memprioritaskan pasien. |
+| **7.2** | **Sebagai Dokter UGD**, saya ingin **melihat *dashboard* antrian UGD** yang menampilkan Triage, Waktu Kedatangan, dan Nama Pasien, agar saya bisa melihat prioritas penanganan. |
+| **7.3** | **Sebagai Dokter UGD**, saya ingin **mengakses RME khusus UGD** yang fokus pada kondisi klinis saat ini (Riwayat Singkat, Pemeriksaan Fisik Terarah, dan Tindakan Cepat), agar dokumentasi penanganan gawat darurat efisien. |
+| **7.4** | **Sebagai Dokter UGD**, saya ingin **mencatat tindakan medis segera** yang diberikan di UGD (misalnya, jahitan, pemasangan infus) secara cepat, agar semua tindakan terdata untuk *billing*. |
+| **7.5** | **Sebagai Dokter UGD**, saya ingin **menentukan *Disposition* (Keputusan Akhir)** dari UGD, yaitu: **Pulang**, **Rawat Jalan Lanjut**, atau **Rawat Inap**, agar proses *handover* ke modul berikutnya jelas. |
+| **7.6** | **Sebagai Perawat Triage**, saya ingin **mengubah data pasien (yang didaftarkan cepat)** menjadi data lengkap (NIK, Alamat, Jaminan) setelah kondisi pasien stabil, agar data lengkap tersedia untuk *billing* dan RME permanen. |

@@ -1,117 +1,107 @@
-# Project Requirements Document: codeguide-starter
+
+## 📄 Product Requirements Document (PRD) - Sistem Informasi Klinik Desa (SIK-Desa)
+
+### 1. Ringkasan Eksekutif
+
+* **Nama Produk:** Sistem Informasi Klinik Desa (SIK-Desa)
+* **Tujuan Utama:** Mendigitalisasi alur kerja inti klinik (Pendaftaran, Triage UGD, RME, Kasir, Apotek) untuk meningkatkan kecepatan layanan (terutama di UGD), akurasi data, dan efisiensi operasional.
+* **Filosofi Desain Kunci:** **Simple UX** ("Satu Tugas, Satu Layar") dan **Mobile-Friendly** (PWA) untuk memastikan adopsi tinggi oleh staf di lingkungan pedesaan.
+* **Pengguna Target (MVP):** Admin Pendaftaran, Dokter, Perawat Triage, Apoteker, dan Kasir.
 
 ---
 
-## 1. Project Overview
+### 2. Sasaran (Goals) dan Metrik Kunci (KPI)
 
-The **codeguide-starter** project is a boilerplate web application that provides a ready-made foundation for any web project requiring secure user authentication and a post-login dashboard. It sets up the common building blocks—sign-up and sign-in pages, API routes to handle registration and login, and a simple dashboard interface driven by static data. By delivering this skeleton, it accelerates development time and ensures best practices are in place from day one.
-
-This starter kit is being built to solve the friction developers face when setting up repeated common tasks: credential handling, session management, page routing, and theming. Key objectives include: 1) delivering a fully working authentication flow (registration & login), 2) providing a gated dashboard area upon successful login, 3) establishing a clear, maintainable project structure using Next.js and TypeScript, and 4) demonstrating a clean theming approach with global and section-specific CSS. Success is measured by having an end-to-end login journey in under 200 lines of code and zero runtime type errors.
-
----
-
-## 2. In-Scope vs. Out-of-Scope
-
-### In-Scope (Version 1)
-- User registration (sign-up) form with validation
-- User login (sign-in) form with validation
-- Next.js API routes under `/api/auth/route.ts` handling:
-  - Credential validation
-  - Password hashing (e.g., bcrypt)
-  - Session creation or JWT issuance
-- Protected dashboard pages under `/dashboard`:
-  - `layout.tsx` wrapping dashboard content
-  - `page.tsx` rendering static data from `data.json`
-- Global application layout in `/app/layout.tsx`
-- Basic styling via `globals.css` and `dashboard/theme.css`
-- TypeScript strict mode enabled
-
-### Out-of-Scope (Later Phases)
-- Integration with a real database (PostgreSQL, MongoDB, etc.)
-- Advanced authentication flows (password reset, email verification, MFA)
-- Role-based access control (RBAC)
-- Multi-tenant or white-label theming
-- Unit, integration, or end-to-end testing suites
-- CI/CD pipeline and production deployment scripts
+| Sasaran (SMART) | Metrik Kunci (KPI) |
+| :--- | :--- |
+| **Kecepatan Layanan Gawat Darurat** | Waktu rata-rata pendaftaran kasus UGD (menggunakan *Quick Register*) **di bawah 30 detik**. |
+| **Akurasi & Kepatuhan Data** | Persentase kelengkapan isian RME (SOAP/CPPT) mencapai **95%**. |
+| **Efisiensi Inventaris Apotek** | Akurasi stok obat (Stok fisik vs. Stok sistem) mencapai **98%**. |
+| **Adopsi Pengguna** | Persentase penggunaan RME digital oleh Dokter **100%** dalam bulan pertama operasional. |
 
 ---
 
-## 3. User Flow
+### 3. Fitur dan Lingkup (Scope)
 
-A new visitor lands on the root URL and sees a welcome page with options to **Sign Up** or **Sign In**. If they choose Sign Up, they fill in their email, password, and hit “Create Account.” The form submits to `/api/auth/route.ts`, which hashes the password, creates a new user session or token, and redirects them to the dashboard. If any input is invalid, an inline error message explains the issue (e.g., “Password too short”).
+**Lingkup MVP (Fase 1):** Mencakup alur pasien dari kedatangan (termasuk UGD), pemeriksaan, hingga kepulangan/pembayaran.
 
-Once authenticated, the user is taken to the `/dashboard` route. Here they see a sidebar or header defined by `dashboard/layout.tsx`, and the main panel pulls in static data from `data.json`. They can log out (if that control is present), but otherwise their entire session is managed by server-side cookies or tokens. Returning users go directly to Sign In, submit credentials, and upon success they land back on `/dashboard`. Any unauthorized access to `/dashboard` redirects back to Sign In.
+#### A. Modul Pendaftaran & Registrasi
 
----
+* **Kebutuhan Fungsional:**
+    * **Pencarian Cepat:** Mampu mencari pasien menggunakan RM, NIK, atau Nama.
+    * **Pendaftaran Baru:** Form **2-Step Wizard** untuk mencatat data demografi lengkap pasien.
+    * **Registrasi Kunjungan:** Mencatat kunjungan (RJ/RI/UGD), memilih Poli/Dokter, dan Jenis Pembayaran (Umum/Asuransi).
+    * **Antrian Digital:** Tampilan *dashboard* antrian *real-time* per Poli.
 
-## 4. Core Features
+#### B. Modul Unit Gawat Darurat (UGD) - **Fitur Kritis**
 
-- **Sign-Up Page (`/app/sign-up/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Sign-In Page (`/app/sign-in/page.tsx`)**: Form fields for email & password, client-side validation, POST to `/api/auth`.
-- **Authentication API (`/app/api/auth/route.ts`)**: Handles both registration and login based on HTTP method, integrates password hashing (bcrypt) and session or JWT logic.
-- **Global Layout (`/app/layout.tsx` + `globals.css`)**: Shared header, footer, and CSS resets across all pages.
-- **Dashboard Layout (`/app/dashboard/layout.tsx` + `dashboard/theme.css`)**: Sidebar or top nav for authenticated flows, section-specific styling.
-- **Dashboard Page (`/app/dashboard/page.tsx`)**: Reads `data.json`, renders it as cards or tables.
-- **Static Data Source (`/app/dashboard/data.json`)**: Example dataset to demo dynamic rendering.
-- **TypeScript Configuration**: `tsconfig.json` with strict mode and path aliases (if any).
+* **Kebutuhan Fungsional:**
+    * **Pendaftaran Cepat (One-Click Registration):** Pendaftaran UGD minimalis hanya dengan Nama dan Keluhan, untuk penanganan segera.
+    * **Triage Prioritas:** Mampu mencatat status Triage (Merah/Kuning/Hijau) yang terlihat jelas di antrian UGD.
+    * **Dashboard UGD:** Tampilan antrian UGD yang memprioritaskan kasus Merah/Kuning (sesuai Triage).
+    * **Disposisi:** Fitur penentuan akhir dari UGD: Pulang, Rawat Jalan Lanjut, atau Rawat Inap.
 
----
+#### C. Modul Rekam Medis Elektronik (RME) & Rawat Jalan
 
-## 5. Tech Stack & Tools
+* **Kebutuhan Fungsional:**
+    * **Alur RME Tabular:** Pengisian RME menggunakan **Tabbed Interface** (SOAP/CPPT, Diagnosis, Resep, Tindakan) untuk meminimalkan *scrolling*.
+    * **Diagnosis Cepat:** Fitur *autocomplete search* untuk kode **ICD-10** (Diagnosis) dan **ICD-9** (Tindakan/Prosedur).
+    * **Resep Digital:** Membuat resep dengan detail dosis/frekuensi dan diteruskan otomatis ke Modul Apotek.
+    * **Riwayat Medis:** Akses cepat ke riwayat RME pasien di layar pemeriksaan.
+    * **Penguncian Data:** RME harus **dikunci** oleh Dokter setelah pemeriksaan selesai untuk integritas data.
 
-- **Framework**: Next.js (App Router) for file-based routing, SSR/SSG, and API routes.
-- **Language**: TypeScript for type safety.
-- **UI Library**: React 18 for component-based UI.
-- **Styling**: Plain CSS via `globals.css` (global reset) and `theme.css` (sectional styling). Can easily migrate to CSS Modules or Tailwind in the future.
-- **Backend**: Node.js runtime provided by Next.js API routes.
-- **Password Hashing**: bcrypt (npm package).
-- **Session/JWT**: NextAuth.js or custom JWT logic (to be decided in implementation).
-- **IDE & Dev Tools**: VS Code with ESLint, Prettier extensions. Optionally, Cursor.ai for AI-assisted coding.
+#### D. Modul Rawat Inap
 
----
+* **Kebutuhan Fungsional:**
+    * **Manajemen Kamar:** Dashboard visualisasi status hunian kamar/tempat tidur.
+    * **Pencatatan Vital Sign & CPPT:** Formulir untuk Perawat mencatat Tanda-Tanda Vital dan Catatan Perkembangan Harian.
+    * **Pencatatan Material:** Mencatat pemakaian material/alat medis untuk keperluan *billing*.
 
-## 6. Non-Functional Requirements
+#### E. Modul Apotek/Farmasi
 
-- **Performance**: Initial page load under 200 ms on a standard broadband connection. API responses under 300 ms.
-- **Security**:
-  - HTTPS only in production.
-  - Proper CORS, CSRF protection for API routes.
-  - Secure password storage (bcrypt with salt).
-  - No credentials or secrets checked into version control.
-- **Scalability**: Structure must support adding database integration, caching layers, and advanced auth flows without rewiring core app.
-- **Usability**: Forms should give real-time feedback on invalid input. Layout must be responsive (mobile > 320 px).
-- **Maintainability**: Code must adhere to TypeScript strict mode. Linting & formatting enforced by ESLint/Prettier.
+* **Kebutuhan Fungsional:**
+    * **Inventaris:** Fitur input stok masuk (termasuk Batch No. dan Exp. Date) dan stok keluar.
+    * **Notifikasi Resep:** Menerima notifikasi *real-time* untuk Resep Digital baru dari Dokter.
+    * **Fulfillment Otomatis:** Otomatis mengurangi stok saat Resep diproses dan ditandai *fulfilled*.
+    * **Peringatan Kadaluarsa/Stok:** Memberikan peringatan dini (e.g., 30 hari) untuk obat yang mendekati kadaluarsa atau stok minimum.
 
----
+#### F. Modul Kasir & Billing
 
-## 7. Constraints & Assumptions
+* **Kebutuhan Fungsional:**
+    * **Agregasi Biaya Otomatis:** Sistem secara otomatis menarik semua biaya (Registrasi, Tindakan, Obat, Kamar) ke dalam *billing*.
+    * **Pembayaran Sederhana:** Pencatatan metode pembayaran (Tunai/Transfer). Jika Tunai, sistem harus menghitung kembalian otomatis.
+    * **Validasi Keuangan:** Mampu mencatat diskon atau jaminan/asuransi dan menghitung tagihan akhir.
+    * **Cetak Kuitansi:** Mampu mencetak kuitansi pembayaran yang ringkas dan jelas.
 
-- **No Database**: Dashboard uses only `data.json`; real database integration is deferred.
-- **Node Version**: Requires Node.js >= 14.
-- **Next.js Version**: Built on Next.js 13+ App Router.
-- **Authentication**: Assumes availability of bcrypt or NextAuth.js at implementation time.
-- **Hosting**: Targets serverless or Node.js-capable hosting (e.g., Vercel, Netlify).
-- **Browser Support**: Modern evergreen browsers; no IE11 support required.
+#### G. Modul Pasien Pulang
 
----
-
-## 8. Known Issues & Potential Pitfalls
-
-- **Static Data Limitation**: `data.json` is only for demo. A real API or database will be needed to avoid stale data.
-  *Mitigation*: Define a clear interface for data fetching so swapping to a live endpoint is trivial.
-
-- **Global CSS Conflicts**: Using global styles can lead to unintended overrides.
-  *Mitigation*: Plan to migrate to CSS Modules or utility-first CSS in Phase 2.
-
-- **API Route Ambiguity**: Single `/api/auth/route.ts` handling both sign-up and sign-in could get complex.
-  *Mitigation*: Clearly branch on HTTP method (`POST /register` vs. `POST /login`) or split into separate files.
-
-- **Lack of Testing**: No test suite means regressions can slip in.
-  *Mitigation*: Build a minimal Jest + React Testing Library setup in an early iteration.
-
-- **Error Handling Gaps**: Client and server must handle edge cases (network failures, malformed input).
-  *Mitigation*: Define a standard error response schema and show user-friendly messages.
+* **Kebutuhan Fungsional:**
+    * **Billing Gate:** Sistem harus **memblokir** status 'Pulang' (dari Rawat Inap/UGD) jika *billing* belum lunas/selesai.
+    * **Surat Pulang:** Formulir ringkasan medis akhir (Diagnosis Akhir & Tindakan) dan instruksi tindak lanjut.
+    * **Jadwal Kontrol:** Fitur untuk menetapkan tanggal kontrol pasien berikutnya.
 
 ---
 
-This PRD should serve as the single source of truth for the AI model or any developer generating the next set of technical documents: Tech Stack Doc, Frontend Guidelines, Backend Structure, App Flow, File Structure, and IDE Rules. It contains all functional and non-functional requirements with no ambiguity, enabling seamless downstream development.
+### 4. Kebutuhan Pengguna (Role-Based Access Control - RBAC)
+
+Aplikasi harus menerapkan otorisasi ketat berdasarkan peran:
+
+| Peran Pengguna | Akses Utama yang Diizinkan | Akses yang Dibatasi |
+| :--- | :--- | :--- |
+| **Admin** | Pengaturan Sistem, Master Data (Tarif/Obat), Akses ke semua Laporan. | Mengisi RME (kecuali Admin adalah Dokter), Memproses Resep. |
+| **Dokter** | RME (SOAP/CPPT/Diagnosis/Resep), Riwayat Pasien. | Manajemen Stok Obat, Pembayaran/Kasir, Pengaturan User Admin. |
+| **Perawat** | Triage UGD, Pencatatan Vital Sign (Rawat Inap), CPPT, Manajemen Kamar. | Diagnosis, Penguncian RME, Penentuan Harga. |
+| **Apoteker** | Inventaris Obat (Stok Masuk/Keluar), Pemenuhan Resep (Fulfillment). | Akses RME penuh, Finalisasi Billing Pasien. |
+| **Kasir** | Modul Billing, Pencetakan Kuitansi, Validasi Pembayaran. | RME, Inventaris Obat. |
+
+---
+
+### 5. Kebutuhan Non-Fungsional
+
+| Kategori | Persyaratan | Dampak ke Proyek |
+| :--- | :--- | :--- |
+| **Performa** | Waktu *loading* halaman dan pencarian pasien **maksimal 2 detik**. | Menggunakan Next.js (SSR/SSG) dan *caching* (React Query). |
+| **Keamanan** | **Enkripsi SSL/TLS (HTTPS) WAJIB.** Data sensitif (PHI) harus dienkripsi saat disimpan (*at rest*). | Penggunaan NextAuth.js (JWT) dan AWS RDS Encryption. |
+| **Ketersediaan** | Aplikasi harus memiliki *uptime* target **99.5%**. | Hosting di AWS dan menggunakan *managed service* (RDS, ECS/Vercel). |
+| **Aksesibilitas (UX)** | Desain harus **Mobile Responsive (PWA)** dan menggunakan ukuran *font* dan *touch target* yang besar. | Penggunaan Tailwind CSS dan Headless UI. |
+| **Regulasi** | Data RME harus memiliki **Audit Trail** (Siapa, Kapan, Apa yang diubah) untuk kepatuhan hukum. | Diimplementasikan di lapisan Backend (Prisma Middleware/DB Logging). |
