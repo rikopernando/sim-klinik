@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Search, Loader2, User } from "lucide-react";
+import axios from "axios";
+import { Search, Loader2, User, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useDebounce } from "@/hooks/use-debounce";
 
 interface Patient {
@@ -43,18 +45,18 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
         setError(null);
 
         try {
-            const response = await fetch(
-                `/api/patients/search?q=${encodeURIComponent(searchQuery)}`
-            );
-
-            if (!response.ok) {
-                throw new Error("Failed to search patients");
-            }
-
-            const data = await response.json();
-            setResults(data.data || []);
+            const response = await axios.get(`/api/patients/search`, {
+                params: { q: searchQuery },
+            });
+            setResults(response.data.data || []);
         } catch (err) {
-            setError("Failed to search patients. Please try again.");
+            if (axios.isAxiosError(err)) {
+                setError(
+                    err.response?.data?.error || "Gagal mencari pasien. Silakan coba lagi."
+                );
+            } else {
+                setError("Terjadi kesalahan. Silakan coba lagi.");
+            }
             console.error("Search error:", err);
         } finally {
             setIsLoading(false);
@@ -84,7 +86,7 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
 
     return (
         <div className="space-y-4">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -95,11 +97,18 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
                         className="pl-10"
                     />
                 </div>
-                <Button onClick={onNewPatient} variant="outline">
+                <Button onClick={onNewPatient} variant="outline" className="w-full sm:w-auto">
                     <User className="mr-2 h-4 w-4" />
                     Pasien Baru
                 </Button>
             </div>
+
+            {error && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
 
             {isLoading && (
                 <div className="flex items-center justify-center py-8">
@@ -107,12 +116,6 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
                     <span className="ml-2 text-sm text-muted-foreground">
                         Mencari pasien...
                     </span>
-                </div>
-            )}
-
-            {error && (
-                <div className="rounded-md bg-destructive/10 p-4 text-sm text-destructive">
-                    {error}
                 </div>
             )}
 

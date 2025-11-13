@@ -1,13 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
     Select,
     SelectContent,
@@ -16,33 +20,50 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, ChevronRight, ChevronLeft, Check } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, ChevronRight, ChevronLeft, Check, CalendarIcon, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
-// Validation schema
-const patientFormSchema = z.object({
-    // Step 1: Basic Information
-    nik: z
-        .string()
-        .length(16, "NIK harus 16 digit")
-        .regex(/^\d+$/, "NIK hanya boleh angka")
-        .optional()
-        .or(z.literal("")),
-    name: z.string().min(2, "Nama minimal 2 karakter").max(255),
-    dateOfBirth: z.string().optional(),
-    gender: z.enum(["male", "female", "other"]).optional(),
-    bloodType: z.string().optional(),
+// Validation schema with NIK required and conditional insurance number validation
+const patientFormSchema = z
+    .object({
+        // Step 1: Basic Information
+        nik: z
+            .string()
+            .min(1, "NIK wajib diisi")
+            .length(16, "NIK harus 16 digit")
+            .regex(/^\d+$/, "NIK hanya boleh angka"),
+        name: z.string().min(2, "Nama minimal 2 karakter").max(255),
+        dateOfBirth: z.date().optional(),
+        gender: z.enum(["male", "female"], {
+            message: "Pilih jenis kelamin",
+        }),
+        bloodType: z.string().optional(),
 
-    // Step 2: Contact & Insurance
-    phone: z.string().max(20).optional(),
-    address: z.string().optional(),
-    email: z.string().email("Email tidak valid").optional().or(z.literal("")),
-    emergencyContact: z.string().max(255).optional(),
-    emergencyPhone: z.string().max(20).optional(),
-    insuranceType: z.string().optional(),
-    insuranceNumber: z.string().max(50).optional(),
-    allergies: z.string().optional(),
-});
+        // Step 2: Contact & Insurance
+        phone: z.string().max(20).optional(),
+        address: z.string().optional(),
+        email: z.string().email("Email tidak valid").optional().or(z.literal("")),
+        emergencyContact: z.string().max(255).optional(),
+        emergencyPhone: z.string().max(20).optional(),
+        insuranceType: z.string().optional(),
+        insuranceNumber: z.string().max(50).optional(),
+        allergies: z.string().optional(),
+    })
+    .refine(
+        (data) => {
+            // If insurance type is not "Umum" and not empty, insurance number is required
+            if (data.insuranceType && data.insuranceType !== "Umum") {
+                return !!data.insuranceNumber && data.insuranceNumber.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Nomor jaminan wajib diisi untuk jenis jaminan selain Umum",
+            path: ["insuranceNumber"],
+        }
+    );
 
 type PatientFormData = z.infer<typeof patientFormSchema>;
 
@@ -69,13 +90,14 @@ export function PatientRegistrationForm({
 }: PatientRegistrationFormProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const form = useForm<PatientFormData>({
         resolver: zodResolver(patientFormSchema),
         defaultValues: {
             nik: "",
             name: "",
-            dateOfBirth: "",
+            dateOfBirth: undefined,
             gender: undefined,
             bloodType: "",
             phone: "",
@@ -92,48 +114,66 @@ export function PatientRegistrationForm({
     const {
         register,
         handleSubmit,
-        setValue,
+        control,
         watch,
+        trigger,
         formState: { errors },
     } = form;
 
     // Watch fields for step 1 validation
-    const step1Fields = watch(["name"]);
-    const isStep1Valid = step1Fields[0]?.length >= 2;
+    const [name, nik, gender] = watch(["name", "nik", "gender"]);
+    const isStep1Valid = name?.length >= 2 && nik?.length === 16 && gender !== undefined;
+
+    // Watch insurance type to conditionally require insurance number
+    const insuranceType = watch("insuranceType");
 
     const onSubmit = async (data: PatientFormData) => {
         setIsSubmitting(true);
+        setErrorMessage(null);
 
         try {
-            const response = await fetch("/api/patients", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data),
-            });
+            // Convert Date to ISO string for API
+            const payload = {
+                ...data,
+                dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString() : undefined,
+            };
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Gagal mendaftarkan pasien");
-            }
-
-            const result = await response.json();
-            onSuccess?.(result.data);
+            const response = await axios.post("/api/patients", payload);
+            onSuccess?.(response.data.data);
         } catch (error) {
+            if (axios.isAxiosError(error)) {
+                // Handle validation errors from API
+                if (error.response?.data?.details) {
+                    const validationErrors = error.response.data.details
+                        .map((err: { message: string }) => err.message)
+                        .join(", ");
+                    setErrorMessage(`Validasi gagal: ${validationErrors}`);
+                } else {
+                    setErrorMessage(
+                        error.response?.data?.error || "Gagal mendaftarkan pasien. Silakan coba lagi."
+                    );
+                }
+            } else {
+                setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
+            }
             console.error("Registration error:", error);
-            alert(error instanceof Error ? error.message : "Gagal mendaftarkan pasien");
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleNext = () => {
-        if (isStep1Valid) {
+    const handleNext = async () => {
+        // Validate step 1 fields before proceeding
+        const isValid = await trigger(["name", "nik", "gender"]);
+        if (isValid) {
             setCurrentStep(2);
+            setErrorMessage(null);
         }
     };
 
     const handleBack = () => {
         setCurrentStep(1);
+        setErrorMessage(null);
     };
 
     return (
@@ -169,34 +209,46 @@ export function PatientRegistrationForm({
                 </div>
             </div>
 
+            {/* Error Alert */}
+            {errorMessage && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+            )}
+
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
                 <Card>
                     <CardHeader>
                         <CardTitle>Data Utama Pasien</CardTitle>
                         <CardDescription>
-                            Masukkan informasi dasar pasien. Nama wajib diisi.
+                            Masukkan informasi dasar pasien. Nama, NIK, dan jenis kelamin wajib diisi.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">
-                                Nama Lengkap <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="name"
-                                {...register("name")}
-                                placeholder="Masukkan nama lengkap"
-                                className={errors.name ? "border-destructive" : ""}
-                            />
-                            {errors.name && (
-                                <p className="text-sm text-destructive">{errors.name.message}</p>
-                            )}
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+                    <CardContent>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {/* Name */}
                             <div className="space-y-2">
-                                <Label htmlFor="nik">NIK (16 digit)</Label>
+                                <Label htmlFor="name">
+                                    Nama Lengkap <span className="text-destructive">*</span>
+                                </Label>
+                                <Input
+                                    id="name"
+                                    {...register("name")}
+                                    placeholder="Masukkan nama lengkap"
+                                    className={errors.name ? "border-destructive" : ""}
+                                />
+                                {errors.name && (
+                                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                                )}
+                            </div>
+
+                            {/* NIK - Required */}
+                            <div className="space-y-2">
+                                <Label htmlFor="nik">
+                                    NIK (16 digit) <span className="text-destructive">*</span>
+                                </Label>
                                 <Input
                                     id="nik"
                                     {...register("nik")}
@@ -209,48 +261,107 @@ export function PatientRegistrationForm({
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="dateOfBirth">Tanggal Lahir</Label>
-                                <Input id="dateOfBirth" type="date" {...register("dateOfBirth")} />
+                            {/* Gender - Radio Buttons */}
+                            <div className="space-y-3">
+                                <Label>
+                                    Jenis Kelamin <span className="text-destructive">*</span>
+                                </Label>
+                                <Controller
+                                    name="gender"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <RadioGroup
+                                            onValueChange={field.onChange}
+                                            value={field.value}
+                                            className="flex gap-6"
+                                        >
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="male" id="male" />
+                                                <Label htmlFor="male" className="cursor-pointer font-normal">
+                                                    Laki-laki
+                                                </Label>
+                                            </div>
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="female" id="female" />
+                                                <Label htmlFor="female" className="cursor-pointer font-normal">
+                                                    Perempuan
+                                                </Label>
+                                            </div>
+                                        </RadioGroup>
+                                    )}
+                                />
+                                {errors.gender && (
+                                    <p className="text-sm text-destructive">{errors.gender.message}</p>
+                                )}
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                            {/* Date of Birth - Calendar Component */}
                             <div className="space-y-2">
-                                <Label htmlFor="gender">Jenis Kelamin</Label>
-                                <Select
-                                    onValueChange={(value) =>
-                                        setValue("gender", value as "male" | "female" | "other")
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih jenis kelamin" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="male">Laki-laki</SelectItem>
-                                        <SelectItem value="female">Perempuan</SelectItem>
-                                        <SelectItem value="other">Lainnya</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <Label>Tanggal Lahir</Label>
+                            <Controller
+                                name="dateOfBirth"
+                                control={control}
+                                render={({ field }) => (
+                                    <Popover>
+                                        <PopoverTrigger asChild>
+                                            <Button
+                                                variant="outline"
+                                                className={cn(
+                                                    "w-full justify-start text-left font-normal",
+                                                    !field.value && "text-muted-foreground"
+                                                )}
+                                            >
+                                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                                {field.value ? (
+                                                    format(field.value, "dd MMMM yyyy")
+                                                ) : (
+                                                    <span>Pilih tanggal lahir</span>
+                                                )}
+                                            </Button>
+                                        </PopoverTrigger>
+                                        <PopoverContent className="w-auto p-0" align="start">
+                                            <Calendar
+                                                mode="single"
+                                                selected={field.value}
+                                                onSelect={field.onChange}
+                                                captionLayout="dropdown"
+                                                fromYear={1900}
+                                                toYear={new Date().getFullYear()}
+                                                initialFocus
+                                                disabled={(date) =>
+                                                    date > new Date() || date < new Date("1900-01-01")
+                                                }
+                                            />
+                                        </PopoverContent>
+                                    </Popover>
+                                )}
+                            />
                             </div>
 
+                            {/* Blood Type */}
                             <div className="space-y-2">
                                 <Label htmlFor="bloodType">Golongan Darah</Label>
-                                <Select onValueChange={(value) => setValue("bloodType", value)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih golongan darah" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="A+">A+</SelectItem>
-                                        <SelectItem value="A-">A-</SelectItem>
-                                        <SelectItem value="B+">B+</SelectItem>
-                                        <SelectItem value="B-">B-</SelectItem>
-                                        <SelectItem value="AB+">AB+</SelectItem>
-                                        <SelectItem value="AB-">AB-</SelectItem>
-                                        <SelectItem value="O+">O+</SelectItem>
-                                        <SelectItem value="O-">O-</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Controller
+                                    name="bloodType"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Pilih golongan darah" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="A+">A+</SelectItem>
+                                                <SelectItem value="A-">A-</SelectItem>
+                                                <SelectItem value="B+">B+</SelectItem>
+                                                <SelectItem value="B-">B-</SelectItem>
+                                                <SelectItem value="AB+">AB+</SelectItem>
+                                                <SelectItem value="AB-">AB-</SelectItem>
+                                                <SelectItem value="O+">O+</SelectItem>
+                                                <SelectItem value="O-">O-</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
                             </div>
                         </div>
                     </CardContent>
@@ -266,8 +377,9 @@ export function PatientRegistrationForm({
                             Informasi kontak dan data jaminan kesehatan (opsional).
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
+                    <CardContent>
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {/* Phone */}
                             <div className="space-y-2">
                                 <Label htmlFor="phone">Nomor Telepon</Label>
                                 <Input
@@ -277,6 +389,7 @@ export function PatientRegistrationForm({
                                 />
                             </div>
 
+                            {/* Email */}
                             <div className="space-y-2">
                                 <Label htmlFor="email">Email</Label>
                                 <Input
@@ -287,24 +400,22 @@ export function PatientRegistrationForm({
                                     className={errors.email ? "border-destructive" : ""}
                                 />
                                 {errors.email && (
-                                    <p className="text-sm text-destructive">
-                                        {errors.email.message}
-                                    </p>
+                                    <p className="text-sm text-destructive">{errors.email.message}</p>
                                 )}
                             </div>
-                        </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="address">Alamat</Label>
-                            <Textarea
-                                id="address"
-                                {...register("address")}
-                                placeholder="Masukkan alamat lengkap"
-                                rows={3}
-                            />
-                        </div>
+                            {/* Address - Span 2 columns */}
+                            <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="address">Alamat</Label>
+                                <Textarea
+                                    id="address"
+                                    {...register("address")}
+                                    placeholder="Masukkan alamat lengkap"
+                                    rows={3}
+                                />
+                            </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                            {/* Emergency Contact */}
                             <div className="space-y-2">
                                 <Label htmlFor="emergencyContact">Kontak Darurat</Label>
                                 <Input
@@ -314,6 +425,7 @@ export function PatientRegistrationForm({
                                 />
                             </div>
 
+                            {/* Emergency Phone */}
                             <div className="space-y-2">
                                 <Label htmlFor="emergencyPhone">No. Telp Darurat</Label>
                                 <Input
@@ -322,61 +434,77 @@ export function PatientRegistrationForm({
                                     placeholder="081234567890"
                                 />
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4">
+                            {/* Insurance Type */}
                             <div className="space-y-2">
                                 <Label htmlFor="insuranceType">Jenis Jaminan</Label>
-                                <Select
-                                    onValueChange={(value) => setValue("insuranceType", value)}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih jenis jaminan" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="BPJS">BPJS Kesehatan</SelectItem>
-                                        <SelectItem value="Asuransi Swasta">
-                                            Asuransi Swasta
-                                        </SelectItem>
-                                        <SelectItem value="Umum">Umum (Cash)</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <Controller
+                                    name="insuranceType"
+                                    control={control}
+                                    render={({ field }) => (
+                                        <Select onValueChange={field.onChange} value={field.value}>
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Pilih jenis jaminan" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="BPJS">BPJS Kesehatan</SelectItem>
+                                                <SelectItem value="Asuransi Swasta">
+                                                    Asuransi Swasta
+                                                </SelectItem>
+                                                <SelectItem value="Umum">Umum (Cash)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    )}
+                                />
                             </div>
 
+                            {/* Insurance Number */}
                             <div className="space-y-2">
-                                <Label htmlFor="insuranceNumber">Nomor Jaminan</Label>
+                                <Label htmlFor="insuranceNumber">
+                                    Nomor Jaminan
+                                    {insuranceType && insuranceType !== "Umum" && (
+                                        <span className="text-destructive"> *</span>
+                                    )}
+                                </Label>
                                 <Input
                                     id="insuranceNumber"
                                     {...register("insuranceNumber")}
                                     placeholder="Nomor kartu BPJS/asuransi"
+                                    className={errors.insuranceNumber ? "border-destructive" : ""}
+                                />
+                                {errors.insuranceNumber && (
+                                    <p className="text-sm text-destructive">
+                                        {errors.insuranceNumber.message}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Allergies - Span 2 columns */}
+                            <div className="space-y-2 md:col-span-2">
+                                <Label htmlFor="allergies">Alergi</Label>
+                                <Textarea
+                                    id="allergies"
+                                    {...register("allergies")}
+                                    placeholder="Sebutkan alergi obat atau makanan (jika ada)"
+                                    rows={2}
                                 />
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="allergies">Alergi</Label>
-                            <Textarea
-                                id="allergies"
-                                {...register("allergies")}
-                                placeholder="Sebutkan alergi obat atau makanan (jika ada)"
-                                rows={2}
-                            />
                         </div>
                     </CardContent>
                 </Card>
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
                 <div>
                     {currentStep === 2 && (
-                        <Button type="button" variant="outline" onClick={handleBack}>
+                        <Button type="button" variant="outline" onClick={handleBack} className="w-full sm:w-auto">
                             <ChevronLeft className="mr-2 h-4 w-4" />
                             Kembali
                         </Button>
                     )}
                     {currentStep === 1 && onCancel && (
-                        <Button type="button" variant="outline" onClick={onCancel}>
+                        <Button type="button" variant="outline" onClick={onCancel} className="w-full sm:w-auto">
                             Batal
                         </Button>
                     )}
@@ -388,13 +516,14 @@ export function PatientRegistrationForm({
                             type="button"
                             onClick={handleNext}
                             disabled={!isStep1Valid}
+                            className="w-full sm:w-auto"
                         >
                             Selanjutnya
                             <ChevronRight className="ml-2 h-4 w-4" />
                         </Button>
                     )}
                     {currentStep === 2 && (
-                        <Button type="submit" disabled={isSubmitting}>
+                        <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
                             {isSubmitting ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

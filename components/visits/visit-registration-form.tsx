@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -17,18 +17,59 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Check, Stethoscope, Bed, AlertCircle } from "lucide-react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const visitFormSchema = z.object({
-    visitType: z.enum(["outpatient", "inpatient", "emergency"]),
-    poliId: z.string().optional(),
-    doctorId: z.string().optional(),
-    triageStatus: z.enum(["red", "yellow", "green"]).optional(),
-    chiefComplaint: z.string().optional(),
-    roomId: z.string().optional(),
-    notes: z.string().optional(),
-});
+const visitFormSchema = z
+    .object({
+        visitType: z.enum(["outpatient", "inpatient", "emergency"]),
+        poliId: z.string().optional(),
+        doctorId: z.string().optional(),
+        triageStatus: z.enum(["red", "yellow", "green"]).optional(),
+        chiefComplaint: z.string().optional(),
+        roomId: z.string().optional(),
+        notes: z.string().optional(),
+    })
+    .refine(
+        (data) => {
+            // Outpatient: poliId is required
+            if (data.visitType === "outpatient") {
+                return !!data.poliId && data.poliId.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Poli/Poliklinik wajib dipilih untuk rawat jalan",
+            path: ["poliId"],
+        }
+    )
+    .refine(
+        (data) => {
+            // Inpatient: roomId is required
+            if (data.visitType === "inpatient") {
+                return !!data.roomId && data.roomId.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Kamar wajib dipilih untuk rawat inap",
+            path: ["roomId"],
+        }
+    )
+    .refine(
+        (data) => {
+            // Emergency: chiefComplaint is required
+            if (data.visitType === "emergency") {
+                return !!data.chiefComplaint && data.chiefComplaint.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Keluhan utama wajib diisi untuk UGD",
+            path: ["chiefComplaint"],
+        }
+    );
 
 type VisitFormData = z.infer<typeof visitFormSchema>;
 
@@ -68,6 +109,7 @@ export function VisitRegistrationForm({
     onCancel,
 }: VisitRegistrationFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [polis, setPolis] = useState<Array<{ id: number; name: string; code: string }>>([]);
 
     const form = useForm<VisitFormData>({
@@ -88,6 +130,7 @@ export function VisitRegistrationForm({
         handleSubmit,
         setValue,
         watch,
+        formState: { errors },
     } = form;
 
     const visitType = watch("visitType");
@@ -105,6 +148,7 @@ export function VisitRegistrationForm({
 
     const onSubmit = async (data: VisitFormData) => {
         setIsSubmitting(true);
+        setErrorMessage(null);
 
         try {
             const payload = {
@@ -118,22 +162,28 @@ export function VisitRegistrationForm({
                 notes: data.notes,
             };
 
-            const response = await fetch("/api/visits", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "Gagal mendaftarkan kunjungan");
-            }
-
-            const result = await response.json();
-            onSuccess?.(result.data);
+            const response = await axios.post("/api/visits", payload);
+            onSuccess?.(response.data.data);
         } catch (error) {
             console.error("Visit registration error:", error);
-            alert(error instanceof Error ? error.message : "Gagal mendaftarkan kunjungan");
+
+            if (axios.isAxiosError(error)) {
+                if (error.response?.data?.details) {
+                    // Handle validation errors
+                    const validationErrors = error.response.data.details
+                        .map((err: { message: string }) => err.message)
+                        .join(", ");
+                    setErrorMessage(`Validasi gagal: ${validationErrors}`);
+                } else {
+                    // Handle other API errors
+                    setErrorMessage(
+                        error.response?.data?.error || "Gagal mendaftarkan kunjungan. Silakan coba lagi."
+                    );
+                }
+            } else {
+                // Handle non-Axios errors
+                setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -155,7 +205,7 @@ export function VisitRegistrationForm({
                     <CardTitle>Informasi Pasien</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                         <div>
                             <span className="font-medium">Nama:</span> {patient.name}
                         </div>
@@ -175,6 +225,14 @@ export function VisitRegistrationForm({
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Error Alert */}
+            {errorMessage && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+            )}
 
             {/* Visit Registration Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -197,7 +255,7 @@ export function VisitRegistrationForm({
                                         value as "outpatient" | "inpatient" | "emergency"
                                     )
                                 }
-                                className="grid grid-cols-3 gap-4"
+                                className="grid grid-cols-1 gap-4 sm:grid-cols-3"
                             >
                                 <Label
                                     htmlFor="outpatient"
@@ -248,7 +306,7 @@ export function VisitRegistrationForm({
                                         Poli/Poliklinik <span className="text-destructive">*</span>
                                     </Label>
                                     <Select onValueChange={(value) => setValue("poliId", value)}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className={errors.poliId ? "w-full border-destructive" : "w-full"}>
                                             <SelectValue placeholder="Pilih poli tujuan" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -259,14 +317,17 @@ export function VisitRegistrationForm({
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                    {errors.poliId && (
+                                        <p className="text-sm text-destructive">{errors.poliId.message}</p>
+                                    )}
                                 </div>
                             </div>
                         )}
 
                         {/* Emergency Fields */}
                         {visitType === "emergency" && (
-                            <div className="space-y-4">
-                                <div className="space-y-2">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="chiefComplaint">
                                         Keluhan Utama <span className="text-destructive">*</span>
                                     </Label>
@@ -275,7 +336,13 @@ export function VisitRegistrationForm({
                                         {...register("chiefComplaint")}
                                         placeholder="Jelaskan keluhan atau gejala yang dialami"
                                         rows={3}
+                                        className={errors.chiefComplaint ? "border-destructive" : ""}
                                     />
+                                    {errors.chiefComplaint && (
+                                        <p className="text-sm text-destructive">
+                                            {errors.chiefComplaint.message}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -285,7 +352,7 @@ export function VisitRegistrationForm({
                                             setValue("triageStatus", value as "red" | "yellow" | "green")
                                         }
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Pilih tingkat kegawatan" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -321,7 +388,7 @@ export function VisitRegistrationForm({
                                         Kamar <span className="text-destructive">*</span>
                                     </Label>
                                     <Select onValueChange={(value) => setValue("roomId", value)}>
-                                        <SelectTrigger>
+                                        <SelectTrigger className={errors.roomId ? "w-full border-destructive" : "w-full"}>
                                             <SelectValue placeholder="Pilih kamar" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -330,6 +397,9 @@ export function VisitRegistrationForm({
                                             <SelectItem value="3">Kamar Kelas 2 - 301</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                    {errors.roomId && (
+                                        <p className="text-sm text-destructive">{errors.roomId.message}</p>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -348,12 +418,21 @@ export function VisitRegistrationForm({
                 </Card>
 
                 {/* Action Buttons */}
-                <div className="flex justify-between">
-                    <Button type="button" variant="outline" onClick={onCancel}>
+                <div className="flex flex-col gap-3 sm:flex-row sm:justify-between">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={onCancel}
+                        className="w-full sm:w-auto"
+                    >
                         Batal
                     </Button>
 
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full sm:w-auto"
+                    >
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
