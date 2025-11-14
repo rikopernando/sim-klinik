@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { format } from "date-fns";
 import { Loader2, ChevronRight, ChevronLeft, Check, CalendarIcon, AlertCircle } from "lucide-react";
 
@@ -28,6 +27,8 @@ import { cn } from "@/lib/utils";
 
 import { patientFormSchema, type PatientFormData } from "@/lib/validations/registration";
 import { type RegisteredPatient, BLOOD_TYPES, INSURANCE_TYPES } from "@/types/registration";
+import { registerPatient } from "@/lib/services/patient.service";
+import { getErrorMessage } from "@/lib/utils/error";
 
 interface PatientRegistrationFormProps {
     onSuccess?: (patient: RegisteredPatient) => void;
@@ -82,30 +83,10 @@ export function PatientRegistrationForm({
         setErrorMessage(null);
 
         try {
-            // Convert Date to ISO string for API
-            const payload = {
-                ...data,
-                dateOfBirth: data.dateOfBirth ? data.dateOfBirth.toISOString() : undefined,
-            };
-
-            const response = await axios.post("/api/patients", payload);
-            onSuccess?.(response.data.data);
+            const patient = await registerPatient(data);
+            onSuccess?.(patient);
         } catch (error) {
-            if (axios.isAxiosError(error)) {
-                // Handle validation errors from API
-                if (error.response?.data?.details) {
-                    const validationErrors = error.response.data.details
-                        .map((err: { message: string }) => err.message)
-                        .join(", ");
-                    setErrorMessage(`Validasi gagal: ${validationErrors}`);
-                } else {
-                    setErrorMessage(
-                        error.response?.data?.error || "Gagal mendaftarkan pasien. Silakan coba lagi."
-                    );
-                }
-            } else {
-                setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
-            }
+            setErrorMessage(getErrorMessage(error));
             console.error("Registration error:", error);
         } finally {
             setIsSubmitting(false);
@@ -295,7 +276,7 @@ export function PatientRegistrationForm({
                                     control={control}
                                     render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Pilih golongan darah" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -388,7 +369,7 @@ export function PatientRegistrationForm({
                                     control={control}
                                     render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="w-full">
                                                 <SelectValue placeholder="Pilih jenis jaminan" />
                                             </SelectTrigger>
                                             <SelectContent>

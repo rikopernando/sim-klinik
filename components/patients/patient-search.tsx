@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import axios from "axios";
 import { Search, Loader2, User, AlertCircle } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,53 +10,33 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useDebounce } from "@/hooks/use-debounce";
 
-interface Patient {
-    id: number;
-    mrNumber: string;
-    nik: string | null;
-    name: string;
-    dateOfBirth: string | null;
-    gender: string | null;
-    phone: string | null;
-    address: string | null;
-    insuranceType: string | null;
-}
+import { searchPatients as searchPatientsService } from "@/lib/services/patient.service";
+import { getErrorMessage } from "@/lib/utils/error";
+import { formatDateShort, calculateAge } from "@/lib/utils/date";
+import { type RegisteredPatient } from "@/types/registration";
 
 interface PatientSearchProps {
-    onSelectPatient?: (patient: Patient) => void;
+    onSelectPatient?: (patient: RegisteredPatient) => void;
     onNewPatient?: () => void;
 }
 
 export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchProps) {
     const [query, setQuery] = useState("");
-    const [results, setResults] = useState<Patient[]>([]);
+    const [results, setResults] = useState<RegisteredPatient[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const debouncedQuery = useDebounce(query, 500);
 
-    const searchPatients = useCallback(async (searchQuery: string) => {
-        if (!searchQuery || searchQuery.length < 2) {
-            setResults([]);
-            return;
-        }
-
+    const handleSearch = useCallback(async (searchQuery: string) => {
         setIsLoading(true);
         setError(null);
 
         try {
-            const response = await axios.get(`/api/patients/search`, {
-                params: { q: searchQuery },
-            });
-            setResults(response.data.data || []);
+            const patients = await searchPatientsService(searchQuery);
+            setResults(patients);
         } catch (err) {
-            if (axios.isAxiosError(err)) {
-                setError(
-                    err.response?.data?.error || "Gagal mencari pasien. Silakan coba lagi."
-                );
-            } else {
-                setError("Terjadi kesalahan. Silakan coba lagi.");
-            }
+            setError(getErrorMessage(err));
             console.error("Search error:", err);
         } finally {
             setIsLoading(false);
@@ -64,25 +44,8 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
     }, []);
 
     useEffect(() => {
-        searchPatients(debouncedQuery);
-    }, [debouncedQuery, searchPatients]);
-
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return "-";
-        return new Date(dateString).toLocaleDateString("id-ID");
-    };
-
-    const calculateAge = (dateOfBirth: string | null) => {
-        if (!dateOfBirth) return null;
-        const today = new Date();
-        const birthDate = new Date(dateOfBirth);
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const monthDiff = today.getMonth() - birthDate.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    };
+        handleSearch(debouncedQuery);
+    }, [debouncedQuery, handleSearch]);
 
     return (
         <div className="space-y-4">
@@ -127,11 +90,10 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
                     {results.map((patient) => (
                         <Card
                             key={patient.id}
-                            className="cursor-pointer transition-colors hover:bg-accent"
+                            className="cursor-pointer transition-colors hover:bg-accent py-0"
                             onClick={() => onSelectPatient?.(patient)}
                         >
                             <CardContent className="p-4">
-                                <div className="flex items-start justify-between">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
                                             <h3 className="font-semibold">{patient.name}</h3>
@@ -141,24 +103,32 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
                                                 </Badge>
                                             )}
                                         </div>
-                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                                            <div>
-                                                <span className="font-medium">No. RM:</span>{" "}
-                                                {patient.mrNumber}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                            <div className="md:col-span-1 grid grid-cols-4">
+                                                <span className="font-medium col-span-1">No. RM</span>
+                                                <span className="col-span-3">
+                                                    :{" "}{patient.mrNumber}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <span className="font-medium">NIK:</span>{" "}
-                                                {patient.nik || "-"}
+                                            <div className="md:col-span-1 grid grid-cols-4">
+                                                <span className="font-medium col-span-1">NIK</span>
+                                                <span className="col-span-3">
+                                                    :{" "}{patient.nik}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <span className="font-medium">TTL:</span>{" "}
-                                                {formatDate(patient.dateOfBirth)}
+                                            <div className="md:col-span-1 grid grid-cols-4">
+                                                <span className="font-medium col-span-1">TTL</span>
+                                                <span className="col-span-3">
+                                                    :{" "}{formatDateShort(patient.dateOfBirth)}
                                                 {patient.dateOfBirth &&
                                                     ` (${calculateAge(patient.dateOfBirth)} th)`}
+                                                </span>
                                             </div>
-                                            <div>
-                                                <span className="font-medium">Telp:</span>{" "}
-                                                {patient.phone || "-"}
+                                            <div className="md:col-span-1 grid grid-cols-4">
+                                                <span className="font-medium col-span-1">Telp</span>
+                                                <span className="col-span-3">
+                                                    :{" "}{patient.phone}
+                                                </span>
                                             </div>
                                         </div>
                                         {patient.insuranceType && (
@@ -167,7 +137,6 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
                                             </Badge>
                                         )}
                                     </div>
-                                </div>
                             </CardContent>
                         </Card>
                     ))}

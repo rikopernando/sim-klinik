@@ -186,7 +186,7 @@ export function QueueDisplay({
                         <Card
                             key={item.visit.id}
                             className={cn(
-                                "transition-all hover:shadow-md",
+                                "transition-all hover:shadow-md py-0",
                                 index === 0 && "border-primary ring-2 ring-primary/20"
                             )}
                         >

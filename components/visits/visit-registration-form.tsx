@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { Loader2, Check, Stethoscope, Bed, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,10 @@ import { FormField } from "@/components/ui/form-field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import { visitFormSchema, type VisitFormData } from "@/lib/validations/registration";
-import { type Patient, type RegisteredVisit, type Poli, TRIAGE_STATUS } from "@/types/registration";
+import { type Patient, type RegisteredVisit, TRIAGE_STATUS } from "@/types/registration";
+import { registerVisit } from "@/lib/services/visit.service";
+import { getErrorMessage } from "@/lib/utils/error";
+import { PatientInfoCard } from "@/components/forms/patient-info-card";
 
 interface VisitRegistrationFormProps {
     patient: Patient;
@@ -79,80 +81,20 @@ export function VisitRegistrationForm({
         setErrorMessage(null);
 
         try {
-            const payload = {
-                patientId: patient.id,
-                visitType: data.visitType,
-                poliId: data.poliId ? parseInt(data.poliId) : undefined,
-                doctorId: data.doctorId || undefined,
-                triageStatus: data.triageStatus,
-                chiefComplaint: data.chiefComplaint,
-                roomId: data.roomId ? parseInt(data.roomId) : undefined,
-                notes: data.notes,
-            };
-
-            const response = await axios.post("/api/visits", payload);
-            onSuccess?.(response.data.data);
+            const visit = await registerVisit(patient.id, data);
+            onSuccess?.(visit);
         } catch (error) {
+            setErrorMessage(getErrorMessage(error));
             console.error("Visit registration error:", error);
-
-            if (axios.isAxiosError(error)) {
-                if (error.response?.data?.details) {
-                    // Handle validation errors
-                    const validationErrors = error.response.data.details
-                        .map((err: { message: string }) => err.message)
-                        .join(", ");
-                    setErrorMessage(`Validasi gagal: ${validationErrors}`);
-                } else {
-                    // Handle other API errors
-                    setErrorMessage(
-                        error.response?.data?.error || "Gagal mendaftarkan kunjungan. Silakan coba lagi."
-                    );
-                }
-            } else {
-                // Handle non-Axios errors
-                setErrorMessage("Terjadi kesalahan. Silakan coba lagi.");
-            }
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const calculateAge = (dateOfBirth: string | null) => {
-        if (!dateOfBirth) return null;
-        const today = new Date();
-        const birthDate = new Date(dateOfBirth);
-        const age = today.getFullYear() - birthDate.getFullYear();
-        return age;
-    };
-
     return (
         <div className="space-y-6">
             {/* Patient Info Card */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Informasi Pasien</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-                        <div>
-                            <span className="font-medium">Nama:</span> {patient.name}
-                        </div>
-                        <div>
-                            <span className="font-medium">No. RM:</span> {patient.mrNumber}
-                        </div>
-                        <div>
-                            <span className="font-medium">Usia:</span>{" "}
-                            {patient.dateOfBirth
-                                ? `${calculateAge(patient.dateOfBirth)} tahun`
-                                : "-"}
-                        </div>
-                        <div>
-                            <span className="font-medium">Jaminan:</span>{" "}
-                            {patient.insuranceType || "Umum"}
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+            <PatientInfoCard patient={patient} />
 
             {/* Error Alert */}
             {errorMessage && (
@@ -279,7 +221,7 @@ export function VisitRegistrationForm({
                                             setValue("triageStatus", value as "red" | "yellow" | "green")
                                         }
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                             <SelectValue placeholder="Pilih tingkat kegawatan" />
                                         </SelectTrigger>
                                         <SelectContent>

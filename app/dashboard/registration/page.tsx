@@ -1,43 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { CheckCircle, ArrowLeft, UserPlus } from "lucide-react";
+
 import { PatientSearch } from "@/components/patients/patient-search";
 import { PatientRegistrationForm } from "@/components/patients/patient-registration-form";
 import { VisitRegistrationForm } from "@/components/visits/visit-registration-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, ArrowLeft, UserPlus } from "lucide-react";
-
-interface Patient {
-    id: number;
-    mrNumber: string;
-    nik: string | null;
-    name: string;
-    dateOfBirth: string | null;
-    gender: string | null;
-    phone: string | null;
-    address: string | null;
-    insuranceType: string | null;
-}
+import { Patient, RegisteredVisit } from "@/types/registration";
 
 type RegistrationStep = "search" | "new-patient" | "visit-registration" | "success";
 
-interface RegisteredVisit {
-    visit: {
-        id: number;
-        visitNumber: string;
-        queueNumber?: string;
-        visitType: string;
-        arrivalTime: string;
-    };
-    patient: {
-        id: number;
-        mrNumber: string;
-        name: string;
-    };
-}
 
 export default function RegistrationPage() {
     const [step, setStep] = useState<RegistrationStep>("search");
