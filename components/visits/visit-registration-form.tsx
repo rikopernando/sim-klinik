@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import axios from "axios";
+import { Loader2, Check, Stethoscope, Bed, AlertCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,88 +19,15 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Check, Stethoscope, Bed, AlertCircle } from "lucide-react";
+import { FormField } from "@/components/ui/form-field";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
-const visitFormSchema = z
-    .object({
-        visitType: z.enum(["outpatient", "inpatient", "emergency"]),
-        poliId: z.string().optional(),
-        doctorId: z.string().optional(),
-        triageStatus: z.enum(["red", "yellow", "green"]).optional(),
-        chiefComplaint: z.string().optional(),
-        roomId: z.string().optional(),
-        notes: z.string().optional(),
-    })
-    .refine(
-        (data) => {
-            // Outpatient: poliId is required
-            if (data.visitType === "outpatient") {
-                return !!data.poliId && data.poliId.trim().length > 0;
-            }
-            return true;
-        },
-        {
-            message: "Poli/Poliklinik wajib dipilih untuk rawat jalan",
-            path: ["poliId"],
-        }
-    )
-    .refine(
-        (data) => {
-            // Inpatient: roomId is required
-            if (data.visitType === "inpatient") {
-                return !!data.roomId && data.roomId.trim().length > 0;
-            }
-            return true;
-        },
-        {
-            message: "Kamar wajib dipilih untuk rawat inap",
-            path: ["roomId"],
-        }
-    )
-    .refine(
-        (data) => {
-            // Emergency: chiefComplaint is required
-            if (data.visitType === "emergency") {
-                return !!data.chiefComplaint && data.chiefComplaint.trim().length > 0;
-            }
-            return true;
-        },
-        {
-            message: "Keluhan utama wajib diisi untuk UGD",
-            path: ["chiefComplaint"],
-        }
-    );
-
-type VisitFormData = z.infer<typeof visitFormSchema>;
-
-interface Patient {
-    id: number;
-    mrNumber: string;
-    name: string;
-    dateOfBirth: string | null;
-    gender: string | null;
-    insuranceType: string | null;
-}
-
-interface VisitData {
-    visit: {
-        id: number;
-        visitNumber: string;
-        queueNumber?: string;
-        visitType: string;
-        arrivalTime: string;
-    };
-    patient: {
-        id: number;
-        mrNumber: string;
-        name: string;
-    };
-}
+import { visitFormSchema, type VisitFormData } from "@/lib/validations/registration";
+import { type Patient, type RegisteredVisit, type Poli, TRIAGE_STATUS } from "@/types/registration";
 
 interface VisitRegistrationFormProps {
     patient: Patient;
-    onSuccess?: (visit: VisitData) => void;
+    onSuccess?: (visit: RegisteredVisit) => void;
     onCancel?: () => void;
 }
 
@@ -345,38 +273,27 @@ export function VisitRegistrationForm({
                                     )}
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="triageStatus">Status Triage</Label>
+                                <FormField label="Status Triage" htmlFor="triageStatus">
                                     <Select
                                         onValueChange={(value) =>
                                             setValue("triageStatus", value as "red" | "yellow" | "green")
                                         }
                                     >
-                                        <SelectTrigger className="w-full">
+                                        <SelectTrigger>
                                             <SelectValue placeholder="Pilih tingkat kegawatan" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="red">
-                                                <span className="flex items-center gap-2">
-                                                    <Badge className="bg-red-500">Merah</Badge>
-                                                    Gawat Darurat
-                                                </span>
-                                            </SelectItem>
-                                            <SelectItem value="yellow">
-                                                <span className="flex items-center gap-2">
-                                                    <Badge className="bg-yellow-500">Kuning</Badge>
-                                                    Mendesak
-                                                </span>
-                                            </SelectItem>
-                                            <SelectItem value="green">
-                                                <span className="flex items-center gap-2">
-                                                    <Badge className="bg-green-500">Hijau</Badge>
-                                                    Tidak Mendesak
-                                                </span>
-                                            </SelectItem>
+                                            {TRIAGE_STATUS.map((status) => (
+                                                <SelectItem key={status.value} value={status.value}>
+                                                    <span className="flex items-center gap-2">
+                                                        <Badge className={status.color}>{status.label}</Badge>
+                                                        {status.description}
+                                                    </span>
+                                                </SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
-                                </div>
+                                </FormField>
                             </div>
                         )}
 

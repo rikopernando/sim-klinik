@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import axios from "axios";
+import { format } from "date-fns";
+import { Loader2, ChevronRight, ChevronLeft, Check, CalendarIcon, AlertCircle } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,66 +23,14 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, ChevronRight, ChevronLeft, Check, CalendarIcon, AlertCircle } from "lucide-react";
+import { FormField } from "@/components/ui/form-field";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
 
-// Validation schema with NIK required and conditional insurance number validation
-const patientFormSchema = z
-    .object({
-        // Step 1: Basic Information
-        nik: z
-            .string()
-            .min(1, "NIK wajib diisi")
-            .length(16, "NIK harus 16 digit")
-            .regex(/^\d+$/, "NIK hanya boleh angka"),
-        name: z.string().min(2, "Nama minimal 2 karakter").max(255),
-        dateOfBirth: z.date().optional(),
-        gender: z.enum(["male", "female"], {
-            message: "Pilih jenis kelamin",
-        }),
-        bloodType: z.string().optional(),
-
-        // Step 2: Contact & Insurance
-        phone: z.string().max(20).optional(),
-        address: z.string().optional(),
-        email: z.string().email("Email tidak valid").optional().or(z.literal("")),
-        emergencyContact: z.string().max(255).optional(),
-        emergencyPhone: z.string().max(20).optional(),
-        insuranceType: z.string().optional(),
-        insuranceNumber: z.string().max(50).optional(),
-        allergies: z.string().optional(),
-    })
-    .refine(
-        (data) => {
-            // If insurance type is not "Umum" and not empty, insurance number is required
-            if (data.insuranceType && data.insuranceType !== "Umum") {
-                return !!data.insuranceNumber && data.insuranceNumber.trim().length > 0;
-            }
-            return true;
-        },
-        {
-            message: "Nomor jaminan wajib diisi untuk jenis jaminan selain Umum",
-            path: ["insuranceNumber"],
-        }
-    );
-
-type PatientFormData = z.infer<typeof patientFormSchema>;
-
-interface PatientData {
-    id: number;
-    mrNumber: string;
-    name: string;
-    nik: string | null;
-    dateOfBirth: string | null;
-    gender: string | null;
-    phone: string | null;
-    address: string | null;
-    insuranceType: string | null;
-}
+import { patientFormSchema, type PatientFormData } from "@/lib/validations/registration";
+import { type RegisteredPatient, BLOOD_TYPES, INSURANCE_TYPES } from "@/types/registration";
 
 interface PatientRegistrationFormProps {
-    onSuccess?: (patient: PatientData) => void;
+    onSuccess?: (patient: RegisteredPatient) => void;
     onCancel?: () => void;
 }
 
@@ -339,30 +289,26 @@ export function PatientRegistrationForm({
                             </div>
 
                             {/* Blood Type */}
-                            <div className="space-y-2">
-                                <Label htmlFor="bloodType">Golongan Darah</Label>
+                            <FormField label="Golongan Darah" htmlFor="bloodType">
                                 <Controller
                                     name="bloodType"
                                     control={control}
                                     render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger>
                                                 <SelectValue placeholder="Pilih golongan darah" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="A+">A+</SelectItem>
-                                                <SelectItem value="A-">A-</SelectItem>
-                                                <SelectItem value="B+">B+</SelectItem>
-                                                <SelectItem value="B-">B-</SelectItem>
-                                                <SelectItem value="AB+">AB+</SelectItem>
-                                                <SelectItem value="AB-">AB-</SelectItem>
-                                                <SelectItem value="O+">O+</SelectItem>
-                                                <SelectItem value="O-">O-</SelectItem>
+                                                {BLOOD_TYPES.map((type) => (
+                                                    <SelectItem key={type} value={type}>
+                                                        {type}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     )}
                                 />
-                            </div>
+                            </FormField>
                         </div>
                     </CardContent>
                 </Card>
@@ -436,27 +382,26 @@ export function PatientRegistrationForm({
                             </div>
 
                             {/* Insurance Type */}
-                            <div className="space-y-2">
-                                <Label htmlFor="insuranceType">Jenis Jaminan</Label>
+                            <FormField label="Jenis Jaminan" htmlFor="insuranceType">
                                 <Controller
                                     name="insuranceType"
                                     control={control}
                                     render={({ field }) => (
                                         <Select onValueChange={field.onChange} value={field.value}>
-                                            <SelectTrigger className="w-full">
+                                            <SelectTrigger>
                                                 <SelectValue placeholder="Pilih jenis jaminan" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="BPJS">BPJS Kesehatan</SelectItem>
-                                                <SelectItem value="Asuransi Swasta">
-                                                    Asuransi Swasta
-                                                </SelectItem>
-                                                <SelectItem value="Umum">Umum (Cash)</SelectItem>
+                                                {INSURANCE_TYPES.map((type) => (
+                                                    <SelectItem key={type.value} value={type.value}>
+                                                        {type.label}
+                                                    </SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                     )}
                                 />
-                            </div>
+                            </FormField>
 
                             {/* Insurance Number */}
                             <div className="space-y-2">
