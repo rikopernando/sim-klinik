@@ -67,6 +67,7 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
             drugId: drug.id,
             drugName: drug.name,
         }));
+        setDrugSearch(drug.name); // Update search field with selected drug name
     }, []);
 
     const handleAdd = useCallback(async () => {

@@ -2,6 +2,7 @@
  * Drug Search Component
  */
 
+import { useState, useEffect } from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,7 +25,23 @@ export function DrugSearch({
     placeholder = "Ketik nama obat...",
     required = false,
 }: DrugSearchProps) {
-    const { drugs, isSearching } = useDrugSearch(value);
+    const [showDropdown, setShowDropdown] = useState(true);
+    const [searchQuery, setSearchQuery] = useState("");
+
+    // Only use searchQuery for the API call, not the display value
+    const { drugs, isSearching } = useDrugSearch(searchQuery);
+
+    const handleInputChange = (newValue: string) => {
+        setSearchQuery(newValue);
+        onChange(newValue);
+        setShowDropdown(true);
+    };
+
+    const handleSelect = (drug: Drug) => {
+        setShowDropdown(false);
+        setSearchQuery(""); // Clear search query to stop API calls
+        onSelect(drug);
+    };
 
     return (
         <div className="space-y-2">
@@ -36,22 +53,19 @@ export function DrugSearch({
                 <Input
                     id="drugSearch"
                     value={value}
-                    onChange={(e) => onChange(e.target.value)}
+                    onChange={(e) => handleInputChange(e.target.value)}
                     placeholder={placeholder}
                     className="pl-10"
                 />
             </div>
             {isSearching && <p className="text-xs text-muted-foreground">Mencari...</p>}
-            {drugs.length > 0 && value && (
+            {drugs.length > 0 && searchQuery && showDropdown && (
                 <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
                     {drugs.map((drug) => (
                         <button
                             key={drug.id}
                             type="button"
-                            onClick={() => {
-                                onSelect(drug);
-                                onChange(drug.name);
-                            }}
+                            onClick={() => handleSelect(drug)}
                             className="w-full rounded px-2 py-1 text-left text-sm hover:bg-accent"
                         >
                             {drug.name} {drug.genericName && `(${drug.genericName})`} - {drug.unit}

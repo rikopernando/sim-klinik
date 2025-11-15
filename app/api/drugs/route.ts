@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { drugs } from "@/db/schema";
-import { like, or } from "drizzle-orm";
+import { ilike, or } from "drizzle-orm";
 
 /**
  * GET /api/drugs?search=paracetamol
- * Search for drugs by name or generic name
+ * Search for drugs by name or generic name (case-insensitive)
  */
 export async function GET(request: NextRequest) {
     try {
@@ -13,15 +13,15 @@ export async function GET(request: NextRequest) {
         const search = searchParams.get("search");
 
         if (search && search.length >= 2) {
-            // Search drugs by name or generic name
+            // Search drugs by name or generic name (case-insensitive)
             const searchPattern = `%${search}%`;
             const results = await db
                 .select()
                 .from(drugs)
                 .where(
                     or(
-                        like(drugs.name, searchPattern),
-                        like(drugs.genericName, searchPattern)
+                        ilike(drugs.name, searchPattern),
+                        ilike(drugs.genericName, searchPattern)
                     )
                 )
                 .limit(20);
