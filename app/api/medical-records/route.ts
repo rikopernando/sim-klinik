@@ -3,13 +3,13 @@ import { db } from "@/db";
 import { medicalRecords, diagnoses, procedures, prescriptions, visits } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
+import { auth } from "@/lib/auth";
 
 /**
  * Medical Record Schema
  */
 const medicalRecordSchema = z.object({
     visitId: z.number().int().positive(),
-    doctorId: z.string(),
     soapSubjective: z.string().optional(),
     soapObjective: z.string().optional(),
     soapAssessment: z.string().optional(),
@@ -26,6 +26,18 @@ const medicalRecordSchema = z.object({
  */
 export async function POST(request: NextRequest) {
     try {
+        // Get authenticated user session
+        const session = await auth.api.getSession({
+            headers: request.headers,
+        });
+
+        if (!session?.user) {
+            return NextResponse.json(
+                { error: "Unauthorized. Please login." },
+                { status: 401 }
+            );
+        }
+
         const body = await request.json();
         const validatedData = medicalRecordSchema.parse(body);
 
@@ -57,12 +69,12 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Create medical record
+        // Create medical record with authenticated user as doctor
         const newRecord = await db
             .insert(medicalRecords)
             .values({
                 visitId: validatedData.visitId,
-                doctorId: validatedData.doctorId,
+                doctorId: session.user.id,
                 soapSubjective: validatedData.soapSubjective || null,
                 soapObjective: validatedData.soapObjective || null,
                 soapAssessment: validatedData.soapAssessment || null,

@@ -74,7 +74,6 @@ export interface MedicalRecordData {
 
 export interface MedicalRecordFormData {
     visitId: number;
-    doctorId: string;
     soapSubjective?: string;
     soapObjective?: string;
     soapAssessment?: string;
