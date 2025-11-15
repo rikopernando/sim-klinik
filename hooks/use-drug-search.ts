@@ -1,8 +1,8 @@
 /**
- * Custom hook for drug search functionality
+ * Custom hook for drug search functionality with debouncing
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
 export interface Drug {
@@ -13,20 +13,12 @@ export interface Drug {
     category: string | null;
 }
 
-export function useDrugSearch(query: string, minLength: number = 2) {
+export function useDrugSearch(query: string, minLength: number = 2, debounceMs: number = 300) {
     const [drugs, setDrugs] = useState<Drug[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (query.length >= minLength) {
-            searchDrugs(query);
-        } else {
-            setDrugs([]);
-        }
-    }, [query, minLength]);
-
-    const searchDrugs = async (searchQuery: string) => {
+    const searchDrugs = useCallback(async (searchQuery: string) => {
         try {
             setIsSearching(true);
             setError(null);
@@ -38,7 +30,22 @@ export function useDrugSearch(query: string, minLength: number = 2) {
         } finally {
             setIsSearching(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        // Reset drugs if query is too short
+        if (query.length < minLength) {
+            setDrugs([]);
+            return;
+        }
+
+        // Debounce the search
+        const timeoutId = setTimeout(() => {
+            searchDrugs(query);
+        }, debounceMs);
+
+        return () => clearTimeout(timeoutId);
+    }, [query, minLength, debounceMs, searchDrugs]);
 
     return { drugs, isSearching, error };
 }

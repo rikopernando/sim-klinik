@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Plus, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -37,12 +37,16 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
     const [isAdding, setIsAdding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-    const canEdit = canEditMedicalRecord(isLocked);
+    const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
-    const handleAdd = async () => {
+    const resetForm = useCallback(() => {
+        setFormData(INITIAL_FORM_STATE);
+        setIsAdding(false);
+    }, []);
+
+    const handleAdd = useCallback(async () => {
         if (!formData.icd9Code || !formData.description) {
             setError("Kode ICD-9 dan deskripsi wajib diisi");
             return;
@@ -67,9 +71,9 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [formData, medicalRecordId, onUpdate, resetForm]);
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = useCallback(async (id: number) => {
         const confirmed = window.confirm("Hapus tindakan ini?");
         if (!confirmed) return;
 
@@ -80,12 +84,7 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
         } catch (err) {
             setError(getErrorMessage(err));
         }
-    };
-
-    const resetForm = () => {
-        setFormData(INITIAL_FORM_STATE);
-        setIsAdding(false);
-    };
+    }, [onUpdate]);
 
     return (
         <div className="space-y-6">

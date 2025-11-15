@@ -36,11 +36,11 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **D.1** | DB | Buat skema DB `Medical_Records` (SOAP fields, is_locked, doctor_id). | Tinggi | Backend | ⏳ |
-| **D.2** | Backend | Buat API untuk CRUD RME, termasuk logika **penguncian data** (`is_locked`). | Tinggi | Backend | ⏳ |
-| **D.3** | Frontend | Buat halaman RME dengan **Tabbed Interface** (SOAP, Diagnosis, Resep, Tindakan) sesuai desain UX. | Tinggi | Frontend | ⏳ |
-| **D.4** | Fullstack | Implementasi *Search* ICD-10/ICD-9/Tindakan dengan *autocomplete* dan *lookup* di Tab Diagnosis. | Sedang | Fullstack | ⏳ |
-| **D.5** | Fullstack | Implementasi Resep Digital: Form input Dosis/Frekuensi, simpan ke tabel `Prescriptions`, dan *link* ke Apotek. | Tinggi | Fullstack | ⏳ |
+| **D.1** | DB | Buat skema DB `Medical_Records` (SOAP fields, is_locked, doctor_id). | Tinggi | Backend | ✅ |
+| **D.2** | Backend | Buat API untuk CRUD RME, termasuk logika **penguncian data** (`is_locked`). | Tinggi | Backend | ✅ |
+| **D.3** | Frontend | Buat halaman RME dengan **Tabbed Interface** (SOAP, Diagnosis, Resep, Tindakan) sesuai desain UX. | Tinggi | Frontend | ✅ |
+| **D.4** | Fullstack | Implementasi *Search* ICD-10/ICD-9/Tindakan dengan *autocomplete* dan *lookup* di Tab Diagnosis. | Sedang | Fullstack | ✅ |
+| **D.5** | Fullstack | Implementasi Resep Digital: Form input Dosis/Frekuensi, simpan ke tabel `Prescriptions`, dan *link* ke Apotek. | Tinggi | Fullstack | ✅ |
 | **D.6** | Frontend | Tampilan Riwayat RME pasien sebelumnya dalam *pop-up* di layar RME utama. | Sedang | Frontend | ⏳ |
 
 ### E. Modul Rawat Inap

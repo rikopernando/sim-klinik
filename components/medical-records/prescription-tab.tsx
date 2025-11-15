@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Plus, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,21 +50,26 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
     const [isAdding, setIsAdding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
     const [drugSearch, setDrugSearch] = useState("");
     const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-    const canEdit = canEditMedicalRecord(isLocked);
+    const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
-    const handleDrugSelect = (drug: Drug) => {
+    const resetForm = useCallback(() => {
+        setFormData(INITIAL_FORM_STATE);
+        setDrugSearch("");
+        setIsAdding(false);
+    }, []);
+
+    const handleDrugSelect = useCallback((drug: Drug) => {
         setFormData((prev) => ({
             ...prev,
             drugId: drug.id,
             drugName: drug.name,
         }));
-    };
+    }, []);
 
-    const handleAdd = async () => {
+    const handleAdd = useCallback(async () => {
         if (!formData.drugId || !formData.dosage || !formData.frequency || !formData.quantity) {
             setError("Obat, dosis, frekuensi, dan jumlah wajib diisi");
             return;
@@ -92,9 +97,9 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [formData, medicalRecordId, onUpdate, resetForm]);
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = useCallback(async (id: number) => {
         const confirmed = window.confirm("Hapus resep ini?");
         if (!confirmed) return;
 
@@ -105,13 +110,7 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
         } catch (err) {
             setError(getErrorMessage(err));
         }
-    };
-
-    const resetForm = () => {
-        setFormData(INITIAL_FORM_STATE);
-        setDrugSearch("");
-        setIsAdding(false);
-    };
+    }, [onUpdate]);
 
     return (
         <div className="space-y-6">
@@ -266,7 +265,7 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                                             setFormData((prev) => ({ ...prev, route: value }))
                                         }
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>

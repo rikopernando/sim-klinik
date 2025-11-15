@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Plus, Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -31,20 +31,26 @@ interface DiagnosisTabProps {
     isLocked: boolean;
 }
 
+const INITIAL_FORM_STATE = {
+    icd10Code: "",
+    description: "",
+    diagnosisType: "primary" as "primary" | "secondary",
+};
+
 export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }: DiagnosisTabProps) {
     const [isAdding, setIsAdding] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
-    const [formData, setFormData] = useState({
-        icd10Code: "",
-        description: "",
-        diagnosisType: "primary" as "primary" | "secondary",
-    });
+    const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
-    const canEdit = canEditMedicalRecord(isLocked);
+    const resetForm = useCallback(() => {
+        setFormData(INITIAL_FORM_STATE);
+        setIsAdding(false);
+    }, []);
 
-    const handleAdd = async () => {
+    const handleAdd = useCallback(async () => {
         if (!formData.icd10Code || !formData.description) {
             setError("Kode ICD-10 dan deskripsi wajib diisi");
             return;
@@ -68,9 +74,9 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [formData, medicalRecordId, onUpdate, resetForm]);
 
-    const handleDelete = async (id: number) => {
+    const handleDelete = useCallback(async (id: number) => {
         const confirmed = window.confirm("Hapus diagnosis ini?");
         if (!confirmed) return;
 
@@ -81,16 +87,7 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
         } catch (err) {
             setError(getErrorMessage(err));
         }
-    };
-
-    const resetForm = () => {
-        setFormData({
-            icd10Code: "",
-            description: "",
-            diagnosisType: "primary",
-        });
-        setIsAdding(false);
-    };
+    }, [onUpdate]);
 
     return (
         <div className="space-y-6">
@@ -176,7 +173,7 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
                                             setFormData((prev) => ({ ...prev, diagnosisType: value }))
                                         }
                                     >
-                                        <SelectTrigger>
+                                        <SelectTrigger className="w-full">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>

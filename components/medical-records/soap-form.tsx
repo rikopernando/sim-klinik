@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Save, Loader2 } from "lucide-react";
 
 import { Textarea } from "@/components/ui/textarea";
@@ -77,14 +77,14 @@ export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapForm
         soapPlan: medicalRecord.soapPlan || "",
     });
 
-    const canEdit = canEditMedicalRecord(isLocked);
+    const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
-    const handleChange = (field: keyof typeof localData, value: string) => {
+    const handleChange = useCallback((field: keyof typeof localData, value: string) => {
         setLocalData((prev) => ({ ...prev, [field]: value }));
         onUpdate({ [field]: value });
-    };
+    }, [onUpdate]);
 
-    const handleSave = async () => {
+    const handleSave = useCallback(async () => {
         try {
             setIsSaving(true);
             await onSave(localData);
@@ -93,7 +93,7 @@ export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapForm
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [onSave, localData]);
 
     return (
         <div className="space-y-6">

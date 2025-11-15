@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Loader2, Lock, Save, FileText, Stethoscope, Pill, ClipboardList } from "lucide-react";
 
@@ -31,11 +31,7 @@ export default function MedicalRecordPage() {
     const [recordData, setRecordData] = useState<MedicalRecordData | null>(null);
     const [activeTab, setActiveTab] = useState("soap");
 
-    useEffect(() => {
-        loadMedicalRecord();
-    }, [visitId]);
-
-    const loadMedicalRecord = async () => {
+    const loadMedicalRecord = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
@@ -62,9 +58,13 @@ export default function MedicalRecordPage() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [visitId]);
 
-    const handleSave = async () => {
+    useEffect(() => {
+        loadMedicalRecord();
+    }, [loadMedicalRecord]);
+
+    const handleSave = useCallback(async () => {
         if (!recordData) return;
 
         try {
@@ -82,9 +82,9 @@ export default function MedicalRecordPage() {
         } finally {
             setIsSaving(false);
         }
-    };
+    }, [recordData, loadMedicalRecord]);
 
-    const handleLock = async () => {
+    const handleLock = useCallback(async () => {
         if (!recordData) return;
 
         const confirmed = window.confirm(
@@ -107,9 +107,9 @@ export default function MedicalRecordPage() {
         } finally {
             setIsLocking(false);
         }
-    };
+    }, [recordData, loadMedicalRecord]);
 
-    const handleUpdateRecord = (updates: Partial<MedicalRecordData["medicalRecord"]>) => {
+    const handleUpdateRecord = useCallback((updates: Partial<MedicalRecordData["medicalRecord"]>) => {
         if (!recordData) return;
 
         setRecordData({
@@ -119,9 +119,9 @@ export default function MedicalRecordPage() {
                 ...updates,
             },
         });
-    };
+    }, [recordData]);
 
-    const handleSaveSOAP = async (soapData: {
+    const handleSaveSOAP = useCallback(async (soapData: {
         soapSubjective?: string;
         soapObjective?: string;
         soapAssessment?: string;
@@ -137,7 +137,7 @@ export default function MedicalRecordPage() {
             setError(getErrorMessage(err));
             throw err;
         }
-    };
+    }, [recordData, loadMedicalRecord]);
 
     if (isLoading) {
         return (
