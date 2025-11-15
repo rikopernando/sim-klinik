@@ -1,0 +1,254 @@
+"use client";
+
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+
+/**
+ * Handover Form Schema
+ */
+const handoverFormSchema = z.object({
+    newVisitType: z.enum(["outpatient", "inpatient"], {
+        required_error: "Jenis kunjungan baru wajib dipilih",
+    }),
+    poliId: z.string().optional(),
+    roomId: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+type HandoverFormData = z.infer<typeof handoverFormSchema>;
+
+interface HandoverDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    visitId: number;
+    patientName: string;
+    onSuccess?: () => void;
+}
+
+export function HandoverDialog({
+    open,
+    onOpenChange,
+    visitId,
+    patientName,
+    onSuccess,
+}: HandoverDialogProps) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+
+    const {
+        register,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors },
+        reset,
+    } = useForm<HandoverFormData>({
+        resolver: zodResolver(handoverFormSchema),
+    });
+
+    const newVisitType = watch("newVisitType");
+
+    const onSubmit = async (data: HandoverFormData) => {
+        setIsSubmitting(true);
+        setError(null);
+
+        try {
+            // Validate required fields
+            if (data.newVisitType === "outpatient" && !data.poliId) {
+                setError("Poli wajib dipilih untuk rawat jalan");
+                setIsSubmitting(false);
+                return;
+            }
+
+            if (data.newVisitType === "inpatient" && !data.roomId) {
+                setError("Kamar wajib dipilih untuk rawat inap");
+                setIsSubmitting(false);
+                return;
+            }
+
+            const response = await fetch("/api/emergency/handover", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    visitId,
+                    newVisitType: data.newVisitType,
+                    poliId: data.poliId ? parseInt(data.poliId) : undefined,
+                    roomId: data.roomId ? parseInt(data.roomId) : undefined,
+                    notes: data.notes,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "Gagal melakukan handover");
+            }
+
+            setSuccess(true);
+            reset();
+
+            setTimeout(() => {
+                setSuccess(false);
+                onOpenChange(false);
+                if (onSuccess) {
+                    onSuccess();
+                }
+            }, 2000);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Terjadi kesalahan");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Handover Pasien UGD</DialogTitle>
+                    <DialogDescription>
+                        Transfer pasien <strong>{patientName}</strong> ke unit lain
+                    </DialogDescription>
+                </DialogHeader>
+
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+
+                {success && (
+                    <Alert className="border-green-500 bg-green-50 text-green-700">
+                        <CheckCircle2 className="h-4 w-4" />
+                        <AlertDescription>Handover berhasil dilakukan!</AlertDescription>
+                    </Alert>
+                )}
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {/* Select New Visit Type */}
+                    <div className="space-y-2">
+                        <Label htmlFor="newVisitType">
+                            Transfer ke <span className="text-destructive">*</span>
+                        </Label>
+                        <Select
+                            onValueChange={(value) =>
+                                setValue("newVisitType", value as "outpatient" | "inpatient")
+                            }
+                        >
+                            <SelectTrigger
+                                className={errors.newVisitType ? "border-destructive" : ""}
+                            >
+                                <SelectValue placeholder="Pilih jenis kunjungan" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="outpatient">
+                                    🏥 Rawat Jalan (Outpatient)
+                                </SelectItem>
+                                <SelectItem value="inpatient">
+                                    🛏️ Rawat Inap (Inpatient)
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        {errors.newVisitType && (
+                            <p className="text-sm text-destructive">
+                                {errors.newVisitType.message}
+                            </p>
+                        )}
+                    </div>
+
+                    {/* Conditional Fields */}
+                    {newVisitType === "outpatient" && (
+                        <div className="space-y-2">
+                            <Label htmlFor="poliId">
+                                Pilih Poli <span className="text-destructive">*</span>
+                            </Label>
+                            <Select onValueChange={(value) => setValue("poliId", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih poli tujuan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1">Poli Umum</SelectItem>
+                                    <SelectItem value="2">Poli Gigi</SelectItem>
+                                    <SelectItem value="3">Poli Anak</SelectItem>
+                                    <SelectItem value="4">Poli Kandungan</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {newVisitType === "inpatient" && (
+                        <div className="space-y-2">
+                            <Label htmlFor="roomId">
+                                Pilih Kamar <span className="text-destructive">*</span>
+                            </Label>
+                            <Select onValueChange={(value) => setValue("roomId", value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih kamar tujuan" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="1">Kamar 101 - Kelas 3</SelectItem>
+                                    <SelectItem value="2">Kamar 102 - Kelas 3</SelectItem>
+                                    <SelectItem value="3">Kamar 201 - Kelas 2</SelectItem>
+                                    <SelectItem value="4">Kamar 202 - Kelas 2</SelectItem>
+                                    <SelectItem value="5">Kamar 301 - Kelas 1</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+
+                    {/* Notes */}
+                    <div className="space-y-2">
+                        <Label htmlFor="notes">Catatan Handover</Label>
+                        <Textarea
+                            id="notes"
+                            {...register("notes")}
+                            placeholder="Catatan untuk tim yang menerima pasien..."
+                            rows={3}
+                        />
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 justify-end pt-4">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => onOpenChange(false)}
+                            disabled={isSubmitting}
+                        >
+                            Batal
+                        </Button>
+                        <Button type="submit" disabled={isSubmitting || !newVisitType}>
+                            <ArrowRight className="h-4 w-4 mr-2" />
+                            {isSubmitting ? "Memproses..." : "Handover Pasien"}
+                        </Button>
+                    </div>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+}
