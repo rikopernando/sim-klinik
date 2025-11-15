@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * Patient Handover Dialog
+ * Transfers ER patients to other departments
+ */
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -24,10 +28,13 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
 
+// Hooks
+import { useHandover } from "@/hooks/use-handover";
+
 /**
- * Handover Form Schema
+ * Form Schema
  */
-const handoverFormSchema = z.object({
+const formSchema = z.object({
     newVisitType: z.enum(["outpatient", "inpatient"], {
         required_error: "Jenis kunjungan baru wajib dipilih",
     }),
@@ -36,7 +43,7 @@ const handoverFormSchema = z.object({
     notes: z.string().optional(),
 });
 
-type HandoverFormData = z.infer<typeof handoverFormSchema>;
+type FormData = z.infer<typeof formSchema>;
 
 interface HandoverDialogProps {
     open: boolean;
@@ -53,10 +60,18 @@ export function HandoverDialog({
     patientName,
     onSuccess,
 }: HandoverDialogProps) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
+    // Use handover hook
+    const { handover, isSubmitting, error, success } = useHandover(() => {
+        // Close dialog after success
+        setTimeout(() => {
+            onOpenChange(false);
+            if (onSuccess) {
+                onSuccess();
+            }
+        }, 1500);
+    });
 
+    // Form hook
     const {
         register,
         handleSubmit,
@@ -64,65 +79,24 @@ export function HandoverDialog({
         watch,
         formState: { errors },
         reset,
-    } = useForm<HandoverFormData>({
-        resolver: zodResolver(handoverFormSchema),
+    } = useForm<FormData>({
+        resolver: zodResolver(formSchema),
     });
 
     const newVisitType = watch("newVisitType");
 
-    const onSubmit = async (data: HandoverFormData) => {
-        setIsSubmitting(true);
-        setError(null);
-
-        try {
-            // Validate required fields
-            if (data.newVisitType === "outpatient" && !data.poliId) {
-                setError("Poli wajib dipilih untuk rawat jalan");
-                setIsSubmitting(false);
-                return;
-            }
-
-            if (data.newVisitType === "inpatient" && !data.roomId) {
-                setError("Kamar wajib dipilih untuk rawat inap");
-                setIsSubmitting(false);
-                return;
-            }
-
-            const response = await fetch("/api/emergency/handover", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    visitId,
-                    newVisitType: data.newVisitType,
-                    poliId: data.poliId ? parseInt(data.poliId) : undefined,
-                    roomId: data.roomId ? parseInt(data.roomId) : undefined,
-                    notes: data.notes,
-                }),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Gagal melakukan handover");
-            }
-
-            setSuccess(true);
-            reset();
-
-            setTimeout(() => {
-                setSuccess(false);
-                onOpenChange(false);
-                if (onSuccess) {
-                    onSuccess();
-                }
-            }, 2000);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Terjadi kesalahan");
-        } finally {
-            setIsSubmitting(false);
-        }
+    /**
+     * Submit handler
+     */
+    const onSubmit = async (data: FormData) => {
+        await handover({
+            visitId,
+            newVisitType: data.newVisitType,
+            poliId: data.poliId ? parseInt(data.poliId) : undefined,
+            roomId: data.roomId ? parseInt(data.roomId) : undefined,
+            notes: data.notes,
+        });
+        reset();
     };
 
     return (
@@ -135,6 +109,7 @@ export function HandoverDialog({
                     </DialogDescription>
                 </DialogHeader>
 
+                {/* Error Alert */}
                 {error && (
                     <Alert variant="destructive">
                         <AlertCircle className="h-4 w-4" />
@@ -142,6 +117,7 @@ export function HandoverDialog({
                     </Alert>
                 )}
 
+                {/* Success Alert */}
                 {success && (
                     <Alert className="border-green-500 bg-green-50 text-green-700">
                         <CheckCircle2 className="h-4 w-4" />
@@ -149,6 +125,7 @@ export function HandoverDialog({
                     </Alert>
                 )}
 
+                {/* Form */}
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     {/* Select New Visit Type */}
                     <div className="space-y-2">
@@ -181,7 +158,7 @@ export function HandoverDialog({
                         )}
                     </div>
 
-                    {/* Conditional Fields */}
+                    {/* Conditional: Poli Selection for Outpatient */}
                     {newVisitType === "outpatient" && (
                         <div className="space-y-2">
                             <Label htmlFor="poliId">
@@ -201,6 +178,7 @@ export function HandoverDialog({
                         </div>
                     )}
 
+                    {/* Conditional: Room Selection for Inpatient */}
                     {newVisitType === "inpatient" && (
                         <div className="space-y-2">
                             <Label htmlFor="roomId">
@@ -221,7 +199,7 @@ export function HandoverDialog({
                         </div>
                     )}
 
-                    {/* Notes */}
+                    {/* Handover Notes */}
                     <div className="space-y-2">
                         <Label htmlFor="notes">Catatan Handover</Label>
                         <Textarea

@@ -1,23 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { patients } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-
 /**
- * Complete Patient Registration Schema
- * For updating patient data after quick ER registration
+ * Complete Patient Registration API
+ * Updates patient data from quick ER registration to full registration
  */
-const completePatientSchema = z.object({
-    patientId: z.number().int().positive(),
-    nik: z.string().length(16, "NIK harus 16 digit"),
-    address: z.string().min(1, "Alamat wajib diisi"),
-    birthDate: z.string(),
-    gender: z.enum(["male", "female"]),
-    phone: z.string().optional(),
-    insuranceType: z.enum(["bpjs", "insurance", "general"]),
-    insuranceNumber: z.string().optional(),
-});
+
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { completeRegistrationSchema } from "@/lib/emergency/validation";
+import { completePatientRegistration } from "@/lib/emergency/api-service";
+import { APIResponse } from "@/types/emergency";
 
 /**
  * PATCH /api/emergency/complete-registration
@@ -26,58 +16,50 @@ const completePatientSchema = z.object({
  */
 export async function PATCH(request: NextRequest) {
     try {
+        // Parse request body
         const body = await request.json();
 
         // Validate input
-        const validatedData = completePatientSchema.parse(body);
+        const validatedData = completeRegistrationSchema.parse(body);
 
-        // Check if patient exists
-        const existingPatient = await db
-            .select()
-            .from(patients)
-            .where(eq(patients.id, validatedData.patientId))
-            .limit(1);
+        // Update patient data
+        const updatedPatient = await completePatientRegistration(validatedData);
 
-        if (existingPatient.length === 0) {
-            return NextResponse.json(
-                { error: "Pasien tidak ditemukan" },
-                { status: 404 }
-            );
-        }
-
-        // Update patient with complete data
-        const updatedPatient = await db
-            .update(patients)
-            .set({
-                nik: validatedData.nik,
-                address: validatedData.address,
-                birthDate: new Date(validatedData.birthDate),
-                gender: validatedData.gender,
-                phone: validatedData.phone || null,
-                insuranceType: validatedData.insuranceType,
-                insuranceNumber: validatedData.insuranceNumber || null,
-                updatedAt: new Date(),
-            })
-            .where(eq(patients.id, validatedData.patientId))
-            .returning();
-
-        return NextResponse.json({
+        // Return success response
+        const response: APIResponse = {
             success: true,
             message: "Data pasien berhasil dilengkapi",
-            data: updatedPatient[0],
-        });
+            data: updatedPatient,
+        };
+
+        return NextResponse.json(response);
     } catch (error) {
+        // Handle validation errors
         if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: "Validasi gagal", details: error.issues },
-                { status: 400 }
-            );
+            const response: APIResponse = {
+                success: false,
+                error: "Validasi gagal",
+                details: error.issues,
+            };
+            return NextResponse.json(response, { status: 400 });
         }
 
-        console.error("Complete patient registration error:", error);
-        return NextResponse.json(
-            { error: "Gagal melengkapi data pasien" },
-            { status: 500 }
-        );
+        // Handle application errors
+        if (error instanceof Error) {
+            console.error("Complete patient registration error:", error);
+            const response: APIResponse = {
+                success: false,
+                error: error.message,
+            };
+            return NextResponse.json(response, { status: 400 });
+        }
+
+        // Handle unknown errors
+        console.error("Unknown error in complete registration:", error);
+        const response: APIResponse = {
+            success: false,
+            error: "Gagal melengkapi data pasien",
+        };
+        return NextResponse.json(response, { status: 500 });
     }
 }

@@ -1,26 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { visits, patients } from "@/db/schema";
-import { z } from "zod";
-import { generateMRNumber, generateVisitNumber } from "@/lib/generators";
-
 /**
- * Quick ER Registration Schema
- * Minimal data required for emergency situations
+ * Quick ER Registration API
+ * Handles rapid patient registration for emergency cases
  */
-const quickERSchema = z.object({
-    // Patient info (minimal for quick registration)
-    name: z.string().min(1, "Nama pasien wajib diisi"),
-    chiefComplaint: z.string().min(1, "Keluhan utama wajib diisi"),
-    triageStatus: z.enum(["red", "yellow", "green"]),
 
-    // Optional fields that can be filled later
-    nik: z.string().optional(),
-    phone: z.string().optional(),
-    gender: z.enum(["male", "female"]).optional(),
-    birthDate: z.string().optional(),
-    notes: z.string().optional(),
-});
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { quickERRegistrationSchema } from "@/lib/emergency/validation";
+import { createQuickERRegistration } from "@/lib/emergency/api-service";
+import { APIResponse } from "@/types/emergency";
 
 /**
  * POST /api/emergency/quick-register
@@ -29,76 +16,50 @@ const quickERSchema = z.object({
  */
 export async function POST(request: NextRequest) {
     try {
+        // Parse request body
         const body = await request.json();
 
         // Validate input
-        const validatedData = quickERSchema.parse(body);
+        const validatedData = quickERRegistrationSchema.parse(body);
 
-        // Generate MR number for new patient
-        const mrNumber = await generateMRNumber();
+        // Create registration
+        const result = await createQuickERRegistration(validatedData);
 
-        // Create patient record (with minimal data)
-        const newPatient = await db
-            .insert(patients)
-            .values({
-                mrNumber,
-                name: validatedData.name,
-                nik: validatedData.nik || null,
-                phone: validatedData.phone || null,
-                gender: validatedData.gender || null,
-                birthDate: validatedData.birthDate ? new Date(validatedData.birthDate) : null,
-                address: null, // Will be filled later
-                insuranceType: "general", // Default to general/umum
-                insuranceNumber: null,
-                isActive: "active",
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-            .returning();
+        // Return success response
+        const response: APIResponse = {
+            success: true,
+            message: "Pasien UGD berhasil didaftarkan",
+            data: result,
+        };
 
-        // Generate visit number
-        const visitNumber = await generateVisitNumber();
-
-        // Create emergency visit
-        const newVisit = await db
-            .insert(visits)
-            .values({
-                patientId: newPatient[0].id,
-                visitType: "emergency",
-                visitNumber,
-                triageStatus: validatedData.triageStatus,
-                chiefComplaint: validatedData.chiefComplaint,
-                status: "pending",
-                arrivalTime: new Date(),
-                notes: validatedData.notes || null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-            .returning();
-
-        return NextResponse.json(
-            {
-                success: true,
-                message: "Pasien UGD berhasil didaftarkan",
-                data: {
-                    patient: newPatient[0],
-                    visit: newVisit[0],
-                },
-            },
-            { status: 201 }
-        );
+        return NextResponse.json(response, { status: 201 });
     } catch (error) {
+        // Handle validation errors
         if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: "Validasi gagal", details: error.issues },
-                { status: 400 }
-            );
+            const response: APIResponse = {
+                success: false,
+                error: "Validasi gagal",
+                details: error.issues,
+            };
+            return NextResponse.json(response, { status: 400 });
         }
 
-        console.error("Quick ER registration error:", error);
-        return NextResponse.json(
-            { error: "Gagal mendaftarkan pasien UGD" },
-            { status: 500 }
-        );
+        // Handle application errors
+        if (error instanceof Error) {
+            console.error("Quick ER registration error:", error);
+            const response: APIResponse = {
+                success: false,
+                error: error.message,
+            };
+            return NextResponse.json(response, { status: 400 });
+        }
+
+        // Handle unknown errors
+        console.error("Unknown error in quick ER registration:", error);
+        const response: APIResponse = {
+            success: false,
+            error: "Gagal mendaftarkan pasien UGD",
+        };
+        return NextResponse.json(response, { status: 500 });
     }
 }

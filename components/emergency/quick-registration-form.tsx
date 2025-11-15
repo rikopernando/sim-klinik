@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+/**
+ * Quick ER Registration Form
+ * Minimal registration form for emergency cases
+ */
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,10 +22,15 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 
+// Hooks & Utils
+import { useQuickRegistration } from "@/hooks/use-quick-registration";
+import { TRIAGE_CONFIG } from "@/lib/emergency/triage-utils";
+import { TriageStatus } from "@/types/emergency";
+
 /**
- * Quick ER Registration Form Schema
+ * Form Schema
  */
-const quickERFormSchema = z.object({
+const formSchema = z.object({
     name: z.string().min(1, "Nama pasien wajib diisi"),
     chiefComplaint: z.string().min(1, "Keluhan utama wajib diisi"),
     triageStatus: z.enum(["red", "yellow", "green"], {
@@ -33,21 +42,18 @@ const quickERFormSchema = z.object({
     notes: z.string().optional(),
 });
 
-type QuickERFormData = z.infer<typeof quickERFormSchema>;
+type FormData = z.infer<typeof formSchema>;
 
 interface QuickRegistrationFormProps {
-    onSuccess?: (data: { patient: any; visit: any }) => void;
+    onSuccess?: (data: any) => void;
     onCancel?: () => void;
 }
 
-export function QuickRegistrationForm({
-    onSuccess,
-    onCancel,
-}: QuickRegistrationFormProps) {
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState(false);
+export function QuickRegistrationForm({ onSuccess, onCancel }: QuickRegistrationFormProps) {
+    // Use quick registration hook
+    const { register: registerPatient, isSubmitting, error, success } = useQuickRegistration(onSuccess);
 
+    // Form hook
     const {
         register,
         handleSubmit,
@@ -55,64 +61,32 @@ export function QuickRegistrationForm({
         watch,
         formState: { errors },
         reset,
-    } = useForm<QuickERFormData>({
-        resolver: zodResolver(quickERFormSchema),
+    } = useForm<FormData>({
+        resolver: zodResolver(formSchema),
     });
 
     const triageStatus = watch("triageStatus");
 
-    const onSubmit = async (data: QuickERFormData) => {
-        setIsSubmitting(true);
-        setError(null);
-
-        try {
-            const response = await fetch("/api/emergency/quick-register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Gagal mendaftarkan pasien UGD");
-            }
-
-            setSuccess(true);
-            reset();
-
-            if (onSuccess) {
-                onSuccess(result.data);
-            }
-
-            // Auto-close success message after 3 seconds
-            setTimeout(() => {
-                setSuccess(false);
-            }, 3000);
-        } catch (err) {
-            setError(err instanceof Error ? err.message : "Terjadi kesalahan");
-        } finally {
-            setIsSubmitting(false);
-        }
+    /**
+     * Submit handler
+     */
+    const onSubmit = async (data: FormData) => {
+        await registerPatient(data);
+        reset();
     };
 
-    const getTriageColor = (status: string | undefined) => {
-        switch (status) {
-            case "red":
-                return "bg-red-100 border-red-500 text-red-700";
-            case "yellow":
-                return "bg-yellow-100 border-yellow-500 text-yellow-700";
-            case "green":
-                return "bg-green-100 border-green-500 text-green-700";
-            default:
-                return "";
-        }
+    /**
+     * Get triage select option class
+     */
+    const getTriageSelectClass = (status: TriageStatus | undefined) => {
+        if (!status) return "";
+        const config = TRIAGE_CONFIG[status];
+        return `${config.bgColor} ${config.borderColor} ${config.textColor}`;
     };
 
     return (
         <div className="space-y-6">
+            {/* Header */}
             <div className="space-y-2">
                 <h2 className="text-2xl font-bold">Pendaftaran Cepat UGD</h2>
                 <p className="text-sm text-muted-foreground">
@@ -121,6 +95,7 @@ export function QuickRegistrationForm({
                 </p>
             </div>
 
+            {/* Error Alert */}
             {error && (
                 <Alert variant="destructive">
                     <AlertCircle className="h-4 w-4" />
@@ -128,6 +103,7 @@ export function QuickRegistrationForm({
                 </Alert>
             )}
 
+            {/* Success Alert */}
             {success && (
                 <Alert className="border-green-500 bg-green-50 text-green-700">
                     <CheckCircle2 className="h-4 w-4" />
@@ -137,8 +113,9 @@ export function QuickRegistrationForm({
                 </Alert>
             )}
 
+            {/* Form */}
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                {/* Section 1: Data Pasien Minimal */}
+                {/* Section 1: Patient Data */}
                 <div className="rounded-lg border p-4 space-y-4">
                     <h3 className="font-semibold">Data Pasien (Minimal)</h3>
 
@@ -192,7 +169,7 @@ export function QuickRegistrationForm({
                     </div>
                 </div>
 
-                {/* Section 2: Triage & Keluhan */}
+                {/* Section 2: Triage & Chief Complaint */}
                 <div className="rounded-lg border p-4 space-y-4">
                     <h3 className="font-semibold">Triage & Keluhan Utama</h3>
 
@@ -202,11 +179,11 @@ export function QuickRegistrationForm({
                         </Label>
                         <Select
                             onValueChange={(value) =>
-                                setValue("triageStatus", value as "red" | "yellow" | "green")
+                                setValue("triageStatus", value as TriageStatus)
                             }
                         >
                             <SelectTrigger
-                                className={`${triageStatus ? getTriageColor(triageStatus) : ""} ${errors.triageStatus ? "border-destructive" : ""}`}
+                                className={`${triageStatus ? getTriageSelectClass(triageStatus) : ""} ${errors.triageStatus ? "border-destructive" : ""}`}
                             >
                                 <SelectValue placeholder="Pilih status triage" />
                             </SelectTrigger>

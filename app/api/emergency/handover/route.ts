@@ -1,22 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { visits } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-import { generateQueueNumber } from "@/lib/generators";
-
 /**
- * Handover Schema
- * For transferring ER patients to other departments
+ * Patient Handover API
+ * Transfers ER patients to other departments (outpatient/inpatient)
  */
-const handoverSchema = z.object({
-    visitId: z.number().int().positive(),
-    newVisitType: z.enum(["outpatient", "inpatient"]),
-    poliId: z.number().int().positive().optional(), // Required for outpatient
-    roomId: z.number().int().positive().optional(), // Required for inpatient
-    doctorId: z.string().optional(),
-    notes: z.string().optional(),
-});
+
+import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { handoverSchema } from "@/lib/emergency/validation";
+import { performHandover } from "@/lib/emergency/api-service";
+import { APIResponse } from "@/types/emergency";
 
 /**
  * POST /api/emergency/handover
@@ -25,100 +16,54 @@ const handoverSchema = z.object({
  */
 export async function POST(request: NextRequest) {
     try {
+        // Parse request body
         const body = await request.json();
 
         // Validate input
         const validatedData = handoverSchema.parse(body);
 
-        // Check if visit exists and is an emergency visit
-        const existingVisit = await db
-            .select()
-            .from(visits)
-            .where(eq(visits.id, validatedData.visitId))
-            .limit(1);
+        // Perform handover
+        const updatedVisit = await performHandover(validatedData);
 
-        if (existingVisit.length === 0) {
-            return NextResponse.json({ error: "Kunjungan tidak ditemukan" }, { status: 404 });
-        }
+        // Determine success message
+        const departmentName =
+            validatedData.newVisitType === "outpatient" ? "Rawat Jalan" : "Rawat Inap";
 
-        if (existingVisit[0].visitType !== "emergency") {
-            return NextResponse.json(
-                { error: "Hanya kunjungan UGD yang dapat di-handover" },
-                { status: 400 }
-            );
-        }
-
-        // Validate required fields based on new visit type
-        if (validatedData.newVisitType === "outpatient" && !validatedData.poliId) {
-            return NextResponse.json(
-                { error: "Poli ID wajib diisi untuk rawat jalan" },
-                { status: 400 }
-            );
-        }
-
-        if (validatedData.newVisitType === "inpatient" && !validatedData.roomId) {
-            return NextResponse.json(
-                { error: "Room ID wajib diisi untuk rawat inap" },
-                { status: 400 }
-            );
-        }
-
-        // Prepare update data
-        const updateData: any = {
-            visitType: validatedData.newVisitType,
-            updatedAt: new Date(),
+        // Return success response
+        const response: APIResponse = {
+            success: true,
+            message: `Pasien berhasil di-handover ke ${departmentName}`,
+            data: updatedVisit,
         };
 
-        // Add type-specific fields
-        if (validatedData.newVisitType === "outpatient") {
-            // Generate queue number for outpatient
-            const queueNumber = await generateQueueNumber(validatedData.poliId!);
-            updateData.poliId = validatedData.poliId;
-            updateData.queueNumber = queueNumber;
-            updateData.doctorId = validatedData.doctorId || null;
-
-            // Clear inpatient fields
-            updateData.roomId = null;
-            updateData.admissionDate = null;
-        } else if (validatedData.newVisitType === "inpatient") {
-            updateData.roomId = validatedData.roomId;
-            updateData.admissionDate = new Date();
-            updateData.doctorId = validatedData.doctorId || null;
-
-            // Clear outpatient fields
-            updateData.poliId = null;
-            updateData.queueNumber = null;
-        }
-
-        // Add notes to existing notes if provided
-        if (validatedData.notes) {
-            const existingNotes = existingVisit[0].notes || "";
-            updateData.notes = existingNotes
-                ? `${existingNotes}\n\n[HANDOVER] ${validatedData.notes}`
-                : `[HANDOVER] ${validatedData.notes}`;
-        }
-
-        // Update visit
-        const updatedVisit = await db
-            .update(visits)
-            .set(updateData)
-            .where(eq(visits.id, validatedData.visitId))
-            .returning();
-
-        return NextResponse.json({
-            success: true,
-            message: `Pasien berhasil di-handover ke ${validatedData.newVisitType === "outpatient" ? "Rawat Jalan" : "Rawat Inap"}`,
-            data: updatedVisit[0],
-        });
+        return NextResponse.json(response);
     } catch (error) {
+        // Handle validation errors
         if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: "Validasi gagal", details: error.issues },
-                { status: 400 }
-            );
+            const response: APIResponse = {
+                success: false,
+                error: "Validasi gagal",
+                details: error.issues,
+            };
+            return NextResponse.json(response, { status: 400 });
         }
 
-        console.error("Handover error:", error);
-        return NextResponse.json({ error: "Gagal melakukan handover" }, { status: 500 });
+        // Handle application errors
+        if (error instanceof Error) {
+            console.error("Handover error:", error);
+            const response: APIResponse = {
+                success: false,
+                error: error.message,
+            };
+            return NextResponse.json(response, { status: 400 });
+        }
+
+        // Handle unknown errors
+        console.error("Unknown error in handover:", error);
+        const response: APIResponse = {
+            success: false,
+            error: "Gagal melakukan handover",
+        };
+        return NextResponse.json(response, { status: 500 });
     }
 }
