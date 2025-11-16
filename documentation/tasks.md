@@ -57,11 +57,11 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **F.1** | DB | Buat skema DB `Drugs` (Master) dan `Drug_Inventory` (Stok, Batch, Exp. Date). | Tinggi | Backend | ⏳ |
-| **F.2** | Backend | Buat API untuk CRUD data master obat dan manajemen stok masuk/keluar. | Tinggi | Backend | ⏳ |
-| **F.3** | Backend | Buat *endpoint* untuk **Notifikasi Kadaluarsa** (menarik data obat yang Exp. Date < 30 hari). | Sedang | Backend | ⏳ |
-| **F.4** | Frontend | Buat tampilan Daftar Resep Digital (Antrian Apotek) dengan *real-time notification* (widget/pop-up). | Tinggi | Frontend | ⏳ |
-| **F.5** | Fullstack | Implementasi *Fulfillment* Resep: Logic mengurangi stok di `Drug_Inventory` dan menandai resep sebagai sudah diambil (`is_fulfilled`). | Tinggi | Fullstack | ⏳ |
+| **F.1** | DB | Buat skema DB `Drugs` (Master) dan `Drug_Inventory` (Stok, Batch, Exp. Date). | Tinggi | Backend | ✅ |
+| **F.2** | Backend | Buat API untuk CRUD data master obat dan manajemen stok masuk/keluar. | Tinggi | Backend | ✅ |
+| **F.3** | Backend | Buat *endpoint* untuk **Notifikasi Kadaluarsa** (menarik data obat yang Exp. Date < 30 hari). | Sedang | Backend | ✅ |
+| **F.4** | Frontend | Buat tampilan Daftar Resep Digital (Antrian Apotek) dengan *real-time notification* (widget/pop-up). | Tinggi | Frontend | ✅ |
+| **F.5** | Fullstack | Implementasi *Fulfillment* Resep: Logic mengurangi stok di `Drug_Inventory` dan menandai resep sebagai sudah diambil (`is_fulfilled`). | Tinggi | Fullstack | ✅ |
 
 ### G. Modul Kasir & Billing & Pasien Pulang
 
