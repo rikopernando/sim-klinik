@@ -27,10 +27,10 @@
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
 | **C.1** | DB | Tambahkan field `triage_status` (Merah, Kuning, Hijau) ke tabel `Visits`. | Tinggi | Backend | ✅ |
-| **C.2** | Fullstack | Buat API dan Form **Registrasi Cepat UGD** (Hanya Nama & Keluhan). | Tinggi | Fullstack | ⏳ |
-| **C.3** | Frontend | Buat **Dashboard Antrian UGD** yang menampilkan *real-time status* dengan warna *highlight* berdasarkan Triage. | Tinggi | Frontend | ⏳ |
-| **C.4** | Fullstack | Buat form RME khusus UGD (Lebih ringkas, fokus Tindakan Cepat & Disposisi). | Tinggi | Fullstack | ⏳ |
-| **C.5** | Fullstack | Implementasi *handover* data: API untuk mengubah `visit_type` UGD menjadi Rawat Jalan/Rawat Inap. | Sedang | Fullstack | ⏳ |
+| **C.2** | Fullstack | Buat API dan Form **Registrasi Cepat UGD** (Hanya Nama & Keluhan). | Tinggi | Fullstack | ✅ |
+| **C.3** | Frontend | Buat **Dashboard Antrian UGD** yang menampilkan *real-time status* dengan warna *highlight* berdasarkan Triage. | Tinggi | Frontend | ✅ |
+| **C.4** | Fullstack | Buat form RME khusus UGD (Lebih ringkas, fokus Tindakan Cepat & Disposisi). | Tinggi | Fullstack | ✅ |
+| **C.5** | Fullstack | Implementasi *handover* data: API untuk mengubah `visit_type` UGD menjadi Rawat Jalan/Rawat Inap. | Sedang | Fullstack | ✅ |
 
 ### D. Modul Rekam Medis Elektronik (RME) & Rawat Jalan
 
@@ -47,11 +47,11 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **E.1** | DB | Buat skema DB `Rooms` dan `Vitals_History`. | Tinggi | Backend | ⏳ |
-| **E.2** | Frontend | Buat **Dashboard Kamar** (Visualisasi status hunian kamar: Kosong/Terisi). | Tinggi | Frontend | ⏳ |
-| **E.3** | Fullstack | Buat API dan Form untuk mencatat Tanda-Tanda Vital (Vital Sign) harian. | Tinggi | Fullstack | ⏳ |
-| **E.4** | Fullstack | Implementasi formulir Catatan Perkembangan Pasien Terintegrasi (**CPPT**). | Sedang | Fullstack | ⏳ |
-| **E.5** | Fullstack | API untuk mencatat pemakaian material/alat medis (agar masuk ke *billing*). | Sedang | Fullstack | ⏳ |
+| **E.1** | DB | Buat skema DB `Rooms` dan `Vitals_History`. | Tinggi | Backend | ✅ |
+| **E.2** | Frontend | Buat **Dashboard Kamar** (Visualisasi status hunian kamar: Kosong/Terisi). | Tinggi | Frontend | ✅ |
+| **E.3** | Fullstack | Buat API dan Form untuk mencatat Tanda-Tanda Vital (Vital Sign) harian. | Tinggi | Fullstack | ✅ |
+| **E.4** | Fullstack | Implementasi formulir Catatan Perkembangan Pasien Terintegrasi (**CPPT**). | Sedang | Fullstack | ✅ |
+| **E.5** | Fullstack | API untuk mencatat pemakaian material/alat medis (agar masuk ke *billing*). | Sedang | Fullstack | ✅ |
 
 ### F. Modul Apotek / Farmasi
 

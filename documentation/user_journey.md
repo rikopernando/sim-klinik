@@ -69,10 +69,4 @@ Berikut adalah rancangan **App Flow / User Journey** utama untuk setiap peran pe
 | **2. Peringatan Dini** | Sistem secara otomatis menjalankan *logic* (misalnya harian) untuk mengecek Exp. Date. | Apoteker melihat **Widget Merah/Kuning** di dashboard yang menampilkan obat yang mendekati kadaluarsa (< 30 hari). | Apotek |
 | **3. Stok Keluar Non-Resep** | Apoteker mencatat obat yang rusak/dibuang/dipakai non-resep. | Membuat entitas `Drug_Inventory_Log` $\rightarrow$ Mengurangi `current_stock`. | Apotek |
 
-Dokumen App Flow ini dapat Anda gunakan bersama dengan *Task List* untuk memvalidasi setiap *user story* di level tim Anda. Apakah ada alur khusus lainnya yang perlu kita petakan?
-
-Itu adalah koreksi yang sangat penting. Perawatan Inap memiliki alur yang paling kompleks dan panjang, sehingga memetakannya secara visual sangat krusial untuk memastikan tidak ada biaya yang terlewat (di Kasir) dan dokumentasi harian terisi lengkap (oleh Perawat).
-
-Saya akan memperbarui dokumen **App Flow / User Journey** dengan menambahkan **Alur Kunjungan Rawat Inap** secara detail.
-
 ---
