@@ -67,12 +67,12 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **G.1** | DB | Buat skema DB `Services` (Master Tarif) dan `Billings`. | Tinggi | Backend | ⏳ |
-| **G.2** | Backend | Buat API **Billing Engine**: Logic menarik dan menjumlahkan semua komponen biaya (Tindakan, Obat, Kamar, Tarif). | Tinggi | Backend | ⏳ |
-| **G.3** | Frontend | Buat Halaman Kasir dengan tampilan **Kotak Total (Sticky)** yang menonjol dan jelas. | Tinggi | Frontend | ⏳ |
-| **G.4** | Fullstack | Implementasi Pencatatan Pembayaran dan **perhitungan kembalian otomatis**. | Tinggi | Fullstack | ⏳ |
-| **G.5** | Backend | Implementasi **Billing Gate Logic**: Cek status `Billings.payment_status` sebelum mengizinkan proses Pulang. | Tinggi | Backend | ⏳ |
-| **G.6** | Fullstack | Buat form Ringkasan Medis Pulang dan input Tanggal Kontrol Lanjutan. | Sedang | Fullstack | ⏳ |
-| **G.7** | Backend | Buat API untuk mencetak kuitansi pembayaran/ringkasan pulang (Generate PDF atau Print View). | Sedang | Backend | ⏳ |
+| **G.1** | DB | Buat skema DB `Services` (Master Tarif) dan `Billings`. | Tinggi | Backend | ✅ |
+| **G.2** | Backend | Buat API **Billing Engine**: Logic menarik dan menjumlahkan semua komponen biaya (Tindakan, Obat, Kamar, Tarif). | Tinggi | Backend | ✅ |
+| **G.3** | Frontend | Buat Halaman Kasir dengan tampilan **Kotak Total (Sticky)** yang menonjol dan jelas. | Tinggi | Frontend | ✅ |
+| **G.4** | Fullstack | Implementasi Pencatatan Pembayaran dan **perhitungan kembalian otomatis**. | Tinggi | Fullstack | ✅ |
+| **G.5** | Backend | Implementasi **Billing Gate Logic**: Cek status `Billings.payment_status` sebelum mengizinkan proses Pulang. | Tinggi | Backend | ✅ |
+| **G.6** | Fullstack | Buat form Ringkasan Medis Pulang dan input Tanggal Kontrol Lanjutan. | Sedang | Fullstack | ✅ |
+| **G.7** | Backend | Buat API untuk mencetak kuitansi pembayaran/ringkasan pulang (Generate PDF atau Print View). | Sedang | Backend | ✅ |
 
 Daftar tugas ini sekarang mencakup semua yang dibutuhkan, dari *setup* dasar hingga fitur-fitur krusial. Anda dapat menggunakan tabel ini untuk alokasi kerja dan pemantauan kemajuan proyek.

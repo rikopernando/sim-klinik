@@ -1,0 +1,298 @@
+/**
+ * Billing Module Type Definitions
+ * Centralized types for Billing, Cashier, and Patient Discharge
+ */
+
+/**
+ * Payment Status Types
+ */
+export type PaymentStatus = "pending" | "partial" | "paid";
+
+export const PAYMENT_STATUS = {
+    PENDING: "pending" as PaymentStatus,
+    PARTIAL: "partial" as PaymentStatus,
+    PAID: "paid" as PaymentStatus,
+} as const;
+
+/**
+ * Payment Method Types
+ */
+export type PaymentMethod = "cash" | "transfer" | "card" | "insurance";
+
+export const PAYMENT_METHODS = {
+    CASH: "cash" as PaymentMethod,
+    TRANSFER: "transfer" as PaymentMethod,
+    CARD: "card" as PaymentMethod,
+    INSURANCE: "insurance" as PaymentMethod,
+} as const;
+
+/**
+ * Service Type (from services master)
+ */
+export type ServiceType =
+    | "consultation"
+    | "procedure"
+    | "room"
+    | "laboratory"
+    | "radiology"
+    | "other";
+
+/**
+ * Billing Item Type
+ */
+export type BillingItemType = "service" | "drug" | "material" | "room";
+
+/**
+ * Service Entity (Master Data)
+ */
+export interface Service {
+    id: number;
+    code: string;
+    name: string;
+    serviceType: string;
+    price: string;
+    description: string | null;
+    category: string | null;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/**
+ * Billing Entity
+ */
+export interface Billing {
+    id: number;
+    visitId: number;
+    subtotal: string;
+    discount: string;
+    discountPercentage: string | null;
+    tax: string;
+    totalAmount: string;
+    insuranceCoverage: string | null;
+    patientPayable: string;
+    paymentStatus: PaymentStatus;
+    paidAmount: string;
+    remainingAmount: string | null;
+    paymentMethod: string | null;
+    paymentReference: string | null;
+    processedBy: string | null;
+    processedAt: string | null;
+    notes: string | null;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/**
+ * Billing Item Entity
+ */
+export interface BillingItem {
+    id: number;
+    billingId: number;
+    itemType: BillingItemType;
+    itemId: number | null;
+    itemName: string;
+    itemCode: string | null;
+    quantity: number;
+    unitPrice: string;
+    subtotal: string;
+    discount: string | null;
+    totalPrice: string;
+    description: string | null;
+    createdAt: string;
+}
+
+/**
+ * Payment Entity
+ */
+export interface Payment {
+    id: number;
+    billingId: number;
+    amount: string;
+    paymentMethod: PaymentMethod;
+    paymentReference: string | null;
+    amountReceived: string | null;
+    changeGiven: string | null;
+    receivedBy: string;
+    receivedAt: string;
+    notes: string | null;
+    createdAt: string;
+}
+
+/**
+ * Discharge Summary Entity
+ */
+export interface DischargeSummary {
+    id: number;
+    visitId: number;
+    admissionDiagnosis: string;
+    dischargeDiagnosis: string;
+    clinicalSummary: string;
+    proceduresPerformed: string | null;
+    medicationsOnDischarge: string | null;
+    dischargeInstructions: string;
+    dietaryRestrictions: string | null;
+    activityRestrictions: string | null;
+    followUpDate: string | null;
+    followUpInstructions: string | null;
+    dischargedBy: string;
+    dischargedAt: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+/**
+ * Billing with Items and Payments
+ */
+export interface BillingWithDetails extends Billing {
+    items: BillingItem[];
+    payments: Payment[];
+    visit?: {
+        id: number;
+        visitNumber: string;
+        visitType: string;
+    };
+    patient?: {
+        id: number;
+        name: string;
+        mrNumber: string;
+    };
+}
+
+/**
+ * Service Input Data
+ */
+export interface ServiceInput {
+    code: string;
+    name: string;
+    serviceType: string;
+    price: string;
+    description?: string;
+    category?: string;
+}
+
+/**
+ * Service Update Input
+ */
+export interface ServiceUpdateInput {
+    id: number;
+    code?: string;
+    name?: string;
+    serviceType?: string;
+    price?: string;
+    description?: string;
+    category?: string;
+    isActive?: boolean;
+}
+
+/**
+ * Billing Item Input
+ */
+export interface BillingItemInput {
+    itemType: BillingItemType;
+    itemId?: number;
+    itemName: string;
+    itemCode?: string;
+    quantity: number;
+    unitPrice: string;
+    discount?: string;
+    description?: string;
+}
+
+/**
+ * Create Billing Input
+ */
+export interface CreateBillingInput {
+    visitId: number;
+    items: BillingItemInput[];
+    discount?: string;
+    discountPercentage?: string;
+    insuranceCoverage?: string;
+    notes?: string;
+}
+
+/**
+ * Payment Input
+ */
+export interface PaymentInput {
+    billingId: number;
+    amount: string;
+    paymentMethod: PaymentMethod;
+    paymentReference?: string;
+    amountReceived?: string; // For cash payments
+    receivedBy: string;
+    notes?: string;
+}
+
+/**
+ * Discharge Summary Input
+ */
+export interface DischargeSummaryInput {
+    visitId: number;
+    admissionDiagnosis: string;
+    dischargeDiagnosis: string;
+    clinicalSummary: string;
+    proceduresPerformed?: string;
+    medicationsOnDischarge?: string;
+    dischargeInstructions: string;
+    dietaryRestrictions?: string;
+    activityRestrictions?: string;
+    followUpDate?: string;
+    followUpInstructions?: string;
+    dischargedBy: string;
+}
+
+/**
+ * Billing Statistics
+ */
+export interface BillingStatistics {
+    totalBillings: number;
+    pendingBillings: number;
+    paidBillings: number;
+    partialBillings: number;
+    totalRevenue: string;
+    pendingRevenue: string;
+    collectedToday: string;
+}
+
+/**
+ * Billing Summary (for reports)
+ */
+export interface BillingSummary {
+    visitId: number;
+    visitNumber: string;
+    patientName: string;
+    mrNumber: string;
+    visitType: string;
+    totalAmount: string;
+    paidAmount: string;
+    remainingAmount: string;
+    paymentStatus: PaymentStatus;
+    processedAt: string | null;
+}
+
+/**
+ * Receipt Data (for printing)
+ */
+export interface ReceiptData {
+    billing: BillingWithDetails;
+    clinic: {
+        name: string;
+        address: string;
+        phone: string;
+    };
+    receiptNumber: string;
+    printedAt: string;
+}
+
+/**
+ * API Response Types
+ */
+export interface APIResponse<T = any> {
+    success: boolean;
+    message?: string;
+    data?: T;
+    error?: string;
+    details?: any;
+    count?: number;
+}
