@@ -13,10 +13,8 @@ import {
 } from "@/db/schema/billing";
 import { visits } from "@/db/schema/visits";
 import { patients } from "@/db/schema/patients";
-import { prescriptions } from "@/db/schema/medical-records";
-import { drugs } from "@/db/schema/pharmacy";
-import { materialUsage } from "@/db/schema/inpatient";
-import { rooms, bedAssignments } from "@/db/schema/inpatient";
+import { prescriptions, drugs } from "@/db/schema/pharmacy";
+import { materialUsage, rooms, bedAssignments } from "@/db/schema/inpatient";
 import { eq, sql, and, desc} from "drizzle-orm";
 import type {
     ServiceInput,
