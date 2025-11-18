@@ -75,4 +75,69 @@
 | **G.6** | Fullstack | Buat form Ringkasan Medis Pulang dan input Tanggal Kontrol Lanjutan. | Sedang | Fullstack | ✅ |
 | **G.7** | Backend | Buat API untuk mencetak kuitansi pembayaran/ringkasan pulang (Generate PDF atau Print View). | Sedang | Backend | ✅ |
 
-Daftar tugas ini sekarang mencakup semua yang dibutuhkan, dari *setup* dasar hingga fitur-fitur krusial. Anda dapat menggunakan tabel ini untuk alokasi kerja dan pemantauan kemajuan proyek.
+### H. Integration & Cross-Module Workflows
+
+#### H.1. Data Flow Integration (Module-to-Module Communication)
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **H.1.1** | RME → Apotek | Buat real-time notification system saat dokter membuat resep digital baru (WebSocket/Server-Sent Events). | Tinggi | Fullstack | ⏳ |
+| **H.1.2** | RME → Kasir | Auto-update visit status menjadi "Ready for Billing" saat RME dikunci oleh dokter. | Tinggi | Backend | ⏳ |
+| **H.1.3** | UGD → RJ/RI | Implementasi handover workflow dengan button "Transfer ke RI/RJ" di dashboard UGD. | Tinggi | Fullstack | ⏳ |
+| **H.1.4** | Apotek → Billing | Auto-agregasi biaya obat yang sudah fulfilled ke billing items pasien (sudah ada di billing engine). | Tinggi | Backend | ✅ |
+| **H.1.5** | Rawat Inap → Billing | Auto-agregasi biaya kamar (daily rate × days stayed) saat billing dibuat (sudah ada di billing engine). | Tinggi | Backend | ✅ |
+| **H.1.6** | Rawat Inap → Billing | Auto-agregasi material usage ke billing items (sudah ada di billing engine). | Tinggi | Backend | ✅ |
+| **H.1.7** | Kasir → Discharge | Implementasi billing gate yang block discharge jika payment_status != "paid" (sudah ada). | Tinggi | Backend | ✅ |
+| **H.1.8** | Discharge → Rawat Inap | Auto-release bed (update bed_assignments.discharged = true) saat pasien dipulangkan (sudah ada). | Tinggi | Backend | ✅ |
+
+#### H.2. Visit Status & Workflow Management
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **H.2.1** | Visit Lifecycle | Buat state machine untuk visit status (registered → in_examination → ready_for_billing → paid → completed). | Tinggi | Backend | ⏳ |
+| **H.2.2** | Visit Lifecycle | Implementasi API untuk update visit status dengan validation (prevent invalid state transitions). | Tinggi | Backend | ⏳ |
+| **H.2.3** | Queue Management | Implementasi real-time queue updates across modules (Admin register → Doctor queue updates). | Sedang | Fullstack | ⏳ |
+| **H.2.4** | Data Sync | Ensure patient data updates di Registration module langsung reflect ke semua module. | Sedang | Backend | ⏳ |
+| **H.2.5** | UGD Workflow | Alert/notification jika data pasien UGD express masih incomplete (perlu lengkapi NIK, alamat). | Sedang | Fullstack | ⏳ |
+
+#### H.3. Role-Based Dashboards (Unified Views)
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **H.3.1** | Dashboard Framework | Buat reusable dashboard layout component dengan widget system untuk semua roles. | Tinggi | Frontend | ⏳ |
+| **H.3.2** | Admin Dashboard | Tampilkan overview: total visits today, pending registrations, bed occupancy, revenue summary. | Sedang | Frontend | ⏳ |
+| **H.3.3** | Doctor Dashboard | Tampilkan antrian pasien dari semua poli + quick access ke RME + riwayat pasien. | Tinggi | Frontend | ⏳ |
+| **H.3.4** | Nurse Dashboard | Tampilkan bed occupancy + vital signs alerts + CPPT quick entry + daily tasks. | Sedang | Frontend | ⏳ |
+| **H.3.5** | Pharmacist Dashboard | Tampilkan pending prescriptions + expiring drugs + low stock alerts (sudah ada). | Tinggi | Frontend | ✅ |
+| **H.3.6** | Cashier Dashboard | Tampilkan pending billings + today's collections + payment history (sudah ada). | Tinggi | Frontend | ✅ |
+
+#### H.4. User Experience & Navigation Enhancements
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **H.4.1** | Global Navigation | Buat **Quick Actions Header**: Button cepat untuk UGD Express Registration, Search Patient, Create Visit. | Tinggi | Frontend | ⏳ |
+| **H.4.2** | RME Enhancement | Tampilkan riwayat RME pasien di sidebar/popup saat dokter buka RME baru. | Sedang | Frontend | ⏳ |
+| **H.4.3** | Global Search | Implementasi global search bar di header untuk cari pasien (NIK/RM/Nama) dari mana saja. | Sedang | Fullstack | ⏳ |
+| **H.4.4** | Breadcrumb Navigation | Implementasi breadcrumb navigation untuk track user location dalam nested pages. | Rendah | Frontend | ⏳ |
+| **H.4.5** | Notification Center | Buat notification center di header untuk tampilkan semua notifikasi cross-module. | Sedang | Fullstack | ⏳ |
+
+#### H.5. System Monitoring & Audit
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **H.5.1** | Audit Trail | Buat logging system untuk track semua perubahan critical data (RME locked, Payment processed, Discharge). | Sedang | Backend | ⏳ |
+| **H.5.2** | Audit Trail | Buat database schema `audit_logs` untuk store semua audit trail. | Sedang | Backend | ⏳ |
+| **H.5.3** | Audit Trail | Buat UI untuk admin melihat audit logs dengan filter by user, action, date range. | Rendah | Fullstack | ⏳ |
+| **H.5.4** | System Health | Implementasi health check endpoint untuk monitor database connection, external services. | Rendah | Backend | ⏳ |
+
+### I. Reporting & Analytics (Phase 2 Preparation)
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **I.1** | Backend | Buat API untuk **Daily Revenue Report** (total billing per hari, payment methods breakdown). | Rendah | Backend | ⏳ |
+| **I.2** | Backend | Buat API untuk **Patient Visit Statistics** (total visits per hari/minggu/bulan, by visit type). | Rendah | Backend | ⏳ |
+| **I.3** | Backend | Buat API untuk **Drug Usage Report** (most prescribed drugs, stock movement trends). | Rendah | Backend | ⏳ |
+| **I.4** | Backend | Buat API untuk **Doctor Performance Report** (jumlah pasien handled, average examination time). | Rendah | Backend | ⏳ |
+| **I.5** | Frontend | Buat **Dashboard Analytics** dengan charts untuk revenue, visits, dan occupancy rate. | Rendah | Frontend | ⏳ |
+
+Daftar tugas ini sekarang mencakup semua yang dibutuhkan dari *setup* dasar, fitur-fitur krusial, hingga **integrasi antar-modul** untuk workflow yang mulus sesuai user journey.
