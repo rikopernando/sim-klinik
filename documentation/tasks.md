@@ -140,4 +140,24 @@
 | **I.4** | Backend | Buat API untuk **Doctor Performance Report** (jumlah pasien handled, average examination time). | Rendah | Backend | ⏳ |
 | **I.5** | Frontend | Buat **Dashboard Analytics** dengan charts untuk revenue, visits, dan occupancy rate. | Rendah | Frontend | ⏳ |
 
-Daftar tugas ini sekarang mencakup semua yang dibutuhkan dari *setup* dasar, fitur-fitur krusial, hingga **integrasi antar-modul** untuk workflow yang mulus sesuai user journey.
+### J. RBAC (Role-Based Access Control)
+
+| **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
+| --- | --- | --- | --- | --- | --- |
+| **J.1** | Backend/Types | Buat type system untuk roles dan permissions (UserRole, Permission, ROLE_PERMISSIONS). | Tinggi | Backend | ✅ |
+| **J.2** | Backend/Types | Tambahkan **super_admin** role dengan akses penuh ke semua fitur dan permissions. | Tinggi | Backend | ✅ |
+| **J.3** | Backend | Buat session utilities untuk get user role dan check permissions dari database. | Tinggi | Backend | ✅ |
+| **J.4** | Backend | Buat RBAC middleware (requireAuth, requireRole, requirePermission, withRBAC). | Tinggi | Backend | ✅ |
+| **J.5** | Backend | Buat API endpoint `/api/rbac/me` untuk fetch current user role dan permissions. | Tinggi | Backend | ✅ |
+| **J.6** | Backend | Buat **database seeder** untuk default roles (admin, doctor, nurse, pharmacist, cashier, receptionist, super_admin). | Tinggi | Backend | ✅ |
+| **J.7** | Backend | Buat **database seeder** untuk demo users dengan berbagai roles untuk testing. | Tinggi | Backend | ✅ |
+| **J.8** | Backend | Buat **CRUD API untuk User Management** (create, read, update, delete users). | Tinggi | Backend | ⏳ |
+| **J.9** | Frontend | Buat **User Management UI** (list users, create user, edit user, delete user). | Tinggi | Frontend | ⏳ |
+| **J.10** | Frontend | Buat navigation configuration berdasarkan role (ROLE_NAVIGATION mapping). | Tinggi | Frontend | ✅ |
+| **J.11** | Frontend | Buat role-based sidebar component yang dynamic based on user role. | Tinggi | Frontend | ✅ |
+| **J.12** | Frontend | Buat role-based dashboard home dengan role-specific stats dan info. | Tinggi | Frontend | ✅ |
+| **J.13** | Fullstack | Implementasi **role management UI** untuk admin assign/change roles ke users. | Sedang | Fullstack | ⏳ |
+| **J.14** | Backend | Protect semua existing API routes dengan RBAC middleware. | Tinggi | Backend | ⏳ |
+| **J.15** | Backend | Update Better Auth configuration untuk include role data dalam session. | Sedang | Backend | ⏳ |
+
+Daftar tugas ini sekarang mencakup semua yang dibutuhkan dari *setup* dasar, fitur-fitur krusial, hingga **integrasi antar-modul** untuk workflow yang mulus sesuai user journey, serta **RBAC** untuk security dan role-based workflows.
