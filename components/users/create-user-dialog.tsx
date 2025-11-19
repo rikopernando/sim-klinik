@@ -75,6 +75,7 @@ export function CreateUserDialog({ roles, open, onOpenChange, onSuccess }: Creat
             toast.success("User berhasil dibuat!");
             onSuccess();
         } catch (err) {
+            console.error(err)
             const errorMessage = err instanceof Error ? err.message : "Failed to create user";
             setError(errorMessage);
             toast.error(`Gagal membuat user: ${errorMessage}`);
