@@ -20,7 +20,7 @@
 | **B.3** | Frontend | Buat halaman Pendaftaran Pasien baru (**2-Step Wizard** sesuai panduan UX) dengan validasi input (React Hook Form/Zod). | Tinggi | Frontend | ✅ |
 | **B.4** | Fullstack | Buat halaman Registrasi Kunjungan. Simpan data ke tabel `Visits` (Rawat Jalan/Rawat Inap/UGD). | Tinggi | Fullstack | ✅ |
 | **B.5** | Frontend | Buat tampilan Antrian Pasien per Poli (Tampilan tabel/card yang dapat *refresh* otomatis). | Tinggi | Frontend | ✅ |
-| **B.6** | Fullstack | Implementasi fungsi *update* dan *edit* data Pasien/Kunjungan. | Sedang | Fullstack | ⏳ |
+| **B.6** | Fullstack | Implementasi fungsi *update* dan *edit* data Pasien/Kunjungan. | Sedang | Fullstack | ✅ |
 
 ### C. Modul Unit Gawat Darurat (UGD)
 
