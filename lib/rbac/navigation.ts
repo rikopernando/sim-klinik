@@ -46,7 +46,7 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             icon: IconUsers,
         },
         {
-            title: "Pendaftaran Pasien",
+            title: "Data Pasien",
             url: "/dashboard/patients",
             icon: IconUserPlus,
         },
@@ -239,7 +239,7 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             icon: IconDashboard,
         },
         {
-            title: "Pendaftaran Pasien",
+            title: "Data Pasien",
             url: "/dashboard/patients",
             icon: IconUserPlus,
         },

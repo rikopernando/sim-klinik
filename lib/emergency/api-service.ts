@@ -7,6 +7,7 @@ import { db } from "@/db";
 import { visits, patients } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateMRNumber, generateVisitNumber, generateQueueNumber } from "@/lib/generators";
+import { getInitialVisitStatus } from "@/types/visit-status";
 import {
     QuickERRegistrationInput,
     CompleteRegistrationInput,
@@ -43,6 +44,9 @@ export async function createQuickERRegistration(data: QuickERRegistrationInput) 
     // Generate visit number
     const visitNumber = await generateVisitNumber();
 
+    // Get initial status for emergency visit
+    const initialStatus = getInitialVisitStatus("emergency");
+
     // Create emergency visit
     const [newVisit] = await db
         .insert(visits)
@@ -52,7 +56,7 @@ export async function createQuickERRegistration(data: QuickERRegistrationInput) 
             visitNumber,
             triageStatus: data.triageStatus,
             chiefComplaint: data.chiefComplaint,
-            status: "pending",
+            status: initialStatus,
             arrivalTime: new Date(),
             notes: data.notes || null,
             createdAt: new Date(),
