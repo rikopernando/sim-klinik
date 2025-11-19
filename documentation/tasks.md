@@ -81,8 +81,8 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **H.1.1** | RME → Apotek | Buat real-time notification system saat dokter membuat resep digital baru (WebSocket/Server-Sent Events). | Tinggi | Fullstack | ⏳ |
-| **H.1.2** | RME → Kasir | Auto-update visit status menjadi "Ready for Billing" saat RME dikunci oleh dokter. | Tinggi | Backend | ⏳ |
+| **H.1.1** | RME → Apotek | Buat real-time notification system saat dokter membuat resep digital baru (WebSocket/Server-Sent Events). | Tinggi | Fullstack | ✅ |
+| **H.1.2** | RME → Kasir | Auto-update visit status menjadi "Ready for Billing" saat RME dikunci oleh dokter. | Tinggi | Backend | ✅ |
 | **H.1.3** | UGD → RJ/RI | Implementasi handover workflow dengan button "Transfer ke RI/RJ" di dashboard UGD. | Tinggi | Fullstack | ⏳ |
 | **H.1.4** | Apotek → Billing | Auto-agregasi biaya obat yang sudah fulfilled ke billing items pasien (sudah ada di billing engine). | Tinggi | Backend | ✅ |
 | **H.1.5** | Rawat Inap → Billing | Auto-agregasi biaya kamar (daily rate × days stayed) saat billing dibuat (sudah ada di billing engine). | Tinggi | Backend | ✅ |
@@ -94,8 +94,8 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **H.2.1** | Visit Lifecycle | Buat state machine untuk visit status (registered → in_examination → ready_for_billing → paid → completed). | Tinggi | Backend | ⏳ |
-| **H.2.2** | Visit Lifecycle | Implementasi API untuk update visit status dengan validation (prevent invalid state transitions). | Tinggi | Backend | ⏳ |
+| **H.2.1** | Visit Lifecycle | Buat state machine untuk visit status (registered → in_examination → ready_for_billing → paid → completed). | Tinggi | Backend | ✅ |
+| **H.2.2** | Visit Lifecycle | Implementasi API untuk update visit status dengan validation (prevent invalid state transitions). | Tinggi | Backend | ✅ |
 | **H.2.3** | Queue Management | Implementasi real-time queue updates across modules (Admin register → Doctor queue updates). | Sedang | Fullstack | ⏳ |
 | **H.2.4** | Data Sync | Ensure patient data updates di Registration module langsung reflect ke semua module. | Sedang | Backend | ⏳ |
 | **H.2.5** | UGD Workflow | Alert/notification jika data pasien UGD express masih incomplete (perlu lengkapi NIK, alamat). | Sedang | Fullstack | ⏳ |

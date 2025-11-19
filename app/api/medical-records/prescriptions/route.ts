@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { prescriptions, medicalRecords } from "@/db/schema";
+import { prescriptions, medicalRecords, drugs, visits, patients } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { sendNotification } from "@/lib/notifications/sse-manager";
 
 /**
  * Prescription Schema
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Add prescription
-        const newPrescription = await db
+        const [newPrescription] = await db
             .insert(prescriptions)
             .values({
                 medicalRecordId: validatedData.medicalRecordId,
@@ -66,11 +67,47 @@ export async function POST(request: NextRequest) {
             })
             .returning();
 
+        // Fetch complete prescription data for notification (H.1.1)
+        const prescriptionWithDetails = await db
+            .select({
+                prescription: prescriptions,
+                drug: drugs,
+                medicalRecord: medicalRecords,
+                visit: visits,
+                patient: patients,
+            })
+            .from(prescriptions)
+            .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+            .leftJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+            .leftJoin(visits, eq(medicalRecords.visitId, visits.id))
+            .leftJoin(patients, eq(visits.patientId, patients.id))
+            .where(eq(prescriptions.id, newPrescription.id))
+            .limit(1);
+
+        // Send real-time notification to pharmacy (H.1.1 Integration)
+        if (prescriptionWithDetails.length > 0) {
+            const data = prescriptionWithDetails[0];
+            sendNotification("pharmacy", "new_prescription", {
+                prescriptionId: newPrescription.id,
+                patientName: data.patient?.name || "Unknown",
+                patientMRNumber: data.patient?.mrNumber || "N/A",
+                drugName: data.drug?.name || "Unknown",
+                dosage: newPrescription.dosage,
+                frequency: newPrescription.frequency,
+                quantity: newPrescription.quantity,
+                visitNumber: data.visit?.visitNumber || "N/A",
+                visitType: data.visit?.visitType || "unknown",
+                createdAt: newPrescription.createdAt,
+            });
+
+            console.log(`[Notification] New prescription notification sent for patient: ${data.patient?.name}`);
+        }
+
         return NextResponse.json(
             {
                 success: true,
-                message: "Prescription added successfully",
-                data: newPrescription[0],
+                message: "Prescription added successfully. Pharmacy has been notified.",
+                data: newPrescription,
             },
             { status: 201 }
         );

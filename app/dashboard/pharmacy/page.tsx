@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PharmacyNotificationPanel } from "@/components/notifications/pharmacy-notification-panel";
 
 export default function PharmacyDashboard() {
     const { queue, isLoading: queueLoading, error: queueError, lastRefresh, refresh } = usePharmacyQueue({
@@ -83,6 +84,9 @@ export default function PharmacyDashboard() {
                     </Button>
                 </div>
             </div>
+
+            {/* Real-time Notification Panel (H.1.1) */}
+            <PharmacyNotificationPanel />
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
