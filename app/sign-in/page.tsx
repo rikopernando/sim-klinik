@@ -12,7 +12,7 @@ import { signIn } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
 
 export default function SignInPage() {
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState("");
@@ -24,8 +24,8 @@ export default function SignInPage() {
         setError("");
 
         try {
-            const result = await signIn.email({
-                email,
+            const result = await signIn.username({
+                username,
                 password,
             });
 
@@ -47,7 +47,7 @@ export default function SignInPage() {
                 <CardHeader className="text-center">
                     <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
                     <CardDescription>
-                        Enter your email and password to access your account
+                        Enter your username and password to access your account
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -58,13 +58,13 @@ export default function SignInPage() {
                             </Alert>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="username">Username</Label>
                             <Input
-                                id="email"
-                                type="email"
-                                placeholder="Enter your email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                id="username"
+                                type="text"
+                                placeholder="Enter your username"
+                                value={username}
+                                onChange={(e) => setUsername(e.target.value)}
                                 required
                                 disabled={isLoading}
                             />

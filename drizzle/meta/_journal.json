@@ -15,6 +15,20 @@
       "when": 1763042377851,
       "tag": "0001_wandering_odin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763519729776,
+      "tag": "0002_faithful_the_santerians",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1763521265662,
+      "tag": "0003_pretty_turbo",
+      "breakpoints": true
     }
   ]
 }

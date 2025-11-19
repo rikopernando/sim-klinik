@@ -151,12 +151,12 @@
 | **J.5** | Backend | Buat API endpoint `/api/rbac/me` untuk fetch current user role dan permissions. | Tinggi | Backend | ✅ |
 | **J.6** | Backend | Buat **database seeder** untuk default roles (admin, doctor, nurse, pharmacist, cashier, receptionist, super_admin). | Tinggi | Backend | ✅ |
 | **J.7** | Backend | Buat **database seeder** untuk demo users dengan berbagai roles untuk testing. | Tinggi | Backend | ✅ |
-| **J.8** | Backend | Buat **CRUD API untuk User Management** (create, read, update, delete users). | Tinggi | Backend | ⏳ |
-| **J.9** | Frontend | Buat **User Management UI** (list users, create user, edit user, delete user). | Tinggi | Frontend | ⏳ |
+| **J.8** | Backend | Buat **CRUD API untuk User Management** (create, read, update, delete users). | Tinggi | Backend | ✅ |
+| **J.9** | Frontend | Buat **User Management UI** (list users, create user, edit user, delete user). | Tinggi | Frontend | ✅ |
 | **J.10** | Frontend | Buat navigation configuration berdasarkan role (ROLE_NAVIGATION mapping). | Tinggi | Frontend | ✅ |
 | **J.11** | Frontend | Buat role-based sidebar component yang dynamic based on user role. | Tinggi | Frontend | ✅ |
 | **J.12** | Frontend | Buat role-based dashboard home dengan role-specific stats dan info. | Tinggi | Frontend | ✅ |
-| **J.13** | Fullstack | Implementasi **role management UI** untuk admin assign/change roles ke users. | Sedang | Fullstack | ⏳ |
+| **J.13** | Fullstack | Implementasi **role management UI** untuk admin assign/change roles ke users. | Sedang | Fullstack | ✅ |
 | **J.14** | Backend | Protect semua existing API routes dengan RBAC middleware. | Tinggi | Backend | ⏳ |
 | **J.15** | Backend | Update Better Auth configuration untuk include role data dalam session. | Sedang | Backend | ⏳ |
 
