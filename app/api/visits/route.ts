@@ -4,6 +4,7 @@ import { visits, patients } from "@/db/schema";
 import { eq, and, gte, lt } from "drizzle-orm";
 import { z } from "zod";
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators";
+import { withRBAC } from "@/lib/rbac/middleware";
 
 /**
  * Visit Registration Schema
@@ -22,8 +23,10 @@ const visitSchema = z.object({
 /**
  * POST /api/visits
  * Create a new visit/registration
+ * Requires: visits:write permission
  */
-export async function POST(request: NextRequest) {
+export const POST = withRBAC(
+    async (request: NextRequest) => {
     try {
         const body = await request.json();
 
@@ -130,13 +133,17 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+    },
+    { permissions: ["visits:write"] }
+);
 
 /**
  * GET /api/visits?poliId=X&status=pending
  * Get visits queue for a specific poli
+ * Requires: visits:read permission
  */
-export async function GET(request: NextRequest) {
+export const GET = withRBAC(
+    async (request: NextRequest) => {
     try {
         const searchParams = request.nextUrl.searchParams;
         const poliId = searchParams.get("poliId");
@@ -190,13 +197,17 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+    },
+    { permissions: ["visits:read"] }
+);
 
 /**
  * PATCH /api/visits/:id
  * Update visit status or information
+ * Requires: visits:write permission
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withRBAC(
+    async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { id, ...updateData } = body;
@@ -237,4 +248,6 @@ export async function PATCH(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+    },
+    { permissions: ["visits:write"] }
+);

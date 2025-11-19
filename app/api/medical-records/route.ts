@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { medicalRecords, diagnoses, procedures, prescriptions, visits } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
-import { auth } from "@/lib/auth";
+import { withRBAC } from "@/lib/rbac/middleware";
 
 /**
  * Medical Record Schema
@@ -23,23 +23,13 @@ const medicalRecordSchema = z.object({
 /**
  * POST /api/medical-records
  * Create a new medical record
+ * Requires: medical_records:write permission
  */
-export async function POST(request: NextRequest) {
-    try {
-        // Get authenticated user session
-        const session = await auth.api.getSession({
-            headers: request.headers,
-        });
-
-        if (!session?.user) {
-            return NextResponse.json(
-                { error: "Unauthorized. Please login." },
-                { status: 401 }
-            );
-        }
-
-        const body = await request.json();
-        const validatedData = medicalRecordSchema.parse(body);
+export const POST = withRBAC(
+    async (request: NextRequest, { user }) => {
+        try {
+            const body = await request.json();
+            const validatedData = medicalRecordSchema.parse(body);
 
         // Verify visit exists and doesn't already have a medical record
         const visit = await db
@@ -74,7 +64,7 @@ export async function POST(request: NextRequest) {
             .insert(medicalRecords)
             .values({
                 visitId: validatedData.visitId,
-                doctorId: session.user.id,
+                doctorId: user.id,
                 soapSubjective: validatedData.soapSubjective || null,
                 soapObjective: validatedData.soapObjective || null,
                 soapAssessment: validatedData.soapAssessment || null,
@@ -111,13 +101,17 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+    },
+    { permissions: ["medical_records:write"] }
+);
 
 /**
  * GET /api/medical-records?visitId=X
  * Get medical record by visit ID
+ * Requires: medical_records:read permission
  */
-export async function GET(request: NextRequest) {
+export const GET = withRBAC(
+    async (request: NextRequest) => {
     try {
         const searchParams = request.nextUrl.searchParams;
         const visitId = searchParams.get("visitId");
@@ -197,13 +191,17 @@ export async function GET(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+    },
+    { permissions: ["medical_records:read"] }
+);
 
 /**
  * PATCH /api/medical-records
  * Update medical record
+ * Requires: medical_records:write permission
  */
-export async function PATCH(request: NextRequest) {
+export const PATCH = withRBAC(
+    async (request: NextRequest) => {
     try {
         const body = await request.json();
         const { id, ...updateData } = body;
@@ -258,4 +256,6 @@ export async function PATCH(request: NextRequest) {
             { status: 500 }
         );
     }
-}
+    },
+    { permissions: ["medical_records:write"] }
+);
