@@ -10,11 +10,18 @@ import { useUsers } from "@/hooks/use-users";
 import { useRoles } from "@/hooks/use-roles";
 import {
     Card,
+    CardAction,
     CardContent,
     CardDescription,
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    Item,
+    ItemContent,
+    ItemMedia,
+    ItemTitle,
+  } from "@/components/ui/item"
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +41,7 @@ import { EditUserDialog } from "@/components/users/edit-user-dialog";
 import { ChangeRoleDialog } from "@/components/users/change-role-dialog";
 import { Pagination } from "@/components/users/pagination";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 interface User {
     id: string;
@@ -129,33 +137,6 @@ export default function UsersPage() {
                 </Button>
             </div>
 
-            {/* Search */}
-            <Card className="mb-6">
-                <CardHeader>
-                    <CardTitle>Cari User</CardTitle>
-                    <CardDescription>
-                        Cari berdasarkan nama atau email
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex gap-2">
-                        <div className="flex-1 relative">
-                            <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
-                            <Input
-                                placeholder="Cari user..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                                className="pl-10"
-                            />
-                        </div>
-                        <Button onClick={handleSearch} disabled={isLoading}>
-                            {isLoading ? "Mencari..." : "Cari"}
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* Error Message */}
             {error && (
                 <Card className="mb-6 border-red-500 bg-red-50">
@@ -169,35 +150,58 @@ export default function UsersPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Daftar User</CardTitle>
-                    <CardDescription>
-                        Total: {pagination?.total || 0} user
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <UserTable
-                        users={users}
-                        onEdit={handleEdit}
-                        onChangeRole={handleChangeRole}
-                        onDelete={handleDelete}
-                    />
-
-                    {users.length === 0 && !isLoading && (
-                        <div className="text-center py-8 text-muted-foreground">
-                            Tidak ada user ditemukan
-                        </div>
+                    {users.length > 0 && !isLoading && (
+                        <CardDescription>
+                            Total: {pagination?.total || 0} user
+                        </CardDescription>
                     )}
-
-                    {/* Pagination */}
-                    {pagination && pagination.totalPages > 1 && (
-                        <div className="mt-4">
-                            <Pagination
-                                currentPage={currentPage}
-                                totalPages={pagination.totalPages}
-                                onPageChange={handlePageChange}
+                    <CardAction>
+                        <div className="flex gap-2">
+                        <div className="flex-1 relative">
+                            <IconSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={20} />
+                            <Input
+                                placeholder="Cari berdasarkan nama atau username"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                                className="min-w-[304px] pl-10"
                             />
                         </div>
+                        </div>
+                    </CardAction>
+                </CardHeader>
+                    {users.length === 0 && isLoading ? (
+                         <div className="mx-auto flex w-full max-w-xs flex-col gap-4 [--radius:1rem]">
+                         <Item variant="outline">
+                           <ItemMedia>
+                             <Spinner />
+                           </ItemMedia>
+                           <ItemContent>
+                             <ItemTitle className="line-clamp-1">Memuat data user...</ItemTitle>
+                           </ItemContent>
+                         </Item>
+                       </div>
+                    ) : (
+                        <CardContent>
+                        <UserTable
+                            users={users}
+                            onEdit={handleEdit}
+                            onChangeRole={handleChangeRole}
+                            onDelete={handleDelete}
+                        />
+    
+                        {/* Pagination */}
+                        {pagination && pagination.totalPages > 1 && (
+                            <div className="mt-4">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={pagination.totalPages}
+                                    onPageChange={handlePageChange}
+                                />
+                            </div>
+                        )}
+                    </CardContent>
                     )}
-                </CardContent>
             </Card>
 
             {/* Create User Dialog */}

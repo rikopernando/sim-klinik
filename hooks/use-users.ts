@@ -20,7 +20,7 @@ interface UseUsersResult {
 export function useUsers(): UseUsersResult {
     const [users, setUsers] = useState<User[]>([]);
     const [pagination, setPagination] = useState<Pagination | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastSearch, setLastSearch] = useState<string | undefined>(undefined);
     const [lastPage, setLastPage] = useState<number>(1);

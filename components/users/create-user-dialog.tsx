@@ -94,7 +94,7 @@ export function CreateUserDialog({ roles, open, onOpenChange, onSuccess }: Creat
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="name">Nama Lengkap</Label>
                         <Input
                             id="name"
@@ -105,7 +105,7 @@ export function CreateUserDialog({ roles, open, onOpenChange, onSuccess }: Creat
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <Input
                             id="email"
@@ -117,7 +117,7 @@ export function CreateUserDialog({ roles, open, onOpenChange, onSuccess }: Creat
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="username">Username</Label>
                         <Input
                             id="username"
@@ -129,7 +129,7 @@ export function CreateUserDialog({ roles, open, onOpenChange, onSuccess }: Creat
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
                         <div className="relative">
                             <Input
@@ -158,7 +158,7 @@ export function CreateUserDialog({ roles, open, onOpenChange, onSuccess }: Creat
                         </div>
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="role">Role</Label>
                         <Select
                             value={formData.roleId}

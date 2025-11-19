@@ -77,7 +77,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="edit-name">Nama Lengkap</Label>
                         <Input
                             id="edit-name"
@@ -88,7 +88,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="edit-email">Email</Label>
                         <Input
                             id="edit-email"
@@ -100,7 +100,7 @@ export function EditUserDialog({ user, open, onOpenChange, onSuccess }: EditUser
                         />
                     </div>
 
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="edit-username">Username</Label>
                         <Input
                             id="edit-username"

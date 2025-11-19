@@ -89,7 +89,7 @@ export function ChangeRoleDialog({ user, roles, open, onOpenChange, onSuccess }:
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
+                    <div className="space-y-2">
                         <Label htmlFor="role-select">Role</Label>
                         <Select value={selectedRole} onValueChange={setSelectedRole}>
                             <SelectTrigger id="role-select" className="w-full">

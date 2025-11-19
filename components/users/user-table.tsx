@@ -30,8 +30,9 @@ interface User {
     name: string;
     email: string;
     username: string;
-    createdAt: Date;
     role: string | null;
+    roleId: number | null;
+    createdAt: Date;
 }
 
 interface UserTableProps {
