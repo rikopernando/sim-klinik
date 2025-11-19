@@ -104,7 +104,7 @@
 
 | **No.** | **Kategori** | **Tugas Detail (Task)** | **Prio** | **Role** | **Status** |
 | --- | --- | --- | --- | --- | --- |
-| **H.3.1** | Dashboard Framework | Buat reusable dashboard layout component dengan widget system untuk semua roles. | Tinggi | Frontend | ⏳ |
+| **H.3.1** | Dashboard Framework | Buat reusable dashboard layout component dengan widget system untuk semua roles. | Tinggi | Frontend | ✅ |
 | **H.3.2** | Admin Dashboard | Tampilkan overview: total visits today, pending registrations, bed occupancy, revenue summary. | Sedang | Frontend | ⏳ |
 | **H.3.3** | Doctor Dashboard | Tampilkan antrian pasien dari semua poli + quick access ke RME + riwayat pasien. | Tinggi | Frontend | ⏳ |
 | **H.3.4** | Nurse Dashboard | Tampilkan bed occupancy + vital signs alerts + CPPT quick entry + daily tasks. | Sedang | Frontend | ⏳ |

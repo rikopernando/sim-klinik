@@ -18,6 +18,7 @@ import {
     IconReportMedical,
     IconUsers,
     IconSettings,
+    IconUser
 } from "@tabler/icons-react";
 
 export interface NavItem {
@@ -46,9 +47,14 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             icon: IconUsers,
         },
         {
+            title: "Pendaftaran Pasien",
+            url: "/dashboard/registration",
+            icon: IconUserPlus,
+        },
+        {
             title: "Data Pasien",
             url: "/dashboard/patients",
-            icon: IconUserPlus,
+            icon: IconUser,
         },
         {
             title: "Kunjungan",
