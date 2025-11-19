@@ -120,6 +120,7 @@ export default function EmergencyQueuePage() {
                             item={item}
                             index={index}
                             onStartExamination={handleStartExamination}
+                            onHandoverSuccess={refresh}
                         />
                     ))
                 )}

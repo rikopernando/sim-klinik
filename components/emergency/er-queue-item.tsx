@@ -1,25 +1,32 @@
 /**
  * ER Queue Item Component
  * Individual patient card in the ER queue
+ * H.1.3: Added handover functionality
  */
 
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, FileText, User } from "lucide-react";
+import { Clock, FileText, User, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { ERQueueItem } from "@/types/emergency";
 import { getTriageBadgeColor, getTriageLabel, getTriageCardClasses } from "@/lib/emergency/triage-utils";
+import { HandoverDialog } from "./handover-dialog";
 
 interface ERQueueItemProps {
     item: ERQueueItem;
     index: number;
     onStartExamination?: (visitId: number) => void;
+    onHandoverSuccess?: () => void;
 }
 
-export function ERQueueItemCard({ item, index, onStartExamination }: ERQueueItemProps) {
+export function ERQueueItemCard({ item, index, onStartExamination, onHandoverSuccess }: ERQueueItemProps) {
+    const [showHandoverDialog, setShowHandoverDialog] = useState(false);
+
     return (
+        <>
         <Card className={`transition-all hover:shadow-md ${getTriageCardClasses(item.visit.triageStatus)}`}>
             <CardHeader>
                 <div className="flex items-start justify-between">
@@ -68,7 +75,7 @@ export function ERQueueItemCard({ item, index, onStartExamination }: ERQueueItem
                         </div>
                     )}
 
-                    {/* Footer: Arrival Time & Action */}
+                    {/* Footer: Arrival Time & Actions */}
                     <div className="flex items-center justify-between text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <Clock className="h-4 w-4" />
@@ -81,18 +88,45 @@ export function ERQueueItemCard({ item, index, onStartExamination }: ERQueueItem
                             </span>
                         </div>
 
-                        {onStartExamination && (
+                        <div className="flex gap-2">
+                            {onStartExamination && (
+                                <Button
+                                    size="sm"
+                                    onClick={() => onStartExamination(item.visit.id)}
+                                >
+                                    <User className="h-4 w-4 mr-2" />
+                                    Mulai Pemeriksaan
+                                </Button>
+                            )}
+
+                            {/* Handover Button (H.1.3) */}
                             <Button
                                 size="sm"
-                                onClick={() => onStartExamination(item.visit.id)}
+                                variant="outline"
+                                onClick={() => setShowHandoverDialog(true)}
                             >
-                                <User className="h-4 w-4 mr-2" />
-                                Mulai Pemeriksaan
+                                <ArrowRight className="h-4 w-4 mr-2" />
+                                Handover
                             </Button>
-                        )}
+                        </div>
                     </div>
                 </div>
             </CardContent>
         </Card>
+
+        {/* Handover Dialog (H.1.3) */}
+        <HandoverDialog
+            open={showHandoverDialog}
+            onOpenChange={setShowHandoverDialog}
+            visitId={item.visit.id}
+            patientName={item.patient.name}
+            onSuccess={() => {
+                setShowHandoverDialog(false);
+                if (onHandoverSuccess) {
+                    onHandoverSuccess();
+                }
+            }}
+        />
+        </>
     );
 }

@@ -83,7 +83,7 @@
 | --- | --- | --- | --- | --- | --- |
 | **H.1.1** | RME → Apotek | Buat real-time notification system saat dokter membuat resep digital baru (WebSocket/Server-Sent Events). | Tinggi | Fullstack | ✅ |
 | **H.1.2** | RME → Kasir | Auto-update visit status menjadi "Ready for Billing" saat RME dikunci oleh dokter. | Tinggi | Backend | ✅ |
-| **H.1.3** | UGD → RJ/RI | Implementasi handover workflow dengan button "Transfer ke RI/RJ" di dashboard UGD. | Tinggi | Fullstack | ⏳ |
+| **H.1.3** | UGD → RJ/RI | Implementasi handover workflow dengan button "Transfer ke RI/RJ" di dashboard UGD. | Tinggi | Fullstack | ✅ |
 | **H.1.4** | Apotek → Billing | Auto-agregasi biaya obat yang sudah fulfilled ke billing items pasien (sudah ada di billing engine). | Tinggi | Backend | ✅ |
 | **H.1.5** | Rawat Inap → Billing | Auto-agregasi biaya kamar (daily rate × days stayed) saat billing dibuat (sudah ada di billing engine). | Tinggi | Backend | ✅ |
 | **H.1.6** | Rawat Inap → Billing | Auto-agregasi material usage ke billing items (sudah ada di billing engine). | Tinggi | Backend | ✅ |

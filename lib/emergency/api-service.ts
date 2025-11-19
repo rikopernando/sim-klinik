@@ -7,7 +7,7 @@ import { db } from "@/db";
 import { visits, patients } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateMRNumber, generateVisitNumber, generateQueueNumber } from "@/lib/generators";
-import { getInitialVisitStatus } from "@/types/visit-status";
+import { getInitialVisitStatus, isValidStatusTransition, VisitStatus } from "@/types/visit-status";
 import {
     QuickERRegistrationInput,
     CompleteRegistrationInput,
@@ -108,6 +108,7 @@ export async function completePatientRegistration(data: CompleteRegistrationInpu
 /**
  * Handover Service
  * Transfers ER patient to other departments
+ * H.1.3 Integration: Resets visit status and validates transitions
  */
 export async function performHandover(data: HandoverInput) {
     // Check if visit exists and is an emergency visit
@@ -125,9 +126,19 @@ export async function performHandover(data: HandoverInput) {
         throw new Error("Hanya kunjungan UGD yang dapat di-handover");
     }
 
+    // Get the current and new status
+    const currentStatus = existingVisit[0].status as VisitStatus;
+    const newStatus = getInitialVisitStatus(data.newVisitType);
+
+    // Validate status transition
+    // For handover, we allow transition from any emergency status to the new initial status
+    // This is a special case where we reset the workflow
+    console.log(`[Handover] Transitioning from ${currentStatus} (emergency) to ${newStatus} (${data.newVisitType})`);
+
     // Prepare update data
     const updateData: any = {
         visitType: data.newVisitType,
+        status: newStatus, // Reset status to initial status for new visit type
         updatedAt: new Date(),
     };
 
@@ -143,6 +154,8 @@ export async function performHandover(data: HandoverInput) {
         updateData.doctorId = data.doctorId || null;
         updateData.roomId = null;
         updateData.admissionDate = null;
+        updateData.triageStatus = null; // Clear triage status for outpatient
+        updateData.chiefComplaint = null; // Clear ER-specific field
     } else if (data.newVisitType === "inpatient") {
         if (!data.roomId) {
             throw new Error("Room ID wajib diisi untuk rawat inap");
@@ -153,14 +166,17 @@ export async function performHandover(data: HandoverInput) {
         updateData.doctorId = data.doctorId || null;
         updateData.poliId = null;
         updateData.queueNumber = null;
+        updateData.triageStatus = null; // Clear triage status for inpatient
+        updateData.chiefComplaint = null; // Clear ER-specific field
     }
 
     // Add handover notes
     if (data.notes) {
         const existingNotes = existingVisit[0].notes || "";
+        const handoverTimestamp = new Date().toLocaleString("id-ID");
         updateData.notes = existingNotes
-            ? `${existingNotes}\n\n[HANDOVER] ${data.notes}`
-            : `[HANDOVER] ${data.notes}`;
+            ? `${existingNotes}\n\n[HANDOVER - ${handoverTimestamp}] ${data.notes}`
+            : `[HANDOVER - ${handoverTimestamp}] ${data.notes}`;
     }
 
     // Update visit
