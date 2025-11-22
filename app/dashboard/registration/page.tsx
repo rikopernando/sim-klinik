@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, ArrowLeft, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CheckCircle, ArrowLeft, UserPlus, Eye, List } from "lucide-react";
 
 import { PatientSearch } from "@/components/patients/patient-search";
 import { PatientRegistrationForm } from "@/components/patients/patient-registration-form";
@@ -15,6 +16,7 @@ type RegistrationStep = "search" | "new-patient" | "visit-registration" | "succe
 
 
 export default function RegistrationPage() {
+    const router = useRouter();
     const [step, setStep] = useState<RegistrationStep>("search");
     const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
     const [registeredVisit, setRegisteredVisit] = useState<RegisteredVisit | null>(null);
@@ -189,14 +191,34 @@ export default function RegistrationPage() {
                         </Card>
 
                         {/* Action Buttons */}
-                        <div className="flex justify-center gap-4">
-                            <Button onClick={handleNewRegistration} size="lg">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+                            <Button onClick={handleNewRegistration} size="lg" className="gap-2">
+                                <UserPlus className="h-4 w-4" />
                                 Daftar Pasien Lain
+                            </Button>
+                            <Button
+                                onClick={() => router.push("/dashboard/queue")}
+                                variant="outline"
+                                size="lg"
+                                className="gap-2"
+                            >
+                                <Eye className="h-4 w-4" />
+                                Lihat Antrian
+                            </Button>
+                            <Button
+                                onClick={() => router.push("/dashboard/patients")}
+                                variant="outline"
+                                size="lg"
+                                className="gap-2"
+                            >
+                                <List className="h-4 w-4" />
+                                Lihat Daftar Pasien
                             </Button>
                             <Button
                                 onClick={() => window.print()}
                                 variant="outline"
                                 size="lg"
+                                className="gap-2"
                             >
                                 Cetak Kartu Antrian
                             </Button>

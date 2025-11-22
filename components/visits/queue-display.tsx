@@ -46,8 +46,9 @@ export function QueueDisplay({
 
     const fetchQueue = async () => {
         try {
+            // Get visits that are waiting in queue
+            // Include: registered, waiting, in_examination
             const params = new URLSearchParams({
-                status: "pending",
                 visitType,
             });
 
@@ -62,7 +63,13 @@ export function QueueDisplay({
             }
 
             const data = await response.json();
-            setQueue(data.data || []);
+
+            // Filter out completed and cancelled visits
+            const activeQueue = (data.data || []).filter((item: QueueItem) => {
+                return item.visit.status !== "completed" && item.visit.status !== "cancelled";
+            });
+
+            setQueue(activeQueue);
             setLastUpdate(new Date());
             setError(null);
         } catch (err) {

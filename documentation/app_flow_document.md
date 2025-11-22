@@ -6,16 +6,16 @@ Berikut adalah User Story (Kisah Pengguna) yang terperinci untuk setiap fitur pa
 
 ### Modul 1: Pendaftaran & Registrasi (Role: Admin)
 
-| **No.** | **User Story** | Perubahan/Penambahan |
+| **No.** | **User Story** | Perubahan/Penambahan/Notes |
 | --- | --- | --- |
 | **1.1** | **Sebagai Admin**, saya ingin **mencari data pasien yang sudah ada** menggunakan Nomor RM, NIK, atau Nama pada satu *search bar* yang cepat, agar saya tidak perlu membuat data ganda dan proses registrasi menjadi efisien. |  |
 | **1.2** | **Sebagai Admin**, saya ingin **membuat data pasien baru** dengan mengisi formulir sederhana (2-step wizard) yang mencakup data demografi inti, agar pasien dapat segera memiliki Nomor RM unik. |  |
 | **1.3** | **Sebagai Admin**, saya ingin **mengedit data pasien yang sudah ada**, agar informasi kontak dan alamat pasien selalu *up-to-date*. |  |
 | **1.4** | **Sebagai Admin**, saya ingin **mendaftarkan pasien untuk kunjungan Rawat Jalan** dengan memilih Dokter/Poli yang dituju, agar pasien masuk ke antrian digital yang benar. |  |
 | **1.5** | **Sebagai Admin**, saya ingin **mendaftarkan pasien untuk Rawat Inap** dengan memilih Kamar dan Jenis Jaminan/Pembayaran, agar status kamar terisi dan alur *billing* dimulai. |  |
-| **1.6** | **Sebagai Admin**, saya ingin **mencetak kartu antrian sederhana** yang berisi Nama Pasien, Nomor Antrian, dan Poli, sebagai bukti registrasi. |  |
-| 1.7 | **Sebagai Admin/Perawat Triage**, saya ingin **melakukan pendaftaran cepat (One-Click Registration)** untuk kasus Gawat Darurat/Kecelakaan, hanya dengan memasukkan nama dan keluhan utama, agar penanganan medis tidak tertunda. | **Baru/Kritis:** Fitur *Express Registration* harus ada di *Header* aplikasi (misalnya, tombol **[UGD Cepat]**). |
-| 1.8 | **Sebagai Admin**, saya ingin **mengubah status kunjungan UGD** menjadi Rawat Jalan atau Rawat Inap, jika diperlukan, agar alur data pasien berpindah modul secara mulus. | Baru: Integrasi handover ke modul lain. |
+| **1.6** | **Sebagai Admin**, saya ingin **mencetak kartu antrian sederhana** yang berisi Nama Pasien, Nomor Antrian, dan Poli, sebagai bukti registrasi. | PR, belum dikerjakan |
+| 1.7 | **Sebagai Admin/Perawat Triage**, saya ingin **melakukan pendaftaran cepat (One-Click Registration)** untuk kasus Gawat Darurat/Kecelakaan, hanya dengan memasukkan nama dan keluhan utama, agar penanganan medis tidak tertunda. | **Baru/Kritis:** Fitur *Express Registration* harus ada di *Header* aplikasi (misalnya, tombol **[UGD Cepat]**). Belum dibuat |
+| 1.8 | **Sebagai Admin**, saya ingin **mengubah status kunjungan UGD** menjadi Rawat Jalan atau Rawat Inap, jika diperlukan, agar alur data pasien berpindah modul secara mulus. | Baru: Integrasi handover ke modul lain. Belum dibuat |
 
 ### Modul 2: Rekam Medis Elektronik (RME) & Rawat Jalan (Role: Dokter, Perawat)
 

@@ -151,7 +151,7 @@ export const GET = withRBAC(
     try {
         const searchParams = request.nextUrl.searchParams;
         const poliId = searchParams.get("poliId");
-        const status = searchParams.get("status") || "pending";
+        const status = searchParams.get("status");
         const visitType = searchParams.get("visitType");
 
         // Build query conditions
@@ -169,7 +169,7 @@ export const GET = withRBAC(
             conditions.push(eq(visits.visitType, visitType));
         }
 
-        // Get today's date range for filtering
+        // Get today's date range for filtering (only today's visits)
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
