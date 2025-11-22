@@ -80,7 +80,7 @@ export default function PatientsPage() {
                                     size={20}
                                 />
                                 <Input
-                                    placeholder="Cari berdasarkan nama, NIK, atau nomor RM"
+                                    placeholder="Cari berdasarkan nama, NIK, atau RM"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="min-w-[304px] pl-10"

@@ -1,13 +1,14 @@
 "use client";
 
 /**
- * Patient Registration Form Component
- * 2-step wizard form for registering new patients
+ * Patient Edit Form Component
+ * 2-step wizard form for editing existing patient information
  */
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { format } from "date-fns";
 import { AlertCircle } from "lucide-react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -17,12 +18,12 @@ import { PatientContactStep } from "./patient-contact-step";
 import { WizardNavigation } from "./wizard-navigation";
 
 import { patientFormSchema, type PatientFormData } from "@/lib/validations/registration";
-import { type RegisteredPatient } from "@/types/registration";
-import { registerPatient } from "@/lib/services/patient.service";
+import { type Patient } from "@/types/registration";
 import { getErrorMessage } from "@/lib/utils/error";
 
-interface PatientRegistrationFormProps {
-    onSuccess?: (patient: RegisteredPatient) => void;
+interface PatientEditFormProps {
+    patient: Patient;
+    onSuccess?: (patient: Patient) => void;
     onCancel?: () => void;
 }
 
@@ -31,10 +32,11 @@ const FORM_STEPS = [
     { number: 2, label: "Kontak & Jaminan" },
 ];
 
-export function PatientRegistrationForm({
+export function PatientEditForm({
+    patient,
     onSuccess,
     onCancel,
-}: PatientRegistrationFormProps) {
+}: PatientEditFormProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -42,19 +44,19 @@ export function PatientRegistrationForm({
     const form = useForm<PatientFormData>({
         resolver: zodResolver(patientFormSchema),
         defaultValues: {
-            nik: "",
-            name: "",
-            dateOfBirth: undefined,
-            gender: undefined,
-            bloodType: "",
-            phone: "",
-            address: "",
-            email: "",
-            emergencyContact: "",
-            emergencyPhone: "",
-            insuranceType: "",
-            insuranceNumber: "",
-            allergies: "",
+            nik: patient.nik || "",
+            name: patient.name,
+            dateOfBirth: patient.dateOfBirth ? new Date(patient.dateOfBirth) : undefined,
+            gender: patient.gender as "male" | "female" | undefined,
+            bloodType: patient.bloodType || "",
+            phone: patient.phone || "",
+            address: patient.address || "",
+            email: patient.email || "",
+            emergencyContact: patient.emergencyContact || "",
+            emergencyPhone: patient.emergencyPhone || "",
+            insuranceType: patient.insuranceType || "",
+            insuranceNumber: patient.insuranceNumber || "",
+            allergies: patient.allergies || "",
         },
     });
 
@@ -79,11 +81,29 @@ export function PatientRegistrationForm({
         setErrorMessage(null);
 
         try {
-            const patient = await registerPatient(data);
-            onSuccess?.(patient);
+            const response = await fetch(`/api/patients/${patient.id}`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...data,
+                    dateOfBirth: data.dateOfBirth
+                        ? format(data.dateOfBirth, "yyyy-MM-dd")
+                        : null,
+                }),
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || "Failed to update patient");
+            }
+
+            const result = await response.json();
+            onSuccess?.(result.data);
         } catch (error) {
             setErrorMessage(getErrorMessage(error));
-            console.error("Registration error:", error);
+            console.error("Update error:", error);
         } finally {
             setIsSubmitting(false);
         }
@@ -143,7 +163,7 @@ export function PatientRegistrationForm({
                 onNext={handleNext}
                 onBack={handleBack}
                 onCancel={onCancel}
-                submitLabel="Daftar Pasien"
+                submitLabel="Simpan Perubahan"
             />
         </form>
     );

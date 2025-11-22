@@ -5,7 +5,7 @@
  * Displays success message and patient details after registration
  */
 
-import { CheckCircle, UserPlus, FileText, List } from "lucide-react";
+import { CheckCircle, UserPlus, FileText, List, Edit } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ interface PatientSuccessCardProps {
     onAddAnother: () => void;
     onRegisterVisit: () => void;
     onViewList: () => void;
+    mode?: "create" | "edit";
 }
 
 export function PatientSuccessCard({
@@ -25,7 +26,9 @@ export function PatientSuccessCard({
     onAddAnother,
     onRegisterVisit,
     onViewList,
+    mode = "create",
 }: PatientSuccessCardProps) {
+    const isEditMode = mode === "edit";
 
     return (
         <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
@@ -35,9 +38,11 @@ export function PatientSuccessCard({
                     <div className="mb-4 rounded-full bg-green-100 p-3 dark:bg-green-900">
                         <CheckCircle className="h-12 w-12 text-green-600 dark:text-green-400" />
                     </div>
-                    <h2 className="mb-2 text-2xl font-bold">Pasien Berhasil Didaftarkan!</h2>
+                    <h2 className="mb-2 text-2xl font-bold">
+                        {isEditMode ? "Data Pasien Berhasil Diperbarui!" : "Pasien Berhasil Didaftarkan!"}
+                    </h2>
                     <p className="text-muted-foreground">
-                        Data pasien telah tersimpan di sistem
+                        {isEditMode ? "Perubahan data pasien telah tersimpan di sistem" : "Data pasien telah tersimpan di sistem"}
                     </p>
                 </div>
 
@@ -120,8 +125,17 @@ export function PatientSuccessCard({
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
                     <Button onClick={onAddAnother} size="lg" className="gap-2">
-                        <UserPlus className="h-4 w-4" />
-                        Tambah Pasien Lain
+                        {isEditMode ? (
+                            <>
+                                <Edit className="h-4 w-4" />
+                                Edit Lagi
+                            </>
+                        ) : (
+                            <>
+                                <UserPlus className="h-4 w-4" />
+                                Tambah Pasien Lain
+                            </>
+                        )}
                     </Button>
                     <Button
                         onClick={onRegisterVisit}
