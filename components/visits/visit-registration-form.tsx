@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { visitFormSchema, type VisitFormData } from "@/lib/validations/registration";
 import { type Patient, type RegisteredVisit, TRIAGE_STATUS } from "@/types/registration";
 import { registerVisit } from "@/lib/services/visit.service";
+import { getDoctors, type Doctor } from "@/lib/services/doctor.service";
 import { getErrorMessage } from "@/lib/utils/error";
 import { PatientInfoCard } from "@/components/forms/patient-info-card";
 
@@ -41,6 +42,8 @@ export function VisitRegistrationForm({
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [polis, setPolis] = useState<Array<{ id: number; name: string; code: string }>>([]);
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [loadingDoctors, setLoadingDoctors] = useState(false);
 
     const form = useForm<VisitFormData>({
         resolver: zodResolver(visitFormSchema),
@@ -65,15 +68,31 @@ export function VisitRegistrationForm({
 
     const visitType = watch("visitType");
 
-    // Fetch polis/departments (placeholder - will implement API later)
+    // Fetch polis/departments and doctors
     useEffect(() => {
-        // TODO: Fetch from API
+        // TODO: Fetch polis from API
         setPolis([
             { id: 1, name: "Poli Umum", code: "PU" },
             { id: 2, name: "Poli Gigi", code: "PG" },
             { id: 3, name: "Poli Anak", code: "PA" },
             { id: 4, name: "Poli Kebidanan", code: "PKB" },
         ]);
+
+        // Fetch doctors from API using service
+        const fetchDoctors = async () => {
+            setLoadingDoctors(true);
+            try {
+                const doctorsList = await getDoctors();
+                setDoctors(doctorsList);
+            } catch (error) {
+                console.error("Error fetching doctors:", error);
+                setErrorMessage("Gagal memuat daftar dokter");
+            } finally {
+                setLoadingDoctors(false);
+            }
+        };
+
+        fetchDoctors();
     }, []);
 
     const onSubmit = async (data: VisitFormData) => {
@@ -170,7 +189,7 @@ export function VisitRegistrationForm({
 
                         {/* Outpatient Fields */}
                         {visitType === "outpatient" && (
-                            <div className="space-y-4">
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="poliId">
                                         Poli/Poliklinik <span className="text-destructive">*</span>
@@ -189,6 +208,36 @@ export function VisitRegistrationForm({
                                     </Select>
                                     {errors.poliId && (
                                         <p className="text-sm text-destructive">{errors.poliId.message}</p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="doctorId">
+                                        Dokter <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Select
+                                        onValueChange={(value) => setValue("doctorId", value)}
+                                        disabled={loadingDoctors}
+                                    >
+                                        <SelectTrigger className={errors.doctorId ? "w-full border-destructive" : "w-full"}>
+                                            <SelectValue placeholder={
+                                                loadingDoctors
+                                                    ? "Memuat dokter..."
+                                                    : doctors.length === 0
+                                                    ? "Tidak ada dokter tersedia"
+                                                    : "Pilih dokter"
+                                            } />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {doctors.map((doctor) => (
+                                                <SelectItem key={doctor.id} value={doctor.id}>
+                                                    {doctor.name}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    {errors.doctorId && (
+                                        <p className="text-sm text-destructive">{errors.doctorId.message}</p>
                                     )}
                                 </div>
                             </div>

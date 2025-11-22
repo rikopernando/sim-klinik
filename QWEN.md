@@ -17,6 +17,22 @@ This is a **sim-klinik** project (likely Simulasi Klinik in Indonesian, meaning 
 ### Project Purpose
 Based on the project name "sim-klinik", this appears to be a clinic simulation system - likely for medical training, clinic management simulations, or healthcare education purposes.
 
+## Key Documentation
+
+The following key documents define the project requirements and workflow. Always refer to these for alignment with project workflow and requirements:
+
+### 1. User Stories Documentation
+- **File:** `documentation/app_flow_document.md`
+- **Content:** Detailed user stories for all modules (Registration, RME, Inpatient, Pharmacy, Billing, Discharge, UGD) organized by user role (Admin, Doctor, Nurse, Pharmacist, Cashier)
+
+### 2. Product Requirements Document
+- **File:** `documentation/project_requirements_document.md`
+- **Content:** Complete product requirements including goals, scope, features, role-based access control, and non-functional requirements
+
+### 3. Visit Status Lifecycle
+- **File:** `documentation/visit_status_lifecycle.md`
+- **Content:** Complete visit status state machine with valid transitions, API endpoints, and integration points
+
 ## Project Structure
 ```
 sim-klinik/ (codeguide-starter-fullstack template)
@@ -35,6 +51,10 @@ sim-klinik/ (codeguide-starter-fullstack template)
 │   └── schema/               # Database schemas
 ├── docker/                    # Docker configuration
 │   └── postgres/             # PostgreSQL initialization
+├── documentation/            # Project documentation
+│   ├── app_flow_document.md  # User stories and workflows
+│   ├── project_requirements_document.md  # Requirements and scope
+│   └── visit_status_lifecycle.md  # Visit status state machine
 ├── hooks/                     # Custom React hooks
 ├── lib/                       # Utility functions
 │   ├── auth.ts               # Better Auth configuration
@@ -121,10 +141,19 @@ This starter includes modern database integration:
 
 ## Project Context and Focus
 
-As a clinic simulation system, this project is likely designed to:
+As a clinic simulation system, this project is designed to:
 - Simulate clinic operations and workflows
 - Provide a platform for medical training or healthcare education
 - Demonstrate healthcare management concepts
 - Offer a realistic clinic management interface for educational purposes
 
-When working on features, keep in mind the healthcare/medical context this system is designed for. Consider user roles like doctors, nurses, patients, administrators, and typical clinic workflows.
+The system follows a **Simple UX** philosophy ("Satu Tugas, Satu Layar") and is designed to be **Mobile-Friendly** (PWA) for adoption in rural settings. Key modules include:
+- Registration & Registration (Admin role)
+- Emergency Unit (UGD) with quick registration and triage
+- Electronic Medical Records (RME) with SOAP documentation
+- Inpatient management
+- Pharmacy with inventory management
+- Billing & Cashier module
+- Patient discharge module
+
+When working on features, always refer to the key documentation files mentioned above to ensure alignment with user stories, requirements, and the visit status state machine. Consider user roles like doctors, nurses, patients, administrators, and typical clinic workflows.

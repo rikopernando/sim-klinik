@@ -48,7 +48,7 @@ export const patientFormSchema = z
 
 /**
  * Visit Registration Form Validation Schema
- * - Outpatient: Poli is required
+ * - Outpatient: Poli and Doctor are required
  * - Inpatient: Room is required
  * - Emergency: Chief complaint is required
  */
@@ -73,6 +73,19 @@ export const visitFormSchema = z
         {
             message: "Poli/Poliklinik wajib dipilih untuk rawat jalan",
             path: ["poliId"],
+        }
+    )
+    .refine(
+        (data) => {
+            // Outpatient: doctorId is required
+            if (data.visitType === "outpatient") {
+                return !!data.doctorId && data.doctorId.trim().length > 0;
+            }
+            return true;
+        },
+        {
+            message: "Dokter wajib dipilih untuk rawat jalan",
+            path: ["doctorId"],
         }
     )
     .refine(

@@ -182,10 +182,24 @@ export function PatientRegistrationForm({
                                 </Label>
                                 <Input
                                     id="nik"
+                                    type="text"
+                                    inputMode="numeric"
                                     {...register("nik")}
                                     placeholder="3201234567890123"
                                     maxLength={16}
                                     className={errors.nik ? "border-destructive" : ""}
+                                    onKeyPress={(e) => {
+                                        // Only allow numbers
+                                        if (!/[0-9]/.test(e.key)) {
+                                            e.preventDefault();
+                                        }
+                                    }}
+                                    onChange={(e) => {
+                                        // Remove non-numeric characters
+                                        const value = e.target.value.replace(/\D/g, '');
+                                        e.target.value = value;
+                                        register("nik").onChange(e);
+                                    }}
                                 />
                                 {errors.nik && (
                                     <p className="text-sm text-destructive">{errors.nik.message}</p>
