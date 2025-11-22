@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Patient } from "@/types/registration";
 import { formatDate } from "@/lib/utils/date";
+import { getGenderLabel } from "@/lib/utils/patient";
 
 interface PatientSuccessCardProps {
     patient: Patient;
@@ -25,10 +26,6 @@ export function PatientSuccessCard({
     onRegisterVisit,
     onViewList,
 }: PatientSuccessCardProps) {
-    const getGenderLabel = (gender: string | null | undefined) => {
-        if (!gender) return "-";
-        return gender === "male" ? "Laki-laki" : "Perempuan";
-    };
 
     return (
         <Card className="border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950">
