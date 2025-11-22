@@ -7,9 +7,17 @@ export interface Patient {
     name: string;
     dateOfBirth: string | null;
     gender: string | null;
+    bloodType: string | null;
     phone: string | null;
+    email: string | null;
     address: string | null;
+    emergencyContact: string | null;
+    emergencyPhone: string | null;
     insuranceType: string | null;
+    insuranceNumber: string | null;
+    allergies: string | null;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface PatientFormData {
@@ -45,9 +53,17 @@ export interface RegisteredPatient {
     nik: string | null;
     dateOfBirth: string | null;
     gender: string | null;
+    bloodType: string | null;
     phone: string | null;
+    email: string | null;
     address: string | null;
+    emergencyContact: string | null;
+    emergencyPhone: string | null;
     insuranceType: string | null;
+    insuranceNumber: string | null;
+    allergies: string | null;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface RegisteredVisit {
