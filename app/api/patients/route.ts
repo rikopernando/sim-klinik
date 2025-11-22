@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { patients } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { or, like, count, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { generateMRNumber } from "@/lib/generators";
 import { withRBAC } from "@/lib/rbac/middleware";
@@ -110,44 +110,65 @@ export const POST = withRBAC(
 );
 
 /**
- * GET /api/patients/:id
- * Get patient by ID
+ * GET /api/patients
+ * Get all patients with pagination and search
  * Requires: patients:read permission
  */
 export const GET = withRBAC(
     async (request: NextRequest) => {
         try {
             const url = new URL(request.url);
-            const id = url.searchParams.get("id");
+            const search = url.searchParams.get("search");
+            const page = parseInt(url.searchParams.get("page") || "1");
+            const limit = parseInt(url.searchParams.get("limit") || "10");
 
-            if (!id) {
-                return NextResponse.json(
-                    { error: "Patient ID is required" },
-                    { status: 400 }
+            const offset = (page - 1) * limit;
+
+            // Build search condition
+            let searchCondition;
+            if (search) {
+                searchCondition = or(
+                    like(patients.name, `%${search}%`),
+                    like(patients.nik, `%${search}%`),
+                    like(patients.mrNumber, `%${search}%`)
                 );
             }
 
-            const patient = await db
+            // Get total count
+            const countQuery = searchCondition
+                ? db.select({ count: count() }).from(patients).where(searchCondition)
+                : db.select({ count: count() }).from(patients);
+
+            const [{ count: total }] = await countQuery;
+
+            // Get paginated patients
+            let patientsQuery = db
                 .select()
                 .from(patients)
-                .where(eq(patients.id, parseInt(id, 10)))
-                .limit(1);
+                .orderBy(desc(patients.createdAt))
+                .limit(limit)
+                .offset(offset);
 
-            if (patient.length === 0) {
-                return NextResponse.json(
-                    { error: "Patient not found" },
-                    { status: 404 }
-                );
+            if (searchCondition) {
+                patientsQuery = patientsQuery.where(searchCondition) as typeof patientsQuery;
             }
+
+            const patientsList = await patientsQuery;
 
             return NextResponse.json({
                 success: true,
-                data: patient[0],
+                patients: patientsList,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                },
             });
         } catch (error) {
             console.error("Patient fetch error:", error);
             return NextResponse.json(
-                { error: "Failed to fetch patient" },
+                { error: "Failed to fetch patients" },
                 { status: 500 }
             );
         }
@@ -155,71 +176,3 @@ export const GET = withRBAC(
     { permissions: ["patients:read"] }
 );
 
-/**
- * PATCH /api/patients/:id
- * Update patient information
- * Requires: patients:write permission
- */
-export const PATCH = withRBAC(
-    async (request: NextRequest) => {
-        try {
-            const body = await request.json();
-            const { id, ...updateData } = body;
-
-            if (!id) {
-                return NextResponse.json(
-                    { error: "Patient ID is required" },
-                    { status: 400 }
-                );
-            }
-
-            // Validate update data
-            const validatedData = patientSchema.partial().parse(updateData);
-
-            // Prepare update object with proper type conversions
-            const updateObject: Record<string, unknown> = {
-                ...validatedData,
-                updatedAt: new Date(),
-            };
-
-            // Convert dateOfBirth string to Date if present
-            if (validatedData.dateOfBirth) {
-                updateObject.dateOfBirth = new Date(validatedData.dateOfBirth);
-            }
-
-            // Update patient
-            const updatedPatient = await db
-                .update(patients)
-                .set(updateObject)
-                .where(eq(patients.id, id))
-                .returning();
-
-            if (updatedPatient.length === 0) {
-                return NextResponse.json(
-                    { error: "Patient not found" },
-                    { status: 404 }
-                );
-            }
-
-            return NextResponse.json({
-                success: true,
-                message: "Patient updated successfully",
-                data: updatedPatient[0],
-            });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                return NextResponse.json(
-                    { error: "Validation error", details: error.issues },
-                    { status: 400 }
-                );
-            }
-
-            console.error("Patient update error:", error);
-            return NextResponse.json(
-                { error: "Failed to update patient" },
-                { status: 500 }
-            );
-        }
-    },
-    { permissions: ["patients:write"] }
-);

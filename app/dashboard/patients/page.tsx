@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useDebounce } from "@/hooks/use-debounce";
 import {
     Card,
     CardContent,
@@ -67,6 +68,9 @@ export default function PatientsPage() {
         totalPages: 0,
     });
 
+    // Debounce search query to avoid excessive API calls
+    const debouncedSearch = useDebounce(searchQuery, 500);
+
     // Fetch patients from API
     const fetchPatients = async (page: number = 1, search: string = "") => {
         setLoading(true);
@@ -96,25 +100,16 @@ export default function PatientsPage() {
     };
 
     useEffect(() => {
-        fetchPatients(1, searchQuery);
-    }, []);
+        fetchPatients(1, debouncedSearch);
+    }, [debouncedSearch]);
 
-    const handleSearch = () => {
-        fetchPatients(1, searchQuery);
-    };
-
-    const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === "Enter") {
-            handleSearch();
-        }
-    };
 
     const handlePageChange = (newPage: number) => {
-        fetchPatients(newPage, searchQuery);
+        fetchPatients(newPage, debouncedSearch);
     };
 
     const handleNewPatient = () => {
-        router.push("/dashboard/registration");
+        router.push("/dashboard/patients/new");
     };
 
     const handleEditPatient = (patientId: number) => {
@@ -151,18 +146,14 @@ export default function PatientsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                placeholder="Cari nama, NIK, atau nomor RM..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                onKeyPress={handleSearchKeyPress}
-                                className="pl-9"
-                            />
-                        </div>
-                        <Button onClick={handleSearch}>Cari</Button>
+                    <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            placeholder="Cari nama, NIK, atau nomor RM..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9"
+                        />
                     </div>
                 </CardContent>
             </Card>
