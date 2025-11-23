@@ -6,6 +6,16 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { deleteDiagnosis } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
@@ -26,22 +36,30 @@ interface DiagnosisTabProps {
 
 export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }: DiagnosisTabProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [diagnosisToDelete, setDiagnosisToDelete] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
-    const handleDelete = useCallback(async (id: number) => {
-        const confirmed = window.confirm("Hapus diagnosis ini?");
-        if (!confirmed) return;
+    const handleDeleteClick = useCallback((id: number) => {
+        setDiagnosisToDelete(id);
+        setDeleteDialogOpen(true);
+    }, []);
+
+    const confirmDelete = useCallback(async () => {
+        if (!diagnosisToDelete) return;
 
         try {
             setError(null);
-            await deleteDiagnosis(id);
+            await deleteDiagnosis(diagnosisToDelete);
+            setDeleteDialogOpen(false);
+            setDiagnosisToDelete(null);
             onUpdate();
         } catch (err) {
             setError(getErrorMessage(err));
         }
-    }, [onUpdate]);
+    }, [diagnosisToDelete, onUpdate]);
 
     return (
         <div className="space-y-6">
@@ -70,7 +88,7 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
                         {diagnoses.map((diagnosis) => (
                             <ListItem
                                 key={diagnosis.id}
-                                onDelete={() => handleDelete(diagnosis.id)}
+                                onDelete={() => handleDeleteClick(diagnosis.id)}
                                 showDelete={canEdit}
                             >
                                 <div className="space-y-1">
@@ -101,6 +119,27 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Diagnosis?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Aksi ini tidak dapat dibatalkan. Diagnosis akan dihapus permanen dari rekam medis.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

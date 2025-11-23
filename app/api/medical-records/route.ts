@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { medicalRecords, diagnoses, procedures, prescriptions, visits } from "@/db/schema";
+import { medicalRecords, diagnoses, procedures, prescriptions, visits, drugs, user } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 import { withRBAC } from "@/lib/rbac/middleware";
@@ -138,16 +138,47 @@ export const GET = withRBAC(
                 .from(diagnoses)
                 .where(eq(diagnoses.medicalRecordId, record[0].id));
 
-            // Get procedures
+            // Get procedures with performer information
             const proceduresList = await db
-                .select()
+                .select({
+                    id: procedures.id,
+                    medicalRecordId: procedures.medicalRecordId,
+                    icd9Code: procedures.icd9Code,
+                    description: procedures.description,
+                    performedBy: procedures.performedBy,
+                    performedByName: user.name,
+                    performedAt: procedures.performedAt,
+                    notes: procedures.notes,
+                    createdAt: procedures.createdAt,
+                })
                 .from(procedures)
+                .leftJoin(user, eq(procedures.performedBy, user.id))
                 .where(eq(procedures.medicalRecordId, record[0].id));
 
-            // Get prescriptions
+            // Get prescriptions with drug information
             const prescriptionsList = await db
-                .select()
+                .select({
+                    id: prescriptions.id,
+                    medicalRecordId: prescriptions.medicalRecordId,
+                    drugId: prescriptions.drugId,
+                    drugName: drugs.name,
+                    dosage: prescriptions.dosage,
+                    frequency: prescriptions.frequency,
+                    duration: prescriptions.duration,
+                    quantity: prescriptions.quantity,
+                    instructions: prescriptions.instructions,
+                    route: prescriptions.route,
+                    isFulfilled: prescriptions.isFulfilled,
+                    fulfilledBy: prescriptions.fulfilledBy,
+                    fulfilledAt: prescriptions.fulfilledAt,
+                    dispensedQuantity: prescriptions.dispensedQuantity,
+                    inventoryId: prescriptions.inventoryId,
+                    notes: prescriptions.notes,
+                    createdAt: prescriptions.createdAt,
+                    updatedAt: prescriptions.updatedAt,
+                })
                 .from(prescriptions)
+                .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
                 .where(eq(prescriptions.medicalRecordId, record[0].id));
 
             return NextResponse.json({

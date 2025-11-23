@@ -6,6 +6,16 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 import { deletePrescription } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
@@ -26,22 +36,30 @@ interface PrescriptionTabProps {
 
 export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLocked }: PrescriptionTabProps) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [prescriptionToDelete, setPrescriptionToDelete] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
-    const handleDelete = useCallback(async (id: number) => {
-        const confirmed = window.confirm("Hapus resep ini?");
-        if (!confirmed) return;
+    const handleDeleteClick = useCallback((id: number) => {
+        setPrescriptionToDelete(id);
+        setDeleteDialogOpen(true);
+    }, []);
+
+    const confirmDelete = useCallback(async () => {
+        if (!prescriptionToDelete) return;
 
         try {
             setError(null);
-            await deletePrescription(id);
+            await deletePrescription(prescriptionToDelete);
+            setDeleteDialogOpen(false);
+            setPrescriptionToDelete(null);
             onUpdate();
         } catch (err) {
             setError(getErrorMessage(err));
         }
-    }, [onUpdate]);
+    }, [prescriptionToDelete, onUpdate]);
 
     return (
         <div className="space-y-6">
@@ -70,34 +88,49 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                         {prescriptions.map((prescription) => (
                             <ListItem
                                 key={prescription.id}
-                                onDelete={() => handleDelete(prescription.id)}
+                                onDelete={() => handleDeleteClick(prescription.id)}
                                 showDelete={canDeletePrescription(isLocked, prescription.isFulfilled)}
                             >
                                 <div className="space-y-2">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-medium">Drug ID: {prescription.drugId}</span>
+                                        <span className="font-medium">{prescription.drugName}</span>
                                         {prescription.isFulfilled && (
                                             <Badge variant="secondary">Sudah Diambil</Badge>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                                        <div>
-                                            <span className="font-medium">Dosis:</span> {prescription.dosage}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                                        <div className="md:col-span-1 grid grid-cols-4">
+                                            <span className="font-medium col-span-1">Dosis</span>
+                                            <span className="col-span-3">
+                                                :{" "}{prescription.dosage}
+                                            </span>
                                         </div>
-                                        <div>
-                                            <span className="font-medium">Frekuensi:</span> {prescription.frequency}
+                                        <div className="md:col-span-1 grid grid-cols-4">
+                                            <span className="font-medium col-span-1">Frekuensi</span>
+                                            <span className="col-span-3">
+                                                :{" "}{prescription.frequency}
+                                            </span>
                                         </div>
                                         {prescription.duration && (
-                                            <div>
-                                                <span className="font-medium">Durasi:</span> {prescription.duration}
+                                            <div className="md:col-span-1 grid grid-cols-4">
+                                                <span className="font-medium col-span-1">Durasi:</span>
+                                                <span className="col-span-3">
+                                                    :{" "}{prescription.duration}
+                                                </span>
                                             </div>
                                         )}
-                                        <div>
-                                            <span className="font-medium">Jumlah:</span> {prescription.quantity}
+                                        <div className="md:col-span-1 grid grid-cols-4">
+                                            <span className="font-medium col-span-1">Jumlah</span>
+                                            <span className="col-span-3">
+                                                :{" "}{prescription.quantity}
+                                            </span>
                                         </div>
                                         {prescription.route && (
-                                            <div>
-                                                <span className="font-medium">Rute:</span> {prescription.route}
+                                            <div className="md:col-span-1 grid grid-cols-4">
+                                                <span className="font-medium col-span-1">Rute:</span>
+                                                <span className="col-span-3">
+                                                    :{" "}{prescription.route}
+                                                </span>
                                             </div>
                                         )}
                                     </div>
@@ -122,6 +155,27 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
             />
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Hapus Resep?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Aksi ini tidak dapat dibatalkan. Resep akan dihapus permanen dari rekam medis.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Batal</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={confirmDelete}
+                            className="bg-red-600 hover:bg-red-700"
+                        >
+                            Hapus
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

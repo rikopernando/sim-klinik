@@ -36,6 +36,7 @@ export interface Procedure {
     icd9Code: string;
     description: string;
     performedBy: string | null;
+    performedByName: string | null;
     performedAt: Date;
     notes: string | null;
     createdAt: Date;
@@ -45,6 +46,7 @@ export interface Prescription {
     id: number;
     medicalRecordId: number;
     drugId: number;
+    drugName: string;
     dosage: string;
     frequency: string;
     duration: string | null;
