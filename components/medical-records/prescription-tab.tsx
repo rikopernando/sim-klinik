@@ -1,32 +1,21 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Textarea } from "@/components/ui/textarea";
 
-import { addPrescription, deletePrescription } from "@/lib/services/medical-record.service";
+import { deletePrescription } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
-import { type Prescription, MEDICATION_ROUTES } from "@/types/medical-record";
+import { type Prescription } from "@/types/medical-record";
 import { canEditMedicalRecord, canDeletePrescription } from "@/lib/utils/medical-record";
-import { type Drug } from "@/hooks/use-drug-search";
 
 import { SectionCard } from "./section-card";
 import { ListItem } from "./list-item";
 import { EmptyState } from "./empty-state";
-import { DrugSearch } from "./drug-search";
+import { AddPrescriptionDialog } from "./add-prescription-dialog";
 
 interface PrescriptionTabProps {
     medicalRecordId: number;
@@ -35,70 +24,11 @@ interface PrescriptionTabProps {
     isLocked: boolean;
 }
 
-const INITIAL_FORM_STATE = {
-    drugId: 0,
-    drugName: "",
-    dosage: "",
-    frequency: "",
-    duration: "",
-    quantity: 1,
-    instructions: "",
-    route: "oral",
-};
-
 export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLocked }: PrescriptionTabProps) {
-    const [isAdding, setIsAdding] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [drugSearch, setDrugSearch] = useState("");
-    const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
-
-    const resetForm = useCallback(() => {
-        setFormData(INITIAL_FORM_STATE);
-        setDrugSearch("");
-        setIsAdding(false);
-    }, []);
-
-    const handleDrugSelect = useCallback((drug: Drug) => {
-        setFormData((prev) => ({
-            ...prev,
-            drugId: drug.id,
-            drugName: drug.name,
-        }));
-        setDrugSearch(drug.name); // Update search field with selected drug name
-    }, []);
-
-    const handleAdd = useCallback(async () => {
-        if (!formData.drugId || !formData.dosage || !formData.frequency || !formData.quantity) {
-            setError("Obat, dosis, frekuensi, dan jumlah wajib diisi");
-            return;
-        }
-
-        try {
-            setIsSaving(true);
-            setError(null);
-
-            await addPrescription({
-                medicalRecordId,
-                drugId: formData.drugId,
-                dosage: formData.dosage,
-                frequency: formData.frequency,
-                duration: formData.duration || undefined,
-                quantity: formData.quantity,
-                instructions: formData.instructions || undefined,
-                route: formData.route || undefined,
-            });
-
-            resetForm();
-            onUpdate();
-        } catch (err) {
-            setError(getErrorMessage(err));
-        } finally {
-            setIsSaving(false);
-        }
-    }, [formData, medicalRecordId, onUpdate, resetForm]);
 
     const handleDelete = useCallback(async (id: number) => {
         const confirmed = window.confirm("Hapus resep ini?");
@@ -120,6 +50,14 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
+            )}
+
+            {/* Add Button */}
+            {canEdit && (
+                <Button onClick={() => setIsDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Tambah Resep
+                </Button>
             )}
 
             {/* Existing Prescriptions */}
@@ -173,161 +111,17 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                 </SectionCard>
             )}
 
-            {/* Add New Prescription */}
-            {canEdit && (
-                <SectionCard
-                    title="Tambah Resep"
-                    description="Tambahkan resep obat baru untuk pasien"
-                >
-                    {!isAdding ? (
-                        <Button onClick={() => setIsAdding(true)} className="w-full">
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Resep
-                        </Button>
-                    ) : (
-                        <div className="space-y-4">
-                            {/* Drug Search */}
-                            <DrugSearch
-                                value={drugSearch}
-                                onChange={setDrugSearch}
-                                onSelect={handleDrugSelect}
-                                required
-                            />
-
-                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                {/* Dosage */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="dosage">
-                                        Dosis <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Input
-                                        id="dosage"
-                                        value={formData.dosage}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({ ...prev, dosage: e.target.value }))
-                                        }
-                                        placeholder="Contoh: 500mg, 1 tablet"
-                                    />
-                                </div>
-
-                                {/* Frequency */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="frequency">
-                                        Frekuensi <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Input
-                                        id="frequency"
-                                        value={formData.frequency}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({ ...prev, frequency: e.target.value }))
-                                        }
-                                        placeholder="Contoh: 3x sehari"
-                                    />
-                                </div>
-
-                                {/* Duration */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="duration">Durasi</Label>
-                                    <Input
-                                        id="duration"
-                                        value={formData.duration}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({ ...prev, duration: e.target.value }))
-                                        }
-                                        placeholder="Contoh: 7 hari"
-                                    />
-                                </div>
-
-                                {/* Quantity */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="quantity">
-                                        Jumlah <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Input
-                                        id="quantity"
-                                        type="number"
-                                        min="1"
-                                        value={formData.quantity}
-                                        onChange={(e) =>
-                                            setFormData((prev) => ({
-                                                ...prev,
-                                                quantity: parseInt(e.target.value, 10) || 1,
-                                            }))
-                                        }
-                                    />
-                                </div>
-
-                                {/* Route */}
-                                <div className="space-y-2">
-                                    <Label htmlFor="route">Rute Pemberian</Label>
-                                    <Select
-                                        value={formData.route}
-                                        onValueChange={(value) =>
-                                            setFormData((prev) => ({ ...prev, route: value }))
-                                        }
-                                    >
-                                        <SelectTrigger className="w-full">
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {MEDICATION_ROUTES.map((route) => (
-                                                <SelectItem key={route.value} value={route.value}>
-                                                    {route.label}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-
-                            {/* Instructions */}
-                            <div className="space-y-2">
-                                <Label htmlFor="instructions">Instruksi Tambahan</Label>
-                                <Textarea
-                                    id="instructions"
-                                    value={formData.instructions}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, instructions: e.target.value }))
-                                    }
-                                    placeholder="Contoh: Diminum setelah makan"
-                                    rows={2}
-                                />
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="flex gap-2">
-                                <Button onClick={handleAdd} disabled={isSaving} className="flex-1">
-                                    {isSaving ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Menyimpan...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Plus className="mr-2 h-4 w-4" />
-                                            Simpan Resep
-                                        </>
-                                    )}
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => {
-                                        resetForm();
-                                        setError(null);
-                                    }}
-                                    disabled={isSaving}
-                                >
-                                    Batal
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </SectionCard>
-            )}
-
-            {prescriptions.length === 0 && !isAdding && (
+            {prescriptions.length === 0 && (
                 <EmptyState message="Belum ada resep yang ditambahkan" />
             )}
+
+            {/* Add Prescription Dialog */}
+            <AddPrescriptionDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                medicalRecordId={medicalRecordId}
+                onSuccess={onUpdate}
+            />
         </div>
     );
 }
