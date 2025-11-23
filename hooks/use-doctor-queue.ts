@@ -5,14 +5,33 @@
 
 import { useState, useEffect, useCallback } from "react";
 
+export interface QueuePatient {
+    id: number;
+    name: string;
+}
+
+export interface QueueVisit {
+    id: number;
+    visitNumber: string;
+    visitType: string;
+    status: string;
+    queueNumber: number | null;
+}
+
+export interface QueuePoli {
+    name: string;
+}
+
+export interface QueueMedicalRecord {
+    id: number;
+    isLocked: boolean;
+}
+
 export interface QueueItem {
-    visit: any;
-    patient: any;
-    poli: any;
-    medicalRecord: {
-        id: number;
-        isLocked: boolean;
-    } | null;
+    visit: QueueVisit;
+    patient: QueuePatient | null;
+    poli: QueuePoli | null;
+    medicalRecord: QueueMedicalRecord | null;
 }
 
 export interface UseDoctorQueueOptions {
