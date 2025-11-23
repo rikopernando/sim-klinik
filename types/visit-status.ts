@@ -97,9 +97,9 @@ export const VISIT_STATUS_INFO: Record<VisitStatus, {
  * Maps current status to allowed next statuses
  */
 export const VISIT_STATUS_TRANSITIONS: Record<VisitStatus, VisitStatus[]> = {
-    registered: ["waiting", "cancelled"],
+    registered: ["waiting", "in_examination", "cancelled"], // Can go directly to in_examination when doctor starts
     waiting: ["in_examination", "cancelled"],
-    in_examination: ["examined", "waiting", "cancelled"], // Can go back to waiting if doctor is not available
+    in_examination: ["examined", "ready_for_billing", "waiting", "cancelled"], // Can go directly to ready_for_billing when locking, or examined as intermediate
     examined: ["ready_for_billing", "in_examination", "cancelled"], // Can go back to examination if needed
     ready_for_billing: ["billed", "cancelled"],
     billed: ["paid", "cancelled"],

@@ -2,6 +2,7 @@
  * Medical Record Types
  */
 
+// Types
 export interface MedicalRecord {
     id: number;
     visitId: number;
@@ -68,6 +69,19 @@ export interface MedicalRecordData {
     diagnoses: Diagnosis[];
     procedures: Procedure[];
     prescriptions: Prescription[];
+    visit: Visit;
+}
+
+export interface MedicalRecordFormData {
+    visitId: number;
+    soapSubjective?: string;
+    soapObjective?: string;
+    soapAssessment?: string;
+    soapPlan?: string;
+    physicalExam?: string;
+    laboratoryResults?: string;
+    radiologyResults?: string;
+    isDraft?: boolean;
 }
 
 export const DIAGNOSIS_TYPES = [

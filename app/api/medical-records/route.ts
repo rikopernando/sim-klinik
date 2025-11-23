@@ -181,6 +181,13 @@ export const GET = withRBAC(
                 .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
                 .where(eq(prescriptions.medicalRecordId, record[0].id));
 
+            // Get visit information
+            const [visitInfo] = await db
+                .select()
+                .from(visits)
+                .where(eq(visits.id, record[0].visitId))
+                .limit(1);
+
             return NextResponse.json({
                 success: true,
                 data: {
@@ -188,6 +195,7 @@ export const GET = withRBAC(
                     diagnoses: diagnosisList,
                     procedures: proceduresList,
                     prescriptions: prescriptionsList,
+                    visit: visitInfo,
                 },
             });
         }

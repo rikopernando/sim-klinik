@@ -62,15 +62,16 @@ export const POST = withRBAC(
                 );
             }
 
-            // Validate that visit status can transition to ready_for_billing
+            // Validate visit status transition to ready_for_billing
             const currentStatus = visit.status as VisitStatus;
-            const newStatus: VisitStatus = "ready_for_billing";
+            const finalStatus: VisitStatus = "ready_for_billing";
 
-            if (!isValidStatusTransition(currentStatus, newStatus)) {
+            // Can transition from in_examination or examined directly to ready_for_billing
+            if (!isValidStatusTransition(currentStatus, finalStatus)) {
                 return NextResponse.json(
                     {
                         error: "Cannot lock medical record",
-                        message: `Visit status "${currentStatus}" cannot transition to "ready_for_billing". Visit must be in "examined" status.`,
+                        message: `Visit status "${currentStatus}" cannot transition to "ready_for_billing". Visit must be in "in_examination" or "examined" status.`,
                         currentStatus,
                     },
                     { status: 400 }
@@ -94,7 +95,7 @@ export const POST = withRBAC(
             const [updatedVisit] = await db
                 .update(visits)
                 .set({
-                    status: newStatus,
+                    status: finalStatus,
                     updatedAt: new Date(),
                 })
                 .where(eq(visits.id, medicalRecord.visitId))

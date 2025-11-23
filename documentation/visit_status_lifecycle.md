@@ -72,7 +72,8 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Description:** Patient has just been registered, visit record created
 - **Initial Status:** YES (for all visit types)
 - **Who Sets:** Receptionist (Registration module)
-- **Can Transition To:** `waiting`, `cancelled`
+- **Can Transition To:** `waiting`, `in_examination`, `cancelled`
+- **Note:** Can skip `waiting` and go directly to `in_examination` when doctor starts examination
 - **Color:** Blue (`bg-blue-100`, `text-blue-700`)
 
 ### 2. **waiting**
@@ -84,9 +85,10 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 
 ### 3. **in_examination**
 - **Description:** Patient is currently being examined by a doctor
-- **Who Sets:** Doctor or Nurse (when calling patient)
-- **Can Transition To:** `examined`, `waiting` (if doctor unavailable), `cancelled`
+- **Who Sets:** Doctor or Nurse (when calling patient), or auto-set when doctor opens medical record
+- **Can Transition To:** `examined`, `ready_for_billing`, `waiting` (if doctor unavailable), `cancelled`
 - **Can Go Back To:** `waiting` (special case)
+- **Note:** Can skip `examined` and go directly to `ready_for_billing` when locking medical record
 - **Medical Record:** Can be created in this status
 - **Color:** Purple (`bg-purple-100`, `text-purple-700`)
 
@@ -141,9 +143,9 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 
 | From Status | To Status(es) |
 |------------|---------------|
-| `registered` | `waiting`, `cancelled` |
+| `registered` | `waiting`, `in_examination`, `cancelled` |
 | `waiting` | `in_examination`, `cancelled` |
-| `in_examination` | `examined`, `waiting`, `cancelled` |
+| `in_examination` | `examined`, `ready_for_billing`, `waiting`, `cancelled` |
 | `examined` | `ready_for_billing`, `in_examination`, `cancelled` |
 | `ready_for_billing` | `billed`, `cancelled` |
 | `billed` | `paid`, `cancelled` |
@@ -519,18 +521,19 @@ status VARCHAR(20) NOT NULL DEFAULT 'registered'
 
 ## Common Workflows
 
-### Workflow 1: Outpatient Visit
+### Workflow 1: Outpatient Visit (Simplified)
 
 ```
 1. Receptionist registers patient → status: registered
-2. System/Receptionist moves to queue → status: waiting
-3. Doctor calls patient → status: in_examination
-4. Doctor completes examination → status: examined
-5. Doctor locks medical record → status: ready_for_billing (auto)
-6. Cashier creates billing → status: billed
-7. Cashier processes payment → status: paid
-8. System completes visit → status: completed
+2. Doctor opens medical record → status: in_examination (auto)
+3. Doctor works on SOAP notes, diagnosis, prescriptions, procedures
+4. Doctor locks medical record → status: ready_for_billing (auto)
+5. Cashier creates billing → status: billed
+6. Cashier processes payment → status: paid
+7. System completes visit → status: completed
 ```
+
+**Note:** Steps can be shortened with auto-transitions. The `waiting` and `examined` statuses are optional intermediate steps.
 
 ### Workflow 2: Emergency Visit (Quick Register)
 

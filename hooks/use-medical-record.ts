@@ -9,8 +9,10 @@ import {
     updateMedicalRecord,
     lockMedicalRecord,
 } from "@/lib/services/medical-record.service";
+import { updateVisitStatus } from "@/lib/services/visit.service";
 import { getErrorMessage } from "@/lib/utils/error";
 import { type MedicalRecordData } from "@/types/medical-record";
+import { type VisitStatus } from "@/types/visit-status";
 
 interface UseMedicalRecordOptions {
     visitId: number;
@@ -58,6 +60,20 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
 
             const data = await getMedicalRecordByVisit(visitId);
             setRecordData(data);
+
+            // Auto-update visit status to "in_examination" when doctor opens medical record
+            // This represents that the doctor has called the patient and started examination
+            const currentStatus = data.visit.status as VisitStatus;
+
+            if (currentStatus === "registered" || currentStatus === "waiting") {
+                try {
+                    await updateVisitStatus(visitId, "in_examination");
+                } catch (statusErr) {
+                    // Log error but don't block the medical record loading
+                    console.error("Failed to update visit status to in_examination:", statusErr);
+                }
+            }
+            // If already in_examination or beyond, do nothing
         } catch (err) {
             // If medical record doesn't exist, create a new one
             if (err instanceof Error && err.message.includes("404")) {
@@ -69,6 +85,18 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
                     // Reload after creation
                     const data = await getMedicalRecordByVisit(visitId);
                     setRecordData(data);
+
+                    // Auto-update visit status to "in_examination" when creating new medical record
+                    const currentStatus = data.visit.status as VisitStatus;
+
+                    if (currentStatus === "registered" || currentStatus === "waiting") {
+                        try {
+                            await updateVisitStatus(visitId, "in_examination");
+                        } catch (statusErr) {
+                            console.error("Failed to update visit status to in_examination:", statusErr);
+                        }
+                    }
+                    // If already in_examination or beyond, do nothing
                 } catch (createErr) {
                     setError(getErrorMessage(createErr));
                 }

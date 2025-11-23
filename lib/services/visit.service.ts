@@ -47,12 +47,12 @@ export async function getQueue(visitType?: string) {
  */
 export async function updateVisitStatus(
     visitId: number,
-    status: string
-): Promise<RegisteredVisit> {
-    const response = await axios.patch<{ data: RegisteredVisit }>(
-        `/api/visits/${visitId}`,
-        { status }
-    );
-
-    return response.data.data;
+    newStatus: string,
+    reason?: string
+): Promise<void> {
+    await axios.patch("/api/visits/status", {
+        visitId,
+        newStatus,
+        reason,
+    });
 }
