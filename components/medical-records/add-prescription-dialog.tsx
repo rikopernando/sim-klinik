@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Loader2, X } from "lucide-react";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 import { addPrescription } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
@@ -36,16 +40,24 @@ interface AddPrescriptionDialogProps {
     onSuccess: () => void;
 }
 
-const INITIAL_FORM_STATE = {
-    drugId: 0,
-    drugName: "",
-    dosage: "",
-    frequency: "",
-    duration: "",
-    quantity: 1,
-    instructions: "",
-    route: "oral",
-};
+// Validation schema for a single prescription item
+const prescriptionItemSchema = z.object({
+    drugId: z.number().min(1, "Obat wajib dipilih"),
+    drugName: z.string().min(1, "Nama obat wajib diisi"),
+    dosage: z.string().min(1, "Dosis wajib diisi"),
+    frequency: z.string().min(1, "Frekuensi wajib diisi"),
+    duration: z.string().optional(),
+    quantity: z.number().min(1, "Jumlah minimal 1"),
+    instructions: z.string().optional(),
+    route: z.string().optional(),
+});
+
+// Schema for the entire form with array of prescriptions
+const prescriptionFormSchema = z.object({
+    prescriptions: z.array(prescriptionItemSchema).min(1, "Minimal 1 resep harus ditambahkan"),
+});
+
+type PrescriptionFormData = z.infer<typeof prescriptionFormSchema>;
 
 export function AddPrescriptionDialog({
     open,
@@ -55,12 +67,34 @@ export function AddPrescriptionDialog({
 }: AddPrescriptionDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [drugSearch, setDrugSearch] = useState("");
-    const [formData, setFormData] = useState(INITIAL_FORM_STATE);
+    const [drugSearches, setDrugSearches] = useState<Record<number, string>>({});
+
+    const form = useForm<PrescriptionFormData>({
+        resolver: zodResolver(prescriptionFormSchema),
+        defaultValues: {
+            prescriptions: [
+                {
+                    drugId: 0,
+                    drugName: "",
+                    dosage: "",
+                    frequency: "",
+                    duration: "",
+                    quantity: 1,
+                    instructions: "",
+                    route: "oral",
+                },
+            ],
+        },
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "prescriptions",
+    });
 
     const resetForm = () => {
-        setFormData(INITIAL_FORM_STATE);
-        setDrugSearch("");
+        form.reset();
+        setDrugSearches({});
         setError(null);
     };
 
@@ -69,37 +103,55 @@ export function AddPrescriptionDialog({
         onOpenChange(false);
     };
 
-    const handleDrugSelect = (drug: Drug) => {
-        setFormData((prev) => ({
-            ...prev,
-            drugId: drug.id,
-            drugName: drug.name,
-        }));
-        setDrugSearch(drug.name);
+    const handleDrugSelect = (index: number, drug: Drug) => {
+        form.setValue(`prescriptions.${index}.drugId`, drug.id);
+        form.setValue(`prescriptions.${index}.drugName`, drug.name);
+        setDrugSearches((prev) => ({ ...prev, [index]: drug.name }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleAddItem = () => {
+        append({
+            drugId: 0,
+            drugName: "",
+            dosage: "",
+            frequency: "",
+            duration: "",
+            quantity: 1,
+            instructions: "",
+            route: "oral",
+        });
+    };
 
-        if (!formData.drugId || !formData.dosage || !formData.frequency || !formData.quantity) {
-            setError("Obat, dosis, frekuensi, dan jumlah wajib diisi");
-            return;
+    const handleRemoveItem = (index: number) => {
+        if (fields.length > 1) {
+            remove(index);
+            // Clean up drug search for removed item
+            setDrugSearches((prev) => {
+                const newSearches = { ...prev };
+                delete newSearches[index];
+                return newSearches;
+            });
         }
+    };
 
+    const onSubmit = async (data: PrescriptionFormData) => {
         try {
             setIsSaving(true);
             setError(null);
 
-            await addPrescription({
-                medicalRecordId,
-                drugId: formData.drugId,
-                dosage: formData.dosage,
-                frequency: formData.frequency,
-                duration: formData.duration || undefined,
-                quantity: formData.quantity,
-                instructions: formData.instructions || undefined,
-                route: formData.route || undefined,
-            });
+            // Save all prescriptions sequentially
+            for (const prescription of data.prescriptions) {
+                await addPrescription({
+                    medicalRecordId,
+                    drugId: prescription.drugId,
+                    dosage: prescription.dosage,
+                    frequency: prescription.frequency,
+                    duration: prescription.duration || undefined,
+                    quantity: prescription.quantity,
+                    instructions: prescription.instructions || undefined,
+                    route: prescription.route || undefined,
+                });
+            }
 
             handleClose();
             onSuccess();
@@ -112,12 +164,12 @@ export function AddPrescriptionDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px]">
-                <form onSubmit={handleSubmit}>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
                         <DialogTitle>Tambah Resep</DialogTitle>
                         <DialogDescription>
-                            Tambahkan resep obat baru untuk pasien
+                            Tambahkan satu atau lebih resep obat untuk pasien
                         </DialogDescription>
                     </DialogHeader>
 
@@ -129,113 +181,153 @@ export function AddPrescriptionDialog({
                             </div>
                         )}
 
-                        {/* Drug Search */}
-                        <DrugSearch
-                            value={drugSearch}
-                            onChange={setDrugSearch}
-                            onSelect={handleDrugSelect}
-                            required
-                        />
+                        {/* Prescription Items */}
+                        {fields.map((field, index) => (
+                            <div key={field.id} className="space-y-4">
+                                {index > 0 && <Separator />}
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {/* Dosage */}
-                            <div className="space-y-2">
-                                <Label htmlFor="dosage">
-                                    Dosis <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="dosage"
-                                    value={formData.dosage}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, dosage: e.target.value }))
+                                {/* Item Header */}
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-medium">Resep #{index + 1}</h4>
+                                    {fields.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="border-destructive text-destructive"
+                                            size="sm"
+                                            onClick={() => handleRemoveItem(index)}
+                                        >
+                                            <X className="h-4 w-4 mr-1" />
+                                            Hapus
+                                        </Button>
+                                    )}
+                                </div>
+
+                                {/* Drug Search */}
+                                <DrugSearch
+                                    value={drugSearches[index] || ""}
+                                    onChange={(value) =>
+                                        setDrugSearches((prev) => ({ ...prev, [index]: value }))
                                     }
-                                    placeholder="Contoh: 500mg, 1 tablet"
+                                    onSelect={(drug) => handleDrugSelect(index, drug)}
+                                    required
                                 />
-                            </div>
+                                {form.formState.errors.prescriptions?.[index]?.drugId && (
+                                    <p className="text-sm text-destructive">
+                                        {form.formState.errors.prescriptions[index]?.drugId?.message}
+                                    </p>
+                                )}
 
-                            {/* Frequency */}
-                            <div className="space-y-2">
-                                <Label htmlFor="frequency">
-                                    Frekuensi <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="frequency"
-                                    value={formData.frequency}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, frequency: e.target.value }))
-                                    }
-                                    placeholder="Contoh: 3x sehari"
-                                />
-                            </div>
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    {/* Dosage */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`dosage-${index}`}>
+                                            Dosis <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id={`dosage-${index}`}
+                                            {...form.register(`prescriptions.${index}.dosage`)}
+                                            placeholder="Contoh: 500mg, 1 tablet"
+                                        />
+                                        {form.formState.errors.prescriptions?.[index]?.dosage && (
+                                            <p className="text-sm text-destructive">
+                                                {form.formState.errors.prescriptions[index]?.dosage?.message}
+                                            </p>
+                                        )}
+                                    </div>
 
-                            {/* Duration */}
-                            <div className="space-y-2">
-                                <Label htmlFor="duration">Durasi</Label>
-                                <Input
-                                    id="duration"
-                                    value={formData.duration}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({ ...prev, duration: e.target.value }))
-                                    }
-                                    placeholder="Contoh: 7 hari"
-                                />
-                            </div>
+                                    {/* Frequency */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`frequency-${index}`}>
+                                            Frekuensi <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id={`frequency-${index}`}
+                                            {...form.register(`prescriptions.${index}.frequency`)}
+                                            placeholder="Contoh: 3x sehari"
+                                        />
+                                        {form.formState.errors.prescriptions?.[index]?.frequency && (
+                                            <p className="text-sm text-destructive">
+                                                {form.formState.errors.prescriptions[index]?.frequency?.message}
+                                            </p>
+                                        )}
+                                    </div>
 
-                            {/* Quantity */}
-                            <div className="space-y-2">
-                                <Label htmlFor="quantity">
-                                    Jumlah <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="quantity"
-                                    type="number"
-                                    min="1"
-                                    value={formData.quantity}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            quantity: parseInt(e.target.value, 10) || 1,
-                                        }))
-                                    }
-                                />
-                            </div>
+                                    {/* Duration */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`duration-${index}`}>Durasi</Label>
+                                        <Input
+                                            id={`duration-${index}`}
+                                            {...form.register(`prescriptions.${index}.duration`)}
+                                            placeholder="Contoh: 7 hari"
+                                        />
+                                    </div>
 
-                            {/* Route */}
-                            <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="route">Rute Pemberian</Label>
-                                <Select
-                                    value={formData.route}
-                                    onValueChange={(value) =>
-                                        setFormData((prev) => ({ ...prev, route: value }))
-                                    }
-                                >
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {MEDICATION_ROUTES.map((route) => (
-                                            <SelectItem key={route.value} value={route.value}>
-                                                {route.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
+                                    {/* Quantity */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`quantity-${index}`}>
+                                            Jumlah <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id={`quantity-${index}`}
+                                            type="number"
+                                            min="1"
+                                            {...form.register(`prescriptions.${index}.quantity`, {
+                                                valueAsNumber: true,
+                                            })}
+                                        />
+                                        {form.formState.errors.prescriptions?.[index]?.quantity && (
+                                            <p className="text-sm text-destructive">
+                                                {form.formState.errors.prescriptions[index]?.quantity?.message}
+                                            </p>
+                                        )}
+                                    </div>
 
-                        {/* Instructions */}
-                        <div className="space-y-2">
-                            <Label htmlFor="instructions">Instruksi Tambahan</Label>
-                            <Textarea
-                                id="instructions"
-                                value={formData.instructions}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, instructions: e.target.value }))
-                                }
-                                placeholder="Contoh: Diminum setelah makan"
-                                rows={2}
-                            />
-                        </div>
+                                    {/* Route */}
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor={`route-${index}`}>Rute Pemberian</Label>
+                                        <Select
+                                            value={form.watch(`prescriptions.${index}.route`)}
+                                            onValueChange={(value) =>
+                                                form.setValue(`prescriptions.${index}.route`, value)
+                                            }
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {MEDICATION_ROUTES.map((route) => (
+                                                    <SelectItem key={route.value} value={route.value}>
+                                                        {route.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Instructions */}
+                                <div className="space-y-2">
+                                    <Label htmlFor={`instructions-${index}`}>Instruksi Tambahan</Label>
+                                    <Textarea
+                                        id={`instructions-${index}`}
+                                        {...form.register(`prescriptions.${index}.instructions`)}
+                                        placeholder="Contoh: Diminum setelah makan"
+                                        rows={2}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+
+                        {/* Add More Button */}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAddItem}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Tambah Resep Lain
+                        </Button>
                     </div>
 
                     <DialogFooter>
@@ -251,12 +343,12 @@ export function AddPrescriptionDialog({
                             {isSaving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menyimpan...
+                                    Menyimpan {fields.length} Resep...
                                 </>
                             ) : (
                                 <>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Simpan Resep
+                                    Simpan {fields.length} Resep
                                 </>
                             )}
                         </Button>

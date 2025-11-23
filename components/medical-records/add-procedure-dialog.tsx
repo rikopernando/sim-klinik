@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Loader2 } from "lucide-react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Loader2, X } from "lucide-react";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +25,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 
 import { addProcedure } from "@/lib/services/medical-record.service";
 import { getMedicalStaff, formatMedicalStaffName, type MedicalStaff } from "@/lib/services/medical-staff.service";
@@ -35,12 +39,20 @@ interface AddProcedureDialogProps {
     onSuccess: () => void;
 }
 
-const INITIAL_FORM_STATE = {
-    icd9Code: "",
-    description: "",
-    performedBy: "",
-    notes: "",
-};
+// Validation schema for a single procedure item
+const procedureItemSchema = z.object({
+    icd9Code: z.string().min(1, "Kode ICD-9 wajib diisi"),
+    description: z.string().min(1, "Deskripsi wajib diisi"),
+    performedBy: z.string().optional(),
+    notes: z.string().optional(),
+});
+
+// Schema for the entire form with array of procedures
+const procedureFormSchema = z.object({
+    procedures: z.array(procedureItemSchema).min(1, "Minimal 1 tindakan harus ditambahkan"),
+});
+
+type ProcedureFormData = z.infer<typeof procedureFormSchema>;
 
 export function AddProcedureDialog({
     open,
@@ -50,9 +62,27 @@ export function AddProcedureDialog({
 }: AddProcedureDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [formData, setFormData] = useState(INITIAL_FORM_STATE);
     const [medicalStaff, setMedicalStaff] = useState<MedicalStaff[]>([]);
     const [loadingStaff, setLoadingStaff] = useState(false);
+
+    const form = useForm<ProcedureFormData>({
+        resolver: zodResolver(procedureFormSchema),
+        defaultValues: {
+            procedures: [
+                {
+                    icd9Code: "",
+                    description: "",
+                    performedBy: "",
+                    notes: "",
+                },
+            ],
+        },
+    });
+
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "procedures",
+    });
 
     // Fetch medical staff when dialog opens
     useEffect(() => {
@@ -75,7 +105,7 @@ export function AddProcedureDialog({
     }, [open]);
 
     const resetForm = () => {
-        setFormData(INITIAL_FORM_STATE);
+        form.reset();
         setError(null);
     };
 
@@ -84,25 +114,36 @@ export function AddProcedureDialog({
         onOpenChange(false);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleAddItem = () => {
+        append({
+            icd9Code: "",
+            description: "",
+            performedBy: "",
+            notes: "",
+        });
+    };
 
-        if (!formData.icd9Code || !formData.description) {
-            setError("Kode ICD-9 dan deskripsi wajib diisi");
-            return;
+    const handleRemoveItem = (index: number) => {
+        if (fields.length > 1) {
+            remove(index);
         }
+    };
 
+    const onSubmit = async (data: ProcedureFormData) => {
         try {
             setIsSaving(true);
             setError(null);
 
-            await addProcedure({
-                medicalRecordId,
-                icd9Code: formatIcdCode(formData.icd9Code),
-                description: formData.description,
-                performedBy: formData.performedBy || undefined,
-                notes: formData.notes || undefined,
-            });
+            // Save all procedures sequentially
+            for (const procedure of data.procedures) {
+                await addProcedure({
+                    medicalRecordId,
+                    icd9Code: formatIcdCode(procedure.icd9Code),
+                    description: procedure.description,
+                    performedBy: procedure.performedBy || undefined,
+                    notes: procedure.notes || undefined,
+                });
+            }
 
             handleClose();
             onSuccess();
@@ -115,12 +156,12 @@ export function AddProcedureDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[600px]">
-                <form onSubmit={handleSubmit}>
+            <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
                         <DialogTitle>Tambah Tindakan</DialogTitle>
                         <DialogDescription>
-                            Tambahkan tindakan medis yang dilakukan berdasarkan kode ICD-9
+                            Tambahkan satu atau lebih tindakan medis berdasarkan kode ICD-9
                         </DialogDescription>
                     </DialogHeader>
 
@@ -132,88 +173,124 @@ export function AddProcedureDialog({
                             </div>
                         )}
 
-                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {/* ICD-9 Code */}
-                            <div className="space-y-2">
-                                <Label htmlFor="icd9Code">
-                                    Kode ICD-9 <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="icd9Code"
-                                    value={formData.icd9Code}
-                                    onChange={(e) =>
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            icd9Code: e.target.value.toUpperCase(),
-                                        }))
-                                    }
-                                    placeholder="Contoh: 99.21"
-                                    className="font-mono"
-                                />
-                                <p className="text-xs text-muted-foreground">
-                                    Masukkan kode ICD-9-CM procedure
-                                </p>
-                            </div>
+                        {/* Procedure Items */}
+                        {fields.map((field, index) => (
+                            <div key={field.id} className="space-y-4">
+                                {index > 0 && <Separator />}
 
-                            {/* Performed By */}
-                            <div className="space-y-2">
-                                <Label htmlFor="performedBy">Dilakukan Oleh</Label>
-                                <Select
-                                    value={formData.performedBy}
-                                    onValueChange={(value) =>
-                                        setFormData((prev) => ({ ...prev, performedBy: value }))
-                                    }
-                                    disabled={loadingStaff}
-                                >
-                                    <SelectTrigger className="w-full" id="performedBy">
-                                        {loadingStaff ? (
-                                            <div className="flex items-center gap-2">
-                                                <Loader2 className="h-4 w-4 animate-spin" />
-                                                <span>Memuat...</span>
-                                            </div>
-                                        ) : (
-                                            <SelectValue placeholder="Pilih dokter/perawat" />
+                                {/* Item Header */}
+                                <div className="flex items-center justify-between">
+                                    <h4 className="font-medium">Tindakan #{index + 1}</h4>
+                                    {fields.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            className="border-destructive text-destructive"
+                                            size="sm"
+                                            onClick={() => handleRemoveItem(index)}
+                                        >
+                                            <X className="h-4 w-4 mr-1" />
+                                            Hapus
+                                        </Button>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    {/* ICD-9 Code */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`icd9Code-${index}`}>
+                                            Kode ICD-9 <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id={`icd9Code-${index}`}
+                                            {...form.register(`procedures.${index}.icd9Code`, {
+                                                onChange: (e) => {
+                                                    e.target.value = e.target.value.toUpperCase();
+                                                },
+                                            })}
+                                            placeholder="Contoh: 99.21"
+                                            className="font-mono"
+                                        />
+                                        {form.formState.errors.procedures?.[index]?.icd9Code && (
+                                            <p className="text-sm text-destructive">
+                                                {form.formState.errors.procedures[index]?.icd9Code?.message}
+                                            </p>
                                         )}
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {medicalStaff.map((staff) => (
-                                            <SelectItem key={staff.id} value={staff.id}>
-                                                {formatMedicalStaffName(staff)}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                        <p className="text-xs text-muted-foreground">
+                                            Masukkan kode ICD-9-CM procedure
+                                        </p>
+                                    </div>
+
+                                    {/* Performed By */}
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`performedBy-${index}`}>Dilakukan Oleh</Label>
+                                        <Select
+                                            value={form.watch(`procedures.${index}.performedBy`)}
+                                            onValueChange={(value) =>
+                                                form.setValue(`procedures.${index}.performedBy`, value)
+                                            }
+                                            disabled={loadingStaff}
+                                        >
+                                            <SelectTrigger className="w-full" id={`performedBy-${index}`}>
+                                                {loadingStaff ? (
+                                                    <div className="flex items-center gap-2">
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                        <span>Memuat...</span>
+                                                    </div>
+                                                ) : (
+                                                    <SelectValue placeholder="Pilih dokter/perawat" />
+                                                )}
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {medicalStaff.map((staff) => (
+                                                    <SelectItem key={staff.id} value={staff.id}>
+                                                        {formatMedicalStaffName(staff)}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+
+                                {/* Description */}
+                                <div className="space-y-2">
+                                    <Label htmlFor={`description-${index}`}>
+                                        Deskripsi Tindakan <span className="text-destructive">*</span>
+                                    </Label>
+                                    <Input
+                                        id={`description-${index}`}
+                                        {...form.register(`procedures.${index}.description`)}
+                                        placeholder="Contoh: Injection of antibiotic"
+                                    />
+                                    {form.formState.errors.procedures?.[index]?.description && (
+                                        <p className="text-sm text-destructive">
+                                            {form.formState.errors.procedures[index]?.description?.message}
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Notes */}
+                                <div className="space-y-2">
+                                    <Label htmlFor={`notes-${index}`}>Catatan</Label>
+                                    <Textarea
+                                        id={`notes-${index}`}
+                                        {...form.register(`procedures.${index}.notes`)}
+                                        placeholder="Catatan tambahan mengenai tindakan"
+                                        rows={2}
+                                    />
+                                </div>
                             </div>
-                        </div>
+                        ))}
 
-                        {/* Description */}
-                        <div className="space-y-2">
-                            <Label htmlFor="description">
-                                Deskripsi Tindakan <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="description"
-                                value={formData.description}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, description: e.target.value }))
-                                }
-                                placeholder="Contoh: Injection of antibiotic"
-                            />
-                        </div>
-
-                        {/* Notes */}
-                        <div className="space-y-2">
-                            <Label htmlFor="notes">Catatan</Label>
-                            <Textarea
-                                id="notes"
-                                value={formData.notes}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
-                                }
-                                placeholder="Catatan tambahan mengenai tindakan"
-                                rows={3}
-                            />
-                        </div>
+                        {/* Add More Button */}
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleAddItem}
+                        >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Tambah Tindakan Lain
+                        </Button>
                     </div>
 
                     <DialogFooter>
@@ -229,12 +306,12 @@ export function AddProcedureDialog({
                             {isSaving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menyimpan...
+                                    Menyimpan {fields.length} Tindakan...
                                 </>
                             ) : (
                                 <>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Simpan Tindakan
+                                    Simpan {fields.length} Tindakan
                                 </>
                             )}
                         </Button>

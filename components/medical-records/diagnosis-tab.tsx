@@ -54,10 +54,10 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
 
             {/* Add Button */}
             {canEdit && (
-                    <Button onClick={() => setIsDialogOpen(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Tambah Diagnosis
-                    </Button>
+                <Button onClick={() => setIsDialogOpen(true)}>
+                   <Plus className="mr-2 h-4 w-4" />
+                    Tambah Diagnosis
+                </Button>
             )}
 
             {/* Existing Diagnoses */}
