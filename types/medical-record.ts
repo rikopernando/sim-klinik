@@ -2,7 +2,6 @@
  * Medical Record Types
  */
 
-// Types
 export interface MedicalRecord {
     id: number;
     visitId: number;
@@ -59,6 +58,26 @@ export interface Prescription {
     fulfilledAt: Date | null;
     dispensedQuantity: number | null;
     inventoryId: number | null;
+    notes: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface Visit {
+    id: number;
+    visitNumber: string;
+    patientId: number;
+    visitType: "outpatient" | "inpatient" | "emergency";
+    poliId: number | null;
+    doctorId: string | null;
+    triageStatus: string | null;
+    chiefComplaint: string | null;
+    roomId: number | null;
+    status: string;
+    arrivalTime: Date;
+    startTime: Date | null;
+    endTime: Date | null;
+    dischargeDate: Date | null;
     notes: string | null;
     createdAt: Date;
     updatedAt: Date;

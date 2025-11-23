@@ -118,16 +118,18 @@ export const GET = withRBAC(
         const patientId = searchParams.get("patientId");
 
         if (visitId) {
+            const parsedVisitId = parseInt(visitId, 10);
+
             // Get medical record for specific visit with all related data
             const record = await db
                 .select()
                 .from(medicalRecords)
-                .where(eq(medicalRecords.visitId, parseInt(visitId, 10)))
+                .where(eq(medicalRecords.visitId, parsedVisitId))
                 .limit(1);
 
             if (record.length === 0) {
                 return NextResponse.json(
-                    { error: "Medical record not found" },
+                    { error: "Medical record not found for this visit" },
                     { status: 404 }
                 );
             }

@@ -30,11 +30,17 @@ import {
 import { useDoctorStats } from "@/hooks/use-doctor-stats";
 import { useDoctorQueue } from "@/hooks/use-doctor-queue";
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog";
+import { createMedicalRecord } from "@/lib/services/medical-record.service";
+import { updateVisitStatus } from "@/lib/services/visit.service";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export default function DoctorDashboard() {
     const router = useRouter();
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [showHistory, setShowHistory] = useState(false);
+    const [startingExamination, setStartingExamination] = useState<number | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Fetch dashboard statistics with auto-refresh
     const { stats, isLoading: statsLoading, lastRefresh, refresh: refreshStats } = useDoctorStats({
@@ -54,7 +60,37 @@ export default function DoctorDashboard() {
         refreshQueue();
     };
 
-    const handleStartExamination = (visitId: number) => {
+    const handleStartExamination = async (visitId: number) => {
+        try {
+            setStartingExamination(visitId);
+            setError(null);
+
+            // Step 1: Create medical record for this visit
+            await createMedicalRecord({
+                visitId,
+                isDraft: true,
+            });
+
+            // Step 2: Update visit status to "in_examination"
+            await updateVisitStatus(visitId, "in_examination");
+
+            // Step 3: Navigate to medical record page
+            router.push(`/dashboard/medical-records/${visitId}`);
+        } catch (error: any) {
+            // If medical record already exists, just navigate to it
+            if (error.response?.data?.error?.includes("already exists")) {
+                router.push(`/dashboard/medical-records/${visitId}`);
+            } else {
+                setError(error.response?.data?.error || "Gagal memulai pemeriksaan");
+                console.error("Failed to start examination:", error);
+            }
+        } finally {
+            setStartingExamination(null);
+        }
+    };
+
+    const handleOpenMedicalRecord = (visitId: number) => {
+        // Just navigate to medical record page (already exists)
         router.push(`/dashboard/medical-records/${visitId}`);
     };
 
@@ -74,6 +110,14 @@ export default function DoctorDashboard() {
 
     return (
         <div className="container mx-auto p-6 space-y-6">
+            {/* Error Alert */}
+            {error && (
+                <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{error}</AlertDescription>
+                </Alert>
+            )}
+
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
@@ -172,8 +216,9 @@ export default function DoctorDashboard() {
                                     variant: item.visit.visitType === "emergency" ? "destructive" : "outline",
                                 },
                                 action: {
-                                    label: "Mulai",
+                                    label: startingExamination === item.visit.id ? "Memulai..." : "Mulai",
                                     onClick: () => handleStartExamination(item.visit.id),
+                                    disabled: startingExamination !== null,
                                 },
                             }))}
                             emptyMessage="Tidak ada pasien dalam antrian"
@@ -220,7 +265,7 @@ export default function DoctorDashboard() {
                                 },
                                 action: {
                                     label: "Lanjutkan",
-                                    onClick: () => handleStartExamination(item.visit.id),
+                                    onClick: () => handleOpenMedicalRecord(item.visit.id),
                                 },
                             }))}
                             emptyMessage="Tidak ada pasien yang sedang diperiksa"
@@ -250,13 +295,13 @@ export default function DoctorDashboard() {
                                 },
                                 action: {
                                     label: "Kunci RME",
-                                    onClick: () => handleStartExamination(item.visit.id),
+                                    onClick: () => handleOpenMedicalRecord(item.visit.id),
                                 },
                             }))}
                             emptyMessage="Semua RME sudah dikunci"
                             maxHeight="450px"
                             onItemClick={(item) => {
-                                handleStartExamination(item.id as number);
+                                handleOpenMedicalRecord(item.id as number);
                             }}
                         />
                     </TabsContent>

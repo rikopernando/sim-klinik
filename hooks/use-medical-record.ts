@@ -2,17 +2,14 @@
  * Custom hook for managing medical record data and operations
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
     getMedicalRecordByVisit,
-    createMedicalRecord,
     updateMedicalRecord,
     lockMedicalRecord,
 } from "@/lib/services/medical-record.service";
-import { updateVisitStatus } from "@/lib/services/visit.service";
 import { getErrorMessage } from "@/lib/utils/error";
 import { type MedicalRecordData } from "@/types/medical-record";
-import { type VisitStatus } from "@/types/visit-status";
 
 interface UseMedicalRecordOptions {
     visitId: number;
@@ -53,60 +50,44 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     const [isLocking, setIsLocking] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const loadMedicalRecord = useCallback(async () => {
-        try {
-            setIsLoading(true);
-            setError(null);
+    // Ref to prevent double execution
+    const isInitializedRef = useRef(false);
 
+    // Internal function to fetch data
+    const fetchMedicalRecord = useCallback(async () => {
+        try {
+            setError(null);
             const data = await getMedicalRecordByVisit(visitId);
             setRecordData(data);
-
-            // Auto-update visit status to "in_examination" when doctor opens medical record
-            // This represents that the doctor has called the patient and started examination
-            const currentStatus = data.visit.status as VisitStatus;
-
-            if (currentStatus === "registered" || currentStatus === "waiting") {
-                try {
-                    await updateVisitStatus(visitId, "in_examination");
-                } catch (statusErr) {
-                    // Log error but don't block the medical record loading
-                    console.error("Failed to update visit status to in_examination:", statusErr);
-                }
-            }
-            // If already in_examination or beyond, do nothing
+            return data;
         } catch (err) {
-            // If medical record doesn't exist, create a new one
-            if (err instanceof Error && err.message.includes("404")) {
-                try {
-                    await createMedicalRecord({
-                        visitId,
-                        isDraft: true,
-                    });
-                    // Reload after creation
-                    const data = await getMedicalRecordByVisit(visitId);
-                    setRecordData(data);
+            setError(getErrorMessage(err));
+            throw err;
+        }
+    }, [visitId]);
 
-                    // Auto-update visit status to "in_examination" when creating new medical record
-                    const currentStatus = data.visit.status as VisitStatus;
+    // Initial load with guard against double execution
+    const loadMedicalRecord = useCallback(async () => {
+        // Prevent double execution in React StrictMode
+        if (isInitializedRef.current) {
+            return;
+        }
 
-                    if (currentStatus === "registered" || currentStatus === "waiting") {
-                        try {
-                            await updateVisitStatus(visitId, "in_examination");
-                        } catch (statusErr) {
-                            console.error("Failed to update visit status to in_examination:", statusErr);
-                        }
-                    }
-                    // If already in_examination or beyond, do nothing
-                } catch (createErr) {
-                    setError(getErrorMessage(createErr));
-                }
-            } else {
-                setError(getErrorMessage(err));
-            }
+        try {
+            setIsLoading(true);
+            await fetchMedicalRecord();
+            isInitializedRef.current = true;
+        } catch (err) {
+            // Error already handled in fetchMedicalRecord
         } finally {
             setIsLoading(false);
         }
-    }, [visitId]);
+    }, [fetchMedicalRecord]);
+
+    // Reload function for updates
+    const reloadMedicalRecord = useCallback(async () => {
+        await fetchMedicalRecord();
+    }, [fetchMedicalRecord]);
 
     useEffect(() => {
         loadMedicalRecord();
@@ -124,14 +105,14 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
             });
 
             // Reload to get updated data
-            await loadMedicalRecord();
+            await reloadMedicalRecord();
         } catch (err) {
             setError(getErrorMessage(err));
             throw err;
         } finally {
             setIsSaving(false);
         }
-    }, [recordData, loadMedicalRecord]);
+    }, [recordData, reloadMedicalRecord]);
 
     const lockRecord = useCallback(async (userId: string) => {
         if (!recordData) return;
@@ -143,14 +124,14 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
             await lockMedicalRecord(recordData.medicalRecord.id, userId);
 
             // Reload to get updated data
-            await loadMedicalRecord();
+            await reloadMedicalRecord();
         } catch (err) {
             setError(getErrorMessage(err));
             throw err;
         } finally {
             setIsLocking(false);
         }
-    }, [recordData, loadMedicalRecord]);
+    }, [recordData, reloadMedicalRecord]);
 
     const saveSOAP = useCallback(async (soapData: {
         soapSubjective?: string;
@@ -163,12 +144,12 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         try {
             setError(null);
             await updateMedicalRecord(recordData.medicalRecord.id, soapData);
-            await loadMedicalRecord();
+            await reloadMedicalRecord();
         } catch (err) {
             setError(getErrorMessage(err));
             throw err;
         }
-    }, [recordData, loadMedicalRecord]);
+    }, [recordData, reloadMedicalRecord]);
 
     const updateRecord = useCallback((updates: Partial<MedicalRecordData["medicalRecord"]>) => {
         if (!recordData) return;
@@ -202,7 +183,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         clearError,
 
         // Operations
-        loadMedicalRecord,
+        loadMedicalRecord: reloadMedicalRecord, // Expose reload for tabs to use
         saveSOAP,
         saveDraft,
         lockRecord,
