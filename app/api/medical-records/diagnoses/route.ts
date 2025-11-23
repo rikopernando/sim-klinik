@@ -81,6 +81,78 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * PATCH /api/medical-records/diagnoses
+ * Update a diagnosis
+ */
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { id, ...updateData } = body;
+
+        if (!id) {
+            return NextResponse.json(
+                { error: "Diagnosis ID is required" },
+                { status: 400 }
+            );
+        }
+
+        // Validate update data
+        const validatedData = diagnosisSchema.partial().parse(updateData);
+
+        // Get diagnosis and check if medical record is locked
+        const diagnosis = await db
+            .select({
+                diagnosis: diagnoses,
+                medicalRecord: medicalRecords,
+            })
+            .from(diagnoses)
+            .innerJoin(medicalRecords, eq(diagnoses.medicalRecordId, medicalRecords.id))
+            .where(eq(diagnoses.id, id))
+            .limit(1);
+
+        if (diagnosis.length === 0) {
+            return NextResponse.json(
+                { error: "Diagnosis not found" },
+                { status: 404 }
+            );
+        }
+
+        if (diagnosis[0].medicalRecord.isLocked) {
+            return NextResponse.json(
+                { error: "Cannot update diagnosis in locked medical record" },
+                { status: 403 }
+            );
+        }
+
+        // Update diagnosis
+        const updatedDiagnosis = await db
+            .update(diagnoses)
+            .set(validatedData)
+            .where(eq(diagnoses.id, id))
+            .returning();
+
+        return NextResponse.json({
+            success: true,
+            message: "Diagnosis updated successfully",
+            data: updatedDiagnosis[0],
+        });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json(
+                { error: "Validation error", details: error.issues },
+                { status: 400 }
+            );
+        }
+
+        console.error("Diagnosis update error:", error);
+        return NextResponse.json(
+            { error: "Failed to update diagnosis" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
  * DELETE /api/medical-records/diagnoses?id=X
  * Remove a diagnosis
  */

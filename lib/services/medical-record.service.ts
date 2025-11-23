@@ -140,6 +140,18 @@ export async function addDiagnosis(data: {
 }
 
 /**
+ * Update a diagnosis
+ */
+export async function updateDiagnosis(id: number, data: {
+    icd10Code?: string;
+    description?: string;
+    diagnosisType?: "primary" | "secondary";
+}): Promise<Diagnosis> {
+    const response = await axios.patch<{ data: Diagnosis }>("/api/medical-records/diagnoses", { id, ...data });
+    return response.data.data;
+}
+
+/**
  * Delete a diagnosis
  */
 export async function deleteDiagnosis(id: number): Promise<void> {
@@ -157,6 +169,19 @@ export async function addProcedure(data: {
     notes?: string;
 }): Promise<Procedure> {
     const response = await axios.post<{ data: Procedure }>("/api/medical-records/procedures", data);
+    return response.data.data;
+}
+
+/**
+ * Update a procedure
+ */
+export async function updateProcedure(id: number, data: {
+    icd9Code?: string;
+    description?: string;
+    performedBy?: string;
+    notes?: string;
+}): Promise<Procedure> {
+    const response = await axios.patch<{ data: Procedure }>("/api/medical-records/procedures", { id, ...data });
     return response.data.data;
 }
 
@@ -181,6 +206,22 @@ export async function addPrescription(data: {
     route?: string;
 }): Promise<Prescription> {
     const response = await axios.post<{ data: Prescription }>("/api/medical-records/prescriptions", data);
+    return response.data.data;
+}
+
+/**
+ * Update a prescription
+ */
+export async function updatePrescription(id: number, data: {
+    drugId?: number;
+    dosage?: string;
+    frequency?: string;
+    duration?: string;
+    quantity?: number;
+    instructions?: string;
+    route?: string;
+}): Promise<Prescription> {
+    const response = await axios.patch<{ data: Prescription }>("/api/medical-records/prescriptions", { id, ...data });
     return response.data.data;
 }
 

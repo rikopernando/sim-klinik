@@ -38,9 +38,20 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [prescriptionToDelete, setPrescriptionToDelete] = useState<number | null>(null);
+    const [prescriptionToEdit, setPrescriptionToEdit] = useState<Prescription | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
+
+    const handleEdit = useCallback((prescription: Prescription) => {
+        setPrescriptionToEdit(prescription);
+        setIsDialogOpen(true);
+    }, []);
+
+    const handleCloseDialog = useCallback(() => {
+        setIsDialogOpen(false);
+        setPrescriptionToEdit(null);
+    }, []);
 
     const handleDeleteClick = useCallback((id: number) => {
         setPrescriptionToDelete(id);
@@ -88,7 +99,9 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                         {prescriptions.map((prescription) => (
                             <ListItem
                                 key={prescription.id}
+                                onEdit={() => handleEdit(prescription)}
                                 onDelete={() => handleDeleteClick(prescription.id)}
+                                showEdit={canDeletePrescription(isLocked, prescription.isFulfilled)}
                                 showDelete={canDeletePrescription(isLocked, prescription.isFulfilled)}
                             >
                                 <div className="space-y-2">
@@ -148,12 +161,13 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                 <EmptyState message="Belum ada resep yang ditambahkan" />
             )}
 
-            {/* Add Prescription Dialog */}
+            {/* Add/Edit Prescription Dialog */}
             <AddPrescriptionDialog
                 open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
+                onOpenChange={handleCloseDialog}
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
+                prescription={prescriptionToEdit}
             />
 
             {/* Delete Confirmation Dialog */}

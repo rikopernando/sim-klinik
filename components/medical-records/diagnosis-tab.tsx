@@ -38,9 +38,20 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [diagnosisToDelete, setDiagnosisToDelete] = useState<number | null>(null);
+    const [diagnosisToEdit, setDiagnosisToEdit] = useState<Diagnosis | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
+
+    const handleEdit = useCallback((diagnosis: Diagnosis) => {
+        setDiagnosisToEdit(diagnosis);
+        setIsDialogOpen(true);
+    }, []);
+
+    const handleCloseDialog = useCallback(() => {
+        setIsDialogOpen(false);
+        setDiagnosisToEdit(null);
+    }, []);
 
     const handleDeleteClick = useCallback((id: number) => {
         setDiagnosisToDelete(id);
@@ -88,7 +99,9 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
                         {diagnoses.map((diagnosis) => (
                             <ListItem
                                 key={diagnosis.id}
+                                onEdit={() => handleEdit(diagnosis)}
                                 onDelete={() => handleDeleteClick(diagnosis.id)}
+                                showEdit={canEdit}
                                 showDelete={canEdit}
                             >
                                 <div className="space-y-1">
@@ -112,12 +125,13 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
                 <EmptyState message="Belum ada diagnosis yang ditambahkan" />
             )}
 
-            {/* Add Diagnosis Dialog */}
+            {/* Add/Edit Diagnosis Dialog */}
             <AddDiagnosisDialog
                 open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
+                onOpenChange={handleCloseDialog}
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
+                diagnosis={diagnosisToEdit}
             />
 
             {/* Delete Confirmation Dialog */}

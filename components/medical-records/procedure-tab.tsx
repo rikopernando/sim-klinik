@@ -38,9 +38,20 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [procedureToDelete, setProcedureToDelete] = useState<number | null>(null);
+    const [procedureToEdit, setProcedureToEdit] = useState<Procedure | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
+
+    const handleEdit = useCallback((procedure: Procedure) => {
+        setProcedureToEdit(procedure);
+        setIsDialogOpen(true);
+    }, []);
+
+    const handleCloseDialog = useCallback(() => {
+        setIsDialogOpen(false);
+        setProcedureToEdit(null);
+    }, []);
 
     const handleDeleteClick = useCallback((id: number) => {
         setProcedureToDelete(id);
@@ -88,7 +99,9 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
                         {procedures.map((procedure) => (
                             <ListItem
                                 key={procedure.id}
+                                onEdit={() => handleEdit(procedure)}
                                 onDelete={() => handleDeleteClick(procedure.id)}
+                                showEdit={canEdit}
                                 showDelete={canEdit}
                             >
                                 <div className="space-y-2">
@@ -126,12 +139,13 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
                 <EmptyState message="Belum ada tindakan yang ditambahkan" />
             )}
 
-            {/* Add Procedure Dialog */}
+            {/* Add/Edit Procedure Dialog */}
             <AddProcedureDialog
                 open={isDialogOpen}
-                onOpenChange={setIsDialogOpen}
+                onOpenChange={handleCloseDialog}
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
+                procedure={procedureToEdit}
             />
 
             {/* Delete Confirmation Dialog */}

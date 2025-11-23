@@ -27,16 +27,18 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
-import { addProcedure } from "@/lib/services/medical-record.service";
+import { addProcedure, updateProcedure } from "@/lib/services/medical-record.service";
 import { getMedicalStaff, formatMedicalStaffName, type MedicalStaff } from "@/lib/services/medical-staff.service";
 import { getErrorMessage } from "@/lib/utils/error";
 import { formatIcdCode } from "@/lib/utils/medical-record";
+import { type Procedure } from "@/types/medical-record";
 
 interface AddProcedureDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     medicalRecordId: number;
     onSuccess: () => void;
+    procedure?: Procedure | null; // If provided, it's edit mode
 }
 
 // Validation schema for a single procedure item
@@ -59,11 +61,13 @@ export function AddProcedureDialog({
     onOpenChange,
     medicalRecordId,
     onSuccess,
+    procedure,
 }: AddProcedureDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [medicalStaff, setMedicalStaff] = useState<MedicalStaff[]>([]);
     const [loadingStaff, setLoadingStaff] = useState(false);
+    const isEditMode = !!procedure;
 
     const form = useForm<ProcedureFormData>({
         resolver: zodResolver(procedureFormSchema),
@@ -83,6 +87,35 @@ export function AddProcedureDialog({
         control: form.control,
         name: "procedures",
     });
+
+    // Reset form when dialog opens or procedure changes
+    useEffect(() => {
+        if (open) {
+            if (isEditMode && procedure) {
+                form.reset({
+                    procedures: [
+                        {
+                            icd9Code: procedure.icd9Code,
+                            description: procedure.description,
+                            performedBy: procedure.performedBy || "",
+                            notes: procedure.notes || "",
+                        },
+                    ],
+                });
+            } else {
+                form.reset({
+                    procedures: [
+                        {
+                            icd9Code: "",
+                            description: "",
+                            performedBy: "",
+                            notes: "",
+                        },
+                    ],
+                });
+            }
+        }
+    }, [open, procedure, isEditMode, form]);
 
     // Fetch medical staff when dialog opens
     useEffect(() => {
@@ -134,15 +167,25 @@ export function AddProcedureDialog({
             setIsSaving(true);
             setError(null);
 
-            // Save all procedures sequentially
-            for (const procedure of data.procedures) {
-                await addProcedure({
-                    medicalRecordId,
-                    icd9Code: formatIcdCode(procedure.icd9Code),
-                    description: procedure.description,
-                    performedBy: procedure.performedBy || undefined,
-                    notes: procedure.notes || undefined,
+            if (isEditMode && procedure) {
+                // Edit mode: update single procedure
+                await updateProcedure(procedure.id, {
+                    icd9Code: formatIcdCode(data.procedures[0].icd9Code),
+                    description: data.procedures[0].description,
+                    performedBy: data.procedures[0].performedBy || undefined,
+                    notes: data.procedures[0].notes || undefined,
                 });
+            } else {
+                // Add mode: save all procedures sequentially
+                for (const procedureItem of data.procedures) {
+                    await addProcedure({
+                        medicalRecordId,
+                        icd9Code: formatIcdCode(procedureItem.icd9Code),
+                        description: procedureItem.description,
+                        performedBy: procedureItem.performedBy || undefined,
+                        notes: procedureItem.notes || undefined,
+                    });
+                }
             }
 
             handleClose();
@@ -159,9 +202,12 @@ export function AddProcedureDialog({
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle>Tambah Tindakan</DialogTitle>
+                        <DialogTitle>{isEditMode ? "Edit Tindakan" : "Tambah Tindakan"}</DialogTitle>
                         <DialogDescription>
-                            Tambahkan satu atau lebih tindakan medis berdasarkan kode ICD-9
+                            {isEditMode
+                                ? "Perbarui tindakan medis berdasarkan kode ICD-9"
+                                : "Tambahkan satu atau lebih tindakan medis berdasarkan kode ICD-9"
+                            }
                         </DialogDescription>
                     </DialogHeader>
 
@@ -178,22 +224,24 @@ export function AddProcedureDialog({
                             <div key={field.id} className="space-y-4">
                                 {index > 0 && <Separator />}
 
-                                {/* Item Header */}
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-medium">Tindakan #{index + 1}</h4>
-                                    {fields.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="border-destructive text-destructive"
-                                            size="sm"
-                                            onClick={() => handleRemoveItem(index)}
-                                        >
-                                            <X className="h-4 w-4 mr-1" />
-                                            Hapus
-                                        </Button>
-                                    )}
-                                </div>
+                                {/* Item Header (only show in add mode) */}
+                                {!isEditMode && (
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">Tindakan #{index + 1}</h4>
+                                        {fields.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="border-destructive text-destructive"
+                                                size="sm"
+                                                onClick={() => handleRemoveItem(index)}
+                                            >
+                                                <X className="h-4 w-4 mr-1" />
+                                                Hapus
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {/* ICD-9 Code */}
@@ -282,15 +330,17 @@ export function AddProcedureDialog({
                             </div>
                         ))}
 
-                        {/* Add More Button */}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleAddItem}
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Tindakan Lain
-                        </Button>
+                        {/* Add More Button (only in add mode) */}
+                        {!isEditMode && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleAddItem}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Tambah Tindakan Lain
+                            </Button>
+                        )}
                     </div>
 
                     <DialogFooter>
@@ -306,12 +356,12 @@ export function AddProcedureDialog({
                             {isSaving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menyimpan {fields.length} Tindakan...
+                                    {isEditMode ? "Menyimpan..." : `Menyimpan ${fields.length} Tindakan...`}
                                 </>
                             ) : (
                                 <>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Simpan {fields.length} Tindakan
+                                    {isEditMode ? "Simpan" : `Simpan ${fields.length} Tindakan`}
                                 </>
                             )}
                         </Button>

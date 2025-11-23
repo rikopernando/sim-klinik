@@ -128,6 +128,88 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * PATCH /api/medical-records/prescriptions
+ * Update a prescription
+ */
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { id, ...updateData } = body;
+
+        if (!id) {
+            return NextResponse.json(
+                { error: "Prescription ID is required" },
+                { status: 400 }
+            );
+        }
+
+        // Validate update data
+        const validatedData = prescriptionSchema.partial().parse(updateData);
+
+        // Get prescription and check if medical record is locked
+        const prescription = await db
+            .select({
+                prescription: prescriptions,
+                medicalRecord: medicalRecords,
+            })
+            .from(prescriptions)
+            .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+            .where(eq(prescriptions.id, id))
+            .limit(1);
+
+        if (prescription.length === 0) {
+            return NextResponse.json(
+                { error: "Prescription not found" },
+                { status: 404 }
+            );
+        }
+
+        if (prescription[0].medicalRecord.isLocked) {
+            return NextResponse.json(
+                { error: "Cannot update prescription in locked medical record" },
+                { status: 403 }
+            );
+        }
+
+        if (prescription[0].prescription.isFulfilled) {
+            return NextResponse.json(
+                { error: "Cannot update fulfilled prescription" },
+                { status: 403 }
+            );
+        }
+
+        // Update prescription
+        const updatedPrescription = await db
+            .update(prescriptions)
+            .set({
+                ...validatedData,
+                updatedAt: new Date(),
+            })
+            .where(eq(prescriptions.id, id))
+            .returning();
+
+        return NextResponse.json({
+            success: true,
+            message: "Prescription updated successfully",
+            data: updatedPrescription[0],
+        });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json(
+                { error: "Validation error", details: error.issues },
+                { status: 400 }
+            );
+        }
+
+        console.error("Prescription update error:", error);
+        return NextResponse.json(
+            { error: "Failed to update prescription" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
  * DELETE /api/medical-records/prescriptions?id=X
  * Remove a prescription
  */

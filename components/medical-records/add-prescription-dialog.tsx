@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Loader2, X } from "lucide-react";
@@ -27,9 +27,9 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
-import { addPrescription } from "@/lib/services/medical-record.service";
+import { addPrescription, updatePrescription } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
-import { MEDICATION_ROUTES } from "@/types/medical-record";
+import { MEDICATION_ROUTES, type Prescription } from "@/types/medical-record";
 import { type Drug } from "@/hooks/use-drug-search";
 import { DrugSearch } from "./drug-search";
 
@@ -38,6 +38,7 @@ interface AddPrescriptionDialogProps {
     onOpenChange: (open: boolean) => void;
     medicalRecordId: number;
     onSuccess: () => void;
+    prescription?: Prescription | null; // If provided, it's edit mode
 }
 
 // Validation schema for a single prescription item
@@ -64,10 +65,12 @@ export function AddPrescriptionDialog({
     onOpenChange,
     medicalRecordId,
     onSuccess,
+    prescription,
 }: AddPrescriptionDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [drugSearches, setDrugSearches] = useState<Record<number, string>>({});
+    const isEditMode = !!prescription;
 
     const form = useForm<PrescriptionFormData>({
         resolver: zodResolver(prescriptionFormSchema),
@@ -91,6 +94,45 @@ export function AddPrescriptionDialog({
         control: form.control,
         name: "prescriptions",
     });
+
+    // Reset form when dialog opens or prescription changes
+    useEffect(() => {
+        if (open) {
+            if (isEditMode && prescription) {
+                form.reset({
+                    prescriptions: [
+                        {
+                            drugId: prescription.drugId,
+                            drugName: prescription.drugName,
+                            dosage: prescription.dosage,
+                            frequency: prescription.frequency,
+                            duration: prescription.duration || "",
+                            quantity: prescription.quantity,
+                            instructions: prescription.instructions || "",
+                            route: prescription.route || "oral",
+                        },
+                    ],
+                });
+                setDrugSearches({ 0: prescription.drugName });
+            } else {
+                form.reset({
+                    prescriptions: [
+                        {
+                            drugId: 0,
+                            drugName: "",
+                            dosage: "",
+                            frequency: "",
+                            duration: "",
+                            quantity: 1,
+                            instructions: "",
+                            route: "oral",
+                        },
+                    ],
+                });
+                setDrugSearches({});
+            }
+        }
+    }, [open, prescription, isEditMode, form]);
 
     const resetForm = () => {
         form.reset();
@@ -139,18 +181,31 @@ export function AddPrescriptionDialog({
             setIsSaving(true);
             setError(null);
 
-            // Save all prescriptions sequentially
-            for (const prescription of data.prescriptions) {
-                await addPrescription({
-                    medicalRecordId,
-                    drugId: prescription.drugId,
-                    dosage: prescription.dosage,
-                    frequency: prescription.frequency,
-                    duration: prescription.duration || undefined,
-                    quantity: prescription.quantity,
-                    instructions: prescription.instructions || undefined,
-                    route: prescription.route || undefined,
+            if (isEditMode && prescription) {
+                // Edit mode: update single prescription
+                await updatePrescription(prescription.id, {
+                    drugId: data.prescriptions[0].drugId,
+                    dosage: data.prescriptions[0].dosage,
+                    frequency: data.prescriptions[0].frequency,
+                    duration: data.prescriptions[0].duration || undefined,
+                    quantity: data.prescriptions[0].quantity,
+                    instructions: data.prescriptions[0].instructions || undefined,
+                    route: data.prescriptions[0].route || undefined,
                 });
+            } else {
+                // Add mode: save all prescriptions sequentially
+                for (const prescriptionItem of data.prescriptions) {
+                    await addPrescription({
+                        medicalRecordId,
+                        drugId: prescriptionItem.drugId,
+                        dosage: prescriptionItem.dosage,
+                        frequency: prescriptionItem.frequency,
+                        duration: prescriptionItem.duration || undefined,
+                        quantity: prescriptionItem.quantity,
+                        instructions: prescriptionItem.instructions || undefined,
+                        route: prescriptionItem.route || undefined,
+                    });
+                }
             }
 
             handleClose();
@@ -167,9 +222,12 @@ export function AddPrescriptionDialog({
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle>Tambah Resep</DialogTitle>
+                        <DialogTitle>{isEditMode ? "Edit Resep" : "Tambah Resep"}</DialogTitle>
                         <DialogDescription>
-                            Tambahkan satu atau lebih resep obat untuk pasien
+                            {isEditMode
+                                ? "Perbarui resep obat untuk pasien"
+                                : "Tambahkan satu atau lebih resep obat untuk pasien"
+                            }
                         </DialogDescription>
                     </DialogHeader>
 
@@ -186,22 +244,24 @@ export function AddPrescriptionDialog({
                             <div key={field.id} className="space-y-4">
                                 {index > 0 && <Separator />}
 
-                                {/* Item Header */}
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-medium">Resep #{index + 1}</h4>
-                                    {fields.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="border-destructive text-destructive"
-                                            size="sm"
-                                            onClick={() => handleRemoveItem(index)}
-                                        >
-                                            <X className="h-4 w-4 mr-1" />
-                                            Hapus
-                                        </Button>
-                                    )}
-                                </div>
+                                {/* Item Header (only show in add mode) */}
+                                {!isEditMode && (
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">Resep #{index + 1}</h4>
+                                        {fields.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="border-destructive text-destructive"
+                                                size="sm"
+                                                onClick={() => handleRemoveItem(index)}
+                                            >
+                                                <X className="h-4 w-4 mr-1" />
+                                                Hapus
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Drug Search */}
                                 <DrugSearch
@@ -319,15 +379,17 @@ export function AddPrescriptionDialog({
                             </div>
                         ))}
 
-                        {/* Add More Button */}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleAddItem}
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Resep Lain
-                        </Button>
+                        {/* Add More Button (only in add mode) */}
+                        {!isEditMode && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleAddItem}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Tambah Resep Lain
+                            </Button>
+                        )}
                     </div>
 
                     <DialogFooter>
@@ -343,12 +405,12 @@ export function AddPrescriptionDialog({
                             {isSaving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menyimpan {fields.length} Resep...
+                                    {isEditMode ? "Menyimpan..." : `Menyimpan ${fields.length} Resep...`}
                                 </>
                             ) : (
                                 <>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Simpan {fields.length} Resep
+                                    {isEditMode ? "Simpan" : `Simpan ${fields.length} Resep`}
                                 </>
                             )}
                         </Button>

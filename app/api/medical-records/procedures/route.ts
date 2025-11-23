@@ -84,6 +84,78 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * PATCH /api/medical-records/procedures
+ * Update a procedure
+ */
+export async function PATCH(request: NextRequest) {
+    try {
+        const body = await request.json();
+        const { id, ...updateData } = body;
+
+        if (!id) {
+            return NextResponse.json(
+                { error: "Procedure ID is required" },
+                { status: 400 }
+            );
+        }
+
+        // Validate update data
+        const validatedData = procedureSchema.partial().parse(updateData);
+
+        // Get procedure and check if medical record is locked
+        const procedure = await db
+            .select({
+                procedure: procedures,
+                medicalRecord: medicalRecords,
+            })
+            .from(procedures)
+            .innerJoin(medicalRecords, eq(procedures.medicalRecordId, medicalRecords.id))
+            .where(eq(procedures.id, id))
+            .limit(1);
+
+        if (procedure.length === 0) {
+            return NextResponse.json(
+                { error: "Procedure not found" },
+                { status: 404 }
+            );
+        }
+
+        if (procedure[0].medicalRecord.isLocked) {
+            return NextResponse.json(
+                { error: "Cannot update procedure in locked medical record" },
+                { status: 403 }
+            );
+        }
+
+        // Update procedure
+        const updatedProcedure = await db
+            .update(procedures)
+            .set(validatedData)
+            .where(eq(procedures.id, id))
+            .returning();
+
+        return NextResponse.json({
+            success: true,
+            message: "Procedure updated successfully",
+            data: updatedProcedure[0],
+        });
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json(
+                { error: "Validation error", details: error.issues },
+                { status: 400 }
+            );
+        }
+
+        console.error("Procedure update error:", error);
+        return NextResponse.json(
+            { error: "Failed to update procedure" },
+            { status: 500 }
+        );
+    }
+}
+
+/**
  * DELETE /api/medical-records/procedures?id=X
  * Remove a procedure
  */

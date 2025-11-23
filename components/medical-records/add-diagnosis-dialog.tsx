@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Loader2, X } from "lucide-react";
@@ -26,9 +26,9 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 
-import { addDiagnosis } from "@/lib/services/medical-record.service";
+import { addDiagnosis, updateDiagnosis } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
-import { DIAGNOSIS_TYPES } from "@/types/medical-record";
+import { DIAGNOSIS_TYPES, type Diagnosis } from "@/types/medical-record";
 import { formatIcdCode } from "@/lib/utils/medical-record";
 
 interface AddDiagnosisDialogProps {
@@ -36,6 +36,7 @@ interface AddDiagnosisDialogProps {
     onOpenChange: (open: boolean) => void;
     medicalRecordId: number;
     onSuccess: () => void;
+    diagnosis?: Diagnosis | null; // If provided, it's edit mode
 }
 
 // Validation schema for a single diagnosis item
@@ -57,9 +58,11 @@ export function AddDiagnosisDialog({
     onOpenChange,
     medicalRecordId,
     onSuccess,
+    diagnosis,
 }: AddDiagnosisDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const isEditMode = !!diagnosis;
 
     const form = useForm<DiagnosisFormData>({
         resolver: zodResolver(diagnosisFormSchema),
@@ -73,6 +76,33 @@ export function AddDiagnosisDialog({
             ],
         },
     });
+
+    // Reset form when dialog opens or diagnosis changes
+    useEffect(() => {
+        if (open) {
+            if (isEditMode && diagnosis) {
+                form.reset({
+                    diagnoses: [
+                        {
+                            icd10Code: diagnosis.icd10Code,
+                            description: diagnosis.description,
+                            diagnosisType: diagnosis.diagnosisType,
+                        },
+                    ],
+                });
+            } else {
+                form.reset({
+                    diagnoses: [
+                        {
+                            icd10Code: "",
+                            description: "",
+                            diagnosisType: "primary",
+                        },
+                    ],
+                });
+            }
+        }
+    }, [open, diagnosis, isEditMode, form]);
 
     const { fields, append, remove } = useFieldArray({
         control: form.control,
@@ -108,14 +138,23 @@ export function AddDiagnosisDialog({
             setIsSaving(true);
             setError(null);
 
-            // Save all diagnoses sequentially
-            for (const diagnosis of data.diagnoses) {
-                await addDiagnosis({
-                    medicalRecordId,
-                    icd10Code: formatIcdCode(diagnosis.icd10Code),
-                    description: diagnosis.description,
-                    diagnosisType: diagnosis.diagnosisType,
+            if (isEditMode && diagnosis) {
+                // Edit mode: update single diagnosis
+                await updateDiagnosis(diagnosis.id, {
+                    icd10Code: formatIcdCode(data.diagnoses[0].icd10Code),
+                    description: data.diagnoses[0].description,
+                    diagnosisType: data.diagnoses[0].diagnosisType,
                 });
+            } else {
+                // Add mode: save all diagnoses sequentially
+                for (const diagnosisItem of data.diagnoses) {
+                    await addDiagnosis({
+                        medicalRecordId,
+                        icd10Code: formatIcdCode(diagnosisItem.icd10Code),
+                        description: diagnosisItem.description,
+                        diagnosisType: diagnosisItem.diagnosisType,
+                    });
+                }
             }
 
             handleClose();
@@ -132,9 +171,12 @@ export function AddDiagnosisDialog({
             <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                     <DialogHeader>
-                        <DialogTitle>Tambah Diagnosis</DialogTitle>
+                        <DialogTitle>{isEditMode ? "Edit Diagnosis" : "Tambah Diagnosis"}</DialogTitle>
                         <DialogDescription>
-                            Tambahkan satu atau lebih diagnosis berdasarkan kode ICD-10
+                            {isEditMode
+                                ? "Perbarui diagnosis berdasarkan kode ICD-10"
+                                : "Tambahkan satu atau lebih diagnosis berdasarkan kode ICD-10"
+                            }
                         </DialogDescription>
                     </DialogHeader>
 
@@ -151,22 +193,24 @@ export function AddDiagnosisDialog({
                             <div key={field.id} className="space-y-4">
                                 {index > 0 && <Separator />}
 
-                                {/* Item Header */}
-                                <div className="flex items-center justify-between">
-                                    <h4 className="font-medium">Diagnosis #{index + 1}</h4>
-                                    {fields.length > 1 && (
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            className="border-destructive text-destructive"
-                                            size="sm"
-                                            onClick={() => handleRemoveItem(index)}
-                                        >
-                                            <X className="h-4 w-4 mr-1" />
-                                            Hapus
-                                        </Button>
-                                    )}
-                                </div>
+                                {/* Item Header (only show counter in add mode) */}
+                                {!isEditMode && (
+                                    <div className="flex items-center justify-between">
+                                        <h4 className="font-medium">Diagnosis #{index + 1}</h4>
+                                        {fields.length > 1 && (
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                className="border-destructive text-destructive"
+                                                size="sm"
+                                                onClick={() => handleRemoveItem(index)}
+                                            >
+                                                <X className="h-4 w-4 mr-1" />
+                                                Hapus
+                                            </Button>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {/* ICD-10 Code */}
@@ -236,15 +280,17 @@ export function AddDiagnosisDialog({
                             </div>
                         ))}
 
-                        {/* Add More Button */}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleAddItem}
-                        >
-                            <Plus className="mr-2 h-4 w-4" />
-                            Tambah Diagnosis Lain
-                        </Button>
+                        {/* Add More Button (only in add mode) */}
+                        {!isEditMode && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleAddItem}
+                            >
+                                <Plus className="mr-2 h-4 w-4" />
+                                Tambah Diagnosis Lain
+                            </Button>
+                        )}
                     </div>
 
                     <DialogFooter>
@@ -260,12 +306,12 @@ export function AddDiagnosisDialog({
                             {isSaving ? (
                                 <>
                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Menyimpan {fields.length} Diagnosis...
+                                    {isEditMode ? "Menyimpan..." : `Menyimpan ${fields.length} Diagnosis...`}
                                 </>
                             ) : (
                                 <>
                                     <Plus className="mr-2 h-4 w-4" />
-                                    Simpan {fields.length} Diagnosis
+                                    {isEditMode ? "Simpan" : `Simpan ${fields.length} Diagnosis`}
                                 </>
                             )}
                         </Button>
