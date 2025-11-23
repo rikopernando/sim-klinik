@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { QueueDisplay } from "@/components/visits/queue-display";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,17 +12,29 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
+import { getPolis, type Poli } from "@/lib/services/poli.service";
 
 export default function QueuePage() {
     const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined);
+    const [polis, setPolis] = useState<Poli[]>([]);
+    const [isLoadingPolis, setIsLoadingPolis] = useState(true);
 
-    // Placeholder polis - will be fetched from API later
-    const polis = [
-        { id: 1, name: "Poli Umum", code: "PU" },
-        { id: 2, name: "Poli Gigi", code: "PG" },
-        { id: 3, name: "Poli Anak", code: "PA" },
-        { id: 4, name: "Poli Kebidanan", code: "PKB" },
-    ];
+    // Fetch polis data from API using service
+    useEffect(() => {
+        const fetchPolis = async () => {
+            try {
+                const polisList = await getPolis();
+                setPolis(polisList);
+            } catch (error) {
+                console.error("Error fetching polis:", error);
+            } finally {
+                setIsLoadingPolis(false);
+            }
+        };
+
+        fetchPolis();
+    }, []);
 
     return (
         <div className="container mx-auto space-y-6 p-6">
@@ -59,9 +71,17 @@ export default function QueuePage() {
                                     onValueChange={(value) =>
                                         setSelectedPoli(value === "all" ? undefined : parseInt(value))
                                     }
+                                    disabled={isLoadingPolis}
                                 >
                                     <SelectTrigger id="poli-filter">
-                                        <SelectValue placeholder="Semua Poli" />
+                                        {isLoadingPolis ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                                <span>Memuat...</span>
+                                            </div>
+                                        ) : (
+                                            <SelectValue placeholder="Semua Poli" />
+                                        )}
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">Semua Poli</SelectItem>

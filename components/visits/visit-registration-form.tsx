@@ -25,6 +25,7 @@ import { visitFormSchema, type VisitFormData } from "@/lib/validations/registrat
 import { type Patient, type RegisteredVisit, TRIAGE_STATUS } from "@/types/registration";
 import { registerVisit } from "@/lib/services/visit.service";
 import { getDoctors, type Doctor } from "@/lib/services/doctor.service";
+import { getPolis, type Poli } from "@/lib/services/poli.service";
 import { getErrorMessage } from "@/lib/utils/error";
 import { PatientInfoCard } from "@/components/forms/patient-info-card";
 
@@ -41,8 +42,9 @@ export function VisitRegistrationForm({
 }: VisitRegistrationFormProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [polis, setPolis] = useState<Array<{ id: number; name: string; code: string }>>([]);
+    const [polis, setPolis] = useState<Poli[]>([]);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
+    const [loadingPolis, setLoadingPolis] = useState(false);
     const [loadingDoctors, setLoadingDoctors] = useState(false);
 
     const form = useForm<VisitFormData>({
@@ -70,13 +72,19 @@ export function VisitRegistrationForm({
 
     // Fetch polis/departments and doctors
     useEffect(() => {
-        // TODO: Fetch polis from API
-        setPolis([
-            { id: 1, name: "Poli Umum", code: "PU" },
-            { id: 2, name: "Poli Gigi", code: "PG" },
-            { id: 3, name: "Poli Anak", code: "PA" },
-            { id: 4, name: "Poli Kebidanan", code: "PKB" },
-        ]);
+        // Fetch polis from API using service
+        const fetchPolis = async () => {
+            setLoadingPolis(true);
+            try {
+                const polisList = await getPolis();
+                setPolis(polisList);
+            } catch (error) {
+                console.error("Error fetching polis:", error);
+                setErrorMessage("Gagal memuat daftar poli");
+            } finally {
+                setLoadingPolis(false);
+            }
+        };
 
         // Fetch doctors from API using service
         const fetchDoctors = async () => {
@@ -92,6 +100,7 @@ export function VisitRegistrationForm({
             }
         };
 
+        fetchPolis();
         fetchDoctors();
     }, []);
 
@@ -194,9 +203,18 @@ export function VisitRegistrationForm({
                                     <Label htmlFor="poliId">
                                         Poli/Poliklinik <span className="text-destructive">*</span>
                                     </Label>
-                                    <Select onValueChange={(value) => setValue("poliId", value)}>
+                                    <Select
+                                        onValueChange={(value) => setValue("poliId", value)}
+                                        disabled={loadingPolis}
+                                    >
                                         <SelectTrigger className={errors.poliId ? "w-full border-destructive" : "w-full"}>
-                                            <SelectValue placeholder="Pilih poli tujuan" />
+                                            <SelectValue placeholder={
+                                                loadingPolis
+                                                    ? "Memuat poli..."
+                                                    : polis.length === 0
+                                                    ? "Tidak ada poli tersedia"
+                                                    : "Pilih poli tujuan"
+                                            } />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {polis.map((poli) => (

@@ -5,6 +5,7 @@
 
 import { seedRoles } from "./seed-roles";
 import { seedUsers } from "./seed-users";
+import { seedPolis } from "./seed-polis";
 
 export async function runAllSeeders() {
     console.log("🚀 Starting database seeding...\n");
@@ -18,6 +19,10 @@ export async function runAllSeeders() {
         await seedUsers();
         console.log("");
 
+        // 3. Seed polis/departments (master data)
+        await seedPolis();
+        console.log("");
+
         console.log("🎉 All seeders completed successfully!");
     } catch (error) {
         console.error("❌ Seeding failed:", error);
@@ -28,3 +33,4 @@ export async function runAllSeeders() {
 // Export individual seeders
 export { seedRoles } from "./seed-roles";
 export { seedUsers } from "./seed-users";
+export { seedPolis } from "./seed-polis";

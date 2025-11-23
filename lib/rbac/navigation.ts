@@ -57,6 +57,11 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             icon: IconUser,
         },
         {
+            title: "Antrian",
+            url: "/dashboard/queue",
+            icon: IconClipboardList,
+        },
+        {
             title: "Kunjungan",
             url: "/dashboard/visits",
             icon: IconClipboardList,
@@ -115,6 +120,11 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             icon: IconUserPlus,
         },
         {
+            title: "Antrian",
+            url: "/dashboard/queue",
+            icon: IconClipboardList,
+        },
+        {
             title: "Kunjungan",
             url: "/dashboard/visits",
             icon: IconClipboardList,
@@ -158,6 +168,11 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             icon: IconDashboard,
         },
         {
+            title: "Antrian Pasien",
+            url: "/dashboard/doctor",
+            icon: IconStethoscope,
+        },
+        {
             title: "Data Pasien",
             url: "/dashboard/patients",
             icon: IconUserPlus,
@@ -170,7 +185,7 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
         {
             title: "Rekam Medis",
             url: "/dashboard/medical-records",
-            icon: IconStethoscope,
+            icon: IconReportMedical,
         },
         {
             title: "UGD",
@@ -189,6 +204,11 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             title: "Dashboard",
             url: "/dashboard",
             icon: IconDashboard,
+        },
+        {
+            title: "Antrian",
+            url: "/dashboard/queue",
+            icon: IconClipboardList,
         },
         {
             title: "Data Pasien",
@@ -243,6 +263,11 @@ export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
             title: "Dashboard",
             url: "/dashboard",
             icon: IconDashboard,
+        },
+        {
+            title: "Antrian",
+            url: "/dashboard/queue",
+            icon: IconClipboardList,
         },
         {
             title: "Data Pasien",

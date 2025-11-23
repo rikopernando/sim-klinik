@@ -4,6 +4,12 @@
  */
 
 import { Edit } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TableCell, TableRow } from "@/components/ui/table";
@@ -43,15 +49,22 @@ export function PatientsTableRow({ patient, onEdit }: PatientsTableRowProps) {
                 )}
             </TableCell>
             <TableCell className="text-right">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(patient.id)}
-                    className="gap-1"
-                >
-                    <Edit className="h-3 w-3" />
-                    Edit
-                </Button>
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button
+                                variant="outline"                                
+                                size="sm"
+                                onClick={() => onEdit(patient.id)}
+                            >
+                                <Edit className="h-3 w-3" />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Edit</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
             </TableCell>
         </TableRow>
     );

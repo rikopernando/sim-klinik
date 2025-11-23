@@ -13,22 +13,33 @@ export function PatientInfoCard({ patient }: PatientInfoCardProps) {
                 <CardTitle>Informasi Pasien</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-                    <div>
-                        <span className="font-medium">Nama:</span> {patient.name}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <div className="md:col-span-1 grid grid-cols-4">
+                        <span className="font-medium col-span-1">Nama</span>
+                        <span className="col-span-3">
+                            :{" "}{patient.name}
+                        </span>
                     </div>
-                    <div>
-                        <span className="font-medium">No. RM:</span> {patient.mrNumber}
+                    <div className="md:col-span-1 grid grid-cols-4">
+                        <span className="font-medium col-span-1">No. RM</span>
+                        <span className="col-span-3">
+                            :{" "}{patient.mrNumber}
+                        </span>
                     </div>
-                    <div>
-                        <span className="font-medium">Usia:</span>{" "}
+                    <div className="md:col-span-1 grid grid-cols-4">
+                        <span className="font-medium  col-span-1">Usia</span>
+                        <span className="col-span-3">
+                        :{" "}
                         {patient.dateOfBirth
                             ? `${calculateAge(patient.dateOfBirth)} tahun`
                             : "-"}
+                        </span>
                     </div>
-                    <div>
-                        <span className="font-medium">Jaminan:</span>{" "}
-                        {patient.insuranceType || "Umum"}
+                    <div className="md:col-span-1 grid grid-cols-4">
+                        <span className="font-medium col-span-1">Jaminan:</span>{" "}
+                        <span className="col-span-3">
+                            :{" "}{patient.insuranceType || 'Umum'}
+                        </span>
                     </div>
                 </div>
             </CardContent>
