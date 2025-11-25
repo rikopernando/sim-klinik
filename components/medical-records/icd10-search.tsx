@@ -60,7 +60,7 @@ export function ICD10Search({
                     className="pl-10"
                 />
             {codes.length > 0 && searchQuery && showDropdown && (
-                <div className="absolute mt-2 max-h-60 space-y-1 overflow-y-auto rounded-md border bg-background p-2 shadow-md">
+                <div className="z-[9999] absolute mt-2 max-h-60 space-y-1 overflow-y-auto rounded-md border bg-background p-2 shadow-md">
                     {codes.map((code) => (
                         <button
                             key={code.id}

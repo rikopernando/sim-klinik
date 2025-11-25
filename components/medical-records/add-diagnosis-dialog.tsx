@@ -213,7 +213,6 @@ export function AddDiagnosisDialog({
                                     </div>
                                 )}
 
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     {/* ICD-10 Code Search */}
                                     <div className="space-y-2">
                                         <ICD10Search
@@ -252,7 +251,6 @@ export function AddDiagnosisDialog({
                                             </p>
                                         )}
                                     </div>
-                                </div>
 
                                 {/* Diagnosis Type */}
                                 <div className="space-y-2">
