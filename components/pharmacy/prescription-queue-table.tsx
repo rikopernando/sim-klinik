@@ -88,71 +88,69 @@ export function PrescriptionQueueTable({
     return (
         <Card className="p-4">
             <CardContent className="p-0">
-                <div className="rounded-md border">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[50px]">#</TableHead>
-                                <TableHead>Pasien</TableHead>
-                                <TableHead>Obat</TableHead>
-                                <TableHead>Dosis</TableHead>
-                                <TableHead>Frekuensi</TableHead>
-                                <TableHead>Jumlah</TableHead>
-                                <TableHead>Durasi</TableHead>
-                                <TableHead>Dokter</TableHead>
-                                <TableHead className="w-[100px]">Status</TableHead>
-                                <TableHead className="w-[120px]">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {queue.map((item, index) => (
-                                <TableRow key={item.prescription.id}>
-                                    <TableCell className="font-medium">
-                                        {index + 1}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div>
-                                            <p className="font-medium">
-                                                {item.patient?.name || "N/A"}
-                                            </p>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div>
-                                            <p className="font-medium">{item.drug.name}</p>
-                                            {item.drug.genericName && (
-                                                <p className="text-xs text-muted-foreground">
-                                                    {item.drug.genericName}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>{item.prescription.dosage}</TableCell>
-                                    <TableCell>{item.prescription.frequency}</TableCell>
-                                    <TableCell>
-                                        {item.prescription.quantity} {item.drug.unit}
-                                    </TableCell>
-                                    <TableCell>
-                                        {item.prescription.duration || "-"}
-                                    </TableCell>
-                                    <TableCell>
-                                        {item.doctor?.name || "N/A"}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge>Pending</Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button
-                                            size="sm"
-                                            onClick={() => onProcess(item)}
-                                        >
-                                            Proses
-                                        </Button>
-                                    </TableCell>
+                <div className="w-full overflow-x-auto">
+                    <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead className="w-[50px]">#</TableHead>
+                                    <TableHead className="min-w-[150px]">Pasien</TableHead>
+                                    <TableHead className="min-w-[200px]">Obat</TableHead>
+                                    <TableHead className="min-w-[120px]">Dosis</TableHead>
+                                    <TableHead className="min-w-[120px]">Frekuensi</TableHead>
+                                    <TableHead className="min-w-[100px]">Jumlah</TableHead>
+                                    <TableHead className="min-w-[150px]">Dokter</TableHead>
+                                    <TableHead className="min-w-[100px]">Status</TableHead>
+                                    <TableHead className="min-w-[120px] text-right">Aksi</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {queue.map((item, index) => (
+                                    <TableRow key={item.prescription.id}>
+                                        <TableCell className="font-medium">
+                                            {index + 1}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div>
+                                                <p className="font-medium whitespace-nowrap">
+                                                    {item.patient?.name || "N/A"}
+                                                </p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div>
+                                                <p className="font-medium">{item.drug.name}</p>
+                                                {item.drug.genericName && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        {item.drug.genericName}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">{item.prescription.dosage}</TableCell>
+                                        <TableCell className="whitespace-nowrap">{item.prescription.frequency}</TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            {item.prescription.quantity} {item.drug.unit}
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="whitespace-nowrap">{item.doctor?.name || "N/A"}</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge>Pending</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                size="sm"
+                                                onClick={() => onProcess(item)}
+                                            >
+                                                Proses
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
             </CardContent>
         </Card>
