@@ -30,6 +30,7 @@ import { addDiagnosis, updateDiagnosis } from "@/lib/services/medical-record.ser
 import { getErrorMessage } from "@/lib/utils/error";
 import { DIAGNOSIS_TYPES, type Diagnosis } from "@/types/medical-record";
 import { formatIcdCode } from "@/lib/utils/medical-record";
+import { ICD10Search } from "./icd10-search";
 
 interface AddDiagnosisDialogProps {
     open: boolean;
@@ -213,33 +214,48 @@ export function AddDiagnosisDialog({
                                 )}
 
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    {/* ICD-10 Code */}
+                                    {/* ICD-10 Code Search */}
                                     <div className="space-y-2">
-                                        <Label htmlFor={`icd10Code-${index}`}>
-                                            Kode ICD-10 <span className="text-destructive">*</span>
-                                        </Label>
-                                        <Input
-                                            id={`icd10Code-${index}`}
-                                            {...form.register(`diagnoses.${index}.icd10Code`, {
-                                                onChange: (e) => {
-                                                    e.target.value = e.target.value.toUpperCase();
-                                                },
-                                            })}
-                                            placeholder="Contoh: J00"
-                                            className="font-mono"
+                                        <ICD10Search
+                                            value={form.watch(`diagnoses.${index}.icd10Code`) || ""}
+                                            onChange={(value) => {
+                                                form.setValue(`diagnoses.${index}.icd10Code`, value);
+                                            }}
+                                            onSelect={(code, description) => {
+                                                form.setValue(`diagnoses.${index}.icd10Code`, code);
+                                                form.setValue(`diagnoses.${index}.description`, description);
+                                            }}
+                                            label="Kode ICD-10"
+                                            placeholder="Ketik kode atau nama penyakit..."
+                                            required
                                         />
                                         {form.formState.errors.diagnoses?.[index]?.icd10Code && (
                                             <p className="text-sm text-destructive">
                                                 {form.formState.errors.diagnoses[index]?.icd10Code?.message}
                                             </p>
                                         )}
-                                        <p className="text-xs text-muted-foreground">
-                                            Masukkan kode ICD-10 (contoh: J00 untuk Common Cold)
-                                        </p>
                                     </div>
 
-                                    {/* Diagnosis Type */}
+                                    {/* Description */}
                                     <div className="space-y-2">
+                                        <Label htmlFor={`description-${index}`}>
+                                            Deskripsi Diagnosis <span className="text-destructive">*</span>
+                                        </Label>
+                                        <Input
+                                            id={`description-${index}`}
+                                            {...form.register(`diagnoses.${index}.description`)}
+                                            placeholder="Contoh: Acute nasopharyngitis (Common cold)"
+                                        />
+                                        {form.formState.errors.diagnoses?.[index]?.description && (
+                                            <p className="text-sm text-destructive">
+                                                {form.formState.errors.diagnoses[index]?.description?.message}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Diagnosis Type */}
+                                <div className="space-y-2">
                                         <Label htmlFor={`diagnosisType-${index}`}>Jenis Diagnosis</Label>
                                         <Select
                                             value={form.watch(`diagnoses.${index}.diagnosisType`)}
@@ -259,24 +275,6 @@ export function AddDiagnosisDialog({
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                </div>
-
-                                {/* Description */}
-                                <div className="space-y-2">
-                                    <Label htmlFor={`description-${index}`}>
-                                        Deskripsi Diagnosis <span className="text-destructive">*</span>
-                                    </Label>
-                                    <Input
-                                        id={`description-${index}`}
-                                        {...form.register(`diagnoses.${index}.description`)}
-                                        placeholder="Contoh: Acute nasopharyngitis (Common cold)"
-                                    />
-                                    {form.formState.errors.diagnoses?.[index]?.description && (
-                                        <p className="text-sm text-destructive">
-                                            {form.formState.errors.diagnoses[index]?.description?.message}
-                                        </p>
-                                    )}
-                                </div>
                             </div>
                         ))}
 

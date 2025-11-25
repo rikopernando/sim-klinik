@@ -16,6 +16,9 @@ export * from "./visits";
 // Medical records
 export * from "./medical-records";
 
+// ICD-10 Codes
+export * from "./icd10";
+
 // Pharmacy
 export * from "./pharmacy";
 
