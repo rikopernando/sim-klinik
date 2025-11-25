@@ -3,16 +3,29 @@
  * Displays title, visit information, and status badges
  */
 
-import { Lock } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Lock, History } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog";
+import { QueuePatient } from "@/hooks/use-doctor-queue";
+import { Visit } from "@/types/medical-record";
 
 interface MedicalRecordHeaderProps {
     visitId: number;
     isLocked: boolean;
     isDraft: boolean;
+    visit: Visit;
 }
 
-export function MedicalRecordHeader({ visitId, isLocked, isDraft }: MedicalRecordHeaderProps) {
+export function MedicalRecordHeader({ visit, visitId, isLocked, isDraft }: MedicalRecordHeaderProps) {
+    const [showHistory, setShowHistory] = useState(false);
+
+    const handleCloseHistory = useCallback(() => {
+        setShowHistory(false);
+    }, []);
+
     return (
         <div className="flex items-center justify-between">
             <div>
@@ -31,7 +44,22 @@ export function MedicalRecordHeader({ visitId, isLocked, isDraft }: MedicalRecor
                 {isDraft && !isLocked && (
                     <Badge variant="outline">Draft</Badge>
                 )}
+                <Button variant="outline" size="sm" onClick={() => setShowHistory(true)}>
+                    <History className="h-4 w-4 mr-1" />
+                    Riwayat
+                </Button>
             </div>
+
+
+            {/* Medical Record History Dialog */}
+            {visit.patientId && (
+                <MedicalRecordHistoryDialog
+                    open={showHistory}
+                    onOpenChange={handleCloseHistory}
+                    patientId={visit.patientId}
+                    // patientName={visit.patientName}
+                />
+            )}
         </div>
     );
 }

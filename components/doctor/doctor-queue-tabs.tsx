@@ -3,7 +3,6 @@
  */
 
 import { DashboardSection, ListWidget } from "@/components/dashboard";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Clock,
@@ -11,7 +10,6 @@ import {
     FileText,
     Users,
     Stethoscope,
-    History,
 } from "lucide-react";
 import { QueueItem, QueuePatient } from "@/hooks/use-doctor-queue";
 
@@ -74,23 +72,6 @@ export function DoctorQueueTabs({
                         }))}
                         emptyMessage="Tidak ada pasien dalam antrian"
                         maxHeight="450px"
-                        headerAction={
-                            <div className="flex gap-2">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        if (waitingQueue.length > 0) {
-                                            onViewHistory(waitingQueue[0].patient);
-                                        }
-                                    }}
-                                    disabled={waitingQueue.length === 0}
-                                >
-                                    <History className="h-4 w-4 mr-1" />
-                                    Riwayat
-                                </Button>
-                            </div>
-                        }
                         onItemClick={(item) => {
                             const queueItem = waitingQueue.find((q) => q.visit.id === item.id);
                             if (queueItem) {

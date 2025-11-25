@@ -19,6 +19,7 @@ import { useMedicalRecord } from "@/hooks/use-medical-record";
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header";
 import { MedicalRecordActions } from "@/components/medical-records/medical-record-actions";
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs";
+import { record } from "zod";
 
 export default function MedicalRecordPage() {
     const params = useParams();
@@ -82,6 +83,7 @@ export default function MedicalRecordPage() {
         <div className="container mx-auto max-w-6xl space-y-6 p-6">
             {/* Header with visit info and status badges */}
             <MedicalRecordHeader
+                visit={recordData.visit}
                 visitId={visitId}
                 isLocked={isLocked}
                 isDraft={isDraft}
