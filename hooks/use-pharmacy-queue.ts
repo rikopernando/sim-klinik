@@ -4,6 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
+import { getPharmacyQueue, type PrescriptionQueueItem } from "@/lib/services/pharmacy.service";
 
 interface UsePharmacyQueueOptions {
     autoRefresh?: boolean;
@@ -11,7 +12,7 @@ interface UsePharmacyQueueOptions {
 }
 
 interface UsePharmacyQueueReturn {
-    queue: any[];
+    queue: PrescriptionQueueItem[];
     isLoading: boolean;
     error: string | null;
     lastRefresh: Date | null;
@@ -23,7 +24,7 @@ export function usePharmacyQueue(
 ): UsePharmacyQueueReturn {
     const { autoRefresh = false, refreshInterval = 30000 } = options;
 
-    const [queue, setQueue] = useState<any[]>([]);
+    const [queue, setQueue] = useState<PrescriptionQueueItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
@@ -33,14 +34,8 @@ export function usePharmacyQueue(
             setIsLoading(true);
             setError(null);
 
-            const response = await fetch("/api/pharmacy/queue");
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Failed to fetch pharmacy queue");
-            }
-
-            setQueue(result.data || []);
+            const data = await getPharmacyQueue();
+            setQueue(data);
             setLastRefresh(new Date());
         } catch (err) {
             setError(err instanceof Error ? err.message : "An error occurred");

@@ -325,15 +325,34 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
 
 /**
  * Get pending prescriptions (not yet fulfilled)
+ * Includes patient and doctor information via joins
  */
 export async function getPendingPrescriptions() {
+    const { medicalRecords } = await import("@/db/schema/medical-records");
+    const { visits } = await import("@/db/schema/visits");
+    const { patients } = await import("@/db/schema/patients");
+    const { user } = await import("@/db/schema/auth");
+
     const pending = await db
         .select({
             prescription: prescriptions,
             drug: drugs,
+            patient: {
+                id: patients.id,
+                name: patients.name,
+                mrNumber: patients.mrNumber,
+            },
+            doctor: {
+                id: user.id,
+                name: user.name,
+            },
         })
         .from(prescriptions)
         .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+        .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+        .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
+        .innerJoin(patients, eq(visits.patientId, patients.id))
+        .leftJoin(user, eq(medicalRecords.doctorId, user.id))
         .where(eq(prescriptions.isFulfilled, false))
         .orderBy(desc(prescriptions.createdAt));
 
