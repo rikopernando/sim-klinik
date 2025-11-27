@@ -1,9 +1,9 @@
 /**
- * Add Inventory Dialog Component
+ * Add Inventory Dialog Component (Refactored)
  * Form for adding new drug inventory (stock incoming)
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -12,14 +12,12 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Package } from "lucide-react";
 import { DrugSearch } from "@/components/medical-records/drug-search";
 import { useAddInventory } from "@/hooks/use-add-inventory";
-import { checkDuplicateBatch, type DuplicateBatchCheck } from "@/lib/services/inventory.service";
+import { useBatchDuplicateCheck } from "@/hooks/use-batch-duplicate-check";
+import { DrugUnitDisplay } from "./inventory/drug-unit-display";
+import { BatchDuplicateWarning } from "./inventory/batch-duplicate-warning";
+import { InventoryFormFields } from "./inventory/inventory-form-fields";
 
 interface AddInventoryDialogProps {
     open: boolean;
@@ -27,78 +25,73 @@ interface AddInventoryDialogProps {
     onSuccess: () => void;
 }
 
+interface FormData {
+    drugId: number;
+    drugName: string;
+    drugUnit: string;
+    batchNumber: string;
+    expiryDate: string;
+    stockQuantity: string;
+    purchasePrice: string;
+    supplier: string;
+    receivedDate: string;
+}
+
+const initialFormData: FormData = {
+    drugId: 0,
+    drugName: "",
+    drugUnit: "",
+    batchNumber: "",
+    expiryDate: "",
+    stockQuantity: "",
+    purchasePrice: "",
+    supplier: "",
+    receivedDate: new Date().toISOString().split("T")[0],
+};
+
 export function AddInventoryDialog({
     open,
     onOpenChange,
     onSuccess,
 }: AddInventoryDialogProps) {
     const { addNewInventory, isSubmitting, error } = useAddInventory();
+    const [formData, setFormData] = useState<FormData>(initialFormData);
 
-    const [formData, setFormData] = useState({
-        drugId: 0,
-        drugName: "",
-        drugUnit: "",
-        batchNumber: "",
-        expiryDate: "",
-        stockQuantity: "",
-        purchasePrice: "",
-        supplier: "",
-        receivedDate: "",
-    });
-
-    const [duplicateCheck, setDuplicateCheck] = useState<DuplicateBatchCheck | null>(null);
-    const [isCheckingDuplicate, setIsCheckingDuplicate] = useState(false);
-    const [showDuplicateWarning, setShowDuplicateWarning] = useState(false);
+    // Batch duplicate check
+    const { duplicateCheck, isChecking, isDuplicate, reset: resetDuplicateCheck } =
+        useBatchDuplicateCheck({
+            drugId: formData.drugId,
+            batchNumber: formData.batchNumber,
+        });
 
     // Reset form when dialog opens
     useEffect(() => {
         if (open) {
-            setFormData({
-                drugId: 0,
-                drugName: "",
-                drugUnit: "",
-                batchNumber: "",
-                expiryDate: "",
-                stockQuantity: "",
-                purchasePrice: "",
-                supplier: "",
-                receivedDate: new Date().toISOString().split("T")[0], // Today's date
-            });
-            setDuplicateCheck(null);
-            setShowDuplicateWarning(false);
+            setFormData(initialFormData);
+            resetDuplicateCheck();
         }
-    }, [open]);
+    }, [open, resetDuplicateCheck]);
 
-    const handleDrugSelect = (drugId: number, drugName: string, drugUnit?: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            drugId,
-            drugName,
-            drugUnit: drugUnit || "",
-        }));
-        setDuplicateCheck(null);
-        setShowDuplicateWarning(false);
-    };
+    // Handle drug selection
+    const handleDrugSelect = useCallback(
+        (drugId: number, drugName: string, drugUnit?: string) => {
+            setFormData((prev) => ({
+                ...prev,
+                drugId,
+                drugName,
+                drugUnit: drugUnit || "",
+            }));
+            resetDuplicateCheck();
+        },
+        [resetDuplicateCheck]
+    );
 
-    // Check for duplicate batch when batch number changes
-    useEffect(() => {
-        const checkBatch = async () => {
-            if (formData.drugId && formData.batchNumber.trim()) {
-                setIsCheckingDuplicate(true);
-                const result = await checkDuplicateBatch(formData.drugId, formData.batchNumber);
-                setDuplicateCheck(result);
-                setShowDuplicateWarning(result.exists);
-                setIsCheckingDuplicate(false);
-            } else {
-                setDuplicateCheck(null);
-                setShowDuplicateWarning(false);
-            }
-        };
+    // Handle form field changes
+    const handleFieldChange = useCallback((field: string, value: string) => {
+        setFormData((prev) => ({ ...prev, [field]: value }));
+    }, []);
 
-        const timeoutId = setTimeout(checkBatch, 500); // Debounce
-        return () => clearTimeout(timeoutId);
-    }, [formData.drugId, formData.batchNumber]);
-
+    // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -131,8 +124,7 @@ export function AddInventoryDialog({
                 <DialogHeader>
                     <DialogTitle>Tambah Stok Obat</DialogTitle>
                     <DialogDescription>
-                        Catat pemasukan stok obat baru dengan batch number dan tanggal
-                        kadaluarsa
+                        Catat pemasukan stok obat baru dengan batch number dan tanggal kadaluarsa
                     </DialogDescription>
                 </DialogHeader>
 
@@ -140,176 +132,36 @@ export function AddInventoryDialog({
                     {/* Drug Selection */}
                     <DrugSearch
                         value={formData.drugName}
-                        onChange={(name) =>
-                            setFormData((prev) => ({ ...prev, drugName: name }))
-                        }
+                        onChange={(name) => handleFieldChange("drugName", name)}
                         onSelect={handleDrugSelect}
                         label="Nama Obat"
                         required
                     />
 
-                    {/* Display Unit (Read-only) */}
-                    {formData.drugUnit && (
-                        <div className="p-3 bg-muted rounded-md flex items-center gap-2">
-                            <Package className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm text-muted-foreground">Satuan</p>
-                                <p className="font-medium">{formData.drugUnit}</p>
-                            </div>
-                        </div>
+                    {/* Display Unit */}
+                    <DrugUnitDisplay unit={formData.drugUnit} />
+
+                    {/* Form Fields */}
+                    <InventoryFormFields
+                        formData={formData}
+                        onChange={handleFieldChange}
+                        disabled={isSubmitting}
+                        isCheckingDuplicate={isChecking}
+                    />
+
+                    {/* Duplicate Warning */}
+                    {isDuplicate && duplicateCheck && (
+                        <BatchDuplicateWarning duplicateCheck={duplicateCheck} />
                     )}
 
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Batch Number */}
-                        <div>
-                            <Label htmlFor="batchNumber">
-                                Nomor Batch <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="batchNumber"
-                                value={formData.batchNumber}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        batchNumber: e.target.value,
-                                    }))
-                                }
-                                placeholder="Masukkan nomor batch dari kemasan"
-                                required
-                                disabled={isSubmitting}
-                            />
-                            {isCheckingDuplicate && (
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Memeriksa duplikasi...
-                                </p>
-                            )}
-                        </div>
-
-                        {/* Expiry Date */}
-                        <div>
-                            <Label htmlFor="expiryDate">
-                                Tanggal Kadaluarsa <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="expiryDate"
-                                type="date"
-                                value={formData.expiryDate}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        expiryDate: e.target.value,
-                                    }))
-                                }
-                                required
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Stock Quantity */}
-                        <div>
-                            <Label htmlFor="stockQuantity">
-                                Jumlah Stok <span className="text-destructive">*</span>
-                            </Label>
-                            <Input
-                                id="stockQuantity"
-                                type="number"
-                                min="1"
-                                value={formData.stockQuantity}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        stockQuantity: e.target.value,
-                                    }))
-                                }
-                                placeholder="Masukkan jumlah"
-                                required
-                                disabled={isSubmitting}
-                            />
-                        </div>
-
-                        {/* Purchase Price */}
-                        <div>
-                            <Label htmlFor="purchasePrice">Harga Beli (Opsional)</Label>
-                            <Input
-                                id="purchasePrice"
-                                type="number"
-                                step="0.01"
-                                value={formData.purchasePrice}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        purchasePrice: e.target.value,
-                                    }))
-                                }
-                                placeholder="0.00"
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        {/* Supplier */}
-                        <div>
-                            <Label htmlFor="supplier">Supplier (Opsional)</Label>
-                            <Input
-                                id="supplier"
-                                value={formData.supplier}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        supplier: e.target.value,
-                                    }))
-                                }
-                                placeholder="Nama supplier"
-                                disabled={isSubmitting}
-                            />
-                        </div>
-
-                        {/* Received Date */}
-                        <div>
-                            <Label htmlFor="receivedDate">Tanggal Terima</Label>
-                            <Input
-                                id="receivedDate"
-                                type="date"
-                                value={formData.receivedDate}
-                                onChange={(e) =>
-                                    setFormData((prev) => ({
-                                        ...prev,
-                                        receivedDate: e.target.value,
-                                    }))
-                                }
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Duplicate Batch Warning */}
-                    {showDuplicateWarning && duplicateCheck?.batch && (
-                        <Alert variant="destructive">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertDescription>
-                                <p className="font-medium">Batch sudah ada!</p>
-                                <p className="text-sm mt-1">
-                                    Batch <strong>{duplicateCheck.batch.batchNumber}</strong> untuk obat ini
-                                    sudah ada dengan stok{" "}
-                                    <strong>{duplicateCheck.batch.stockQuantity} {duplicateCheck.batch.drug.unit}</strong>.
-                                </p>
-                                <p className="text-xs mt-2">
-                                    Jika ini adalah penambahan stok untuk batch yang sama, pastikan nomor batch
-                                    benar. Atau gunakan nomor batch berbeda jika ini batch baru.
-                                </p>
-                            </AlertDescription>
-                        </Alert>
-                    )}
-
+                    {/* Error Message */}
                     {error && (
                         <div className="p-3 bg-destructive/10 border border-destructive rounded-md text-sm text-destructive">
                             {error}
                         </div>
                     )}
 
+                    {/* Actions */}
                     <div className="flex justify-end gap-2 pt-4">
                         <Button
                             type="button"
