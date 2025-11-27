@@ -336,7 +336,12 @@ export async function getPendingPrescriptions() {
     const pending = await db
         .select({
             prescription: prescriptions,
-            drug: drugs,
+            drug: {
+                id: drugs.id,
+                name: drugs.name,
+                genericName: drugs.genericName,
+                unit: drugs.unit,
+            },
             patient: {
                 id: patients.id,
                 name: patients.name,

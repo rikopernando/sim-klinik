@@ -17,6 +17,7 @@ export interface PrescriptionQueueItem {
         createdAt: Date;
     };
     drug: {
+        id: number;
         name: string;
         genericName: string | null;
         unit: string;

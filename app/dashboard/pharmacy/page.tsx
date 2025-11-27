@@ -22,6 +22,7 @@ interface SelectedPrescription {
         quantity: number;
     };
     drug: {
+        id: number;
         name: string;
         genericName?: string | null;
         unit: string;

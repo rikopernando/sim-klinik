@@ -3,7 +3,8 @@
  */
 
 import { Button } from "@/components/ui/button";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Package } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface PharmacyHeaderProps {
     lastRefresh?: Date | null;
@@ -11,6 +12,8 @@ interface PharmacyHeaderProps {
 }
 
 export function PharmacyHeader({ lastRefresh, onRefresh }: PharmacyHeaderProps) {
+    const router = useRouter();
+
     return (
         <div className="flex justify-between items-center">
             <div>
@@ -25,6 +28,13 @@ export function PharmacyHeader({ lastRefresh, onRefresh }: PharmacyHeaderProps) 
                         Terakhir diperbarui: {lastRefresh.toLocaleTimeString("id-ID")}
                     </p>
                 )}
+                <Button
+                    onClick={() => router.push("/dashboard/pharmacy/inventory")}
+                    variant="default"
+                >
+                    <Package className="h-4 w-4 mr-2" />
+                    Kelola Stok
+                </Button>
                 <Button onClick={onRefresh} variant="outline">
                     <RefreshCw className="h-4 w-4 mr-2" />
                     Refresh
