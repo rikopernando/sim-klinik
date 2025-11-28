@@ -6,6 +6,7 @@ import { useState} from "react";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
 import { useDrugSearch, type Drug } from "@/hooks/use-drug-search";
 
 interface DrugSearchProps {
@@ -49,7 +50,11 @@ export function DrugSearch({
                 {label} {required && <span className="text-destructive">*</span>}
             </Label>
             <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                {isSearching ? 
+                    <Spinner className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    : (
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                )}
                 <Input
                     id="drugSearch"
                     value={value}
@@ -57,10 +62,8 @@ export function DrugSearch({
                     placeholder={placeholder}
                     className="pl-10"
                 />
-            </div>
-            {isSearching && <p className="text-xs text-muted-foreground">Mencari...</p>}
             {drugs.length > 0 && searchQuery && showDropdown && (
-                <div className="max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
+                <div className="absolute w-full bg-background mt-1 shadow-xl max-h-40 space-y-1 overflow-y-auto rounded-md border p-2">
                     {drugs.map((drug) => (
                         <button
                             key={drug.id}
@@ -73,6 +76,7 @@ export function DrugSearch({
                     ))}
                 </div>
             )}
+            </div>
         </div>
     );
 }

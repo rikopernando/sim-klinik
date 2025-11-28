@@ -13,8 +13,8 @@ interface DatePickerFieldProps {
     required?: boolean;
     error?: string;
     placeholder?: string;
-    minDate?: Date;
-    maxDate?: Date;
+    endMonth?: Date;
+    startMonth?: Date;
 }
 
 export function DatePickerField({
@@ -24,6 +24,8 @@ export function DatePickerField({
     required = false,
     error,
     placeholder = "Pilih tanggal",
+    startMonth = new Date("1900-01-01"),
+    endMonth,
 }: DatePickerFieldProps) {
     return (
         <FormField label={label} required={required} error={error}>
@@ -47,6 +49,8 @@ export function DatePickerField({
                         selected={value}
                         onSelect={onChange}
                         captionLayout="dropdown"
+                        startMonth={startMonth}
+                        endMonth={endMonth}
                     />
                 </PopoverContent>
             </Popover>

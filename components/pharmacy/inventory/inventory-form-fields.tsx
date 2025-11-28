@@ -15,6 +15,8 @@ interface InventoryFormFieldsProps {
     isCheckingDuplicate?: boolean;
 }
 
+const currentYear = new Date().getFullYear() + 20;
+
 export function InventoryFormFields({
     formData,
     onChange,
@@ -38,11 +40,12 @@ export function InventoryFormFields({
                 </div>
 
                 <div className="col-span-2 md:col-span-1">
-                    <DatePickerField 
+                    <DatePickerField
                         required
                         label="Tanggal Kadaluarsa"
                         value={formData.expiryDate}
                         onChange={(date) => onChange('expiryDate', date as Date)}
+                        endMonth={new Date(currentYear, 12)}
                     />
                 </div>
 
@@ -100,7 +103,7 @@ export function InventoryFormFields({
                 </div>
 
                 <div className="col-span-2 md:col-span-1">
-                    <DatePickerField 
+                    <DatePickerField
                         required
                         label="Tanggal Terima"
                         value={formData.receivedDate}

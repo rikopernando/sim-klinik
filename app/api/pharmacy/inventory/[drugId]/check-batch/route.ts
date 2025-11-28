@@ -69,7 +69,7 @@ export async function GET(
 
         // Batch exists, return details
         const { inventory, drug } = existingBatch[0];
-        const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate);
+        const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString());
         const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry);
 
         const response: APIResponse = {

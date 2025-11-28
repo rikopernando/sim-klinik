@@ -48,8 +48,6 @@ export function AddInventoryDialog({
     const { addNewInventory, isSubmitting, error } = useAddInventory();
     const [formData, setFormData] = useState<DrugInventoryInputValues>(initialFormData);
 
-    console.log({ formData})
-
     // Batch duplicate check
     const { duplicateCheck, isChecking, isDuplicate, reset: resetDuplicateCheck } =
         useBatchDuplicateCheck({
@@ -94,6 +92,9 @@ export function AddInventoryDialog({
         if (success) {
             onSuccess();
             onOpenChange(false);
+            setFormData({ ...initialFormData})
+            setDrugSearch('')
+            resetDuplicateCheck();
         }
     };
 
