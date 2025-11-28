@@ -1,10 +1,11 @@
 /**
- * Expiring Drugs List Component
+ * Expiring Drugs List Component (Refactored)
+ * Displays list of expiring drugs with optimized rendering
  */
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils";
+import { useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { ExpiringDrugCard } from "./expiring/expiring-drug-card";
 
 interface Drug {
     name: string;
@@ -52,77 +53,23 @@ const EmptyState = () => (
     </Card>
 );
 
-const ExpiryBadge = ({ level }: { level: string }) => {
-    const labels = {
-        expired: "Kadaluarsa",
-        expiring_soon: "Segera Kadaluarsa",
-        warning: "Perhatian",
-    };
-
-    return <Badge className={getExpiryAlertColor(level).badge}>{labels[level as keyof typeof labels]}</Badge>;
-};
-
 export function ExpiringDrugsList({
     drugs,
     isLoading,
     error,
 }: ExpiringDrugsListProps) {
+    // Memoize list items to prevent unnecessary re-renders
+    const drugCards = useMemo(
+        () =>
+            drugs.map((inventory) => (
+                <ExpiringDrugCard key={inventory.id} inventory={inventory} />
+            )),
+        [drugs]
+    );
+
     if (isLoading) return <LoadingState />;
     if (error) return <ErrorState error={error} />;
     if (drugs.length === 0) return <EmptyState />;
 
-    return (
-        <div className="grid gap-4">
-            {drugs.map((inventory) => {
-                const colors = getExpiryAlertColor(inventory.expiryAlertLevel);
-                return (
-                    <Card
-                        key={inventory.id}
-                        className={`border-2 ${colors.border} ${colors.bg}`}
-                    >
-                        <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <CardTitle className="text-lg">
-                                        {inventory.drug.name}
-                                    </CardTitle>
-                                    <CardDescription>
-                                        Batch: {inventory.batchNumber}
-                                    </CardDescription>
-                                </div>
-                                <ExpiryBadge level={inventory.expiryAlertLevel} />
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">
-                                        Tanggal Kadaluarsa
-                                    </p>
-                                    <p className={`font-medium ${colors.text}`}>
-                                        {formatExpiryDate(
-                                            inventory.expiryDate,
-                                            inventory.daysUntilExpiry
-                                        )}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Stok</p>
-                                    <p className="font-medium">
-                                        {inventory.stockQuantity} {inventory.drug.unit}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Supplier</p>
-                                    <p className="font-medium">
-                                        {inventory.supplier || "-"}
-                                    </p>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                );
-            })}
-        </div>
-    );
+    return <div className="grid gap-4">{drugCards}</div>;
 }

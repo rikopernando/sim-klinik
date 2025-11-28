@@ -54,8 +54,8 @@ export interface Drug {
     minimumStock: number;
     description: string | null;
     isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 /**
@@ -73,13 +73,13 @@ export interface DrugInventory {
     id: number;
     drugId: number;
     batchNumber: string;
-    expiryDate: string;
+    expiryDate: Date;
     stockQuantity: number;
     purchasePrice: string | null;
     supplier: string | null;
-    receivedDate: string;
-    createdAt: string;
-    updatedAt: string;
+    receivedDate: Date;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 /**

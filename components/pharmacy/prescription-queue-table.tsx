@@ -1,18 +1,12 @@
 /**
- * Prescription Queue Table Component
+ * Prescription Queue Table Component (Refactored)
+ * Displays prescription queue with optimized rendering
  */
 
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { useMemo } from "react";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { PrescriptionRow } from "./queue/prescription-row";
 
 interface Drug {
     name: string;
@@ -81,6 +75,20 @@ export function PrescriptionQueueTable({
     error,
     onProcess,
 }: PrescriptionQueueTableProps) {
+    // Memoize table rows to prevent unnecessary re-renders
+    const tableRows = useMemo(
+        () =>
+            queue.map((item, index) => (
+                <PrescriptionRow
+                    key={item.prescription.id}
+                    item={item}
+                    index={index}
+                    onProcess={onProcess}
+                />
+            )),
+        [queue, onProcess]
+    );
+
     if (isLoading) return <LoadingState />;
     if (error) return <ErrorState error={error} />;
     if (queue.length === 0) return <EmptyState />;
@@ -104,51 +112,7 @@ export function PrescriptionQueueTable({
                                     <TableHead className="min-w-[120px] text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
-                                {queue.map((item, index) => (
-                                    <TableRow key={item.prescription.id}>
-                                        <TableCell className="font-medium">
-                                            {index + 1}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium whitespace-nowrap">
-                                                    {item.patient?.name || "N/A"}
-                                                </p>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div>
-                                                <p className="font-medium">{item.drug.name}</p>
-                                                {item.drug.genericName && (
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {item.drug.genericName}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap">{item.prescription.dosage}</TableCell>
-                                        <TableCell className="whitespace-nowrap">{item.prescription.frequency}</TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            {item.prescription.quantity} {item.drug.unit}
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="whitespace-nowrap">{item.doctor?.name || "N/A"}</span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge>Pending</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                size="sm"
-                                                onClick={() => onProcess(item)}
-                                            >
-                                                Proses
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
+                            <TableBody>{tableRows}</TableBody>
                         </Table>
                     </div>
                 </div>

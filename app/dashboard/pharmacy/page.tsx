@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * Pharmacy Queue Dashboard
- * Displays pending prescriptions and expiring drugs
+ * Pharmacy Queue Dashboard (Refactored)
+ * Displays pending prescriptions and expiring drugs with optimized performance
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard";
 import { usePrescriptionFulfillment } from "@/hooks/use-prescription-fulfillment";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,26 +43,37 @@ export default function PharmacyDashboard() {
 
     const { fulfillPrescription, isSubmitting } = usePrescriptionFulfillment();
 
-    const [selectedPrescription, setSelectedPrescription] = useState<SelectedPrescription | null>(null);
+    const [selectedPrescription, setSelectedPrescription] =
+        useState<SelectedPrescription | null>(null);
 
-    const handleFulfill = async (data: {
-        inventoryId: number;
-        dispensedQuantity: number;
-        fulfilledBy: string;
-        notes?: string;
-    }) => {
-        if (!selectedPrescription) return;
+    // Memoize handlers to prevent unnecessary re-renders
+    const handleFulfill = useCallback(
+        async (data: {
+            inventoryId: number;
+            dispensedQuantity: number;
+            fulfilledBy: string;
+            notes?: string;
+        }) => {
+            if (!selectedPrescription) return;
 
-        const success = await fulfillPrescription({
-            prescriptionId: selectedPrescription.prescription.id,
-            ...data,
-        });
+            const success = await fulfillPrescription({
+                prescriptionId: selectedPrescription.prescription.id,
+                ...data,
+            });
 
-        if (success) {
+            if (success) {
+                setSelectedPrescription(null);
+                refresh();
+            }
+        },
+        [selectedPrescription, fulfillPrescription, refresh]
+    );
+
+    const handleDialogClose = useCallback((open: boolean) => {
+        if (!open) {
             setSelectedPrescription(null);
-            refresh();
         }
-    };
+    }, []);
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -111,7 +122,7 @@ export default function PharmacyDashboard() {
             {/* Fulfillment Dialog */}
             <FulfillmentDialog
                 open={!!selectedPrescription}
-                onOpenChange={(open) => !open && setSelectedPrescription(null)}
+                onOpenChange={handleDialogClose}
                 selectedPrescription={selectedPrescription}
                 isSubmitting={isSubmitting}
                 onSubmit={handleFulfill}

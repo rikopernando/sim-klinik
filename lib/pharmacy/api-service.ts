@@ -14,6 +14,8 @@ import type {
     StockMovementInput,
     DrugWithStock,
     DrugInventoryWithDetails,
+    Drug,
+    DrugInventory,
 } from "@/types/pharmacy";
 import {
     calculateDaysUntilExpiry,
@@ -197,7 +199,7 @@ export async function getAllDrugInventory(): Promise<DrugInventoryWithDetails[]>
 
     const inventoriesWithDetails: DrugInventoryWithDetails[] = inventories.map(
         ({ inventory, drug }) => {
-            const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate);
+            const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString());
             const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry);
 
             return {
@@ -230,7 +232,7 @@ export async function getDrugInventoryByDrugId(
 
     const inventoriesWithDetails: DrugInventoryWithDetails[] = inventories.map(
         ({ inventory, drug }) => {
-            const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate);
+            const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString());
             const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry);
 
             return {
@@ -303,7 +305,7 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
         .innerJoin(drugs, eq(drugInventory.drugId, drugs.id))
         .where(
             and(
-                lt(drugInventory.expiryDate, thirtyDaysFromNow.toISOString().split("T")[0]),
+                lt(drugInventory.expiryDate, thirtyDaysFromNow),
                 gte(drugInventory.stockQuantity, 1)
             )
         )
@@ -311,7 +313,7 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
 
     const inventoriesWithDetails: DrugInventoryWithDetails[] = inventories.map(
         ({ inventory, drug }) => {
-            const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate);
+            const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString());
             const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry);
 
             return {

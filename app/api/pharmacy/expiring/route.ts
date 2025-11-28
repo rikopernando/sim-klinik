@@ -12,7 +12,7 @@ import { APIResponse } from "@/types/pharmacy";
  * Get all drugs with expiry date < 30 days
  * Returns drugs sorted by expiry date (earliest first)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
         const expiringDrugs = await getExpiringDrugs();
 

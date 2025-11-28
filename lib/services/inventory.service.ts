@@ -5,18 +5,19 @@
 
 import axios from "axios";
 import { DrugInventoryInput } from "../pharmacy/validation";
+import { ExpiryAlertLevel } from "@/types/pharmacy";
 
 export interface DrugInventory {
     id: number;
     drugId: number;
     batchNumber: string;
-    expiryDate: Date;
+    expiryDate: string;
     stockQuantity: number;
     purchasePrice: string | null;
     supplier: string | null;
     receivedDate: Date;
-    createdAt: Date;
-    updatedAt: Date;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface DrugInventoryWithDetails extends DrugInventory {
@@ -28,7 +29,7 @@ export interface DrugInventoryWithDetails extends DrugInventory {
         category: string | null;
     };
     daysUntilExpiry: number;
-    expiryAlertLevel: "expired" | "expiring_soon" | "warning" | "ok";
+    expiryAlertLevel: ExpiryAlertLevel;
 }
 
 export interface InventoryByDrugItem {

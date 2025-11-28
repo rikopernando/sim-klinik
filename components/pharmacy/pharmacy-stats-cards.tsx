@@ -1,8 +1,10 @@
 /**
- * Pharmacy Stats Cards Component
+ * Pharmacy Stats Cards Component (Refactored)
+ * Displays statistics using reusable StatCard components
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo } from "react";
+import { StatCard } from "./stats/stat-card";
 
 interface ExpiringDrugsData {
     expired: unknown[];
@@ -20,61 +22,46 @@ export function PharmacyStatsCards({
     queueCount,
     expiringDrugs,
 }: PharmacyStatsCardsProps) {
+    // Memoize stats to prevent unnecessary recalculations
+    const stats = useMemo(
+        () => ({
+            queue: queueCount,
+            expired: expiringDrugs.expired.length,
+            expiringSoon: expiringDrugs.expiringSoon.length,
+            warning: expiringDrugs.warning.length,
+        }),
+        [queueCount, expiringDrugs]
+    );
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Resep Pending</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{queueCount}</div>
-                    <p className="text-xs text-muted-foreground">
-                        Menunggu proses
-                    </p>
-                </CardContent>
-            </Card>
+            <StatCard
+                title="Resep Pending"
+                value={stats.queue}
+                description="Menunggu proses"
+                variant="default"
+            />
 
-            <Card className="border-red-200 bg-red-50">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Kadaluarsa</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-red-700">
-                        {expiringDrugs.expired.length}
-                    </div>
-                    <p className="text-xs text-red-600">
-                        Sudah kadaluarsa
-                    </p>
-                </CardContent>
-            </Card>
+            <StatCard
+                title="Kadaluarsa"
+                value={stats.expired}
+                description="Sudah kadaluarsa"
+                variant="danger"
+            />
 
-            <Card className="border-orange-200 bg-orange-50">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Segera Kadaluarsa</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-orange-700">
-                        {expiringDrugs.expiringSoon.length}
-                    </div>
-                    <p className="text-xs text-orange-600">
-                        &lt; 30 hari
-                    </p>
-                </CardContent>
-            </Card>
+            <StatCard
+                title="Segera Kadaluarsa"
+                value={stats.expiringSoon}
+                description="< 30 hari"
+                variant="warning"
+            />
 
-            <Card className="border-yellow-200 bg-yellow-50">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Perhatian</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold text-yellow-700">
-                        {expiringDrugs.warning.length}
-                    </div>
-                    <p className="text-xs text-yellow-600">
-                        30-90 hari
-                    </p>
-                </CardContent>
-            </Card>
+            <StatCard
+                title="Perhatian"
+                value={stats.warning}
+                description="30-90 hari"
+                variant="caution"
+            />
         </div>
     );
 }

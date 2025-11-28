@@ -1,9 +1,9 @@
 /**
- * Prescription Fulfillment Dialog Component
- * Enhanced with batch selection
+ * Prescription Fulfillment Dialog Component (Refactored)
+ * Enhanced with batch selection and modular components
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -12,14 +12,10 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Package } from "lucide-react";
 import { getAvailableBatches, type DrugInventoryWithDetails } from "@/lib/services/inventory.service";
-import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils";
+import { DrugInfoDisplay } from "./fulfillment/drug-info-display";
+import { BatchSelector } from "./fulfillment/batch-selector";
+import { FulfillmentForm } from "./fulfillment/fulfillment-form";
 
 interface Drug {
     id: number;
@@ -91,25 +87,31 @@ export function FulfillmentDialog({
         }
     }, [open, selectedPrescription?.drug.id]);
 
-    const handleBatchSelect = (batch: DrugInventoryWithDetails) => {
-        setSelectedBatch(batch);
-        setFormData((prev) => ({
-            ...prev,
-            inventoryId: batch.id.toString(),
-            dispensedQuantity: prev.dispensedQuantity || selectedPrescription?.prescription.quantity.toString() || "",
-        }));
-    };
+    const handleBatchSelect = useCallback(
+        (batch: DrugInventoryWithDetails) => {
+            setSelectedBatch(batch);
+            setFormData((prev) => ({
+                ...prev,
+                inventoryId: batch.id.toString(),
+                dispensedQuantity:
+                    prev.dispensedQuantity ||
+                    selectedPrescription?.prescription.quantity.toString() ||
+                    "",
+            }));
+        },
+        [selectedPrescription]
+    );
 
-    const handleSubmit = () => {
+    const handleSubmit = useCallback(() => {
         onSubmit({
             inventoryId: parseInt(formData.inventoryId),
             dispensedQuantity: parseInt(formData.dispensedQuantity),
             fulfilledBy: formData.fulfilledBy,
             notes: formData.notes || undefined,
         });
-    };
+    }, [formData, onSubmit]);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         if (!isSubmitting) {
             setFormData({
                 inventoryId: "",
@@ -121,11 +123,11 @@ export function FulfillmentDialog({
             setAvailableBatches([]);
             onOpenChange(false);
         }
-    };
+    }, [isSubmitting, onOpenChange]);
 
     return (
         <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl md:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Proses Resep</DialogTitle>
                     <DialogDescription>
@@ -136,184 +138,53 @@ export function FulfillmentDialog({
                 {selectedPrescription && (
                     <div className="space-y-4">
                         {/* Drug Info */}
-                        <div className="p-3 bg-muted rounded-md">
-                            <p className="text-sm font-medium text-muted-foreground">Obat</p>
-                            <p className="text-lg font-semibold">{selectedPrescription.drug.name}</p>
-                            {selectedPrescription.drug.genericName && (
-                                <p className="text-sm text-muted-foreground">
-                                    {selectedPrescription.drug.genericName}
-                                </p>
-                            )}
-                            <p className="text-sm mt-1">
-                                Jumlah resep:{" "}
-                                <span className="font-semibold">
-                                    {selectedPrescription.prescription.quantity} {selectedPrescription.drug.unit}
-                                </span>
-                            </p>
-                        </div>
+                        <DrugInfoDisplay
+                            drugName={selectedPrescription.drug.name}
+                            genericName={selectedPrescription.drug.genericName}
+                            quantity={selectedPrescription.prescription.quantity}
+                            unit={selectedPrescription.drug.unit}
+                        />
 
-                        {/* Available Batches */}
-                        <div>
-                            <Label>
-                                Pilih Batch <span className="text-destructive">*</span>
-                            </Label>
-                            {isLoadingBatches ? (
-                                <div className="p-4 text-center text-muted-foreground">
-                                    Loading batches...
-                                </div>
-                            ) : availableBatches.length === 0 ? (
-                                <div className="p-4 bg-destructive/10 border border-destructive rounded-md flex items-start gap-2">
-                                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-                                    <div>
-                                        <p className="text-sm font-medium text-destructive">
-                                            Tidak ada stok tersedia
-                                        </p>
-                                        <p className="text-xs text-destructive/80 mt-1">
-                                            Obat ini tidak memiliki batch dengan stok yang tersedia.
-                                            Silakan tambah stok terlebih dahulu.
-                                        </p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
-                                    {availableBatches.map((batch) => {
-                                        const colors = getExpiryAlertColor(batch.expiryAlertLevel);
-                                        const isSelected = selectedBatch?.id === batch.id;
+                        {/* Batch Selector */}
+                        <BatchSelector
+                            isLoading={isLoadingBatches}
+                            batches={availableBatches}
+                            selectedBatch={selectedBatch}
+                            onBatchSelect={handleBatchSelect}
+                        />
 
-                                        return (
-                                            <Card
-                                                key={batch.id}
-                                                className={`cursor-pointer transition-colors ${
-                                                    isSelected
-                                                        ? "border-primary ring-2 ring-primary"
-                                                        : "hover:border-primary/50"
-                                                }`}
-                                                onClick={() => handleBatchSelect(batch)}
-                                            >
-                                                <CardContent className="p-3">
-                                                    <div className="flex items-start justify-between">
-                                                        <div className="flex-1">
-                                                            <div className="flex items-center gap-2">
-                                                                <Package className="h-4 w-4 text-muted-foreground" />
-                                                                <p className="font-mono text-sm font-medium">
-                                                                    {batch.batchNumber}
-                                                                </p>
-                                                                {isSelected && (
-                                                                    <Badge variant="default" className="text-xs">
-                                                                        Dipilih
-                                                                    </Badge>
-                                                                )}
-                                                            </div>
-                                                            <div className="mt-1 flex items-center gap-4 text-xs text-muted-foreground">
-                                                                <span>
-                                                                    Stok:{" "}
-                                                                    <span className="font-semibold text-foreground">
-                                                                        {batch.stockQuantity} {batch.drug.unit}
-                                                                    </span>
-                                                                </span>
-                                                                <span className={colors.text}>
-                                                                    Exp:{" "}
-                                                                    {formatExpiryDate(
-                                                                        batch.expiryDate,
-                                                                        batch.daysUntilExpiry
-                                                                    )}
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                        <Badge className={colors.badge}>
-                                                            {batch.expiryAlertLevel === "expiring_soon"
-                                                                ? "Segera Exp"
-                                                                : batch.expiryAlertLevel === "warning"
-                                                                ? "Perhatian"
-                                                                : "Aman"}
-                                                        </Badge>
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Quantity and Pharmacist */}
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <Label htmlFor="dispensedQuantity">
-                                    Jumlah yang Diberikan <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="dispensedQuantity"
-                                    type="number"
-                                    min="1"
-                                    max={selectedBatch?.stockQuantity || selectedPrescription.prescription.quantity}
-                                    value={formData.dispensedQuantity}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            dispensedQuantity: e.target.value,
-                                        })
-                                    }
-                                    placeholder={`Max: ${selectedBatch?.stockQuantity || selectedPrescription.prescription.quantity}`}
-                                    disabled={isSubmitting || !selectedBatch}
-                                />
-                                {selectedBatch && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Stok tersedia: {selectedBatch.stockQuantity} {selectedBatch.drug.unit}
-                                    </p>
-                                )}
-                            </div>
-
-                            <div>
-                                <Label htmlFor="fulfilledBy">
-                                    Diproses Oleh <span className="text-destructive">*</span>
-                                </Label>
-                                <Input
-                                    id="fulfilledBy"
-                                    value={formData.fulfilledBy}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            fulfilledBy: e.target.value,
-                                        })
-                                    }
-                                    placeholder="Nama petugas"
-                                    disabled={isSubmitting}
-                                />
-                            </div>
-                        </div>
-
-                        {/* Notes */}
-                        <div>
-                            <Label htmlFor="notes">Catatan (Opsional)</Label>
-                            <Textarea
-                                id="notes"
-                                value={formData.notes}
-                                onChange={(e) =>
-                                    setFormData({
-                                        ...formData,
-                                        notes: e.target.value,
-                                    })
-                                }
-                                placeholder="Tambahkan catatan jika diperlukan"
-                                disabled={isSubmitting}
-                            />
-                        </div>
+                        {/* Fulfillment Form */}
+                        <FulfillmentForm
+                            selectedBatch={selectedBatch}
+                            prescriptionQuantity={selectedPrescription.prescription.quantity}
+                            unit={selectedPrescription.drug.unit}
+                            dispensedQuantity={formData.dispensedQuantity}
+                            fulfilledBy={formData.fulfilledBy}
+                            notes={formData.notes}
+                            isSubmitting={isSubmitting}
+                            onDispensedQuantityChange={(value) =>
+                                setFormData({ ...formData, dispensedQuantity: value })
+                            }
+                            onFulfilledByChange={(value) =>
+                                setFormData({ ...formData, fulfilledBy: value })
+                            }
+                            onNotesChange={(value) => setFormData({ ...formData, notes: value })}
+                        />
 
                         {/* Actions */}
-                        <div className="flex gap-2 pt-4">
+                        <div className="flex justify-end gap-2 pt-4">
                             <Button
                                 onClick={handleSubmit}
-                                disabled={isSubmitting || !selectedBatch || !formData.dispensedQuantity || !formData.fulfilledBy}
-                                className="flex-1"
+                                disabled={
+                                    isSubmitting ||
+                                    !selectedBatch ||
+                                    !formData.dispensedQuantity ||
+                                    !formData.fulfilledBy
+                                }
                             >
                                 {isSubmitting ? "Memproses..." : "Proses Resep"}
                             </Button>
-                            <Button
-                                onClick={handleClose}
-                                variant="outline"
-                                disabled={isSubmitting}
-                            >
+                            <Button onClick={handleClose} variant="outline" disabled={isSubmitting}>
                                 Batal
                             </Button>
                         </div>

@@ -15,8 +15,7 @@ import { eq, asc } from "drizzle-orm";
  */
 export async function GET() {
     try {
-        // Get all users with 'doctor' role
-        const doctors = await db
+        const pharmacists = await db
             .select({
                 id: user.id,
                 name: user.name,
@@ -25,20 +24,20 @@ export async function GET() {
             .from(user)
             .innerJoin(userRoles, eq(user.id, userRoles.userId))
             .innerJoin(roles, eq(userRoles.roleId, roles.id))
-            .where(eq(roles.name, "doctor"))
+            .where(eq(roles.name, "pharmacist"))
             .orderBy(asc(user.name));
 
         return NextResponse.json({
-            doctors: doctors.map((doc) => ({
+            pharmacists: pharmacists.map((doc) => ({
                 id: doc.id,
                 name: doc.name,
                 email: doc.email,
             })),
         });
     } catch (error) {
-        console.error("Error fetching doctors:", error);
+        console.error("Error fetching pharmacists:", error);
         return NextResponse.json(
-            { error: "Failed to fetch doctors" },
+            { error: "Failed to fetch pharmacists" },
             { status: 500 }
         );
     }
