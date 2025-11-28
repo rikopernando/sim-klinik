@@ -21,6 +21,7 @@ import {
     getStockAlertLevel,
 } from "./stock-utils";
 import { DrugInventoryInput } from "./validation";
+import { getSession } from "../rbac";
 
 /**
  * Get all drugs with total stock calculation
@@ -272,13 +273,15 @@ export async function addDrugInventory(data: DrugInventoryInput) {
         })
         .returning();
 
+    const session = await getSession();
+
     // Record stock movement
     await db.insert(stockMovements).values({
         inventoryId: newInventory.id,
         movementType: "in",
         quantity: data.stockQuantity,
         reason: "Stock masuk baru",
-        performedBy: "system",
+        performedBy: session?.user.id,
     });
 
     return newInventory;
