@@ -9,7 +9,6 @@ import { eq, sql, and, lt, gte, desc, ilike, or } from "drizzle-orm";
 import type {
     DrugInput,
     DrugUpdateInput,
-    DrugInventoryInput,
     PrescriptionFulfillmentInput,
     StockAdjustmentInput,
     StockMovementInput,
@@ -21,6 +20,7 @@ import {
     getExpiryAlertLevel,
     getStockAlertLevel,
 } from "./stock-utils";
+import { DrugInventoryInput } from "./validation";
 
 /**
  * Get all drugs with total stock calculation
@@ -264,11 +264,11 @@ export async function addDrugInventory(data: DrugInventoryInput) {
         .values({
             drugId: data.drugId,
             batchNumber: data.batchNumber,
-            expiryDate: data.expiryDate,
+            expiryDate: new Date(data.expiryDate),
             stockQuantity: data.stockQuantity,
-            purchasePrice: data.purchasePrice || null,
+            purchasePrice: data.purchasePrice ? data.purchasePrice : null,
             supplier: data.supplier || null,
-            receivedDate: sql`CURRENT_DATE`,
+            receivedDate: data.receivedDate ? new Date(data.receivedDate) : new Date(),
         })
         .returning();
 

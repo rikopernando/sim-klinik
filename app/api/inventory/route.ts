@@ -8,10 +8,8 @@ import { z } from "zod";
 import { drugInventorySchema, stockAdjustmentSchema } from "@/lib/pharmacy/validation";
 import {
     getAllDrugInventory,
-    getDrugInventoryByDrugId,
     addDrugInventory,
     adjustStock,
-    getStockMovements,
 } from "@/lib/pharmacy/api-service";
 import { APIResponse } from "@/types/pharmacy";
 
@@ -22,55 +20,8 @@ import { APIResponse } from "@/types/pharmacy";
  * - drugId: number (optional) - filter by specific drug
  * - movements: number (optional) - get stock movements for specific inventory
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
-        const searchParams = request.nextUrl.searchParams;
-        const drugId = searchParams.get("drugId");
-        const movementsId = searchParams.get("movements");
-
-        // Get stock movements for specific inventory
-        if (movementsId) {
-            const inventoryId = parseInt(movementsId);
-            if (isNaN(inventoryId)) {
-                const response: APIResponse = {
-                    success: false,
-                    error: "Invalid inventory ID",
-                };
-                return NextResponse.json(response, { status: 400 });
-            }
-
-            const movements = await getStockMovements(inventoryId);
-
-            const response: APIResponse = {
-                success: true,
-                data: movements,
-                count: movements.length,
-            };
-            return NextResponse.json(response);
-        }
-
-        // Get inventory by drug ID
-        if (drugId) {
-            const id = parseInt(drugId);
-            if (isNaN(id)) {
-                const response: APIResponse = {
-                    success: false,
-                    error: "Invalid drug ID",
-                };
-                return NextResponse.json(response, { status: 400 });
-            }
-
-            const inventories = await getDrugInventoryByDrugId(id);
-
-            const response: APIResponse = {
-                success: true,
-                data: inventories,
-                count: inventories.length,
-            };
-            return NextResponse.json(response);
-        }
-
-        // Get all inventory
         const allInventory = await getAllDrugInventory();
 
         const response: APIResponse = {
@@ -78,6 +29,7 @@ export async function GET(request: NextRequest) {
             data: allInventory,
             count: allInventory.length,
         };
+
         return NextResponse.json(response);
     } catch (error) {
         console.error("Inventory fetch error:", error);

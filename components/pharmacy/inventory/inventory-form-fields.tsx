@@ -3,19 +3,14 @@
  * Reusable form fields for inventory management
  */
 
+import { DatePickerField } from "@/components/forms/date-picker-field";
+import { FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { DrugInventoryInputValues } from "@/types/inventory";
 
 interface InventoryFormFieldsProps {
-    formData: {
-        batchNumber: string;
-        expiryDate: string;
-        stockQuantity: string;
-        purchasePrice: string;
-        supplier: string;
-        receivedDate: string;
-    };
-    onChange: (field: string, value: string) => void;
+    formData: DrugInventoryInputValues;
+    onChange: (field: string, value: string | Date) => void;
     disabled?: boolean;
     isCheckingDuplicate?: boolean;
 }
@@ -24,52 +19,35 @@ export function InventoryFormFields({
     formData,
     onChange,
     disabled = false,
-    isCheckingDuplicate = false,
 }: InventoryFormFieldsProps) {
     return (
         <>
             {/* Batch Number and Expiry Date */}
             <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <Label htmlFor="batchNumber">
-                        Nomor Batch <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                        id="batchNumber"
-                        value={formData.batchNumber}
-                        onChange={(e) => onChange("batchNumber", e.target.value)}
-                        placeholder="Masukkan nomor batch dari kemasan"
-                        required
-                        disabled={disabled}
-                    />
-                    {isCheckingDuplicate && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Memeriksa duplikasi...
-                        </p>
-                    )}
+                <div className="col-span-2 md:col-span-1">
+                    <FormField htmlFor="batchNumber" label='Nomor Batch' required>
+                        <Input
+                            id="batchNumber"
+                            value={formData.batchNumber}
+                            onChange={(e) => onChange("batchNumber", e.target.value)}
+                            placeholder="Masukkan nomor batch dari kemasan"
+                            required
+                            disabled={disabled}
+                        />
+                        </FormField>
                 </div>
 
-                <div>
-                    <Label htmlFor="expiryDate">
-                        Tanggal Kadaluarsa <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                        id="expiryDate"
-                        type="date"
+                <div className="col-span-2 md:col-span-1">
+                    <DatePickerField 
+                        required
+                        label="Tanggal Kadaluarsa"
                         value={formData.expiryDate}
-                        onChange={(e) => onChange("expiryDate", e.target.value)}
-                        required
-                        disabled={disabled}
+                        onChange={(date) => onChange('expiryDate', date as Date)}
                     />
                 </div>
-            </div>
 
-            {/* Stock Quantity and Purchase Price */}
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <Label htmlFor="stockQuantity">
-                        Jumlah Stok <span className="text-destructive">*</span>
-                    </Label>
+                <div className="col-span-2 md:col-span-1">
+                    <FormField htmlFor="stockQuantity" label='Jumlah Stok' required>
                     <Input
                         id="stockQuantity"
                         type="number"
@@ -80,10 +58,23 @@ export function InventoryFormFields({
                         required
                         disabled={disabled}
                     />
+                    </FormField>
                 </div>
 
-                <div>
-                    <Label htmlFor="purchasePrice">Harga Beli (Opsional)</Label>
+                <div className="col-span-2 md:col-span-1">
+                    <FormField htmlFor="unit" label='Satuan'>
+                    <Input
+                        id="satuan"
+                        type="text"
+                        value={formData.drugUnit}
+                        placeholder="Satuan"
+                        disabled
+                    />
+                    </FormField>
+                </div>
+
+                <div className="col-span-2 md:col-span-1">
+                    <FormField htmlFor="purchasePrice" label='Harga Beli'>
                     <Input
                         id="purchasePrice"
                         type="number"
@@ -93,13 +84,11 @@ export function InventoryFormFields({
                         placeholder="0.00"
                         disabled={disabled}
                     />
+                    </FormField>
                 </div>
-            </div>
 
-            {/* Supplier and Received Date */}
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <Label htmlFor="supplier">Supplier (Opsional)</Label>
+                <div className="col-span-2 md:col-span-1">
+                    <FormField htmlFor="supplier" label='Supplier'>
                     <Input
                         id="supplier"
                         value={formData.supplier}
@@ -107,16 +96,15 @@ export function InventoryFormFields({
                         placeholder="Nama supplier"
                         disabled={disabled}
                     />
+                    </FormField>
                 </div>
 
-                <div>
-                    <Label htmlFor="receivedDate">Tanggal Terima</Label>
-                    <Input
-                        id="receivedDate"
-                        type="date"
+                <div className="col-span-2 md:col-span-1">
+                    <DatePickerField 
+                        required
+                        label="Tanggal Terima"
                         value={formData.receivedDate}
-                        onChange={(e) => onChange("receivedDate", e.target.value)}
-                        disabled={disabled}
+                        onChange={(date) => onChange('receivedDate', date as Date)}
                     />
                 </div>
             </div>

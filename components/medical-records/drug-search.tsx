@@ -11,7 +11,7 @@ import { useDrugSearch, type Drug } from "@/hooks/use-drug-search";
 interface DrugSearchProps {
     value: string;
     onChange: (value: string) => void;
-    onSelect: (drugId: number, drugName: string, drugUnit?: string) => void;
+    onSelect: (drug: Drug) => void;
     label?: string;
     placeholder?: string;
     required?: boolean;
@@ -40,7 +40,7 @@ export function DrugSearch({
     const handleSelect = (drug: Drug) => {
         setShowDropdown(false);
         setSearchQuery(""); // Clear search query to stop API calls
-        onSelect(drug.id, drug.name, drug.unit);
+        onSelect(drug);
     };
 
     return (

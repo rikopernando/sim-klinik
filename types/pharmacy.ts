@@ -169,17 +169,6 @@ export interface DrugInput {
     description?: string;
 }
 
-/**
- * Drug Inventory Input Data
- */
-export interface DrugInventoryInput {
-    drugId: number;
-    batchNumber: string;
-    expiryDate: string;
-    stockQuantity: number;
-    purchasePrice?: string;
-    supplier?: string;
-}
 
 /**
  * Prescription Fulfillment Input

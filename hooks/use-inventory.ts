@@ -28,6 +28,8 @@ export function useInventory(options: UseInventoryOptions = {}): UseInventoryRet
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    console.log({ inventories})
+
     const fetchInventories = useCallback(async () => {
         try {
             setIsLoading(true);

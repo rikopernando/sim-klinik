@@ -24,8 +24,6 @@ export function DatePickerField({
     required = false,
     error,
     placeholder = "Pilih tanggal",
-    minDate = new Date("1900-01-01"),
-    maxDate = new Date(),
 }: DatePickerFieldProps) {
     return (
         <FormField label={label} required={required} error={error}>
@@ -49,10 +47,6 @@ export function DatePickerField({
                         selected={value}
                         onSelect={onChange}
                         captionLayout="dropdown"
-                        fromYear={minDate.getFullYear()}
-                        toYear={maxDate.getFullYear()}
-                        initialFocus
-                        disabled={(date) => date > maxDate || date < minDate}
                     />
                 </PopoverContent>
             </Popover>

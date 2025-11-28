@@ -6,7 +6,6 @@
 import {
     StockAlertLevel,
     ExpiryAlertLevel,
-    DrugWithStock,
     DrugInventoryWithDetails,
 } from "@/types/pharmacy";
 

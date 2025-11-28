@@ -3,7 +3,7 @@
  * Form for adding new drug inventory (stock incoming)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
     Dialog,
     DialogContent,
@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/button";
 import { DrugSearch } from "@/components/medical-records/drug-search";
 import { useAddInventory } from "@/hooks/use-add-inventory";
 import { useBatchDuplicateCheck } from "@/hooks/use-batch-duplicate-check";
-import { DrugUnitDisplay } from "./inventory/drug-unit-display";
+import { type Drug } from "@/hooks/use-drug-search";
+
 import { BatchDuplicateWarning } from "./inventory/batch-duplicate-warning";
 import { InventoryFormFields } from "./inventory/inventory-form-fields";
+import { DrugInventoryInputValues } from "@/types/inventory";
 
 interface AddInventoryDialogProps {
     open: boolean;
@@ -25,28 +27,16 @@ interface AddInventoryDialogProps {
     onSuccess: () => void;
 }
 
-interface FormData {
-    drugId: number;
-    drugName: string;
-    drugUnit: string;
-    batchNumber: string;
-    expiryDate: string;
-    stockQuantity: string;
-    purchasePrice: string;
-    supplier: string;
-    receivedDate: string;
-}
-
-const initialFormData: FormData = {
+const initialFormData: DrugInventoryInputValues = {
     drugId: 0,
     drugName: "",
     drugUnit: "",
     batchNumber: "",
-    expiryDate: "",
-    stockQuantity: "",
+    expiryDate: undefined,
+    stockQuantity: '',
     purchasePrice: "",
     supplier: "",
-    receivedDate: new Date().toISOString().split("T")[0],
+    receivedDate: undefined,
 };
 
 export function AddInventoryDialog({
@@ -54,8 +44,11 @@ export function AddInventoryDialog({
     onOpenChange,
     onSuccess,
 }: AddInventoryDialogProps) {
+    const [drugSearch, setDrugSearch] = useState('');
     const { addNewInventory, isSubmitting, error } = useAddInventory();
-    const [formData, setFormData] = useState<FormData>(initialFormData);
+    const [formData, setFormData] = useState<DrugInventoryInputValues>(initialFormData);
+
+    console.log({ formData})
 
     // Batch duplicate check
     const { duplicateCheck, isChecking, isDuplicate, reset: resetDuplicateCheck } =
@@ -64,30 +57,23 @@ export function AddInventoryDialog({
             batchNumber: formData.batchNumber,
         });
 
-    // Reset form when dialog opens
-    useEffect(() => {
-        if (open) {
-            setFormData(initialFormData);
-            resetDuplicateCheck();
-        }
-    }, [open, resetDuplicateCheck]);
-
     // Handle drug selection
     const handleDrugSelect = useCallback(
-        (drugId: number, drugName: string, drugUnit?: string) => {
+        (drug: Drug) => {
             setFormData((prev) => ({
                 ...prev,
-                drugId,
-                drugName,
-                drugUnit: drugUnit || "",
+                drugId: drug.id,
+                drugName: drug.name,
+                drugUnit: drug.unit || "",
             }));
+            setDrugSearch(drug.name)
             resetDuplicateCheck();
         },
         [resetDuplicateCheck]
     );
 
     // Handle form field changes
-    const handleFieldChange = useCallback((field: string, value: string) => {
+    const handleFieldChange = useCallback((field: string, value: string | Date) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
     }, []);
 
@@ -95,21 +81,14 @@ export function AddInventoryDialog({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.drugId) {
-            alert("Pilih obat terlebih dahulu");
-            return;
-        }
-
         const success = await addNewInventory({
             drugId: formData.drugId,
             batchNumber: formData.batchNumber,
-            expiryDate: new Date(formData.expiryDate).toISOString(),
+            expiryDate: formData.expiryDate?.toISOString() || '',
             stockQuantity: parseInt(formData.stockQuantity),
             purchasePrice: formData.purchasePrice || undefined,
             supplier: formData.supplier || undefined,
-            receivedDate: formData.receivedDate
-                ? new Date(formData.receivedDate).toISOString()
-                : undefined,
+            receivedDate: formData.receivedDate?.toISOString() || '',
         });
 
         if (success) {
@@ -120,7 +99,7 @@ export function AddInventoryDialog({
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="md:max-w-[700px] max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>Tambah Stok Obat</DialogTitle>
                     <DialogDescription>
@@ -131,15 +110,12 @@ export function AddInventoryDialog({
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Drug Selection */}
                     <DrugSearch
-                        value={formData.drugName}
-                        onChange={(name) => handleFieldChange("drugName", name)}
+                        value={drugSearch}
+                        onChange={(name) => setDrugSearch(name)}
                         onSelect={handleDrugSelect}
                         label="Nama Obat"
                         required
                     />
-
-                    {/* Display Unit */}
-                    <DrugUnitDisplay unit={formData.drugUnit} />
 
                     {/* Form Fields */}
                     <InventoryFormFields

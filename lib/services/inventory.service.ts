@@ -4,6 +4,7 @@
  */
 
 import axios from "axios";
+import { DrugInventoryInput } from "../pharmacy/validation";
 
 export interface DrugInventory {
     id: number;
@@ -28,16 +29,6 @@ export interface DrugInventoryWithDetails extends DrugInventory {
     };
     daysUntilExpiry: number;
     expiryAlertLevel: "expired" | "expiring_soon" | "warning" | "ok";
-}
-
-export interface AddInventoryInput {
-    drugId: number;
-    batchNumber: string;
-    expiryDate: string; // ISO date string
-    stockQuantity: number;
-    purchasePrice?: string;
-    supplier?: string;
-    receivedDate?: string; // ISO date string
 }
 
 export interface InventoryByDrugItem {
@@ -92,7 +83,7 @@ export async function checkDuplicateBatch(
  * Add new inventory (stock incoming)
  */
 export async function addInventory(
-    data: AddInventoryInput
+    data: DrugInventoryInput
 ): Promise<{ success: boolean; message?: string; error?: string; data?: DrugInventory }> {
     try {
         const response = await axios.post("/api/pharmacy/inventory", data);

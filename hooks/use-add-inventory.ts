@@ -4,10 +4,11 @@
  */
 
 import { useState } from "react";
-import { addInventory, type AddInventoryInput } from "@/lib/services/inventory.service";
+import { addInventory } from "@/lib/services/inventory.service";
+import { DrugInventoryInput } from "@/lib/pharmacy/validation";
 
 interface UseAddInventoryReturn {
-    addNewInventory: (data: AddInventoryInput) => Promise<boolean>;
+    addNewInventory: (data: DrugInventoryInput) => Promise<boolean>;
     isSubmitting: boolean;
     error: string | null;
     success: boolean;
@@ -18,7 +19,7 @@ export function useAddInventory(): UseAddInventoryReturn {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
-    const addNewInventory = async (data: AddInventoryInput): Promise<boolean> => {
+    const addNewInventory = async (data: DrugInventoryInput): Promise<boolean> => {
         try {
             setIsSubmitting(true);
             setError(null);
