@@ -10,7 +10,7 @@ import type { PaymentStatus, BillingItem } from "@/types/billing";
  */
 export function formatCurrency(amount: string | number): string {
     const numAmount = typeof amount === "string" ? parseFloat(amount) : amount;
-    return `Rp ${numAmount.toLocaleString("id-ID")}`;
+    return `Rp ${numAmount?.toLocaleString("id-ID")}`;
 }
 
 /**

@@ -14,6 +14,7 @@ interface BillingPatientInfoProps {
 
 export function BillingPatientInfo({ billing }: BillingPatientInfoProps) {
     const statusConfig = getPaymentStatusConfig(billing.paymentStatus);
+    console.log({ statusConfig})
 
     return (
         <Card>
@@ -26,7 +27,7 @@ export function BillingPatientInfo({ billing }: BillingPatientInfoProps) {
                             {billing.visit?.visitNumber || "N/A"}
                         </CardDescription>
                     </div>
-                    <Badge className={statusConfig.badge}>{statusConfig.label}</Badge>
+                    <Badge className={statusConfig?.badge}>{statusConfig?.label}</Badge>
                 </div>
             </CardHeader>
         </Card>

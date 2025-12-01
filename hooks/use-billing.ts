@@ -4,10 +4,17 @@
  */
 
 import { useState, useCallback } from "react";
-import type { CreateBillingInput } from "@/types/billing";
+import axios from "axios";
+
+interface CalculateBillingParams {
+    visitId: number;
+    discount?: number;
+    discountPercentage?: number;
+    insuranceCoverage?: number;
+}
 
 interface UseBillingReturn {
-    createBilling: (data: CreateBillingInput) => Promise<boolean>;
+    calculateBilling: (params: CalculateBillingParams) => Promise<boolean>;
     fetchBilling: (visitId: number) => Promise<any>;
     isSubmitting: boolean;
     isLoading: boolean;
@@ -23,33 +30,34 @@ export function useBilling(): UseBillingReturn {
     const [success, setSuccess] = useState(false);
     const [billing, setBilling] = useState<any | null>(null);
 
-    const createBilling = async (data: CreateBillingInput): Promise<boolean> => {
+    const calculateBilling = async (params: CalculateBillingParams): Promise<boolean> => {
         try {
             setIsSubmitting(true);
             setError(null);
             setSuccess(false);
 
-            const response = await fetch("/api/billing", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(data),
-            });
+            const response = await axios.post(
+                `/api/billing/${params.visitId}/calculate`,
+                {
+                    discount: params.discount,
+                    discountPercentage: params.discountPercentage,
+                    insuranceCoverage: params.insuranceCoverage,
+                }
+            );
 
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.error || "Failed to create billing");
+            if (response.data.success) {
+                // Fetch the updated billing details
+                await fetchBilling(params.visitId);
+                setSuccess(true);
+                return true;
+            } else {
+                setError(response.data.error || "Failed to calculate billing");
+                return false;
             }
-
-            setBilling(result.data);
-            setSuccess(true);
-            return true;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "An error occurred";
             setError(errorMessage);
-            console.error("Billing creation error:", err);
+            console.error("Billing calculation error:", err);
             return false;
         } finally {
             setIsSubmitting(false);
@@ -61,20 +69,20 @@ export function useBilling(): UseBillingReturn {
             setIsLoading(true);
             setError(null);
 
-            const response = await fetch(`/api/billing?visitId=${visitId}`);
-            const result = await response.json();
+            const response = await axios.get(`/api/billing/${visitId}`);
 
-            if (!response.ok) {
-                if (response.status === 404) {
-                    setBilling(null);
-                    return null;
-                }
-                throw new Error(result.error || "Failed to fetch billing");
+            if (response.data.success) {
+                setBilling(response.data.data);
+                return response.data.data;
+            } else {
+                setError(response.data.error || "Failed to fetch billing");
+                return null;
             }
-
-            setBilling(result.data);
-            return result.data;
         } catch (err) {
+            if (axios.isAxiosError(err) && err.response?.status === 404) {
+                setBilling(null);
+                return null;
+            }
             const errorMessage = err instanceof Error ? err.message : "An error occurred";
             setError(errorMessage);
             console.error("Billing fetch error:", err);
@@ -85,7 +93,7 @@ export function useBilling(): UseBillingReturn {
     }, []);
 
     return {
-        createBilling,
+        calculateBilling,
         fetchBilling,
         isSubmitting,
         isLoading,

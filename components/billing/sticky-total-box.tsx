@@ -29,7 +29,7 @@ export function StickyTotalBox({ billing, onProcessPayment }: StickyTotalBoxProp
 
     return (
         <div className="sticky top-6">
-            <Card className={`border-2 ${statusConfig.borderColor} ${statusConfig.bgColor}`}>
+            <Card className={`border-2 ${statusConfig?.borderColor} ${statusConfig?.bgColor}`}>
                 <CardHeader>
                     <CardTitle className="text-2xl">Total Tagihan</CardTitle>
                 </CardHeader>
@@ -79,7 +79,7 @@ export function StickyTotalBox({ billing, onProcessPayment }: StickyTotalBoxProp
                         <div className="border-t pt-2">
                             <div className="flex justify-between text-xl font-bold">
                                 <span>Sisa</span>
-                                <span className={statusConfig.color}>
+                                <span className={statusConfig?.color}>
                                     {formatCurrency(
                                         billing.remainingAmount || billing.patientPayable
                                     )}

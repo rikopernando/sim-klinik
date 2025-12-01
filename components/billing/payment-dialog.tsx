@@ -8,6 +8,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+    Field,
+    FieldDescription,
+    FieldGroup,
+    FieldLabel,
+    FieldLegend,
+    FieldSeparator,
+    FieldSet,
+  } from "@/components/ui/field"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatCurrency, calculateChange } from "@/lib/billing/billing-utils";
 import type { PaymentMethod } from "@/types/billing";
@@ -85,31 +94,33 @@ export function PaymentDialog({
                         <p className="text-2xl font-bold">{formatCurrency(remainingAmount)}</p>
                     </div>
 
-                    {/* Payment Method */}
-                    <div>
-                        <Label htmlFor="paymentMethod">Metode Pembayaran</Label>
-                        <Select
-                            value={paymentMethod}
-                            onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
-                            disabled={isSubmitting}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="cash">Tunai</SelectItem>
-                                <SelectItem value="transfer">Transfer Bank</SelectItem>
-                                <SelectItem value="card">Kartu Debit/Kredit</SelectItem>
-                                <SelectItem value="insurance">Asuransi</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
-                    {/* Amount Received (Cash only) */}
-                    {paymentMethod === "cash" && (
-                        <>
-                            <div>
-                                <Label htmlFor="amountReceived">Uang Diterima</Label>
+                    <FieldGroup>
+                        <FieldSet>
+                            <FieldGroup>
+                            <Field>
+                                <FieldLabel htmlFor="checkout-7j9-card-name-43j">
+                                    Metode Pembayaran
+                                </FieldLabel>
+                                <Select
+                                    value={paymentMethod}
+                                    onValueChange={(value) => setPaymentMethod(value as PaymentMethod)}
+                                    disabled={isSubmitting}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="cash">Tunai</SelectItem>
+                                        <SelectItem value="transfer">Transfer Bank</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            {paymentMethod === "cash" && (
+                                <>
+                            <Field>
+                                <FieldLabel htmlFor="checkout-7j9-card-name-43j">
+                                    Uang Diterima
+                                </FieldLabel>
                                 <Input
                                     id="amountReceived"
                                     type="number"
@@ -117,11 +128,10 @@ export function PaymentDialog({
                                     onChange={(e) => setAmountReceived(e.target.value)}
                                     placeholder="Masukkan jumlah uang yang diterima"
                                     disabled={isSubmitting}
-                                />
-                            </div>
+                                /> 
+                             {amountReceived && (
+                                <FieldDescription>
 
-                            {/* Change Display */}
-                            {amountReceived && (
                                 <div
                                     className={`p-4 rounded-lg ${
                                         parseFloat(changeAmount) >= 0
@@ -145,21 +155,29 @@ export function PaymentDialog({
                                         </p>
                                     )}
                                 </div>
-                            )}
-                        </>
-                    )}
+                                </FieldDescription>
 
-                    {/* Notes */}
-                    <div>
-                        <Label htmlFor="notes">Catatan (Opsional)</Label>
-                        <Input
+                            )}
+                            </Field>
+                                </>
+
+                            )}
+
+                <Field>
+                <FieldLabel htmlFor="notes">
+                    Catatan
+                </FieldLabel>
+                <Input
                             id="notes"
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="Tambahkan catatan jika diperlukan"
                             disabled={isSubmitting}
-                        />
-                    </div>
+                />
+              </Field>
+
+              <Field orientation="horizontal">
+
 
                     {/* Action Buttons */}
                     <div className="flex gap-2">
@@ -178,6 +196,10 @@ export function PaymentDialog({
                             Batal
                         </Button>
                     </div>
+              </Field>
+                            </FieldGroup>
+                        </FieldSet>
+                    </FieldGroup>
                 </div>
             </DialogContent>
         </Dialog>
