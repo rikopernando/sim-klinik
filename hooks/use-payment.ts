@@ -4,19 +4,20 @@
  */
 
 import { useState } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import type { PaymentMethod, PaymentStatus, APIResponse } from "@/types/billing";
 
-interface PaymentInput {
+export interface PaymentInput {
     visitId: number;
     amount: number;
-    paymentMethod: string;
+    paymentMethod: PaymentMethod;
     paymentReference?: string;
     amountReceived?: number;
     notes?: string;
 }
 
-interface PaymentResult {
-    paymentStatus: string;
+export interface PaymentResult {
+    paymentStatus: PaymentStatus;
     paidAmount: number;
     remainingAmount: number;
     changeGiven: number;
@@ -28,6 +29,7 @@ interface UsePaymentReturn {
     error: string | null;
     success: boolean;
     paymentResult: PaymentResult | null;
+    resetPayment: () => void;
 }
 
 export function usePayment(): UsePaymentReturn {
@@ -42,7 +44,7 @@ export function usePayment(): UsePaymentReturn {
             setError(null);
             setSuccess(false);
 
-            const response = await axios.post(
+            const response = await axios.post<APIResponse<PaymentResult>>(
                 `/api/billing/${data.visitId}/payment`,
                 {
                     amount: data.amount,
@@ -58,11 +60,16 @@ export function usePayment(): UsePaymentReturn {
                 setSuccess(true);
                 return response.data.data;
             } else {
-                setError(response.data.error || "Failed to process payment");
+                const errorMsg = response.data.error || "Failed to process payment";
+                setError(errorMsg);
+                console.error("Payment processing error:", errorMsg);
                 return null;
             }
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : "An error occurred";
+            const errorMessage = err instanceof AxiosError
+                ? err.response?.data?.error || err.message
+                : "An error occurred";
+
             setError(errorMessage);
             console.error("Payment processing error:", err);
             return null;
@@ -71,11 +78,18 @@ export function usePayment(): UsePaymentReturn {
         }
     };
 
+    const resetPayment = () => {
+        setError(null);
+        setSuccess(false);
+        setPaymentResult(null);
+    };
+
     return {
         processPayment,
         isSubmitting,
         error,
         success,
         paymentResult,
+        resetPayment,
     };
 }

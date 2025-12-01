@@ -4,33 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
-
-interface BillingItem {
-    id: number;
-    itemType: string;
-    itemId: number | null;
-    itemName: string;
-    itemCode: string | null;
-    quantity: number;
-    unitPrice: string;
-    subtotal: string;
-    discount: string;
-    totalPrice: string;
-    description: string | null;
-}
-
-interface Payment {
-    id: number;
-    amount: string;
-    paymentMethod: string;
-    paymentReference: string | null;
-    amountReceived: string | null;
-    changeGiven: string | null;
-    receivedBy: string;
-    receivedAt: Date;
-    notes: string | null;
-}
+import axios, { AxiosError } from "axios";
+import type { BillingItem, Payment, PaymentStatus, APIResponse } from "@/types/billing";
 
 interface Billing {
     id: number;
@@ -42,23 +17,30 @@ interface Billing {
     totalAmount: string;
     insuranceCoverage: string;
     patientPayable: string;
-    paymentStatus: string;
+    paymentStatus: PaymentStatus;
     paidAmount: string;
     remainingAmount: string;
     paymentMethod: string | null;
     paymentReference: string | null;
     processedBy: string | null;
-    processedAt: Date | null;
+    processedAt: Date | string | null;
     notes: string | null;
 }
 
-interface BillingDetails {
+export interface BillingDetails {
     billing: Billing;
     items: BillingItem[];
     payments: Payment[];
 }
 
-export function useBillingDetails(visitId: number | null) {
+interface UseBillingDetailsReturn {
+    billingDetails: BillingDetails | null;
+    isLoading: boolean;
+    error: string | null;
+    refresh: () => void;
+}
+
+export function useBillingDetails(visitId: number | null): UseBillingDetailsReturn {
     const [billingDetails, setBillingDetails] = useState<BillingDetails | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -66,6 +48,7 @@ export function useBillingDetails(visitId: number | null) {
     const fetchBillingDetails = useCallback(async () => {
         if (!visitId) {
             setBillingDetails(null);
+            setIsLoading(false);
             return;
         }
 
@@ -73,16 +56,24 @@ export function useBillingDetails(visitId: number | null) {
             setIsLoading(true);
             setError(null);
 
-            const response = await axios.get(`/api/billing/${visitId}`);
+            const response = await axios.get<APIResponse<BillingDetails>>(
+                `/api/billing/${visitId}`
+            );
 
-            if (response.data.success) {
+            if (response.data.success && response.data.data) {
                 setBillingDetails(response.data.data);
             } else {
-                setError(response.data.error || "Failed to fetch billing details");
+                const errorMsg = response.data.error || "Failed to fetch billing details";
+                setError(errorMsg);
+                console.error("Billing details fetch error:", errorMsg);
             }
         } catch (err) {
+            const errorMessage = err instanceof AxiosError
+                ? err.response?.data?.error || err.message
+                : "Failed to fetch billing details";
+
             console.error("Billing details fetch error:", err);
-            setError(err instanceof Error ? err.message : "Failed to fetch billing details");
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }

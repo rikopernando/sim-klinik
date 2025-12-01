@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
+import type { PaymentStatus, APIResponse } from "@/types/billing";
 
 interface Patient {
     id: number;
@@ -18,7 +19,7 @@ interface Visit {
     visitNumber: string;
     visitType: string;
     status: string;
-    createdAt: Date;
+    createdAt: Date | string;
 }
 
 interface Billing {
@@ -26,7 +27,7 @@ interface Billing {
     totalAmount: string;
     paidAmount: string;
     remainingAmount: string;
-    paymentStatus: string;
+    paymentStatus: PaymentStatus;
 }
 
 interface MedicalRecord {
@@ -34,7 +35,7 @@ interface MedicalRecord {
     isLocked: boolean;
 }
 
-interface BillingQueueItem {
+export interface BillingQueueItem {
     visit: Visit;
     patient: Patient;
     billing: Billing | null;
@@ -46,10 +47,18 @@ interface UseBillingQueueOptions {
     refreshInterval?: number; // milliseconds
 }
 
+interface UseBillingQueueReturn {
+    queue: BillingQueueItem[];
+    isLoading: boolean;
+    error: string | null;
+    lastRefresh: Date | null;
+    refresh: () => void;
+}
+
 export function useBillingQueue({
     autoRefresh = false,
     refreshInterval = 30000,
-}: UseBillingQueueOptions = {}) {
+}: UseBillingQueueOptions = {}): UseBillingQueueReturn {
     const [queue, setQueue] = useState<BillingQueueItem[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -60,17 +69,23 @@ export function useBillingQueue({
             setIsLoading(true);
             setError(null);
 
-            const response = await axios.get("/api/billing/queue");
+            const response = await axios.get<APIResponse<BillingQueueItem[]>>("/api/billing/queue");
 
-            if (response.data.success) {
+            if (response.data.success && response.data.data) {
                 setQueue(response.data.data);
                 setLastRefresh(new Date());
             } else {
-                setError(response.data.error || "Failed to fetch billing queue");
+                const errorMsg = response.data.error || "Failed to fetch billing queue";
+                setError(errorMsg);
+                console.error("Billing queue fetch error:", errorMsg);
             }
         } catch (err) {
+            const errorMessage = err instanceof AxiosError
+                ? err.response?.data?.error || err.message
+                : "Failed to fetch billing queue";
+
             console.error("Billing queue fetch error:", err);
-            setError(err instanceof Error ? err.message : "Failed to fetch billing queue");
+            setError(errorMessage);
         } finally {
             setIsLoading(false);
         }
