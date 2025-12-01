@@ -104,12 +104,12 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
         ? {
               name: session.user.name || "User",
               email: session.user.email,
-              avatar: session.user.image || "/codeguide-logo.png",
+              avatar: session.user.image || "/bumi-andalas-logo.jpg",
           }
         : {
               name: "Guest",
               email: "guest@example.com",
-              avatar: "/codeguide-logo.png",
+              avatar: "/bumi-andalas-logo.jpg",
           };
 
     // Get navigation items based on role
@@ -134,14 +134,14 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
                         >
                             <Link href="/">
                                 <Image
-                                    src="/codeguide-logo.png"
-                                    alt="SIM Klinik"
+                                    src="/bumi-andalas-logo.jpg"
+                                    alt="Klinik Bumi Andalas"
                                     width={32}
                                     height={32}
                                     className="rounded-lg"
                                 />
                                 <span className="text-base font-semibold font-parkinsans">
-                                    SIM Klinik
+                                    Klinik Bumi Andalas
                                 </span>
                             </Link>
                         </SidebarMenuButton>

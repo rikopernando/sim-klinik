@@ -7,7 +7,7 @@ import { runAllSeeders } from "@/lib/seeders";
 
 async function main() {
     console.log("=" .repeat(50));
-    console.log("  SIM Klinik - Database Seeder");
+    console.log("  Klinik Bumi Andalas - Database Seeder");
     console.log("=" .repeat(50));
     console.log("");
 

@@ -28,7 +28,7 @@ export function PaymentHistoryCard({ payments }: PaymentHistoryCardProps) {
 
     return (
         <Card>
-            <CardHeader className="pb-3">
+            <CardHeader >
                 <CardTitle className="text-lg flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
                     Riwayat Pembayaran
