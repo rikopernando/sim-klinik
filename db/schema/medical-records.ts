@@ -1,6 +1,7 @@
 import { pgTable, serial, integer, text, timestamp, boolean } from "drizzle-orm/pg-core";
 import { visits } from "./visits";
 import { user } from "./auth";
+import { services } from "./billing";
 
 /**
  * Medical Records Table
@@ -62,7 +63,8 @@ export const procedures = pgTable("procedures", {
     medicalRecordId: integer("medical_record_id")
         .notNull()
         .references(() => medicalRecords.id, { onDelete: "cascade" }),
-    icd9Code: text("icd9_code").notNull(), // ICD-9-CM procedure code
+    serviceId: integer("service_id").references(() => services.id), // Reference to services table
+    icd9Code: text("icd9_code").notNull(), // ICD-9-CM procedure code (kept for legacy)
     description: text("description").notNull(), // Procedure description
     performedBy: text("performed_by").references(() => user.id),
     performedAt: timestamp("performed_at").defaultNow().notNull(),

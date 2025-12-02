@@ -43,6 +43,17 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
+    // Calculate subtotal of all prescriptions
+    const subtotal = useMemo(() => {
+        return prescriptions.reduce((total, prescription) => {
+            if (prescription.drugPrice) {
+                const quantity = prescription.dispensedQuantity || prescription.quantity;
+                return total + (parseFloat(prescription.drugPrice) * quantity);
+            }
+            return total;
+        }, 0);
+    }, [prescriptions]);
+
     const handleEdit = useCallback((prescription: Prescription) => {
         setPrescriptionToEdit(prescription);
         setIsDialogOpen(true);
@@ -105,10 +116,22 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                                 showDelete={canDeletePrescription(isLocked, prescription.isFulfilled)}
                             >
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-medium">{prescription.drugName}</span>
-                                        {prescription.isFulfilled && (
-                                            <Badge variant="secondary">Sudah Diambil</Badge>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-medium">{prescription.drugName}</span>
+                                            {prescription.isFulfilled && (
+                                                <Badge variant="secondary">Sudah Diambil</Badge>
+                                            )}
+                                        </div>
+                                        {prescription.drugPrice && (
+                                            <div className="text-right">
+                                                <div className="text-sm font-semibold text-primary">
+                                                    Rp {(parseFloat(prescription.drugPrice) * (prescription.dispensedQuantity || prescription.quantity)).toLocaleString("id-ID")}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    @ Rp {parseFloat(prescription.drugPrice).toLocaleString("id-ID")} × {prescription.dispensedQuantity || prescription.quantity}
+                                                </div>
+                                            </div>
                                         )}
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
@@ -153,6 +176,16 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                                 </div>
                             </ListItem>
                         ))}
+
+                        {/* Subtotal */}
+                        {subtotal > 0 && (
+                            <div className="mt-4 flex items-center justify-between border-t pt-3">
+                                <span className="text-sm font-semibold">Subtotal Resep</span>
+                                <span className="text-lg font-bold text-primary">
+                                    Rp {subtotal.toLocaleString("id-ID")}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </SectionCard>
             )}

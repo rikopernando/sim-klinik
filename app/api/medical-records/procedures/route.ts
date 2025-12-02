@@ -9,6 +9,7 @@ import { z } from "zod";
  */
 const procedureSchema = z.object({
     medicalRecordId: z.number().int().positive(),
+    serviceId: z.number().int().positive().optional(),
     icd9Code: z.string().min(1),
     description: z.string().min(1),
     performedBy: z.string().optional(),
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest) {
             .insert(procedures)
             .values({
                 medicalRecordId: validatedData.medicalRecordId,
+                serviceId: validatedData.serviceId || null,
                 icd9Code: validatedData.icd9Code,
                 description: validatedData.description,
                 performedBy: validatedData.performedBy || null,

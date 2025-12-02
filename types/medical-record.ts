@@ -33,6 +33,9 @@ export interface Diagnosis {
 export interface Procedure {
     id: number;
     medicalRecordId: number;
+    serviceId: number | null;
+    serviceName: string | null;
+    servicePrice: string | null;
     icd9Code: string;
     description: string;
     performedBy: string | null;
@@ -47,6 +50,7 @@ export interface Prescription {
     medicalRecordId: number;
     drugId: number;
     drugName: string;
+    drugPrice: string | null;
     dosage: string;
     frequency: string;
     duration: string | null;

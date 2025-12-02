@@ -82,6 +82,7 @@ export async function deleteDiagnosis(id: number): Promise<void> {
  */
 export async function addProcedure(data: {
     medicalRecordId: number;
+    serviceId?: number;
     icd9Code: string;
     description: string;
     performedBy?: string;
@@ -95,6 +96,7 @@ export async function addProcedure(data: {
  * Update a procedure
  */
 export async function updateProcedure(id: number, data: {
+    serviceId?: number;
     icd9Code?: string;
     description?: string;
     performedBy?: string;

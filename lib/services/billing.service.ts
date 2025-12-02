@@ -296,13 +296,15 @@ export async function createOrUpdateBilling(
     // Delete existing billing items
     await db.delete(billingItems).where(eq(billingItems.billingId, billingId));
 
-    // Insert new billing items
-    await db.insert(billingItems).values(
-        calculation.items.map((item) => ({
-            billingId,
-            ...item,
-        }))
-    );
+    // Insert new billing items (only if there are items)
+    if (calculation.items.length > 0) {
+        await db.insert(billingItems).values(
+            calculation.items.map((item) => ({
+                billingId,
+                ...item,
+            }))
+        );
+    }
 
     return billingId;
 }

@@ -32,6 +32,8 @@ import { getMedicalStaff, formatMedicalStaffName, type MedicalStaff } from "@/li
 import { getErrorMessage } from "@/lib/utils/error";
 import { formatIcdCode } from "@/lib/utils/medical-record";
 import { type Procedure } from "@/types/medical-record";
+import { type Service } from "@/hooks/use-service-search";
+import { ServiceSearch } from "./service-search";
 
 interface AddProcedureDialogProps {
     open: boolean;
@@ -43,6 +45,9 @@ interface AddProcedureDialogProps {
 
 // Validation schema for a single procedure item
 const procedureItemSchema = z.object({
+    serviceId: z.number().min(1, "Tindakan wajib dipilih"),
+    serviceName: z.string().min(1, "Tindakan wajib dipilih"),
+    servicePrice: z.string().optional(),
     icd9Code: z.string().min(1, "Kode ICD-9 wajib diisi"),
     description: z.string().min(1, "Deskripsi wajib diisi"),
     performedBy: z.string().optional(),
@@ -67,6 +72,7 @@ export function AddProcedureDialog({
     const [error, setError] = useState<string | null>(null);
     const [medicalStaff, setMedicalStaff] = useState<MedicalStaff[]>([]);
     const [loadingStaff, setLoadingStaff] = useState(false);
+    const [serviceSearches, setServiceSearches] = useState<Record<number, string>>({});
     const isEditMode = !!procedure;
 
     const form = useForm<ProcedureFormData>({
@@ -74,6 +80,9 @@ export function AddProcedureDialog({
         defaultValues: {
             procedures: [
                 {
+                    serviceId: 0,
+                    serviceName: "",
+                    servicePrice: "",
                     icd9Code: "",
                     description: "",
                     performedBy: "",
@@ -95,6 +104,9 @@ export function AddProcedureDialog({
                 form.reset({
                     procedures: [
                         {
+                            serviceId: procedure.serviceId || 0,
+                            serviceName: procedure.serviceName || procedure.description,
+                            servicePrice: procedure.servicePrice || "",
                             icd9Code: procedure.icd9Code,
                             description: procedure.description,
                             performedBy: procedure.performedBy || "",
@@ -102,10 +114,14 @@ export function AddProcedureDialog({
                         },
                     ],
                 });
+                setServiceSearches({ 0: procedure.serviceName || procedure.description });
             } else {
                 form.reset({
                     procedures: [
                         {
+                            serviceId: 0,
+                            serviceName: "",
+                            servicePrice: "",
                             icd9Code: "",
                             description: "",
                             performedBy: "",
@@ -113,6 +129,7 @@ export function AddProcedureDialog({
                         },
                     ],
                 });
+                setServiceSearches({});
             }
         }
     }, [open, procedure, isEditMode, form]);
@@ -149,6 +166,9 @@ export function AddProcedureDialog({
 
     const handleAddItem = () => {
         append({
+            serviceId: 0,
+            serviceName: "",
+            servicePrice: "",
             icd9Code: "",
             description: "",
             performedBy: "",
@@ -162,6 +182,16 @@ export function AddProcedureDialog({
         }
     };
 
+    const handleServiceSelect = (index: number, service: Service) => {
+        // Auto-fill service data
+        form.setValue(`procedures.${index}.serviceId`, service.id);
+        form.setValue(`procedures.${index}.serviceName`, service.name);
+        form.setValue(`procedures.${index}.servicePrice`, service.price);
+        form.setValue(`procedures.${index}.icd9Code`, service.code);
+        form.setValue(`procedures.${index}.description`, service.description || service.name);
+        setServiceSearches((prev) => ({ ...prev, [index]: service.name }));
+    };
+
     const onSubmit = async (data: ProcedureFormData) => {
         try {
             setIsSaving(true);
@@ -170,6 +200,7 @@ export function AddProcedureDialog({
             if (isEditMode && procedure) {
                 // Edit mode: update single procedure
                 await updateProcedure(procedure.id, {
+                    serviceId: data.procedures[0].serviceId || undefined,
                     icd9Code: formatIcdCode(data.procedures[0].icd9Code),
                     description: data.procedures[0].description,
                     performedBy: data.procedures[0].performedBy || undefined,
@@ -180,6 +211,7 @@ export function AddProcedureDialog({
                 for (const procedureItem of data.procedures) {
                     await addProcedure({
                         medicalRecordId,
+                        serviceId: procedureItem.serviceId || undefined,
                         icd9Code: formatIcdCode(procedureItem.icd9Code),
                         description: procedureItem.description,
                         performedBy: procedureItem.performedBy || undefined,
@@ -243,29 +275,43 @@ export function AddProcedureDialog({
                                     </div>
                                 )}
 
+                                {/* Service Search */}
+                                <ServiceSearch
+                                    value={serviceSearches[index] || ""}
+                                    onChange={(value) => {
+                                        setServiceSearches((prev) => ({ ...prev, [index]: value }));
+                                        form.setValue(`procedures.${index}.serviceName`, value);
+                                    }}
+                                    onSelect={(service) => handleServiceSelect(index, service)}
+                                    label="Nama Tindakan"
+                                    placeholder="Ketik untuk mencari tindakan medis..."
+                                    required
+                                />
+                                {form.formState.errors.procedures?.[index]?.serviceName && (
+                                    <p className="text-sm text-destructive">
+                                        {form.formState.errors.procedures[index]?.serviceName?.message}
+                                    </p>
+                                )}
+
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    {/* ICD-9 Code */}
+                                    {/* Price (Auto-filled, Read-only) */}
                                     <div className="space-y-2">
-                                        <Label htmlFor={`icd9Code-${index}`}>
-                                            Kode ICD-9 <span className="text-destructive">*</span>
+                                        <Label htmlFor={`servicePrice-${index}`}>
+                                            Harga Tindakan
                                         </Label>
                                         <Input
-                                            id={`icd9Code-${index}`}
-                                            {...form.register(`procedures.${index}.icd9Code`, {
-                                                onChange: (e) => {
-                                                    e.target.value = e.target.value.toUpperCase();
-                                                },
-                                            })}
-                                            placeholder="Contoh: 99.21"
-                                            className="font-mono"
+                                            id={`servicePrice-${index}`}
+                                            value={
+                                                form.watch(`procedures.${index}.servicePrice`)
+                                                    ? `Rp ${parseFloat(form.watch(`procedures.${index}.servicePrice`) || "0").toLocaleString("id-ID")}`
+                                                    : "Rp -"
+                                            }
+                                            placeholder="Otomatis terisi dari pilihan tindakan"
+                                            className="bg-muted font-medium"
+                                            readOnly
                                         />
-                                        {form.formState.errors.procedures?.[index]?.icd9Code && (
-                                            <p className="text-sm text-destructive">
-                                                {form.formState.errors.procedures[index]?.icd9Code?.message}
-                                            </p>
-                                        )}
                                         <p className="text-xs text-muted-foreground">
-                                            Masukkan kode ICD-9-CM procedure
+                                            Harga otomatis terisi saat memilih tindakan
                                         </p>
                                     </div>
 
@@ -300,7 +346,7 @@ export function AddProcedureDialog({
                                     </div>
                                 </div>
 
-                                {/* Description */}
+                                {/* Description (Auto-filled but editable) */}
                                 <div className="space-y-2">
                                     <Label htmlFor={`description-${index}`}>
                                         Deskripsi Tindakan <span className="text-destructive">*</span>
@@ -308,13 +354,16 @@ export function AddProcedureDialog({
                                     <Input
                                         id={`description-${index}`}
                                         {...form.register(`procedures.${index}.description`)}
-                                        placeholder="Contoh: Injection of antibiotic"
+                                        placeholder="Otomatis terisi dari pilihan tindakan (dapat diedit)"
                                     />
                                     {form.formState.errors.procedures?.[index]?.description && (
                                         <p className="text-sm text-destructive">
                                             {form.formState.errors.procedures[index]?.description?.message}
                                         </p>
                                     )}
+                                    <p className="text-xs text-muted-foreground">
+                                        Deskripsi otomatis terisi, dapat diubah sesuai kebutuhan
+                                    </p>
                                 </div>
 
                                 {/* Notes */}

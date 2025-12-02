@@ -6,6 +6,8 @@
 import { seedRoles } from "./seed-roles";
 import { seedUsers } from "./seed-users";
 import { seedPolis } from "./seed-polis";
+import { seedServices } from "./seed-services";
+import { seedDrugs } from "./seed-drugs";
 
 export async function runAllSeeders() {
     console.log("🚀 Starting database seeding...\n");
@@ -23,6 +25,14 @@ export async function runAllSeeders() {
         await seedPolis();
         console.log("");
 
+        // 4. Seed services (master data for billing)
+        await seedServices();
+        console.log("");
+
+        // 5. Seed drugs (master data for pharmacy)
+        await seedDrugs();
+        console.log("");
+
         console.log("🎉 All seeders completed successfully!");
     } catch (error) {
         console.error("❌ Seeding failed:", error);
@@ -34,3 +44,5 @@ export async function runAllSeeders() {
 export { seedRoles } from "./seed-roles";
 export { seedUsers } from "./seed-users";
 export { seedPolis } from "./seed-polis";
+export { seedServices } from "./seed-services";
+export { seedDrugs } from "./seed-drugs";

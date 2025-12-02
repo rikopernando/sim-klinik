@@ -6,7 +6,7 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, RefreshCw, CreditCard } from "lucide-react";
+import { User, RefreshCw, CreditCard, Percent } from "lucide-react";
 import { BillingSummaryCard } from "./billing-summary-card";
 import { PaymentHistoryCard } from "./payment-history-card";
 import type { PaymentStatus } from "@/types/billing";
@@ -51,6 +51,7 @@ interface BillingDetailsPanelProps {
     isLoading: boolean;
     onRefresh: () => void;
     onProcessPayment: () => void;
+    onApplyDiscount?: () => void;
     isSubmitting?: boolean;
 }
 
@@ -60,6 +61,7 @@ export function BillingDetailsPanel({
     isLoading,
     onRefresh,
     onProcessPayment,
+    onApplyDiscount,
     isSubmitting = false,
 }: BillingDetailsPanelProps) {
     // Calculate remaining amount
@@ -121,24 +123,44 @@ export function BillingDetailsPanel({
                 {/* Payment History */}
                 <PaymentHistoryCard payments={billingDetails.payments} />
 
-                {/* Payment Action Button */}
+                {/* Action Buttons */}
                 {!isPaid && (
-                    <Card className="border-primary">
-                        <CardContent>
-                            <Button
-                                onClick={onProcessPayment}
-                                className="w-full"
-                                size="lg"
-                                disabled={isSubmitting}
-                            >
-                                <CreditCard className="h-5 w-5 mr-2" />
-                                {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                                <span className="ml-2 font-bold">
-                                    Rp {remainingAmount.toLocaleString("id-ID")}
-                                </span>
-                            </Button>
-                        </CardContent>
-                    </Card>
+                    <>
+                        {/* Discount Button */}
+                        {onApplyDiscount && (
+                            <Card>
+                                <CardContent className="pt-6">
+                                    <Button
+                                        onClick={onApplyDiscount}
+                                        variant="outline"
+                                        className="w-full"
+                                        size="lg"
+                                    >
+                                        <Percent className="h-5 w-5 mr-2" />
+                                        Terapkan Diskon / Jaminan
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
+
+                        {/* Payment Button */}
+                        <Card className="border-primary">
+                            <CardContent className="pt-6">
+                                <Button
+                                    onClick={onProcessPayment}
+                                    className="w-full"
+                                    size="lg"
+                                    disabled={isSubmitting}
+                                >
+                                    <CreditCard className="h-5 w-5 mr-2" />
+                                    {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+                                    <span className="ml-2 font-bold">
+                                        Rp {remainingAmount.toLocaleString("id-ID")}
+                                    </span>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </>
                 )}
             </div>
         </ScrollArea>

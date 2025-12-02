@@ -43,6 +43,16 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
 
     const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked]);
 
+    // Calculate subtotal of all procedures
+    const subtotal = useMemo(() => {
+        return procedures.reduce((total, procedure) => {
+            if (procedure.servicePrice) {
+                return total + parseFloat(procedure.servicePrice);
+            }
+            return total;
+        }, 0);
+    }, [procedures]);
+
     const handleEdit = useCallback((procedure: Procedure) => {
         setProcedureToEdit(procedure);
         setIsDialogOpen(true);
@@ -105,12 +115,17 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
                                 showDelete={canEdit}
                             >
                                 <div className="space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-mono text-sm font-medium">
-                                            {procedure.icd9Code}
-                                        </span>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <p className="text-sm font-medium">{procedure.serviceName || procedure.description}</p>
+                                        {procedure.servicePrice && (
+                                            <span className="text-sm font-semibold text-primary">
+                                                Rp {parseFloat(procedure.servicePrice).toLocaleString("id-ID")}
+                                            </span>
+                                        )}
                                     </div>
-                                    <p className="text-sm font-medium">{procedure.description}</p>
+                                    {procedure.description !== procedure.serviceName && (
+                                        <p className="text-xs text-muted-foreground">{procedure.description}</p>
+                                    )}
                                     <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
                                         {procedure.performedByName && (
                                             <div>
@@ -131,6 +146,16 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
                                 </div>
                             </ListItem>
                         ))}
+
+                        {/* Subtotal */}
+                        {subtotal > 0 && (
+                            <div className="mt-4 flex items-center justify-between border-t pt-3">
+                                <span className="text-sm font-semibold">Subtotal Tindakan</span>
+                                <span className="text-lg font-bold text-primary">
+                                    Rp {subtotal.toLocaleString("id-ID")}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </SectionCard>
             )}

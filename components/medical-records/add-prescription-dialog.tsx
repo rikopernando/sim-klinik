@@ -45,6 +45,7 @@ interface AddPrescriptionDialogProps {
 const prescriptionItemSchema = z.object({
     drugId: z.number().min(1, "Obat wajib dipilih"),
     drugName: z.string().min(1, "Nama obat wajib diisi"),
+    drugPrice: z.string().optional(),
     dosage: z.string().min(1, "Dosis wajib diisi"),
     frequency: z.string().min(1, "Frekuensi wajib diisi"),
     duration: z.string().optional(),
@@ -79,6 +80,7 @@ export function AddPrescriptionDialog({
                 {
                     drugId: 0,
                     drugName: "",
+                    drugPrice: "",
                     dosage: "",
                     frequency: "",
                     duration: "",
@@ -104,6 +106,7 @@ export function AddPrescriptionDialog({
                         {
                             drugId: prescription.drugId,
                             drugName: prescription.drugName,
+                            drugPrice: prescription.drugPrice || "",
                             dosage: prescription.dosage,
                             frequency: prescription.frequency,
                             duration: prescription.duration || "",
@@ -120,6 +123,7 @@ export function AddPrescriptionDialog({
                         {
                             drugId: 0,
                             drugName: "",
+                            drugPrice: "",
                             dosage: "",
                             frequency: "",
                             duration: "",
@@ -148,6 +152,7 @@ export function AddPrescriptionDialog({
     const handleDrugSelect = (index: number, drug: Drug) => {
         form.setValue(`prescriptions.${index}.drugId`, drug.id);
         form.setValue(`prescriptions.${index}.drugName`, drug.name);
+        form.setValue(`prescriptions.${index}.drugPrice`, drug.price);
         setDrugSearches((prev) => ({ ...prev, [index]: drug.name }));
     };
 
@@ -155,6 +160,7 @@ export function AddPrescriptionDialog({
         append({
             drugId: 0,
             drugName: "",
+            drugPrice: "",
             dosage: "",
             frequency: "",
             duration: "",
@@ -276,6 +282,23 @@ export function AddPrescriptionDialog({
                                     <p className="text-sm text-destructive">
                                         {form.formState.errors.prescriptions[index]?.drugId?.message}
                                     </p>
+                                )}
+
+                                {/* Price Display (Read-only) */}
+                                {form.watch(`prescriptions.${index}.drugPrice`) && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor={`drugPrice-${index}`}>Harga Satuan</Label>
+                                        <Input
+                                            id={`drugPrice-${index}`}
+                                            value={`Rp ${parseFloat(form.watch(`prescriptions.${index}.drugPrice`) || "0").toLocaleString("id-ID")}`}
+                                            placeholder="Otomatis terisi dari pilihan obat"
+                                            className="bg-muted font-medium"
+                                            readOnly
+                                        />
+                                        <p className="text-xs text-muted-foreground">
+                                            Harga per {form.watch(`prescriptions.${index}.drugName`)?.split(" ").pop() || "unit"}
+                                        </p>
+                                    </div>
                                 )}
 
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

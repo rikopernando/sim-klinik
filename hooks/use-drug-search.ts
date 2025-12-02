@@ -10,6 +10,7 @@ export interface Drug {
     name: string;
     genericName: string | null;
     unit: string;
+    price: string;
     category: string | null;
 }
 

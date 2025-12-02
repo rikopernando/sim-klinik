@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { medicalRecords, diagnoses, procedures, prescriptions, visits, drugs, user } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { medicalRecords, diagnoses, procedures, prescriptions, visits, drugs, user, services } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { withRBAC } from "@/lib/rbac/middleware";
 
@@ -140,11 +140,14 @@ export const GET = withRBAC(
                 .from(diagnoses)
                 .where(eq(diagnoses.medicalRecordId, record[0].id));
 
-            // Get procedures with performer information
+            // Get procedures with performer and service information
             const proceduresList = await db
                 .select({
                     id: procedures.id,
                     medicalRecordId: procedures.medicalRecordId,
+                    serviceId: procedures.serviceId,
+                    serviceName: services.name,
+                    servicePrice: services.price,
                     icd9Code: procedures.icd9Code,
                     description: procedures.description,
                     performedBy: procedures.performedBy,
@@ -155,6 +158,7 @@ export const GET = withRBAC(
                 })
                 .from(procedures)
                 .leftJoin(user, eq(procedures.performedBy, user.id))
+                .leftJoin(services, eq(procedures.serviceId, services.id))
                 .where(eq(procedures.medicalRecordId, record[0].id));
 
             // Get prescriptions with drug information
@@ -164,6 +168,7 @@ export const GET = withRBAC(
                     medicalRecordId: prescriptions.medicalRecordId,
                     drugId: prescriptions.drugId,
                     drugName: drugs.name,
+                    drugPrice: drugs.price,
                     dosage: prescriptions.dosage,
                     frequency: prescriptions.frequency,
                     duration: prescriptions.duration,

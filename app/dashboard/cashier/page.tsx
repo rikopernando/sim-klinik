@@ -10,8 +10,10 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useBillingQueue } from "@/hooks/use-billing-queue";
 import { useBillingDetails } from "@/hooks/use-billing-details";
 import { usePayment, type PaymentInput } from "@/hooks/use-payment";
+import { useBilling } from "@/hooks/use-billing";
 import { Clock } from "lucide-react";
 import { PaymentDialog } from "@/components/billing/payment-dialog";
+import { DiscountDialog } from "@/components/billing/discount-dialog";
 import { QueueSidebar } from "@/components/billing/queue-sidebar";
 import { BillingDetailsPanel } from "@/components/billing/billing-details-panel";
 import type { PaymentMethod } from "@/types/billing";
@@ -19,6 +21,7 @@ import type { PaymentMethod } from "@/types/billing";
 export default function CashierDashboard() {
     const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null);
     const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+    const [discountDialogOpen, setDiscountDialogOpen] = useState(false);
 
     // Billing queue with auto-refresh
     const { queue, isLoading: queueLoading, lastRefresh, refresh: refreshQueue } = useBillingQueue({
@@ -32,12 +35,20 @@ export default function CashierDashboard() {
     // Payment processing
     const { processPayment, isSubmitting, success, resetPayment } = usePayment();
 
-    // Calculate remaining amount using useMemo for performance
+    // Billing calculation (for discount/insurance)
+    const { calculateBilling, isSubmitting: isCalculating, success: calculateSuccess } = useBilling();
+
+    // Calculate remaining amount and subtotal using useMemo for performance
     const remainingAmount = useMemo(() => {
         if (!billingDetails) return 0;
         return parseFloat(
             billingDetails.billing.remainingAmount || billingDetails.billing.patientPayable
         );
+    }, [billingDetails]);
+
+    const currentSubtotal = useMemo(() => {
+        if (!billingDetails) return 0;
+        return parseFloat(billingDetails.billing.subtotal);
     }, [billingDetails]);
 
     // Refresh after successful payment
@@ -49,6 +60,15 @@ export default function CashierDashboard() {
             resetPayment();
         }
     }, [success, selectedVisitId, refreshDetails, refreshQueue, resetPayment]);
+
+    // Refresh after successful discount calculation
+    useEffect(() => {
+        if (calculateSuccess && selectedVisitId) {
+            refreshDetails();
+            refreshQueue();
+            setDiscountDialogOpen(false);
+        }
+    }, [calculateSuccess, selectedVisitId, refreshDetails, refreshQueue]);
 
     // Handle payment submission
     const handlePaymentSubmit = useCallback(
@@ -71,6 +91,25 @@ export default function CashierDashboard() {
             await processPayment(paymentData);
         },
         [billingDetails, selectedVisitId, remainingAmount, processPayment]
+    );
+
+    // Handle discount submission
+    const handleDiscountSubmit = useCallback(
+        async (data: {
+            discount?: number;
+            discountPercentage?: number;
+            insuranceCoverage?: number;
+        }) => {
+            if (!selectedVisitId) return;
+
+            await calculateBilling({
+                visitId: selectedVisitId,
+                discount: data.discount,
+                discountPercentage: data.discountPercentage,
+                insuranceCoverage: data.insuranceCoverage,
+            });
+        },
+        [selectedVisitId, calculateBilling]
     );
 
     return (
@@ -111,9 +150,28 @@ export default function CashierDashboard() {
                     isLoading={detailsLoading}
                     onRefresh={refreshDetails}
                     onProcessPayment={() => setPaymentDialogOpen(true)}
+                    onApplyDiscount={() => setDiscountDialogOpen(true)}
                     isSubmitting={isSubmitting}
                 />
             </div>
+
+            {/* Discount Dialog */}
+            <DiscountDialog
+                open={discountDialogOpen}
+                onOpenChange={setDiscountDialogOpen}
+                currentSubtotal={currentSubtotal}
+                currentDiscount={billingDetails ? parseFloat(billingDetails.billing.discount) : 0}
+                currentDiscountPercentage={
+                    billingDetails && billingDetails.billing.discountPercentage
+                        ? parseFloat(billingDetails.billing.discountPercentage)
+                        : 0
+                }
+                currentInsuranceCoverage={
+                    billingDetails ? parseFloat(billingDetails.billing.insuranceCoverage) : 0
+                }
+                onSubmit={handleDiscountSubmit}
+                isSubmitting={isCalculating}
+            />
 
             {/* Payment Dialog */}
             <PaymentDialog
