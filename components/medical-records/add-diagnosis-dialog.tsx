@@ -38,6 +38,7 @@ interface AddDiagnosisDialogProps {
     medicalRecordId: number;
     onSuccess: () => void;
     diagnosis?: Diagnosis | null; // If provided, it's edit mode
+    existingDiagnoses?: Diagnosis[]; // For duplicate checking
 }
 
 // Validation schema for a single diagnosis item
@@ -60,6 +61,7 @@ export function AddDiagnosisDialog({
     medicalRecordId,
     onSuccess,
     diagnosis,
+    existingDiagnoses = [],
 }: AddDiagnosisDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -140,14 +142,35 @@ export function AddDiagnosisDialog({
             setError(null);
 
             if (isEditMode && diagnosis) {
-                // Edit mode: update single diagnosis
+                // Edit mode: Check for duplicate (excluding current diagnosis)
+                const formattedCode = formatIcdCode(data.diagnoses[0].icd10Code);
+                const duplicate = existingDiagnoses.find(
+                    (d) => d.id !== diagnosis.id && d.icd10Code === formattedCode
+                );
+                if (duplicate) {
+                    setError(`Diagnosis dengan kode ${formattedCode} sudah ada dalam rekam medis ini`);
+                    setIsSaving(false);
+                    return;
+                }
+
                 await updateDiagnosis(diagnosis.id, {
-                    icd10Code: formatIcdCode(data.diagnoses[0].icd10Code),
+                    icd10Code: formattedCode,
                     description: data.diagnoses[0].description,
                     diagnosisType: data.diagnoses[0].diagnosisType,
                 });
             } else {
-                // Add mode: save all diagnoses sequentially
+                // Add mode: Check for duplicates
+                for (const diagnosisItem of data.diagnoses) {
+                    const formattedCode = formatIcdCode(diagnosisItem.icd10Code);
+                    const duplicate = existingDiagnoses.find((d) => d.icd10Code === formattedCode);
+                    if (duplicate) {
+                        setError(`Diagnosis dengan kode ${formattedCode} sudah ada dalam rekam medis ini`);
+                        setIsSaving(false);
+                        return;
+                    }
+                }
+
+                // Save all diagnoses sequentially
                 for (const diagnosisItem of data.diagnoses) {
                     await addDiagnosis({
                         medicalRecordId,

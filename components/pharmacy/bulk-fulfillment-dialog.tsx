@@ -12,7 +12,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +27,7 @@ import { AlertCircle, Loader2 } from "lucide-react";
 import { getAvailableBatches, type DrugInventoryWithDetails } from "@/lib/services/inventory.service";
 import { BatchSelector } from "./fulfillment/batch-selector";
 import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.service";
+import { Label } from "../ui/label";
 
 interface Drug {
     id: number;
@@ -187,16 +187,6 @@ export function BulkFulfillmentDialog({
         }));
     };
 
-    const handleQuantityChange = (prescriptionId: number, quantity: number) => {
-        setFulfillmentData((prev) => ({
-            ...prev,
-            [prescriptionId]: {
-                ...prev[prescriptionId],
-                dispensedQuantity: quantity,
-            },
-        }));
-    };
-
     const handleSubmit = async () => {
         setValidationError(null);
 
@@ -322,25 +312,11 @@ export function BulkFulfillmentDialog({
                                     />
                                 </div>
 
-                                {/* Quantity Input */}
+                                {/* Display Prescription Quantity (Read-only) */}
                                 {!data?.isLoading && !data?.error && data?.selectedBatch && (
-                                    <div className="ml-8 space-y-2">
-                                        <Label>Jumlah Diberikan</Label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            max={data.selectedBatch.stockQuantity}
-                                            value={data?.dispensedQuantity || ""}
-                                            onChange={(e) =>
-                                                handleQuantityChange(
-                                                    item.prescription.id,
-                                                    parseInt(e.target.value) || 0
-                                                )
-                                            }
-                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                        />
-                                        <p className="text-xs text-muted-foreground">
-                                            Max: {data.selectedBatch.stockQuantity} {item.drug.unit}
+                                    <div className="ml-8">
+                                        <p className="text-sm text-muted-foreground">
+                                            Jumlah Diberikan: <span className="font-medium text-foreground">{item.prescription.quantity} {item.drug.unit}</span>
                                         </p>
                                     </div>
                                 )}

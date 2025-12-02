@@ -16,7 +16,10 @@ export const patientFormSchema = z
             .length(16, "NIK harus 16 digit")
             .regex(/^\d+$/, "NIK hanya boleh angka"),
         name: z.string().min(2, "Nama minimal 2 karakter").max(255),
-        dateOfBirth: z.date().optional(),
+        dateOfBirth: z.date({
+            required_error: "Tanggal lahir wajib diisi",
+            invalid_type_error: "Tanggal lahir tidak valid",
+        }),
         gender: z.enum(["male", "female"], {
             message: "Pilih jenis kelamin",
         }),

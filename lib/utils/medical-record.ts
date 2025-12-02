@@ -35,9 +35,14 @@ export function getDiagnosisTypeBadgeVariant(
 
 /**
  * Check if medical record can be edited
+ * Per feedback 4.12: Allow editing locked records until patient discharge
+ * Currently always returns true since discharge flow is not yet fully implemented
+ * TODO: Implement proper check against visit status when discharge module is complete
  */
-export function canEditMedicalRecord(isLocked: boolean): boolean {
-    return !isLocked;
+export function canEditMedicalRecord(_isLocked: boolean): boolean {
+    // Allow editing even if locked, until discharge flow is implemented
+    // Once discharge is implemented, check if visit.status === "completed"
+    return true;
 }
 
 /**

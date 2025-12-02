@@ -1,26 +1,26 @@
 1. Pendaftaran Pasien Baru
-  - Input Tanggal Lahir Wajib Isi
-  - Label Pada Input Kontak Darurat diubah Menjadi Wali/Penanggung Jawab
-  - Label Pada No. Telp Darurat diubah Menjadi No. Telp Wali/Penanggung Jawab
+  - [x] Input Tanggal Lahir Wajib Isi
+  - [x] Label Pada Input Kontak Darurat diubah Menjadi Wali/Penanggung Jawab
+  - [x] Label Pada No. Telp Darurat diubah Menjadi No. Telp Wali/Penanggung Jawab
 2. Antrian Pasien Pada SuperAdmin 
   - Status Antrian Belum terintegrasi, masih dummy
 3. Antrian Pasien Pada Dokter
-  - Urutkan berdasarkan nomor urut, yang pertama datang paling atas
+  - [x] Urutkan berdasarkan nomor urut, yang pertama datang paling atas
 4. Rekam Medis Elektronik
   - Inputan SOAP dibuat autocomplete, seperti suggestion, memudahkan dokter untuk input SOAP
-  - Tombol Tambah Diagnosis Letakan disebelah kanan flex-end atau justify-end
-  - Tombol Tambah Resep Letakan disebelah kanan flex-end atau justify-end
-  - Tombol Tambah Tindakan Letakan disebelah kanan flex-end atau justify-end
-  - Pada Form Tambah Resep, kolom input dosis tidak required karena sudah ada dalam product name 
-  - Pada Form Tambah Resep, Frekeunsi dibuat Select atau dropdown, isinnya berupa pilihan Frekeunsi Seperti: 3 X 1 Setelah Makan, 3 x 1 Sebelum Makan dan seterusnya
-  - Pada Form Tambah Resep, Kolom input Durasi tidak diperlukan
-  - Pada List Resep, Field Dosis tidak perlu ditampilkan
-  - Pada Form Tambah Resep, Form Tambah Tindakan dan Form Tambah Diagnosis Buat validasi jika ada item yang sama, atau menginput item yang sudah diinput sebelumnya
-  - Pada Form Tambah Tindakan, kolom Dilakukan Oleh Wajib isi
+  - [x] Tombol Tambah Diagnosis Letakan disebelah kanan flex-end atau justify-end
+  - [x] Tombol Tambah Resep Letakan disebelah kanan flex-end atau justify-end
+  - [x] Tombol Tambah Tindakan Letakan disebelah kanan flex-end atau justify-end
+  - [x] Pada Form Tambah Resep, kolom input dosis tidak required karena sudah ada dalam product name 
+  - [x] Pada Form Tambah Resep, Frekeunsi dibuat Select atau dropdown, isinnya berupa pilihan Frekeunsi Seperti: 3 X 1 Setelah Makan, 3 x 1 Sebelum Makan dan seterusnya
+  - [x] Pada Form Tambah Resep, Kolom input Durasi tidak diperlukan
+  - [x] Pada List Resep, Field Dosis tidak perlu ditampilkan
+  -  [x] Pada Form Tambah Resep, Form Tambah Tindakan dan Form Tambah Diagnosis Buat validasi jika ada item yang sama, atau menginput item yang sudah diinput sebelumnya
+  -  [x] Pada Form Tambah Tindakan, kolom Dilakukan Oleh Wajib isi
   - Saat ingin mengunci rekam medik, dokter bisa input diskon harga subtotal atau menambahkan harga subtotal, yang nantinya akan masuk ke cashier, dan akan mempengaruhi subtotal harga pada cashier
   - Rekam Medik yang sudah dikunci masih bisa diedit, selama pasien belum pulang.
 4. Farmasi
-  - Pada Proses Resep - Bulk, Farmasi tidak bisa merubah jumlah obat yang diberikan, bisa dihapus saja kolom jumlahnya
+  - [x] Pada Proses Resep - Bulk, Farmasi tidak bisa merubah jumlah obat yang diberikan, bisa dihapus saja kolom jumlahnya
   - Pada Proses Resep - Bulk, Farmasi bisa menambahkan Resep obat dengan persetujuan dokter, tujuannya ketika ada urgensi atau dokter tidak bisa input
 5. Kasir
   - Daftar Antrian Pembayaran hanya pada pasien yang sudah selesai (RME/Pulang dikunci)

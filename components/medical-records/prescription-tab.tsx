@@ -94,10 +94,12 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
 
             {/* Add Button */}
             {canEdit && (
-                <Button onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Tambah Resep
-                </Button>
+                <div className="flex justify-end">
+                    <Button onClick={() => setIsDialogOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tambah Resep
+                    </Button>
+                </div>
             )}
 
             {/* Existing Prescriptions */}
@@ -136,25 +138,11 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1 text-sm text-muted-foreground">
                                         <div className="md:col-span-1 grid grid-cols-4">
-                                            <span className="font-medium col-span-1">Dosis</span>
-                                            <span className="col-span-3">
-                                                :{" "}{prescription.dosage}
-                                            </span>
-                                        </div>
-                                        <div className="md:col-span-1 grid grid-cols-4">
                                             <span className="font-medium col-span-1">Frekuensi</span>
                                             <span className="col-span-3">
                                                 :{" "}{prescription.frequency}
                                             </span>
                                         </div>
-                                        {prescription.duration && (
-                                            <div className="md:col-span-1 grid grid-cols-4">
-                                                <span className="font-medium col-span-1">Durasi:</span>
-                                                <span className="col-span-3">
-                                                    :{" "}{prescription.duration}
-                                                </span>
-                                            </div>
-                                        )}
                                         <div className="md:col-span-1 grid grid-cols-4">
                                             <span className="font-medium col-span-1">Jumlah</span>
                                             <span className="col-span-3">
@@ -201,6 +189,7 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
                 prescription={prescriptionToEdit}
+                existingPrescriptions={prescriptions}
             />
 
             {/* Delete Confirmation Dialog */}

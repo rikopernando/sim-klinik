@@ -83,10 +83,12 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
 
             {/* Add Button */}
             {canEdit && (
-                <Button onClick={() => setIsDialogOpen(true)}>
-                   <Plus className="mr-2 h-4 w-4" />
-                    Tambah Diagnosis
-                </Button>
+                <div className="flex justify-end">
+                    <Button onClick={() => setIsDialogOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tambah Diagnosis
+                    </Button>
+                </div>
             )}
 
             {/* Existing Diagnoses */}
@@ -132,6 +134,7 @@ export function DiagnosisTab({ medicalRecordId, diagnoses, onUpdate, isLocked }:
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
                 diagnosis={diagnosisToEdit}
+                existingDiagnoses={diagnoses}
             />
 
             {/* Delete Confirmation Dialog */}

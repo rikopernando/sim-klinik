@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { visits, patients, polis, medicalRecords } from "@/db/schema";
-import { eq, and, or, isNull, desc } from "drizzle-orm";
+import { eq, and, or, asc } from "drizzle-orm";
 import { withRBAC } from "@/lib/rbac/middleware";
 
 /**
@@ -39,6 +39,7 @@ export const GET = withRBAC(
             }
 
             // Get patient queue with patient info and poli info
+            // Sorted by queue number (ascending) - first arrival first
             const queue = await db
                 .select({
                     visit: visits,
@@ -54,7 +55,7 @@ export const GET = withRBAC(
                         statusConditions
                     )
                 )
-                .orderBy(desc(visits.arrivalTime));
+                .orderBy(asc(visits.queueNumber));
 
             // For each visit, check if medical record exists
             const queueWithMedicalRecords = await Promise.all(

@@ -93,17 +93,17 @@ export function PatientContactStep({
 
                     {/* Emergency Contact */}
                     <div className="space-y-2">
-                        <Label htmlFor="emergencyContact">Kontak Darurat</Label>
+                        <Label htmlFor="emergencyContact">Wali/Penanggung Jawab</Label>
                         <Input
                             id="emergencyContact"
                             {...register("emergencyContact")}
-                            placeholder="Nama kontak darurat"
+                            placeholder="Nama wali/penanggung jawab"
                         />
                     </div>
 
                     {/* Emergency Phone */}
                     <div className="space-y-2">
-                        <Label htmlFor="emergencyPhone">No. Telp Darurat</Label>
+                        <Label htmlFor="emergencyPhone">No. Telp Wali/Penanggung Jawab</Label>
                         <Input
                             id="emergencyPhone"
                             {...register("emergencyPhone")}

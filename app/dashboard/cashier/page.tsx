@@ -51,6 +51,21 @@ export default function CashierDashboard() {
         return parseFloat(billingDetails.billing.subtotal);
     }, [billingDetails]);
 
+    // Calculate drugs and procedures subtotals
+    const drugsSubtotal = useMemo(() => {
+        if (!billingDetails) return 0;
+        return billingDetails.items
+            .filter((item) => item.itemType === "drug")
+            .reduce((sum, item) => sum + parseFloat(item.totalPrice), 0);
+    }, [billingDetails]);
+
+    const proceduresSubtotal = useMemo(() => {
+        if (!billingDetails) return 0;
+        return billingDetails.items
+            .filter((item) => item.itemType === "procedure")
+            .reduce((sum, item) => sum + parseFloat(item.totalPrice), 0);
+    }, [billingDetails]);
+
     // Refresh after successful payment
     useEffect(() => {
         if (success && selectedVisitId) {
@@ -169,6 +184,8 @@ export default function CashierDashboard() {
                 currentInsuranceCoverage={
                     billingDetails ? parseFloat(billingDetails.billing.insuranceCoverage) : 0
                 }
+                drugsSubtotal={drugsSubtotal}
+                proceduresSubtotal={proceduresSubtotal}
                 onSubmit={handleDiscountSubmit}
                 isSubmitting={isCalculating}
             />

@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { formatCurrency } from "@/lib/billing/billing-utils";
 
-type DiscountType = "none" | "fixed" | "percentage";
+type DiscountType = "none" | "fixed" | "percentage" | "drugs_only" | "procedures_only";
 
 interface DiscountDialogProps {
     open: boolean;
@@ -27,6 +27,9 @@ interface DiscountDialogProps {
     currentDiscount?: number;
     currentDiscountPercentage?: number;
     currentInsuranceCoverage?: number;
+    // Breakdown for specific discounts
+    drugsSubtotal?: number;
+    proceduresSubtotal?: number;
     onSubmit: (data: {
         discount?: number;
         discountPercentage?: number;
@@ -38,6 +41,8 @@ interface DiscountDialogProps {
 export function DiscountDialog({
     open,
     onOpenChange,
+    drugsSubtotal,
+    proceduresSubtotal,
     currentSubtotal,
     currentDiscount = 0,
     currentDiscountPercentage = 0,
@@ -62,9 +67,13 @@ export function DiscountDialog({
         } else if (discountType === "percentage") {
             const percent = parseFloat(discountPercentage) || 0;
             return (currentSubtotal * percent) / 100;
+        } else if (discountType === "drugs_only" && drugsSubtotal) {
+            return drugsSubtotal;
+        } else if (discountType === "procedures_only" && proceduresSubtotal) {
+            return proceduresSubtotal;
         }
         return 0;
-    }, [discountType, discountFixed, discountPercentage, currentSubtotal]);
+    }, [discountType, discountFixed, discountPercentage, currentSubtotal, drugsSubtotal, proceduresSubtotal]);
 
     // Calculate final amount
     const insurance = parseFloat(insuranceCoverage) || 0;
@@ -134,6 +143,22 @@ export function DiscountDialog({
                                             <RadioGroupItem value="percentage" id="discount-percentage" />
                                             <Label htmlFor="discount-percentage">Diskon Persentase (%)</Label>
                                         </div>
+                                        {drugsSubtotal && drugsSubtotal > 0 && (
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="drugs_only" id="discount-drugs" />
+                                                <Label htmlFor="discount-drugs">
+                                                    Diskon Seluruh Obat ({formatCurrency(drugsSubtotal)})
+                                                </Label>
+                                            </div>
+                                        )}
+                                        {proceduresSubtotal && proceduresSubtotal > 0 && (
+                                            <div className="flex items-center space-x-2">
+                                                <RadioGroupItem value="procedures_only" id="discount-procedures" />
+                                                <Label htmlFor="discount-procedures">
+                                                    Diskon Seluruh Tindakan ({formatCurrency(proceduresSubtotal)})
+                                                </Label>
+                                            </div>
+                                        )}
                                     </RadioGroup>
                                 </Field>
 
@@ -215,7 +240,11 @@ export function DiscountDialog({
                                     </div>
                                     {calculatedDiscount > 0 && (
                                         <div className="flex justify-between text-red-600">
-                                            <span>Diskon</span>
+                                            <span>
+                                                Diskon
+                                                {discountType === "drugs_only" && " (Obat)"}
+                                                {discountType === "procedures_only" && " (Tindakan)"}
+                                            </span>
                                             <span>- {formatCurrency(calculatedDiscount)}</span>
                                         </div>
                                     )}

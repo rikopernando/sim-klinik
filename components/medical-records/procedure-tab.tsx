@@ -93,10 +93,12 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
 
             {/* Add Button */}
             {canEdit && (
-                <Button onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                     Tambah Tindakan
-                </Button>
+                <div className="flex justify-end">
+                    <Button onClick={() => setIsDialogOpen(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Tambah Tindakan
+                    </Button>
+                </div>
             )}
 
             {/* Existing Procedures */}
@@ -171,6 +173,7 @@ export function ProcedureTab({ medicalRecordId, procedures, onUpdate, isLocked }
                 medicalRecordId={medicalRecordId}
                 onSuccess={onUpdate}
                 procedure={procedureToEdit}
+                existingProcedures={procedures}
             />
 
             {/* Delete Confirmation Dialog */}

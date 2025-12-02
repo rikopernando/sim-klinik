@@ -41,6 +41,7 @@ interface AddProcedureDialogProps {
     medicalRecordId: number;
     onSuccess: () => void;
     procedure?: Procedure | null; // If provided, it's edit mode
+    existingProcedures?: Procedure[]; // For duplicate checking
 }
 
 // Validation schema for a single procedure item
@@ -50,7 +51,7 @@ const procedureItemSchema = z.object({
     servicePrice: z.string().optional(),
     icd9Code: z.string().min(1, "Kode ICD-9 wajib diisi"),
     description: z.string().min(1, "Deskripsi wajib diisi"),
-    performedBy: z.string().optional(),
+    performedBy: z.string().min(1, "Dilakukan oleh wajib diisi"),
     notes: z.string().optional(),
 });
 
@@ -67,6 +68,7 @@ export function AddProcedureDialog({
     medicalRecordId,
     onSuccess,
     procedure,
+    existingProcedures = [],
 }: AddProcedureDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -198,23 +200,42 @@ export function AddProcedureDialog({
             setError(null);
 
             if (isEditMode && procedure) {
-                // Edit mode: update single procedure
+                // Edit mode: Check for duplicate (excluding current procedure)
+                const duplicate = existingProcedures.find(
+                    (p) => p.id !== procedure.id && p.serviceId === data.procedures[0].serviceId
+                );
+                if (duplicate) {
+                    setError(`Tindakan "${data.procedures[0].serviceName}" sudah ada dalam rekam medis ini`);
+                    setIsSaving(false);
+                    return;
+                }
+
                 await updateProcedure(procedure.id, {
                     serviceId: data.procedures[0].serviceId || undefined,
                     icd9Code: formatIcdCode(data.procedures[0].icd9Code),
                     description: data.procedures[0].description,
-                    performedBy: data.procedures[0].performedBy || undefined,
+                    performedBy: data.procedures[0].performedBy,
                     notes: data.procedures[0].notes || undefined,
                 });
             } else {
-                // Add mode: save all procedures sequentially
+                // Add mode: Check for duplicates
+                for (const procedureItem of data.procedures) {
+                    const duplicate = existingProcedures.find((p) => p.serviceId === procedureItem.serviceId);
+                    if (duplicate) {
+                        setError(`Tindakan "${procedureItem.serviceName}" sudah ada dalam rekam medis ini`);
+                        setIsSaving(false);
+                        return;
+                    }
+                }
+
+                // Save all procedures sequentially
                 for (const procedureItem of data.procedures) {
                     await addProcedure({
                         medicalRecordId,
                         serviceId: procedureItem.serviceId || undefined,
                         icd9Code: formatIcdCode(procedureItem.icd9Code),
                         description: procedureItem.description,
-                        performedBy: procedureItem.performedBy || undefined,
+                        performedBy: procedureItem.performedBy,
                         notes: procedureItem.notes || undefined,
                     });
                 }
@@ -317,7 +338,9 @@ export function AddProcedureDialog({
 
                                     {/* Performed By */}
                                     <div className="space-y-2">
-                                        <Label htmlFor={`performedBy-${index}`}>Dilakukan Oleh</Label>
+                                        <Label htmlFor={`performedBy-${index}`}>
+                                            Dilakukan Oleh <span className="text-destructive">*</span>
+                                        </Label>
                                         <Select
                                             value={form.watch(`procedures.${index}.performedBy`)}
                                             onValueChange={(value) =>
@@ -343,6 +366,11 @@ export function AddProcedureDialog({
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {form.formState.errors.procedures?.[index]?.performedBy && (
+                                            <p className="text-sm text-destructive">
+                                                {form.formState.errors.procedures[index]?.performedBy?.message}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
 

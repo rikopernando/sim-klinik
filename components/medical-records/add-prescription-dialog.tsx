@@ -39,16 +39,30 @@ interface AddPrescriptionDialogProps {
     medicalRecordId: number;
     onSuccess: () => void;
     prescription?: Prescription | null; // If provided, it's edit mode
+    existingPrescriptions?: Prescription[]; // For duplicate checking
 }
+
+// Predefined frequency options
+const FREQUENCY_OPTIONS = [
+    { value: "3x1_setelah_makan", label: "3 x 1 Setelah Makan" },
+    { value: "3x1_sebelum_makan", label: "3 x 1 Sebelum Makan" },
+    { value: "2x1_setelah_makan", label: "2 x 1 Setelah Makan" },
+    { value: "2x1_sebelum_makan", label: "2 x 1 Sebelum Makan" },
+    { value: "1x1_setelah_makan", label: "1 x 1 Setelah Makan" },
+    { value: "1x1_sebelum_makan", label: "1 x 1 Sebelum Makan" },
+    { value: "3x1", label: "3 x 1" },
+    { value: "2x1", label: "2 x 1" },
+    { value: "1x1", label: "1 x 1" },
+    { value: "bila_perlu", label: "Bila Perlu" },
+] as const;
 
 // Validation schema for a single prescription item
 const prescriptionItemSchema = z.object({
     drugId: z.number().min(1, "Obat wajib dipilih"),
     drugName: z.string().min(1, "Nama obat wajib diisi"),
     drugPrice: z.string().optional(),
-    dosage: z.string().min(1, "Dosis wajib diisi"),
+    dosage: z.string().optional(), // Made optional per feedback 4.5
     frequency: z.string().min(1, "Frekuensi wajib diisi"),
-    duration: z.string().optional(),
     quantity: z.number().min(1, "Jumlah minimal 1"),
     instructions: z.string().optional(),
     route: z.string().optional(),
@@ -67,6 +81,7 @@ export function AddPrescriptionDialog({
     medicalRecordId,
     onSuccess,
     prescription,
+    existingPrescriptions = [],
 }: AddPrescriptionDialogProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -83,7 +98,6 @@ export function AddPrescriptionDialog({
                     drugPrice: "",
                     dosage: "",
                     frequency: "",
-                    duration: "",
                     quantity: 1,
                     instructions: "",
                     route: "oral",
@@ -107,9 +121,8 @@ export function AddPrescriptionDialog({
                             drugId: prescription.drugId,
                             drugName: prescription.drugName,
                             drugPrice: prescription.drugPrice || "",
-                            dosage: prescription.dosage,
+                            dosage: prescription.dosage || "",
                             frequency: prescription.frequency,
-                            duration: prescription.duration || "",
                             quantity: prescription.quantity,
                             instructions: prescription.instructions || "",
                             route: prescription.route || "oral",
@@ -126,7 +139,6 @@ export function AddPrescriptionDialog({
                             drugPrice: "",
                             dosage: "",
                             frequency: "",
-                            duration: "",
                             quantity: 1,
                             instructions: "",
                             route: "oral",
@@ -163,7 +175,6 @@ export function AddPrescriptionDialog({
             drugPrice: "",
             dosage: "",
             frequency: "",
-            duration: "",
             quantity: 1,
             instructions: "",
             route: "oral",
@@ -188,25 +199,42 @@ export function AddPrescriptionDialog({
             setError(null);
 
             if (isEditMode && prescription) {
-                // Edit mode: update single prescription
+                // Edit mode: Check for duplicate (excluding current prescription)
+                const duplicate = existingPrescriptions.find(
+                    (p) => p.id !== prescription.id && p.drugId === data.prescriptions[0].drugId
+                );
+                if (duplicate) {
+                    setError(`Resep untuk obat "${data.prescriptions[0].drugName}" sudah ada dalam rekam medis ini`);
+                    setIsSaving(false);
+                    return;
+                }
+
                 await updatePrescription(prescription.id, {
                     drugId: data.prescriptions[0].drugId,
-                    dosage: data.prescriptions[0].dosage,
+                    dosage: data.prescriptions[0].dosage || undefined,
                     frequency: data.prescriptions[0].frequency,
-                    duration: data.prescriptions[0].duration || undefined,
                     quantity: data.prescriptions[0].quantity,
                     instructions: data.prescriptions[0].instructions || undefined,
                     route: data.prescriptions[0].route || undefined,
                 });
             } else {
-                // Add mode: save all prescriptions sequentially
+                // Add mode: Check for duplicates
+                for (const prescriptionItem of data.prescriptions) {
+                    const duplicate = existingPrescriptions.find((p) => p.drugId === prescriptionItem.drugId);
+                    if (duplicate) {
+                        setError(`Resep untuk obat "${prescriptionItem.drugName}" sudah ada dalam rekam medis ini`);
+                        setIsSaving(false);
+                        return;
+                    }
+                }
+
+                // Save all prescriptions sequentially
                 for (const prescriptionItem of data.prescriptions) {
                     await addPrescription({
                         medicalRecordId,
                         drugId: prescriptionItem.drugId,
-                        dosage: prescriptionItem.dosage,
+                        dosage: prescriptionItem.dosage || undefined,
                         frequency: prescriptionItem.frequency,
-                        duration: prescriptionItem.duration || undefined,
                         quantity: prescriptionItem.quantity,
                         instructions: prescriptionItem.instructions || undefined,
                         route: prescriptionItem.route || undefined,
@@ -302,11 +330,9 @@ export function AddPrescriptionDialog({
                                 )}
 
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    {/* Dosage */}
+                                    {/* Dosage - Now optional */}
                                     <div className="space-y-2">
-                                        <Label htmlFor={`dosage-${index}`}>
-                                            Dosis <span className="text-destructive">*</span>
-                                        </Label>
+                                        <Label htmlFor={`dosage-${index}`}>Dosis</Label>
                                         <Input
                                             id={`dosage-${index}`}
                                             {...form.register(`prescriptions.${index}.dosage`)}
@@ -319,31 +345,33 @@ export function AddPrescriptionDialog({
                                         )}
                                     </div>
 
-                                    {/* Frequency */}
+                                    {/* Frequency - Now dropdown */}
                                     <div className="space-y-2">
                                         <Label htmlFor={`frequency-${index}`}>
                                             Frekuensi <span className="text-destructive">*</span>
                                         </Label>
-                                        <Input
-                                            id={`frequency-${index}`}
-                                            {...form.register(`prescriptions.${index}.frequency`)}
-                                            placeholder="Contoh: 3x sehari"
-                                        />
+                                        <Select
+                                            value={form.watch(`prescriptions.${index}.frequency`)}
+                                            onValueChange={(value) =>
+                                                form.setValue(`prescriptions.${index}.frequency`, value)
+                                            }
+                                        >
+                                            <SelectTrigger className="w-full">
+                                                <SelectValue placeholder="Pilih frekuensi" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {FREQUENCY_OPTIONS.map((freq) => (
+                                                    <SelectItem key={freq.value} value={freq.label}>
+                                                        {freq.label}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         {form.formState.errors.prescriptions?.[index]?.frequency && (
                                             <p className="text-sm text-destructive">
                                                 {form.formState.errors.prescriptions[index]?.frequency?.message}
                                             </p>
                                         )}
-                                    </div>
-
-                                    {/* Duration */}
-                                    <div className="space-y-2">
-                                        <Label htmlFor={`duration-${index}`}>Durasi</Label>
-                                        <Input
-                                            id={`duration-${index}`}
-                                            {...form.register(`prescriptions.${index}.duration`)}
-                                            placeholder="Contoh: 7 hari"
-                                        />
                                     </div>
 
                                     {/* Quantity */}
