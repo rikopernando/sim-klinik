@@ -45,6 +45,9 @@ interface FulfillmentDialogProps {
         fulfilledBy: string;
         notes?: string;
     }) => void;
+    currentIndex?: number;
+    totalPrescriptions?: number;
+    patientName?: string;
 }
 
 export function FulfillmentDialog({
@@ -53,6 +56,9 @@ export function FulfillmentDialog({
     selectedPrescription,
     isSubmitting,
     onSubmit,
+    currentIndex = 0,
+    totalPrescriptions = 1,
+    patientName,
 }: FulfillmentDialogProps) {
     const [formData, setFormData] = useState({
         inventoryId: "",
@@ -65,10 +71,20 @@ export function FulfillmentDialog({
     const [isLoadingBatches, setIsLoadingBatches] = useState(false);
     const [selectedBatch, setSelectedBatch] = useState<DrugInventoryWithDetails | null>(null);
 
-    // Fetch available batches when prescription is selected
+    // Fetch available batches when prescription is selected or changed
     useEffect(() => {
         if (open && selectedPrescription?.drug.id) {
             setIsLoadingBatches(true);
+
+            // Reset form when switching to a new prescription
+            setFormData({
+                inventoryId: "",
+                dispensedQuantity: "",
+                fulfilledBy: "",
+                notes: "",
+            });
+            setSelectedBatch(null);
+
             getAvailableBatches(selectedPrescription.drug.id)
                 .then((batches) => {
                     setAvailableBatches(batches);
@@ -85,7 +101,7 @@ export function FulfillmentDialog({
                     setIsLoadingBatches(false);
                 });
         }
-    }, [open, selectedPrescription?.drug.id]);
+    }, [open, selectedPrescription?.drug.id, selectedPrescription?.prescription.id]);
 
     const handleBatchSelect = useCallback(
         (batch: DrugInventoryWithDetails) => {
@@ -99,7 +115,8 @@ export function FulfillmentDialog({
                     "",
             }));
         },
-        [selectedPrescription]
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [selectedPrescription?.prescription.quantity]
     );
 
     const handleSubmit = useCallback(() => {
@@ -129,8 +146,16 @@ export function FulfillmentDialog({
         <Dialog open={open} onOpenChange={handleClose}>
             <DialogContent className="max-w-2xl md:max-w-[700px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Proses Resep</DialogTitle>
+                    <DialogTitle>
+                        Proses Resep
+                        {totalPrescriptions > 1 && (
+                            <span className="text-sm text-muted-foreground ml-2">
+                                ({currentIndex + 1} dari {totalPrescriptions})
+                            </span>
+                        )}
+                    </DialogTitle>
                     <DialogDescription>
+                        {patientName && <div className="font-medium text-foreground mb-1">Pasien: {patientName}</div>}
                         Pilih batch dan isi informasi pengambilan obat
                     </DialogDescription>
                 </DialogHeader>
@@ -182,7 +207,11 @@ export function FulfillmentDialog({
                                     !formData.fulfilledBy
                                 }
                             >
-                                {isSubmitting ? "Memproses..." : "Proses Resep"}
+                                {isSubmitting
+                                    ? "Memproses..."
+                                    : totalPrescriptions > 1 && currentIndex < totalPrescriptions - 1
+                                    ? "Proses & Lanjut"
+                                    : "Proses Resep"}
                             </Button>
                             <Button onClick={handleClose} variant="outline" disabled={isSubmitting}>
                                 Batal

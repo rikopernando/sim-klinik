@@ -1,6 +1,6 @@
 /**
- * Prescription Queue Table Row Component
- * Reusable row for prescription queue table
+ * Prescription Queue Table Row Component (Grouped by Visit)
+ * Displays compact summary with process button
  */
 
 import { Button } from "@/components/ui/button";
@@ -9,17 +9,27 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { memo } from "react";
 
 interface Drug {
+    id: number;
     name: string;
     genericName?: string | null;
     unit: string;
+    price: string;
 }
 
 interface Patient {
+    id: number;
     name: string;
+    mrNumber: string;
 }
 
 interface Doctor {
+    id: string;
     name: string;
+}
+
+interface Visit {
+    id: number;
+    visitNumber: string;
 }
 
 interface Prescription {
@@ -31,17 +41,20 @@ interface Prescription {
     instructions?: string | null;
 }
 
-interface QueueItem {
-    prescription: Prescription;
-    drug: Drug;
-    patient: Patient | null;
+interface GroupedQueueItem {
+    visit: Visit;
+    patient: Patient;
     doctor: Doctor | null;
+    prescriptions: Array<{
+        prescription: Prescription;
+        drug: Drug;
+    }>;
 }
 
 interface PrescriptionRowProps {
-    item: QueueItem;
+    item: GroupedQueueItem;
     index: number;
-    onProcess: (item: QueueItem) => void;
+    onProcess: (item: GroupedQueueItem) => void;
 }
 
 export const PrescriptionRow = memo(function PrescriptionRow({
@@ -53,34 +66,23 @@ export const PrescriptionRow = memo(function PrescriptionRow({
         <TableRow>
             <TableCell className="font-medium">{index + 1}</TableCell>
             <TableCell>
-                <p className="font-medium whitespace-nowrap">
-                    {item.patient?.name || "N/A"}
-                </p>
-            </TableCell>
-            <TableCell>
                 <div>
-                    <p className="font-medium">{item.drug.name}</p>
-                    {item.drug.genericName && (
-                        <p className="text-xs text-muted-foreground">
-                            {item.drug.genericName}
-                        </p>
-                    )}
+                    <p className="font-medium">{item.patient.name}</p>
+                    <p className="text-xs text-muted-foreground">MR: {item.patient.mrNumber}</p>
+                    <p className="text-xs text-muted-foreground">Kunjungan: {item.visit.visitNumber}</p>
                 </div>
             </TableCell>
-            <TableCell className="whitespace-nowrap">{item.prescription.dosage}</TableCell>
-            <TableCell className="whitespace-nowrap">{item.prescription.frequency}</TableCell>
-            <TableCell className="whitespace-nowrap">
-                {item.prescription.quantity} {item.drug.unit}
+            <TableCell>
+                <Badge variant="secondary" className="font-medium">
+                    {item.prescriptions.length} Resep
+                </Badge>
             </TableCell>
             <TableCell>
                 <span className="whitespace-nowrap">{item.doctor?.name || "N/A"}</span>
             </TableCell>
-            <TableCell>
-                <Badge>Pending</Badge>
-            </TableCell>
             <TableCell className="text-right">
                 <Button size="sm" onClick={() => onProcess(item)}>
-                    Proses
+                    Proses Semua
                 </Button>
             </TableCell>
         </TableRow>

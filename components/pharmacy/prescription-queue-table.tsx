@@ -1,6 +1,6 @@
 /**
  * Prescription Queue Table Component (Refactored)
- * Displays prescription queue with optimized rendering
+ * Displays prescription queue grouped by visit with optimized rendering
  */
 
 import { useMemo } from "react";
@@ -9,17 +9,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PrescriptionRow } from "./queue/prescription-row";
 
 interface Drug {
+    id: number;
     name: string;
     genericName?: string | null;
     unit: string;
+    price: string;
 }
 
 interface Patient {
+    id: number;
     name: string;
+    mrNumber: string;
 }
 
 interface Doctor {
+    id: string;
     name: string;
+}
+
+interface Visit {
+    id: number;
+    visitNumber: string;
 }
 
 interface Prescription {
@@ -31,18 +41,21 @@ interface Prescription {
     instructions?: string | null;
 }
 
-interface QueueItem {
-    prescription: Prescription;
-    drug: Drug;
-    patient: Patient | null;
+interface GroupedQueueItem {
+    visit: Visit;
+    patient: Patient;
     doctor: Doctor | null;
+    prescriptions: Array<{
+        prescription: Prescription;
+        drug: Drug;
+    }>;
 }
 
 interface PrescriptionQueueTableProps {
-    queue: QueueItem[];
+    queue: GroupedQueueItem[];
     isLoading: boolean;
     error: string | null;
-    onProcess: (item: QueueItem) => void;
+    onProcess: (item: GroupedQueueItem) => void;
 }
 
 const LoadingState = () => (
@@ -80,7 +93,7 @@ export function PrescriptionQueueTable({
         () =>
             queue.map((item, index) => (
                 <PrescriptionRow
-                    key={item.prescription.id}
+                    key={item.visit.id}
                     item={item}
                     index={index}
                     onProcess={onProcess}
@@ -102,13 +115,9 @@ export function PrescriptionQueueTable({
                             <TableHeader>
                                 <TableRow>
                                     <TableHead className="w-[50px]">#</TableHead>
-                                    <TableHead className="min-w-[150px]">Pasien</TableHead>
-                                    <TableHead className="min-w-[200px]">Obat</TableHead>
-                                    <TableHead className="min-w-[120px]">Dosis</TableHead>
-                                    <TableHead className="min-w-[120px]">Frekuensi</TableHead>
-                                    <TableHead className="min-w-[100px]">Jumlah</TableHead>
+                                    <TableHead className="min-w-[180px]">Pasien / No. Kunjungan</TableHead>
+                                    <TableHead className="min-w-[200px]">Resep</TableHead>
                                     <TableHead className="min-w-[150px]">Dokter</TableHead>
-                                    <TableHead className="min-w-[100px]">Status</TableHead>
                                     <TableHead className="min-w-[120px] text-right">Aksi</TableHead>
                                 </TableRow>
                             </TableHeader>

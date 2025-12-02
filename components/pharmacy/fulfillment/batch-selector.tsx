@@ -4,10 +4,12 @@
  */
 
 import { memo } from "react";
+import Link from "next/link";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Package } from "lucide-react";
+import { AlertCircle, Package, PlusCircle } from "lucide-react";
 import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils";
 import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service";
 
@@ -16,22 +18,35 @@ interface BatchSelectorProps {
     batches: DrugInventoryWithDetails[];
     selectedBatch: DrugInventoryWithDetails | null;
     onBatchSelect: (batch: DrugInventoryWithDetails) => void;
+    drugId?: number;
+    drugName?: string;
 }
 
 const LoadingState = () => (
     <div className="p-4 text-center text-muted-foreground">Loading batches...</div>
 );
 
-const EmptyState = () => (
-    <div className="p-4 bg-destructive/10 border border-destructive rounded-md flex items-start gap-2">
-        <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
-        <div>
-            <p className="text-sm font-medium text-destructive">Tidak ada stok tersedia</p>
-            <p className="text-xs text-destructive/80 mt-1">
-                Obat ini tidak memiliki batch dengan stok yang tersedia. Silakan tambah stok
-                terlebih dahulu.
-            </p>
+const EmptyState = ({ drugId, drugName }: { drugId?: number; drugName?: string }) => (
+    <div className="p-4 bg-destructive/10 border border-destructive rounded-md">
+        <div className="flex items-start gap-2">
+            <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+                <p className="text-sm font-medium text-destructive">Tidak ada stok tersedia</p>
+                <p className="text-xs text-destructive/80 mt-1">
+                    {drugName ? `"${drugName}"` : "Obat ini"} tidak memiliki batch dengan stok yang tersedia.
+                </p>
+            </div>
         </div>
+        {drugId && (
+            <div className="mt-3">
+                <Link href={`/dashboard/pharmacy/inventory?drugId=${drugId}`} target="_blank">
+                    <Button size="sm" variant="outline" className="w-full">
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Tambah Stok Obat Ini
+                    </Button>
+                </Link>
+            </div>
+        )}
     </div>
 );
 
@@ -95,6 +110,8 @@ export const BatchSelector = memo(function BatchSelector({
     batches,
     selectedBatch,
     onBatchSelect,
+    drugId,
+    drugName,
 }: BatchSelectorProps) {
     return (
         <div className="space-y-2">
@@ -104,7 +121,7 @@ export const BatchSelector = memo(function BatchSelector({
             {isLoading ? (
                 <LoadingState />
             ) : batches.length === 0 ? (
-                <EmptyState />
+                <EmptyState drugId={drugId} drugName={drugName} />
             ) : (
                 <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                     {batches.map((batch) => (

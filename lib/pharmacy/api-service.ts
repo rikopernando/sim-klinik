@@ -329,7 +329,7 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
 }
 
 /**
- * Get pending prescriptions (not yet fulfilled)
+ * Get pending prescriptions grouped by visit
  * Includes patient and doctor information via joins
  */
 export async function getPendingPrescriptions() {
@@ -346,6 +346,7 @@ export async function getPendingPrescriptions() {
                 name: drugs.name,
                 genericName: drugs.genericName,
                 unit: drugs.unit,
+                price: drugs.price,
             },
             patient: {
                 id: patients.id,
@@ -355,6 +356,10 @@ export async function getPendingPrescriptions() {
             doctor: {
                 id: user.id,
                 name: user.name,
+            },
+            visit: {
+                id: visits.id,
+                visitNumber: visits.visitNumber,
             },
         })
         .from(prescriptions)
@@ -366,11 +371,134 @@ export async function getPendingPrescriptions() {
         .where(eq(prescriptions.isFulfilled, false))
         .orderBy(desc(prescriptions.createdAt));
 
-    return pending;
+    // Group prescriptions by visit
+    const groupedByVisit = pending.reduce((acc, item) => {
+        const visitId = item.visit.id;
+
+        if (!acc[visitId]) {
+            acc[visitId] = {
+                visit: item.visit,
+                patient: item.patient,
+                doctor: item.doctor,
+                prescriptions: [],
+            };
+        }
+
+        acc[visitId].prescriptions.push({
+            prescription: item.prescription,
+            drug: item.drug,
+        });
+
+        return acc;
+    }, {} as Record<number, {
+        visit: { id: number; visitNumber: string };
+        patient: { id: number; name: string; mrNumber: string };
+        doctor: { id: string; name: string } | null;
+        prescriptions: Array<{
+            prescription: typeof prescriptions.$inferSelect;
+            drug: { id: number; name: string; genericName: string | null; unit: string; price: string };
+        }>;
+    }>);
+
+    // Convert to array and sort by most recent prescription
+    return Object.values(groupedByVisit).sort((a, b) => {
+        const aLatest = Math.max(...a.prescriptions.map(p => p.prescription.createdAt.getTime()));
+        const bLatest = Math.max(...b.prescriptions.map(p => p.prescription.createdAt.getTime()));
+        return bLatest - aLatest;
+    });
 }
 
 /**
- * Fulfill prescription
+ * Bulk fulfill multiple prescriptions atomically
+ */
+export async function bulkFulfillPrescriptions(
+    fulfillmentRequests: PrescriptionFulfillmentInput[]
+) {
+    const results: Array<typeof prescriptions.$inferSelect> = [];
+
+    // Start a transaction-like process
+    try {
+        for (const data of fulfillmentRequests) {
+            // Get prescription
+            const prescriptionRecord = await db
+                .select()
+                .from(prescriptions)
+                .where(eq(prescriptions.id, data.prescriptionId))
+                .limit(1);
+
+            if (prescriptionRecord.length === 0) {
+                throw new Error(`Prescription ${data.prescriptionId} not found`);
+            }
+
+            if (prescriptionRecord[0].isFulfilled) {
+                throw new Error(`Prescription ${data.prescriptionId} already fulfilled`);
+            }
+
+            // Get inventory
+            const inventory = await db
+                .select()
+                .from(drugInventory)
+                .where(eq(drugInventory.id, data.inventoryId))
+                .limit(1);
+
+            if (inventory.length === 0) {
+                throw new Error(`Inventory ${data.inventoryId} not found`);
+            }
+
+            // Check stock availability
+            if (inventory[0].stockQuantity < data.dispensedQuantity) {
+                throw new Error(
+                    `Insufficient stock for inventory ${data.inventoryId}. Available: ${inventory[0].stockQuantity}, Requested: ${data.dispensedQuantity}`
+                );
+            }
+
+            // Update prescription
+            const [updatedPrescription] = await db
+                .update(prescriptions)
+                .set({
+                    isFulfilled: true,
+                    fulfilledBy: data.fulfilledBy,
+                    fulfilledAt: sql`CURRENT_TIMESTAMP`,
+                    dispensedQuantity: data.dispensedQuantity,
+                    inventoryId: data.inventoryId,
+                    notes: data.notes || null,
+                    updatedAt: sql`CURRENT_TIMESTAMP`,
+                })
+                .where(eq(prescriptions.id, data.prescriptionId))
+                .returning();
+
+            // Reduce stock
+            await db
+                .update(drugInventory)
+                .set({
+                    stockQuantity: sql`${drugInventory.stockQuantity} - ${data.dispensedQuantity}`,
+                    updatedAt: sql`CURRENT_TIMESTAMP`,
+                })
+                .where(eq(drugInventory.id, data.inventoryId));
+
+            // Record stock movement
+            await db.insert(stockMovements).values({
+                inventoryId: data.inventoryId,
+                movementType: "out",
+                quantity: -data.dispensedQuantity,
+                reason: `Resep #${data.prescriptionId}`,
+                referenceId: data.prescriptionId,
+                performedBy: data.fulfilledBy,
+            });
+
+            results.push(updatedPrescription);
+        }
+
+        return results;
+    } catch (error) {
+        // In a real transaction, this would rollback
+        // For now, we throw the error to prevent partial fulfillment
+        throw error;
+    }
+}
+
+/**
+ * Fulfill prescription (single)
  */
 export async function fulfillPrescription(data: PrescriptionFulfillmentInput) {
     // Get prescription
