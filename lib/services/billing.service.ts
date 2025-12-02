@@ -390,7 +390,7 @@ export async function processPayment(
 }
 
 /**
- * Get billing details with items
+ * Get billing details with items, patient, and visit info
  */
 export async function getBillingDetails(visitId: number) {
     // Get billing record
@@ -420,9 +420,34 @@ export async function getBillingDetails(visitId: number) {
         .where(eq(payments.billingId, billing.id))
         .orderBy(desc(payments.createdAt));
 
+    // Get visit and patient info
+    const visitResult = await db
+        .select({
+            visit: visits,
+            patient: patients,
+        })
+        .from(visits)
+        .innerJoin(patients, eq(visits.patientId, patients.id))
+        .where(eq(visits.id, visitId))
+        .limit(1);
+
+    if (visitResult.length === 0) {
+        return null;
+    }
+
+    const { visit, patient } = visitResult[0];
+
     return {
         billing,
         items,
         payments: paymentHistory,
+        patient: {
+            name: patient.name,
+            mrNumber: patient.mrNumber,
+        },
+        visit: {
+            visitNumber: visit.visitNumber,
+            createdAt: visit.createdAt,
+        },
     };
 }

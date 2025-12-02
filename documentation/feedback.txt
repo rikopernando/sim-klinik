@@ -23,5 +23,6 @@
   - Pada Proses Resep - Bulk, Farmasi tidak bisa merubah jumlah obat yang diberikan, bisa dihapus saja kolom jumlahnya
   - Pada Proses Resep - Bulk, Farmasi bisa menambahkan Resep obat dengan persetujuan dokter, tujuannya ketika ada urgensi atau dokter tidak bisa input
 5. Kasir
+  - Daftar Antrian Pembayaran hanya pada pasien yang sudah selesai (RME/Pulang dikunci)
   - Pada Dialog Terapkan Diskon & Jaminan, Tambahkan opsi diskon: [Diskon Seluruh Obat, Diskon Seluruh Tindakan], ini biasanya berguna untuk pasien BPJS
   - Pada Proses Pembayaran Buatkan Struk Pembayaran atau invoice

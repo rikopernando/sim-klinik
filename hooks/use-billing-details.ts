@@ -31,6 +31,14 @@ export interface BillingDetails {
     billing: Billing;
     items: BillingItem[];
     payments: Payment[];
+    patient: {
+        name: string;
+        mrNumber: string;
+    };
+    visit: {
+        visitNumber: string;
+        createdAt: Date | string;
+    };
 }
 
 interface UseBillingDetailsReturn {

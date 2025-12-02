@@ -6,11 +6,12 @@
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, RefreshCw, CreditCard, Percent } from "lucide-react";
+import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react";
 import { BillingSummaryCard } from "./billing-summary-card";
 import { PaymentHistoryCard } from "./payment-history-card";
+import { ReceiptPrint } from "./receipt-print";
 import type { PaymentStatus } from "@/types/billing";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 interface BillingItem {
     itemName: string;
@@ -43,6 +44,14 @@ interface BillingDetails {
     billing: Billing;
     items: BillingItem[];
     payments: Payment[];
+    patient: {
+        name: string;
+        mrNumber: string;
+    };
+    visit: {
+        visitNumber: string;
+        createdAt: Date | string;
+    };
 }
 
 interface BillingDetailsPanelProps {
@@ -64,6 +73,8 @@ export function BillingDetailsPanel({
     onApplyDiscount,
     isSubmitting = false,
 }: BillingDetailsPanelProps) {
+    const printRef = useRef<HTMLDivElement>(null);
+
     // Calculate remaining amount
     const remainingAmount = useMemo(() => {
         if (!billingDetails) return 0;
@@ -71,6 +82,11 @@ export function BillingDetailsPanel({
             billingDetails.billing.remainingAmount || billingDetails.billing.patientPayable
         );
     }, [billingDetails]);
+
+    // Handle print receipt
+    const handlePrint = () => {
+        window.print();
+    };
 
     // No visit selected
     if (!selectedVisitId) {
@@ -115,54 +131,78 @@ export function BillingDetailsPanel({
     const isPaid = billingDetails.billing.paymentStatus === "paid";
 
     return (
-        <ScrollArea className="flex-1">
-            <div className="p-4 space-y-4">
-                {/* Billing Summary */}
-                <BillingSummaryCard items={billingDetails.items} summary={billingDetails.billing} />
+        <>
+            <ScrollArea className="flex-1">
+                <div className="p-4 space-y-4">
+                    {/* Billing Summary */}
+                    <BillingSummaryCard items={billingDetails.items} summary={billingDetails.billing} />
 
-                {/* Payment History */}
-                <PaymentHistoryCard payments={billingDetails.payments} />
+                    {/* Payment History */}
+                    <PaymentHistoryCard payments={billingDetails.payments} />
 
-                {/* Action Buttons */}
-                {!isPaid && (
-                    <>
-                        {/* Discount Button */}
-                        {onApplyDiscount && (
-                            <Card>
+                    {/* Action Buttons */}
+                    {!isPaid ? (
+                        <>
+                            {/* Discount Button */}
+                            {onApplyDiscount && (
+                                <Card>
+                                    <CardContent className="pt-6">
+                                        <Button
+                                            onClick={onApplyDiscount}
+                                            variant="outline"
+                                            className="w-full"
+                                            size="lg"
+                                        >
+                                            <Percent className="h-5 w-5 mr-2" />
+                                            Terapkan Diskon / Jaminan
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            )}
+
+                            {/* Payment Button */}
+                            <Card className="border-primary">
                                 <CardContent className="pt-6">
                                     <Button
-                                        onClick={onApplyDiscount}
-                                        variant="outline"
+                                        onClick={onProcessPayment}
                                         className="w-full"
                                         size="lg"
+                                        disabled={isSubmitting}
                                     >
-                                        <Percent className="h-5 w-5 mr-2" />
-                                        Terapkan Diskon / Jaminan
+                                        <CreditCard className="h-5 w-5 mr-2" />
+                                        {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+                                        <span className="ml-2 font-bold">
+                                            Rp {remainingAmount.toLocaleString("id-ID")}
+                                        </span>
                                     </Button>
                                 </CardContent>
                             </Card>
-                        )}
-
-                        {/* Payment Button */}
-                        <Card className="border-primary">
+                        </>
+                    ) : (
+                        /* Print Receipt Button */
+                        <Card className="border-green-500 bg-green-50">
                             <CardContent className="pt-6">
                                 <Button
-                                    onClick={onProcessPayment}
-                                    className="w-full"
+                                    onClick={handlePrint}
+                                    variant="outline"
+                                    className="w-full border-green-600 text-green-700 hover:bg-green-100"
                                     size="lg"
-                                    disabled={isSubmitting}
                                 >
-                                    <CreditCard className="h-5 w-5 mr-2" />
-                                    {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                                    <span className="ml-2 font-bold">
-                                        Rp {remainingAmount.toLocaleString("id-ID")}
-                                    </span>
+                                    <Printer className="h-5 w-5 mr-2" />
+                                    Cetak Kuitansi
                                 </Button>
                             </CardContent>
                         </Card>
-                    </>
-                )}
-            </div>
-        </ScrollArea>
+                    )}
+                </div>
+            </ScrollArea>
+
+            {/* Hidden Receipt for Printing */}
+            {isPaid && (
+                <div ref={printRef}>
+                    <ReceiptPrint data={billingDetails} />
+                </div>
+            )}
+        </>
     );
 }
