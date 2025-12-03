@@ -38,10 +38,28 @@ export async function updateMedicalRecord(id: number, data: Partial<MedicalRecor
 }
 
 /**
- * Lock a medical record
+ * Lock a medical record with optional billing adjustment
  */
-export async function lockMedicalRecord(id: number, userId: string): Promise<MedicalRecord> {
-    const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/lock", { id, userId });
+export async function lockMedicalRecord(
+    id: number,
+    userId: string,
+    billingAdjustment?: number,
+    adjustmentNote?: string
+): Promise<MedicalRecord> {
+    const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/lock", {
+        id,
+        userId,
+        billingAdjustment,
+        adjustmentNote
+    });
+    return response.data.data;
+}
+
+/**
+ * Unlock a medical record
+ */
+export async function unlockMedicalRecord(id: number): Promise<MedicalRecord> {
+    const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/unlock", { id });
     return response.data.data;
 }
 

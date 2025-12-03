@@ -1,16 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { medicalRecords, visits } from "@/db/schema";
+import { billingItems, billings } from "@/db/schema/billing";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { withRBAC } from "@/lib/rbac/middleware";
 import { isValidStatusTransition, VisitStatus } from "@/types/visit-status";
+import { calculateBillingForVisit } from "@/lib/services/billing.service";
 
 /**
  * Lock Medical Record Schema
+ * Optional billing adjustments can be provided by doctor
  */
 const lockSchema = z.object({
     id: z.number().int().positive(),
+    billingAdjustment: z.number().optional(), // Positive = surcharge, Negative = discount
+    adjustmentNote: z.string().optional(), // Note explaining the adjustment
 });
 
 /**
@@ -100,6 +105,43 @@ export const POST = withRBAC(
                 })
                 .where(eq(visits.id, medicalRecord.visitId))
                 .returning();
+
+            // Apply doctor's billing adjustment if provided
+            if (validatedData.billingAdjustment && validatedData.billingAdjustment !== 0) {
+                // Calculate billing first to ensure billing record exists
+                await calculateBillingForVisit(medicalRecord.visitId);
+
+                // Get the billing ID
+                const [billing] = await db
+                    .select()
+                    .from(billings)
+                    .where(eq(billings.visitId, medicalRecord.visitId))
+                    .limit(1);
+
+                if (billing) {
+                    const adjustmentAmount = validatedData.billingAdjustment;
+                    const isDiscount = adjustmentAmount < 0;
+
+                    // Add billing item for doctor's adjustment
+                    await db.insert(billingItems).values({
+                        billingId: billing.id,
+                        itemType: "adjustment",
+                        itemId: null,
+                        itemName: isDiscount ? "Diskon Dokter" : "Biaya Tambahan Dokter",
+                        itemCode: "DOCTOR_ADJ",
+                        quantity: 1,
+                        unitPrice: adjustmentAmount.toString(),
+                        subtotal: adjustmentAmount.toString(),
+                        discount: "0",
+                        totalPrice: adjustmentAmount.toString(),
+                        description: validatedData.adjustmentNote ||
+                            (isDiscount ? "Diskon diberikan oleh dokter" : "Biaya tambahan dari dokter"),
+                    });
+
+                    // Recalculate billing totals
+                    await calculateBillingForVisit(medicalRecord.visitId);
+                }
+            }
 
             return NextResponse.json({
                 success: true,

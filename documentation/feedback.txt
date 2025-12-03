@@ -26,3 +26,11 @@
   - Daftar Antrian Pembayaran hanya pada pasien yang sudah selesai (RME/Pulang dikunci)
   - Pada Dialog Terapkan Diskon & Jaminan, Tambahkan opsi diskon: [Diskon Seluruh Obat, Diskon Seluruh Tindakan], ini biasanya berguna untuk pasien BPJS
   - Pada Proses Pembayaran Buatkan Struk Pembayaran atau invoice
+
+
+New Feedback
+1. Farmasi
+  - Pada Proses Resep - Bulk Dialog, Farmasi tidak bisa memproses obat sebelum rekam mediknya dikunci. Untku menghindari farmasi memproses resep yang belum selesai diinput. Jadi Button Proses Obat bisa disable dulu dan diberi keterangan
+  - Pada Antrian Resep Urutkan berdasarkan yang datang lebih dulu
+2. Billing
+  - Pastikan flow billing pada rawat jalan sudah firm. Kapan billing diproses harus jelas

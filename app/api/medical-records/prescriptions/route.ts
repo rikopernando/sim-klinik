@@ -11,12 +11,12 @@ import { sendNotification } from "@/lib/notifications/sse-manager";
 const prescriptionSchema = z.object({
     medicalRecordId: z.number().int().positive(),
     drugId: z.number().int().positive(),
-    dosage: z.string().min(1),
+    dosage: z.string().optional().nullable(), // Optional per feedback 4.5
     frequency: z.string().min(1),
-    duration: z.string().optional(),
+    duration: z.string().optional().nullable(), // Removed per feedback 4.7
     quantity: z.number().int().positive(),
-    instructions: z.string().optional(),
-    route: z.string().optional(),
+    instructions: z.string().optional().nullable(),
+    route: z.string().optional().nullable(),
 });
 
 /**
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
                 patientName: data.patient?.name || "Unknown",
                 patientMRNumber: data.patient?.mrNumber || "N/A",
                 drugName: data.drug?.name || "Unknown",
-                dosage: newPrescription.dosage,
+                dosage: newPrescription.dosage || null,
                 frequency: newPrescription.frequency,
                 quantity: newPrescription.quantity,
                 visitNumber: data.visit?.visitNumber || "N/A",

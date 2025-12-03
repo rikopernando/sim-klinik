@@ -1,0 +1,1 @@
+ALTER TABLE "prescriptions" ALTER COLUMN "dosage" DROP NOT NULL;

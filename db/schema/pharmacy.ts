@@ -53,9 +53,9 @@ export const prescriptions = pgTable("prescriptions", {
         .references(() => drugs.id),
 
     // Prescription details
-    dosage: varchar("dosage", { length: 100 }).notNull(), // e.g., "500mg"
+    dosage: varchar("dosage", { length: 100 }), // e.g., "500mg" - Optional per feedback 4.5 (often in drug name)
     frequency: varchar("frequency", { length: 100 }).notNull(), // e.g., "3x daily", "After meals"
-    duration: varchar("duration", { length: 100 }), // e.g., "7 days", "Until finished"
+    duration: varchar("duration", { length: 100 }), // e.g., "7 days", "Until finished" - Removed per feedback 4.7
     quantity: integer("quantity").notNull(), // Total quantity to dispense
 
     // Instructions

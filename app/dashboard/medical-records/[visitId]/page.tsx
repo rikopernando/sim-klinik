@@ -40,6 +40,7 @@ export default function MedicalRecordPage() {
         saveSOAP,
         saveDraft,
         lockRecord,
+        unlockRecord,
         updateRecord,
     } = useMedicalRecord({ visitId });
 
@@ -75,8 +76,8 @@ export default function MedicalRecordPage() {
     }
 
     // Handle lock action
-    const handleLock = async () => {
-        await lockRecord(recordData.medicalRecord.doctorId);
+    const handleLock = async (billingAdjustment?: number, adjustmentNote?: string) => {
+        await lockRecord(recordData.medicalRecord.doctorId, billingAdjustment, adjustmentNote);
     };
 
     return (
@@ -107,13 +108,15 @@ export default function MedicalRecordPage() {
                             </CardDescription>
                         </div>
 
-                        {/* Action Buttons (Save Draft / Lock & Finish) */}
+                        {/* Action Buttons (Save Draft / Lock & Finish / Unlock) */}
                         <MedicalRecordActions
                             isLocked={isLocked}
                             isSaving={isSaving}
                             isLocking={isLocking}
+                            visitId={visitId}
                             onSave={saveDraft}
                             onLock={handleLock}
+                            onUnlock={unlockRecord}
                         />
                     </div>
                 </CardHeader>

@@ -7,6 +7,7 @@ import {
     getMedicalRecordByVisit,
     updateMedicalRecord,
     lockMedicalRecord,
+    unlockMedicalRecord,
 } from "@/lib/services/medical-record.service";
 import { getErrorMessage } from "@/lib/utils/error";
 import { type MedicalRecordData } from "@/types/medical-record";
@@ -39,7 +40,8 @@ interface UseMedicalRecordReturn {
         soapPlan?: string;
     }) => Promise<void>;
     saveDraft: () => Promise<void>;
-    lockRecord: (userId: string) => Promise<void>;
+    lockRecord: (userId: string, billingAdjustment?: number, adjustmentNote?: string) => Promise<void>;
+    unlockRecord: () => Promise<void>;
     updateRecord: (updates: Partial<MedicalRecordData["medicalRecord"]>) => void;
 }
 
@@ -114,14 +116,33 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         }
     }, [recordData, reloadMedicalRecord]);
 
-    const lockRecord = useCallback(async (userId: string) => {
+    const lockRecord = useCallback(async (userId: string, billingAdjustment?: number, adjustmentNote?: string) => {
         if (!recordData) return;
 
         try {
             setIsLocking(true);
             setError(null);
 
-            await lockMedicalRecord(recordData.medicalRecord.id, userId);
+            await lockMedicalRecord(recordData.medicalRecord.id, userId, billingAdjustment, adjustmentNote);
+
+            // Reload to get updated data
+            await reloadMedicalRecord();
+        } catch (err) {
+            setError(getErrorMessage(err));
+            throw err;
+        } finally {
+            setIsLocking(false);
+        }
+    }, [recordData, reloadMedicalRecord]);
+
+    const unlockRecord = useCallback(async () => {
+        if (!recordData) return;
+
+        try {
+            setIsLocking(true);
+            setError(null);
+
+            await unlockMedicalRecord(recordData.medicalRecord.id);
 
             // Reload to get updated data
             await reloadMedicalRecord();
@@ -187,6 +208,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         saveSOAP,
         saveDraft,
         lockRecord,
+        unlockRecord,
         updateRecord,
     };
 }
