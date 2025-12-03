@@ -63,6 +63,13 @@ export interface Prescription {
     dispensedQuantity: number | null;
     inventoryId: number | null;
     notes: string | null;
+    // Pharmacist-added prescription fields
+    addedByPharmacist: boolean;
+    addedByPharmacistId: string | null;
+    addedByPharmacistName: string | null;
+    approvedBy: string | null;
+    approvedAt: Date | null;
+    pharmacistNote: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

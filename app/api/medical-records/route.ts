@@ -161,7 +161,7 @@ export const GET = withRBAC(
                 .leftJoin(services, eq(procedures.serviceId, services.id))
                 .where(eq(procedures.medicalRecordId, record[0].id));
 
-            // Get prescriptions with drug information
+            // Get prescriptions with drug information and pharmacist info
             const prescriptionsList = await db
                 .select({
                     id: prescriptions.id,
@@ -181,11 +181,19 @@ export const GET = withRBAC(
                     dispensedQuantity: prescriptions.dispensedQuantity,
                     inventoryId: prescriptions.inventoryId,
                     notes: prescriptions.notes,
+                    // Pharmacist-added prescription fields
+                    addedByPharmacist: prescriptions.addedByPharmacist,
+                    addedByPharmacistId: prescriptions.addedByPharmacistId,
+                    addedByPharmacistName: user.name,
+                    approvedBy: prescriptions.approvedBy,
+                    approvedAt: prescriptions.approvedAt,
+                    pharmacistNote: prescriptions.pharmacistNote,
                     createdAt: prescriptions.createdAt,
                     updatedAt: prescriptions.updatedAt,
                 })
                 .from(prescriptions)
                 .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+                .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
                 .where(eq(prescriptions.medicalRecordId, record[0].id));
 
             // Get visit information

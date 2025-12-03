@@ -119,8 +119,13 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                             >
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between gap-2">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <span className="font-medium">{prescription.drugName}</span>
+                                            {prescription.addedByPharmacist && (
+                                                <Badge variant="outline" className="bg-teal-50 text-teal-700 border-teal-300">
+                                                    Ditambahkan Farmasi
+                                                </Badge>
+                                            )}
                                             {prescription.isFulfilled && (
                                                 <Badge variant="secondary">Sudah Diambil</Badge>
                                             )}
@@ -160,6 +165,19 @@ export function PrescriptionTab({ medicalRecordId, prescriptions, onUpdate, isLo
                                     </div>
                                     {prescription.instructions && (
                                         <p className="text-sm italic">{prescription.instructions}</p>
+                                    )}
+                                    {prescription.addedByPharmacist && prescription.pharmacistNote && (
+                                        <div className="mt-2 p-2 bg-teal-50 border border-teal-200 rounded text-sm">
+                                            <div className="font-medium text-teal-900 mb-1">
+                                                Catatan Farmasi:
+                                            </div>
+                                            <p className="text-teal-800 italic">{prescription.pharmacistNote}</p>
+                                            {prescription.addedByPharmacistName && (
+                                                <p className="text-xs text-teal-600 mt-1">
+                                                    Ditambahkan oleh: {prescription.addedByPharmacistName}
+                                                </p>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </ListItem>

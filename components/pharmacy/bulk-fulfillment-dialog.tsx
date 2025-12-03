@@ -23,11 +23,12 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Plus } from "lucide-react";
 import { getAvailableBatches, type DrugInventoryWithDetails } from "@/lib/services/inventory.service";
 import { BatchSelector } from "./fulfillment/batch-selector";
 import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.service";
 import { Label } from "../ui/label";
+import { AddPrescriptionDialog } from "./add-prescription-dialog";
 
 interface Drug {
     id: number;
@@ -66,6 +67,7 @@ interface GroupedQueueItem {
     visit: Visit;
     patient: Patient;
     doctor: { id: string; name: string } | null;
+    medicalRecordId: number;
     prescriptions: PrescriptionItem[];
 }
 
@@ -90,6 +92,8 @@ interface BulkFulfillmentDialogProps {
         fulfilledBy: string;
         notes?: string;
     }[]) => Promise<void>;
+    onPrescriptionAdded?: () => void; // Callback when prescription is added
+    medicalRecordId?: number; // Medical record ID for adding prescriptions
 }
 
 export function BulkFulfillmentDialog({
@@ -98,6 +102,8 @@ export function BulkFulfillmentDialog({
     selectedGroup,
     isSubmitting,
     onSubmit,
+    onPrescriptionAdded,
+    medicalRecordId,
 }: BulkFulfillmentDialogProps) {
     const [fulfillmentData, setFulfillmentData] = useState<Record<number, FulfillmentFormData>>({});
     const [fulfilledBy, setFulfilledBy] = useState("");
@@ -105,6 +111,7 @@ export function BulkFulfillmentDialog({
     const [validationError, setValidationError] = useState<string | null>(null);
     const [pharmacists, setPharmacists] = useState<Pharmacist[]>([]);
     const [isLoadingPharmacists, setIsLoadingPharmacists] = useState(false);
+    const [addPrescriptionDialogOpen, setAddPrescriptionDialogOpen] = useState(false);
 
     // Load pharmacists when dialog opens
     useEffect(() => {
@@ -240,25 +247,49 @@ export function BulkFulfillmentDialog({
     };
 
 
+    const handlePrescriptionAdded = () => {
+        // Reload prescriptions after adding
+        if (onPrescriptionAdded) {
+            onPrescriptionAdded();
+        }
+    };
+
     return (
-        <Dialog open={open} onOpenChange={handleClose}>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                    <DialogTitle>Proses Resep - Bulk</DialogTitle>
-                    <DialogDescription>
-                        {selectedGroup && (
-                            <div>
-                                <p className="font-medium text-foreground">
-                                    Pasien: {selectedGroup.patient.name} ({selectedGroup.patient.mrNumber})
-                                </p>
-                                <p className="text-sm">Kunjungan: {selectedGroup.visit.visitNumber}</p>
-                                <p className="text-sm">
-                                    Total Resep: {selectedGroup.prescriptions.length}
-                                </p>
+        <>
+            <Dialog open={open} onOpenChange={handleClose}>
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                                <DialogTitle>Proses Resep - Bulk</DialogTitle>
+                                <DialogDescription>
+                                    {selectedGroup && (
+                                        <div>
+                                            <p className="font-medium text-foreground">
+                                                Pasien: {selectedGroup.patient.name} ({selectedGroup.patient.mrNumber})
+                                            </p>
+                                            <p className="text-sm">Kunjungan: {selectedGroup.visit.visitNumber}</p>
+                                            <p className="text-sm">
+                                                Total Resep: {selectedGroup.prescriptions.length}
+                                            </p>
+                                        </div>
+                                    )}
+                                </DialogDescription>
                             </div>
-                        )}
-                    </DialogDescription>
-                </DialogHeader>
+                            {/* Add Prescription Button */}
+                            {medicalRecordId && selectedGroup?.doctor && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setAddPrescriptionDialogOpen(true)}
+                                    disabled={isSubmitting}
+                                >
+                                    <Plus className="mr-2 h-4 w-4" />
+                                    Tambah Resep
+                                </Button>
+                            )}
+                        </div>
+                    </DialogHeader>
 
                 {validationError && (
                     <Alert variant="destructive">
@@ -398,5 +429,17 @@ export function BulkFulfillmentDialog({
                 </div>
             </DialogContent>
         </Dialog>
+
+        {/* Add Prescription Dialog */}
+        {medicalRecordId && selectedGroup?.doctor && (
+            <AddPrescriptionDialog
+                open={addPrescriptionDialogOpen}
+                onOpenChange={setAddPrescriptionDialogOpen}
+                medicalRecordId={medicalRecordId}
+                doctor={selectedGroup.doctor}
+                onSuccess={handlePrescriptionAdded}
+            />
+        )}
+        </>
     );
 }

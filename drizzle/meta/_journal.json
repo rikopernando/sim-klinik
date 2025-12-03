@@ -50,6 +50,13 @@
       "when": 1764719546029,
       "tag": "0006_spicy_drax",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1764757237813,
+      "tag": "0007_glorious_surge",
+      "breakpoints": true
     }
   ]
 }

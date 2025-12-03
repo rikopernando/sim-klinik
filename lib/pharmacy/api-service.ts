@@ -361,6 +361,7 @@ export async function getPendingPrescriptions() {
                 id: visits.id,
                 visitNumber: visits.visitNumber,
             },
+            medicalRecordId: medicalRecords.id, // Include medical record ID for pharmacist prescription feature
         })
         .from(prescriptions)
         .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
@@ -380,6 +381,7 @@ export async function getPendingPrescriptions() {
                 visit: item.visit,
                 patient: item.patient,
                 doctor: item.doctor,
+                medicalRecordId: item.medicalRecordId, // Include medical record ID
                 prescriptions: [],
             };
         }
@@ -394,6 +396,7 @@ export async function getPendingPrescriptions() {
         visit: { id: number; visitNumber: string };
         patient: { id: number; name: string; mrNumber: string };
         doctor: { id: string; name: string } | null;
+        medicalRecordId: number; // Added medical record ID
         prescriptions: Array<{
             prescription: typeof prescriptions.$inferSelect;
             drug: { id: number; name: string; genericName: string | null; unit: string; price: string };

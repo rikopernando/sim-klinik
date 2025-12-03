@@ -54,6 +54,7 @@ interface GroupedQueueItem {
     visit: Visit;
     patient: Patient;
     doctor: Doctor | null;
+    medicalRecordId: number;
     prescriptions: Array<{
         prescription: Prescription;
         drug: Drug;
@@ -173,6 +174,8 @@ export default function PharmacyDashboard() {
                 selectedGroup={selectedGroup}
                 isSubmitting={isSubmitting}
                 onSubmit={handleBulkFulfill}
+                medicalRecordId={selectedGroup?.medicalRecordId}
+                onPrescriptionAdded={refresh}
             />
         </div>
     );

@@ -71,6 +71,13 @@ export const prescriptions = pgTable("prescriptions", {
     // Stock tracking
     inventoryId: integer("inventory_id").references(() => drugInventory.id), // Which batch was used
 
+    // Pharmacist-added prescriptions (for urgent cases)
+    addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false), // Flag for pharmacist-added prescriptions
+    addedByPharmacistId: text("added_by_pharmacist_id").references(() => user.id), // Which pharmacist added it
+    approvedBy: text("approved_by").references(() => user.id), // Doctor who approved
+    approvedAt: timestamp("approved_at"), // When approved
+    pharmacistNote: text("pharmacist_note"), // Reason for adding prescription
+
     notes: text("notes"), // Pharmacist notes
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
