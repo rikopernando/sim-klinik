@@ -179,29 +179,34 @@ const staticData = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
-  
-  const userData = session?.user ? {
-    name: session.user.name || "User",
-    email: session.user.email,
-    avatar: session.user.image || "/bumi-andalas-logo.jpg",
-  } : {
-    name: "Guest",
-    email: "guest@example.com", 
-    avatar: "/bumi-andalas-logo.jpg",
-  }
+
+  const userData = session?.user
+    ? {
+        name: session.user.name || "User",
+        email: session.user.email,
+        avatar: session.user.image || "/bumi-andalas-logo.jpg",
+      }
+    : {
+        name: "Guest",
+        email: "guest@example.com",
+        avatar: "/bumi-andalas-logo.jpg",
+      }
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
-            >
+            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <Link href="/">
-                <Image src="/bumi-andalas-logo.jpg" alt="CodeGuide" width={32} height={32} className="rounded-lg" />
-                <span className="text-base font-semibold font-parkinsans">CodeGuide</span>
+                <Image
+                  src="/bumi-andalas-logo.jpg"
+                  alt="CodeGuide"
+                  width={32}
+                  height={32}
+                  className="rounded-lg"
+                />
+                <span className="font-parkinsans text-base font-semibold">CodeGuide</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>

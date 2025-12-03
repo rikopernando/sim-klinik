@@ -33,6 +33,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development Commands
 
 ### Application
+
 ```bash
 npm run dev          # Start dev server with Turbopack
 npm run build        # Build for production
@@ -41,6 +42,7 @@ npm run lint         # Run ESLint
 ```
 
 ### Database Management
+
 ```bash
 npm run db:up        # Start PostgreSQL (port 5432)
 npm run db:down      # Stop PostgreSQL
@@ -53,6 +55,7 @@ npm run db:reset     # Drop and recreate all tables
 ```
 
 ### Docker
+
 ```bash
 npm run docker:build # Build app image
 npm run docker:up    # Start full stack
@@ -63,18 +66,21 @@ npm run docker:logs  # View logs
 ## Architecture Overview
 
 ### Authentication Flow
+
 - Better Auth configured with Drizzle adapter in `lib/auth.ts`
 - Database schema for auth in `db/schema/auth.ts` (user, session, account, verification tables)
 - Client-side auth utilities in `lib/auth-client.ts`
 - Sign-in/Sign-up pages at `/sign-in` and `/sign-up`
 
 ### Database Architecture
+
 - **Connection**: Configured in `db/index.ts` using Drizzle ORM with PostgreSQL
 - **Schemas**: Organized in `db/schema/` directory by domain
 - **Migrations**: Managed via Drizzle Kit, stored in `drizzle/` directory
 - **Config**: `drizzle.config.ts` defines schema path and database credentials
 
 **Expected Schema Structure** (from `backend_structure_document.md`):
+
 - **users**: id, email, password_hash, created_at (auth tables already exist)
 - **patients**: id, mr_number (auto-generated), nik, name, address, phone, insurance
 - **visits**: id, patient_id, visit_type (outpatient/inpatient/er), doctor_id, poli_id, triage_status, status
@@ -92,6 +98,7 @@ npm run docker:logs  # View logs
 Each schema file should follow Drizzle conventions with proper relations and indexes.
 
 ### Project Structure
+
 ```
 app/
 ├── api/              # API routes (auth endpoints)
@@ -130,22 +137,26 @@ documentation/
 ### Key Patterns
 
 **Path Aliases**: Use `@/*` to import from project root
+
 ```typescript
-import { db } from '@/db'
-import { auth } from '@/lib/auth'
+import { db } from "@/db"
+import { auth } from "@/lib/auth"
 ```
 
 **Database Access**: All database operations go through Drizzle ORM
+
 ```typescript
-import { db } from '@/db'
-import { user } from '@/db/schema/auth'
+import { db } from "@/db"
+import { user } from "@/db/schema/auth"
 ```
 
 **Authentication**: Better Auth provides session management and credential validation
+
 - Server-side: Import from `@/lib/auth`
 - Client-side: Import from `@/lib/auth-client`
 
 **Styling**: Global styles + component-specific CSS + Tailwind utilities
+
 - Use `cn()` utility from `@/lib/utils` for conditional classes
 - shadcn/ui components are fully customizable via CSS variables
 - Follow BEM-inspired naming conventions for custom CSS classes
@@ -153,6 +164,7 @@ import { user } from '@/db/schema/auth'
 ## Design System
 
 **Color Palette** (defined in CSS variables):
+
 - **Primary Blue**: `#1E90FF` - Buttons, highlights
 - **Secondary Navy**: `#2C3E50` - Header, sidebar backgrounds
 - **Accent Cyan**: `#00CEC9` - Links, hover states
@@ -160,10 +172,12 @@ import { user } from '@/db/schema/auth'
 - **Neutral Dark**: `#2D3436` - Text, icons
 
 **Typography**:
+
 - **Font Family**: Inter (sans-serif) with system font fallbacks
 - All font sizes and colors use CSS variables from `globals.css`
 
 **UX Philosophy**:
+
 - **Sederhana (Simple)**: Prioritize clarity and ease of use
 - **2-Step Wizards**: Break complex forms into digestible steps
 - **Instant Feedback**: Real-time validation on forms
@@ -173,6 +187,7 @@ import { user } from '@/db/schema/auth'
 ## Environment Variables
 
 Required variables (see `.env.example`):
+
 ```env
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/postgres
 POSTGRES_DB=postgres
@@ -186,17 +201,20 @@ NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 ## Development Workflow
 
 1. **Database First**: Start PostgreSQL before running dev server
+
    ```bash
    npm run db:up && npm run db:push
    ```
 
 2. **Schema Changes**: After modifying schema files
+
    ```bash
    npm run db:generate  # Create migration
    npm run db:push      # Apply to database
    ```
 
 3. **Adding UI Components**: Use shadcn CLI
+
    ```bash
    npx shadcn@latest add [component-name]
    ```
@@ -224,6 +242,7 @@ Refer to `documentation/app_flow_document.md` for detailed user stories per modu
 Tasks are organized in `documentation/tasks.md` in these categories:
 
 **A. Core Setup** (High Priority)
+
 - Next.js + TypeScript + Environment setup
 - Database ORM (Drizzle) + PostgreSQL connection
 - Tailwind CSS + Base components
@@ -231,12 +250,14 @@ Tasks are organized in `documentation/tasks.md` in these categories:
 - Application layout (Header, Sidebar)
 
 **B. Registration Module** (High Priority)
+
 - Patient search (NIK, MR, Name)
 - New patient form (2-step wizard)
 - Visit registration (Outpatient/Inpatient/ER)
 - Queue management per Poli
 
 **C-G. Clinical Modules** (See tasks.md for full breakdown)
+
 - C: Emergency Room (UGD)
 - D: Electronic Medical Records (EMR)
 - E: Inpatient Care
@@ -244,6 +265,7 @@ Tasks are organized in `documentation/tasks.md` in these categories:
 - G: Billing & Patient Discharge
 
 **Key Implementation Notes**:
+
 - All forms must use React Hook Form + Zod validation
 - Real-time notifications for pharmacy e-prescriptions
 - Auto-generation of Medical Record (MR) numbers
@@ -254,53 +276,61 @@ Tasks are organized in `documentation/tasks.md` in these categories:
 **Critical Requirements** (see `documentation/security_guideline_document.md` for full details):
 
 **Authentication & Access**:
+
 - Passwords hashed via Better Auth (bcrypt with salt)
 - Session tokens in HttpOnly, Secure, SameSite=Strict cookies
 - Rate limiting on `/api/auth` to prevent brute-force attacks
 - Strong password policy: min 12 chars, mixed case, numbers, symbols
 
 **Input Handling**:
+
 - All forms use Zod validation on both client and server
 - Parameterized queries via Drizzle ORM (no raw SQL)
 - Sanitize and validate all user inputs
 - Prevent open redirects with allow-list validation
 
 **Data Protection**:
+
 - HTTPS/TLS 1.2+ enforced in production
 - Never log passwords, tokens, or PII
 - Database credentials in `.env` (never committed)
 - Implement data retention policies for patient data
 
 **Web Security**:
+
 - CSRF protection on all state-changing operations
 - Security headers: HSTS, X-Content-Type-Options, X-Frame-Options, CSP
 - Prevent XSS: escape user content, avoid dangerouslySetInnerHTML
 - CORS restricted to authorized origins only
 
 **Dependency Management**:
+
 - Regular `npm audit` for vulnerability scanning
 - Keep all packages updated
 - Use `package-lock.json` for reproducible builds
-
 
 ## Testing & Quality Assurance
 
 **Testing Strategy** (from `frontend_guidelines_document.md`):
 
 **Unit Tests**:
+
 - Jest + React Testing Library for components
 - Test form validations, utility functions, hooks
 - Example: Verify Sign In form shows errors for empty fields
 
 **Integration Tests**:
+
 - Test component interactions and API calls
 - Use msw (Mock Service Worker) for API mocking
 
 **E2E Tests**:
+
 - Cypress or Playwright for full user flows
 - Test: Sign up → Login → Dashboard navigation → Logout
 
 **Code Quality**:
+
 - ESLint for code style and bug detection
 - Prettier for consistent formatting
 - Husky git hooks run lint/tests before commits

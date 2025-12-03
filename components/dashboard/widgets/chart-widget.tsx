@@ -3,17 +3,17 @@
  * Placeholder for future chart integration (Recharts, Chart.js, etc.)
  */
 
-import { ReactNode } from "react";
-import { LucideIcon } from "lucide-react";
-import { DashboardWidget } from "../dashboard-widget";
+import { ReactNode } from "react"
+import { LucideIcon } from "lucide-react"
+import { DashboardWidget } from "../dashboard-widget"
 
 export interface ChartWidgetProps {
-    title: string;
-    description?: string;
-    icon?: LucideIcon;
-    children: ReactNode;
-    headerAction?: ReactNode;
-    className?: string;
+  title: string
+  description?: string
+  icon?: LucideIcon
+  children: ReactNode
+  headerAction?: ReactNode
+  className?: string
 }
 
 /**
@@ -29,24 +29,22 @@ export interface ChartWidgetProps {
  * ```
  */
 export function ChartWidget({
-    title,
-    description,
-    icon,
-    children,
-    headerAction,
-    className,
+  title,
+  description,
+  icon,
+  children,
+  headerAction,
+  className,
 }: ChartWidgetProps) {
-    return (
-        <DashboardWidget
-            title={title}
-            description={description}
-            icon={icon}
-            headerAction={headerAction}
-            className={className}
-        >
-            <div className="w-full">
-                {children}
-            </div>
-        </DashboardWidget>
-    );
+  return (
+    <DashboardWidget
+      title={title}
+      description={description}
+      icon={icon}
+      headerAction={headerAction}
+      className={className}
+    >
+      <div className="w-full">{children}</div>
+    </DashboardWidget>
+  )
 }

@@ -8,8 +8,8 @@
  * @returns Formatted gender label or "-"
  */
 export function getGenderLabel(gender: string | null | undefined): string {
-    if (!gender) return "-";
-    return gender === "male" ? "Laki-laki" : "Perempuan";
+  if (!gender) return "-"
+  return gender === "male" ? "Laki-laki" : "Perempuan"
 }
 
 /**
@@ -19,7 +19,7 @@ export function getGenderLabel(gender: string | null | undefined): string {
  * @returns Formatted display name
  */
 export function getPatientDisplayName(name: string, mrNumber: string): string {
-    return `${name} (${mrNumber})`;
+  return `${name} (${mrNumber})`
 }
 
 /**
@@ -27,8 +27,10 @@ export function getPatientDisplayName(name: string, mrNumber: string): string {
  * @param insuranceType - Type of insurance
  * @returns Badge variant
  */
-export function getInsuranceBadgeVariant(insuranceType: string | null): "default" | "secondary" | "outline" {
-    if (!insuranceType) return "outline";
-    if (insuranceType.toLowerCase().includes("bpjs")) return "default";
-    return "secondary";
+export function getInsuranceBadgeVariant(
+  insuranceType: string | null
+): "default" | "secondary" | "outline" {
+  if (!insuranceType) return "outline"
+  if (insuranceType.toLowerCase().includes("bpjs")) return "default"
+  return "secondary"
 }

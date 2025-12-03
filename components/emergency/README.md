@@ -1,11 +1,13 @@
 # Emergency Room (UGD) Module
 
 ## Overview
+
 The Emergency Room module provides a complete workflow for managing emergency patients, from quick triage registration to patient handover to other departments.
 
 ## Architecture
 
 ### Directory Structure
+
 ```
 emergency/
 ├── README.md                          # This file
@@ -37,12 +39,14 @@ emergency/
 ## Key Features
 
 ### 1. **Quick Registration**
+
 - Minimal data entry for urgent cases
 - Triage-based prioritization (Red/Yellow/Green)
 - Auto-generates MR and Visit numbers
 - Can be completed later when patient stabilizes
 
 ### 2. **Triage System**
+
 - **Red (Merah)**: Critical - Immediate attention required
 - **Yellow (Kuning)**: Urgent - Needs prompt care
 - **Green (Hijau)**: Non-urgent - Can wait
@@ -50,18 +54,21 @@ emergency/
 - Priority-based queue sorting
 
 ### 3. **Real-Time Queue Management**
+
 - Auto-refresh every 30 seconds
 - Sorted by triage priority + arrival time
 - Live statistics dashboard
 - Patient search and filtering
 
 ### 4. **Patient Handover**
+
 - Transfer to Outpatient (Rawat Jalan)
 - Transfer to Inpatient (Rawat Inap)
 - Preserves patient history
 - Adds handover notes
 
 ### 5. **ER Medical Records**
+
 - Streamlined for emergency documentation
 - Vital signs tracking
 - Emergency actions logging
@@ -70,7 +77,9 @@ emergency/
 ## Code Organization
 
 ### Types (`types/emergency.ts`)
+
 Centralized type definitions:
+
 - `TriageStatus`: "red" | "yellow" | "green"
 - `DispositionType`: "discharged" | "admitted" | "referred" | "observation"
 - `ERQueueItem`: Visit with Patient data
@@ -78,7 +87,9 @@ Centralized type definitions:
 - `APIResponse`: Standard API response format
 
 ### Utilities (`lib/emergency/triage-utils.ts`)
+
 Reusable triage logic:
+
 - `getTriageConfig()`: Get configuration by status
 - `getTriageBadgeColor()`: Badge styling classes
 - `getTriageLabel()`: Human-readable label
@@ -87,57 +98,66 @@ Reusable triage logic:
 - `isValidTriageStatus()`: Type guard
 
 ### Validation (`lib/emergency/validation.ts`)
+
 Zod schemas for API validation:
+
 - `quickERRegistrationSchema`: Quick registration
 - `completeRegistrationSchema`: Complete patient data
 - `handoverSchema`: Patient handover
 - `erMedicalRecordSchema`: ER medical records
 
 ### Service Layer (`lib/emergency/api-service.ts`)
+
 Database operations:
+
 - `createQuickERRegistration()`: Create patient + visit
 - `completePatientRegistration()`: Update patient data
 - `performHandover()`: Transfer patient
 - `getERQueue()`: Fetch queue data
 
 ### Custom Hooks
+
 **useERQueue**
+
 ```typescript
 const {
-  sortedQueue,      // Sorted queue items
-  statistics,       // Triage statistics
-  isLoading,        // Loading state
-  lastRefresh,      // Last refresh timestamp
-  refresh           // Manual refresh function
+  sortedQueue, // Sorted queue items
+  statistics, // Triage statistics
+  isLoading, // Loading state
+  lastRefresh, // Last refresh timestamp
+  refresh, // Manual refresh function
 } = useERQueue({
   autoRefresh: true,
-  refreshInterval: 30000
-});
+  refreshInterval: 30000,
+})
 ```
 
 **useQuickRegistration**
+
 ```typescript
 const {
-  register,         // Registration function
-  isSubmitting,     // Submit state
-  error,            // Error message
-  success           // Success state
-} = useQuickRegistration(onSuccess);
+  register, // Registration function
+  isSubmitting, // Submit state
+  error, // Error message
+  success, // Success state
+} = useQuickRegistration(onSuccess)
 ```
 
 **useHandover**
+
 ```typescript
 const {
-  handover,         // Handover function
-  isSubmitting,     // Submit state
-  error,            // Error message
-  success           // Success state
-} = useHandover(onSuccess);
+  handover, // Handover function
+  isSubmitting, // Submit state
+  error, // Error message
+  success, // Success state
+} = useHandover(onSuccess)
 ```
 
 ## Component Usage
 
 ### ER Queue Dashboard
+
 ```typescript
 import { ERQueueStats } from "@/components/emergency/er-queue-stats";
 import { ERQueueItemCard } from "@/components/emergency/er-queue-item";
@@ -156,6 +176,7 @@ return (
 ```
 
 ### Quick Registration Form
+
 ```typescript
 import { QuickRegistrationForm } from "@/components/emergency/quick-registration-form";
 
@@ -166,6 +187,7 @@ import { QuickRegistrationForm } from "@/components/emergency/quick-registration
 ```
 
 ### Handover Dialog
+
 ```typescript
 import { HandoverDialog } from "@/components/emergency/handover-dialog";
 
@@ -181,7 +203,9 @@ import { HandoverDialog } from "@/components/emergency/handover-dialog";
 ## API Endpoints
 
 ### POST `/api/emergency/quick-register`
+
 Quick ER registration
+
 ```json
 {
   "name": "John Doe",
@@ -194,7 +218,9 @@ Quick ER registration
 ```
 
 ### PATCH `/api/emergency/complete-registration`
+
 Complete patient data after triage
+
 ```json
 {
   "patientId": 1,
@@ -207,7 +233,9 @@ Complete patient data after triage
 ```
 
 ### POST `/api/emergency/handover`
+
 Transfer patient to other department
+
 ```json
 {
   "visitId": 1,
@@ -229,19 +257,25 @@ Transfer patient to other department
 ## Best Practices
 
 ### Type Safety
+
 Always use TypeScript types from `types/emergency.ts`:
+
 ```typescript
-import { TriageStatus, ERQueueItem } from "@/types/emergency";
+import { TriageStatus, ERQueueItem } from "@/types/emergency"
 ```
 
 ### Utility Functions
+
 Use centralized utilities instead of duplicating logic:
+
 ```typescript
-import { getTriageLabel, sortByTriagePriority } from "@/lib/emergency/triage-utils";
+import { getTriageLabel, sortByTriagePriority } from "@/lib/emergency/triage-utils"
 ```
 
 ### Error Handling
+
 All API routes follow consistent error handling pattern:
+
 ```typescript
 try {
   // ... operation
@@ -257,26 +291,31 @@ try {
 ```
 
 ### Form Validation
+
 Use Zod schemas with react-hook-form:
+
 ```typescript
 const form = useForm<FormData>({
-  resolver: zodResolver(formSchema)
-});
+  resolver: zodResolver(formSchema),
+})
 ```
 
 ## Testing Considerations
 
 ### Unit Tests
+
 - Utility functions in `triage-utils.ts`
 - Validation schemas in `validation.ts`
 - Service layer functions in `api-service.ts`
 
 ### Integration Tests
+
 - Custom hooks with mock API responses
 - Form submission flows
 - API endpoint handlers
 
 ### E2E Tests
+
 - Complete patient registration flow
 - Queue dashboard updates
 - Patient handover process
@@ -293,16 +332,19 @@ const form = useForm<FormData>({
 ## Troubleshooting
 
 ### Queue not updating
+
 - Check auto-refresh is enabled
 - Verify API endpoint is accessible
 - Check browser console for errors
 
 ### Triage colors not showing
+
 - Ensure Tailwind CSS is compiled
 - Check `TRIAGE_CONFIG` in `triage-utils.ts`
 - Verify CSS classes are whitelisted
 
 ### Form validation errors
+
 - Check Zod schema matches form fields
 - Ensure react-hook-form resolver is configured
 - Verify field names match schema keys
@@ -310,6 +352,7 @@ const form = useForm<FormData>({
 ## Contributors
 
 Module created and refactored following clean code principles:
+
 - Modular architecture
 - Type safety
 - Performance optimization

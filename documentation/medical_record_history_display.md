@@ -29,11 +29,13 @@ The medical record history feature provides doctors with quick access to a patie
 **RBAC Protected:** ✅ Yes
 
 **Query Parameters:**
+
 ```
 patientId: number (required) - The patient ID to fetch history for
 ```
 
 **Response (200):**
+
 ```json
 {
   "success": true,
@@ -106,6 +108,7 @@ patientId: number (required) - The patient ID to fetch history for
 ```
 
 **Error Responses:**
+
 ```json
 // Missing patientId
 {
@@ -124,6 +127,7 @@ patientId: number (required) - The patient ID to fetch history for
 ```
 
 **Key Features:**
+
 - ✅ Fetches all medical records for a patient
 - ✅ Includes complete visit information
 - ✅ Loads all related diagnoses
@@ -142,6 +146,7 @@ patientId: number (required) - The patient ID to fetch history for
 **Purpose:** Popup dialog to display patient's complete medical history
 
 **Features:**
+
 - ✅ Auto-fetch history when dialog opens
 - ✅ Loading state with spinner
 - ✅ Error handling with clear messages
@@ -155,16 +160,18 @@ patientId: number (required) - The patient ID to fetch history for
 - ✅ Date formatting in Indonesian locale
 
 **Props:**
+
 ```typescript
 interface MedicalRecordHistoryDialogProps {
-  open: boolean;                     // Dialog open state
-  onOpenChange: (open: boolean) => void; // Handle dialog close
-  patientId: number;                 // Patient ID to fetch history
-  patientName?: string;              // Optional patient name for display
+  open: boolean // Dialog open state
+  onOpenChange: (open: boolean) => void // Handle dialog close
+  patientId: number // Patient ID to fetch history
+  patientName?: string // Optional patient name for display
 }
 ```
 
 **Usage Example:**
+
 ```typescript
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -346,6 +353,7 @@ The history dialog can be integrated into medical record pages:
 ## Benefits
 
 ### Clinical Decision Support
+
 - ✅ Quick access to patient's medical history
 - ✅ Review previous diagnoses and treatments
 - ✅ Identify patterns and trends
@@ -353,12 +361,14 @@ The history dialog can be integrated into medical record pages:
 - ✅ Ensure continuity of care
 
 ### Safety
+
 - ✅ Prominent allergy alerts
 - ✅ Complete medication history
 - ✅ Previous adverse reactions visible
 - ✅ Contraindication checking
 
 ### User Experience
+
 - ✅ No need to navigate away from current page
 - ✅ Popup interface keeps context
 - ✅ Organized tabbed display
@@ -366,6 +376,7 @@ The history dialog can be integrated into medical record pages:
 - ✅ Clear empty states
 
 ### Data Organization
+
 - ✅ Chronological order (newest first)
 - ✅ Grouped by visit
 - ✅ Categorized data (SOAP, Dx, Proc, Rx)
@@ -380,6 +391,7 @@ The history dialog can be integrated into medical record pages:
 **Permission Required:** `medical_records:read`
 
 **Roles with Access:**
+
 - Doctor
 - Nurse
 - Admin
@@ -559,6 +571,7 @@ The history dialog can be integrated into medical record pages:
 
 **Problem:** History not loading
 **Solutions:**
+
 - Check patient ID is valid
 - Verify network connection
 - Check browser console for errors
@@ -566,18 +579,21 @@ The history dialog can be integrated into medical record pages:
 
 **Problem:** Empty history for existing patient
 **Solutions:**
+
 - Verify patient has previous visits
 - Check if medical records were created for those visits
 - Confirm database queries are correct
 
 **Problem:** Allergies not showing
 **Solutions:**
+
 - Check if allergies are set in patient profile
 - Verify allergies field is not null
 - Update patient data if needed
 
 **Problem:** Dialog too small on mobile
 **Solutions:**
+
 - Use responsive design adjustments
 - Enable full-screen mode on small devices
 - Consider dedicated mobile view
@@ -598,6 +614,7 @@ The history dialog can be integrated into medical record pages:
 ✅ **Task D.6 Complete**
 
 **What was implemented:**
+
 - ✅ Medical record history API endpoint
 - ✅ Comprehensive history dialog component
 - ✅ RBAC-protected data access
@@ -609,6 +626,7 @@ The history dialog can be integrated into medical record pages:
 - ✅ Complete documentation with examples
 
 **Impact:**
+
 - Doctors can quickly review patient history
 - Better clinical decision-making
 - Improved patient safety with allergy alerts
@@ -616,12 +634,14 @@ The history dialog can be integrated into medical record pages:
 - No need to navigate away from current page
 
 **Integration Ready:**
+
 - Component can be used in any medical record page
 - Just import and provide patient ID
 - Auto-fetches and displays complete history
 - Consistent with existing design system
 
 **Next Steps:**
+
 - Integrate button into existing medical record pages
 - Add search and filter capabilities
 - Implement timeline view

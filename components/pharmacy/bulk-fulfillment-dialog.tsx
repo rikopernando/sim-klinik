@@ -3,443 +3,444 @@
  * Allows processing multiple prescriptions at once
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-import { AlertCircle, Loader2, Plus } from "lucide-react";
-import { getAvailableBatches, type DrugInventoryWithDetails } from "@/lib/services/inventory.service";
-import { BatchSelector } from "./fulfillment/batch-selector";
-import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.service";
-import { Label } from "../ui/label";
-import { AddPrescriptionDialog } from "./add-prescription-dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { AlertCircle, Loader2, Plus } from "lucide-react"
+import {
+  getAvailableBatches,
+  type DrugInventoryWithDetails,
+} from "@/lib/services/inventory.service"
+import { BatchSelector } from "./fulfillment/batch-selector"
+import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.service"
+import { Label } from "../ui/label"
+import { AddPrescriptionDialog } from "./add-prescription-dialog"
 
 interface Drug {
-    id: number;
-    name: string;
-    genericName?: string | null;
-    unit: string;
-    price: string;
+  id: number
+  name: string
+  genericName?: string | null
+  unit: string
+  price: string
 }
 
 interface Prescription {
-    id: number;
-    dosage: string;
-    frequency: string;
-    quantity: number;
-    duration?: string | null;
-    instructions?: string | null;
+  id: number
+  dosage: string
+  frequency: string
+  quantity: number
+  duration?: string | null
+  instructions?: string | null
 }
 
 interface PrescriptionItem {
-    prescription: Prescription;
-    drug: Drug;
+  prescription: Prescription
+  drug: Drug
 }
 
 interface Patient {
-    id: number;
-    name: string;
-    mrNumber: string;
+  id: number
+  name: string
+  mrNumber: string
 }
 
 interface Visit {
-    id: number;
-    visitNumber: string;
+  id: number
+  visitNumber: string
 }
 
 interface GroupedQueueItem {
-    visit: Visit;
-    patient: Patient;
-    doctor: { id: string; name: string } | null;
-    medicalRecordId: number;
-    prescriptions: PrescriptionItem[];
+  visit: Visit
+  patient: Patient
+  doctor: { id: string; name: string } | null
+  medicalRecordId: number
+  prescriptions: PrescriptionItem[]
 }
 
 interface FulfillmentFormData {
-    inventoryId: number;
-    dispensedQuantity: number;
-    availableBatches: DrugInventoryWithDetails[];
-    selectedBatch: DrugInventoryWithDetails | null;
-    isLoading: boolean;
-    error: string | null;
+  inventoryId: number
+  dispensedQuantity: number
+  availableBatches: DrugInventoryWithDetails[]
+  selectedBatch: DrugInventoryWithDetails | null
+  isLoading: boolean
+  error: string | null
 }
 
 interface BulkFulfillmentDialogProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    selectedGroup: GroupedQueueItem | null;
-    isSubmitting: boolean;
-    onSubmit: (data: {
-        prescriptionId: number;
-        inventoryId: number;
-        dispensedQuantity: number;
-        fulfilledBy: string;
-        notes?: string;
-    }[]) => Promise<void>;
-    onPrescriptionAdded?: () => void; // Callback when prescription is added
-    medicalRecordId?: number; // Medical record ID for adding prescriptions
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedGroup: GroupedQueueItem | null
+  isSubmitting: boolean
+  onSubmit: (
+    data: {
+      prescriptionId: number
+      inventoryId: number
+      dispensedQuantity: number
+      fulfilledBy: string
+      notes?: string
+    }[]
+  ) => Promise<void>
+  onPrescriptionAdded?: () => void // Callback when prescription is added
+  medicalRecordId?: number // Medical record ID for adding prescriptions
 }
 
 export function BulkFulfillmentDialog({
-    open,
-    onOpenChange,
-    selectedGroup,
-    isSubmitting,
-    onSubmit,
-    onPrescriptionAdded,
-    medicalRecordId,
+  open,
+  onOpenChange,
+  selectedGroup,
+  isSubmitting,
+  onSubmit,
+  onPrescriptionAdded,
+  medicalRecordId,
 }: BulkFulfillmentDialogProps) {
-    const [fulfillmentData, setFulfillmentData] = useState<Record<number, FulfillmentFormData>>({});
-    const [fulfilledBy, setFulfilledBy] = useState("");
-    const [notes, setNotes] = useState("");
-    const [validationError, setValidationError] = useState<string | null>(null);
-    const [pharmacists, setPharmacists] = useState<Pharmacist[]>([]);
-    const [isLoadingPharmacists, setIsLoadingPharmacists] = useState(false);
-    const [addPrescriptionDialogOpen, setAddPrescriptionDialogOpen] = useState(false);
+  const [fulfillmentData, setFulfillmentData] = useState<Record<number, FulfillmentFormData>>({})
+  const [fulfilledBy, setFulfilledBy] = useState("")
+  const [notes, setNotes] = useState("")
+  const [validationError, setValidationError] = useState<string | null>(null)
+  const [pharmacists, setPharmacists] = useState<Pharmacist[]>([])
+  const [isLoadingPharmacists, setIsLoadingPharmacists] = useState(false)
+  const [addPrescriptionDialogOpen, setAddPrescriptionDialogOpen] = useState(false)
 
-    // Load pharmacists when dialog opens
-    useEffect(() => {
-        if (open) {
-            const loadPharmacists = async () => {
-                setIsLoadingPharmacists(true);
-                try {
-                    const pharmacistsList = await getPharmacists();
-                    setPharmacists(pharmacistsList);
-                } catch (error) {
-                    console.error("Error fetching pharmacists:", error);
-                } finally {
-                    setIsLoadingPharmacists(false);
-                }
-            };
-
-            loadPharmacists();
+  // Load pharmacists when dialog opens
+  useEffect(() => {
+    if (open) {
+      const loadPharmacists = async () => {
+        setIsLoadingPharmacists(true)
+        try {
+          const pharmacistsList = await getPharmacists()
+          setPharmacists(pharmacistsList)
+        } catch (error) {
+          console.error("Error fetching pharmacists:", error)
+        } finally {
+          setIsLoadingPharmacists(false)
         }
-    }, [open]);
+      }
 
-    // Load batches for all prescriptions when dialog opens
-    useEffect(() => {
-        if (open && selectedGroup) {
-            const loadBatches = async () => {
-                const newData: Record<number, FulfillmentFormData> = {};
+      loadPharmacists()
+    }
+  }, [open])
 
-                for (const item of selectedGroup.prescriptions) {
-                    newData[item.prescription.id] = {
-                        inventoryId: 0,
-                        dispensedQuantity: item.prescription.quantity,
-                        availableBatches: [],
-                        selectedBatch: null,
-                        isLoading: true,
-                        error: null,
-                    };
-                }
+  // Load batches for all prescriptions when dialog opens
+  useEffect(() => {
+    if (open && selectedGroup) {
+      const loadBatches = async () => {
+        const newData: Record<number, FulfillmentFormData> = {}
 
-                setFulfillmentData(newData);
-
-                // Load batches for each drug
-                for (const item of selectedGroup.prescriptions) {
-                    try {
-                        const batches = await getAvailableBatches(item.drug.id);
-                        const firstBatch = batches.length > 0 ? batches[0] : null;
-                        setFulfillmentData((prev) => ({
-                            ...prev,
-                            [item.prescription.id]: {
-                                ...prev[item.prescription.id],
-                                availableBatches: batches,
-                                selectedBatch: firstBatch,
-                                inventoryId: firstBatch ? firstBatch.id : 0,
-                                isLoading: false,
-                            },
-                        }));
-                    } catch {
-                        setFulfillmentData((prev) => ({
-                            ...prev,
-                            [item.prescription.id]: {
-                                ...prev[item.prescription.id],
-                                isLoading: false,
-                                error: "Gagal memuat batch",
-                            },
-                        }));
-                    }
-                }
-            };
-
-            loadBatches();
-        }
-    }, [open, selectedGroup]);
-
-    const handleBatchSelect = (prescriptionId: number, batch: DrugInventoryWithDetails) => {
-        setFulfillmentData((prev) => ({
-            ...prev,
-            [prescriptionId]: {
-                ...prev[prescriptionId],
-                selectedBatch: batch,
-                inventoryId: batch.id,
-            },
-        }));
-    };
-
-    const handleSubmit = async () => {
-        setValidationError(null);
-
-        // Validate all fields are filled
-        if (!fulfilledBy.trim()) {
-            setValidationError("Nama petugas wajib diisi");
-            return;
+        for (const item of selectedGroup.prescriptions) {
+          newData[item.prescription.id] = {
+            inventoryId: 0,
+            dispensedQuantity: item.prescription.quantity,
+            availableBatches: [],
+            selectedBatch: null,
+            isLoading: true,
+            error: null,
+          }
         }
 
-        const prescriptionData: Array<{
-            prescriptionId: number;
-            inventoryId: number;
-            dispensedQuantity: number;
-            fulfilledBy: string;
-            notes?: string;
-        }> = [];
+        setFulfillmentData(newData)
 
-        for (const item of selectedGroup?.prescriptions || []) {
-            const data = fulfillmentData[item.prescription.id];
-
-            if (!data || data.inventoryId === 0) {
-                setValidationError(`Batch untuk ${item.drug.name} belum dipilih`);
-                return;
-            }
-
-            if (!data.dispensedQuantity || data.dispensedQuantity <= 0) {
-                setValidationError(`Jumlah untuk ${item.drug.name} tidak valid`);
-                return;
-            }
-
-            prescriptionData.push({
-                prescriptionId: item.prescription.id,
-                inventoryId: data.inventoryId,
-                dispensedQuantity: data.dispensedQuantity,
-                fulfilledBy: fulfilledBy.trim(),
-                notes: notes.trim() || undefined,
-            });
+        // Load batches for each drug
+        for (const item of selectedGroup.prescriptions) {
+          try {
+            const batches = await getAvailableBatches(item.drug.id)
+            const firstBatch = batches.length > 0 ? batches[0] : null
+            setFulfillmentData((prev) => ({
+              ...prev,
+              [item.prescription.id]: {
+                ...prev[item.prescription.id],
+                availableBatches: batches,
+                selectedBatch: firstBatch,
+                inventoryId: firstBatch ? firstBatch.id : 0,
+                isLoading: false,
+              },
+            }))
+          } catch {
+            setFulfillmentData((prev) => ({
+              ...prev,
+              [item.prescription.id]: {
+                ...prev[item.prescription.id],
+                isLoading: false,
+                error: "Gagal memuat batch",
+              },
+            }))
+          }
         }
+      }
 
-        await onSubmit(prescriptionData);
-    };
+      loadBatches()
+    }
+  }, [open, selectedGroup])
 
-    const handleClose = () => {
-        if (!isSubmitting) {
-            setFulfillmentData({});
-            setFulfilledBy("");
-            setNotes("");
-            setValidationError(null);
-            onOpenChange(false);
-        }
-    };
+  const handleBatchSelect = (prescriptionId: number, batch: DrugInventoryWithDetails) => {
+    setFulfillmentData((prev) => ({
+      ...prev,
+      [prescriptionId]: {
+        ...prev[prescriptionId],
+        selectedBatch: batch,
+        inventoryId: batch.id,
+      },
+    }))
+  }
 
+  const handleSubmit = async () => {
+    setValidationError(null)
 
-    const handlePrescriptionAdded = () => {
-        // Reload prescriptions after adding
-        if (onPrescriptionAdded) {
-            onPrescriptionAdded();
-        }
-    };
+    // Validate all fields are filled
+    if (!fulfilledBy.trim()) {
+      setValidationError("Nama petugas wajib diisi")
+      return
+    }
 
-    return (
-        <>
-            <Dialog open={open} onOpenChange={handleClose}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                                <DialogTitle>Proses Resep - Bulk</DialogTitle>
-                                <DialogDescription>
-                                    {selectedGroup && (
-                                        <div>
-                                            <p className="font-medium text-foreground">
-                                                Pasien: {selectedGroup.patient.name} ({selectedGroup.patient.mrNumber})
-                                            </p>
-                                            <p className="text-sm">Kunjungan: {selectedGroup.visit.visitNumber}</p>
-                                            <p className="text-sm">
-                                                Total Resep: {selectedGroup.prescriptions.length}
-                                            </p>
-                                        </div>
-                                    )}
-                                </DialogDescription>
-                            </div>
-                            {/* Add Prescription Button */}
-                            {medicalRecordId && selectedGroup?.doctor && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setAddPrescriptionDialogOpen(true)}
-                                    disabled={isSubmitting}
-                                >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Tambah Resep
-                                </Button>
-                            )}
-                        </div>
-                    </DialogHeader>
+    const prescriptionData: Array<{
+      prescriptionId: number
+      inventoryId: number
+      dispensedQuantity: number
+      fulfilledBy: string
+      notes?: string
+    }> = []
 
-                {validationError && (
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>{validationError}</AlertDescription>
-                    </Alert>
-                )}
+    for (const item of selectedGroup?.prescriptions || []) {
+      const data = fulfillmentData[item.prescription.id]
 
-                <div className="space-y-6">
-                    {/* Prescription Items */}
-                    {selectedGroup?.prescriptions.map((item, idx) => {
-                        const data = fulfillmentData[item.prescription.id];
+      if (!data || data.inventoryId === 0) {
+        setValidationError(`Batch untuk ${item.drug.name} belum dipilih`)
+        return
+      }
 
-                        return (
-                            <div key={item.prescription.id} className="space-y-3">
-                                {idx > 0 && <Separator />}
+      if (!data.dispensedQuantity || data.dispensedQuantity <= 0) {
+        setValidationError(`Jumlah untuk ${item.drug.name} tidak valid`)
+        return
+      }
 
-                                {/* Drug Header */}
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-2">
-                                            <Badge>{idx + 1}</Badge>
-                                            <h4 className="font-semibold">{item.drug.name}</h4>
-                                        </div>
-                                        {item.drug.genericName && (
-                                            <p className="text-sm text-muted-foreground ml-8">
-                                                {item.drug.genericName}
-                                            </p>
-                                        )}
-                                        <div className="flex gap-4 text-sm text-muted-foreground ml-8 mt-1">
-                                            <span>Dosis: {item.prescription.dosage}</span>
-                                            <span>Frekuensi: {item.prescription.frequency}</span>
-                                            <span>
-                                                Jumlah Resep: {item.prescription.quantity} {item.drug.unit}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
+      prescriptionData.push({
+        prescriptionId: item.prescription.id,
+        inventoryId: data.inventoryId,
+        dispensedQuantity: data.dispensedQuantity,
+        fulfilledBy: fulfilledBy.trim(),
+        notes: notes.trim() || undefined,
+      })
+    }
 
-                                {/* Batch Selector */}
-                                <div className="ml-8">
-                                    <BatchSelector
-                                        isLoading={data?.isLoading || false}
-                                        batches={data?.availableBatches || []}
-                                        selectedBatch={data?.selectedBatch || null}
-                                        onBatchSelect={(batch) =>
-                                            handleBatchSelect(item.prescription.id, batch)
-                                        }
-                                        drugId={item.drug.id}
-                                        drugName={item.drug.name}
-                                    />
-                                </div>
+    await onSubmit(prescriptionData)
+  }
 
-                                {/* Display Prescription Quantity (Read-only) */}
-                                {!data?.isLoading && !data?.error && data?.selectedBatch && (
-                                    <div className="ml-8">
-                                        <p className="text-sm text-muted-foreground">
-                                            Jumlah Diberikan: <span className="font-medium text-foreground">{item.prescription.quantity} {item.drug.unit}</span>
-                                        </p>
-                                    </div>
-                                )}
-                            </div>
-                        );
-                    })}
+  const handleClose = () => {
+    if (!isSubmitting) {
+      setFulfillmentData({})
+      setFulfilledBy("")
+      setNotes("")
+      setValidationError(null)
+      onOpenChange(false)
+    }
+  }
 
-                    <Separator />
+  const handlePrescriptionAdded = () => {
+    // Reload prescriptions after adding
+    if (onPrescriptionAdded) {
+      onPrescriptionAdded()
+    }
+  }
 
-                    {/* Common Fields */}
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="fulfilledBy">
-                                Petugas Farmasi <span className="text-destructive">*</span>
-                            </Label>
-                            <Select
-                                value={fulfilledBy}
-                                onValueChange={(value) => setFulfilledBy(value)}
-                                disabled={isLoadingPharmacists}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue
-                                        placeholder={
-                                            isLoadingPharmacists
-                                                ? "Memuat farmasi..."
-                                                : pharmacists.length === 0
-                                                ? "Tidak ada farmasi tersedia"
-                                                : "Pilih petugas farmasi"
-                                        }
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {pharmacists.map((pharmacist) => (
-                                        <SelectItem key={pharmacist.id} value={pharmacist.id}>
-                                            {pharmacist.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="notes">Catatan (Opsional)</Label>
-                            <Textarea
-                                id="notes"
-                                placeholder="Catatan tambahan untuk semua resep..."
-                                rows={3}
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                            />
-                        </div>
+  return (
+    <>
+      <Dialog open={open} onOpenChange={handleClose}>
+        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+          <DialogHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <DialogTitle>Proses Resep - Bulk</DialogTitle>
+                <DialogDescription>
+                  {selectedGroup && (
+                    <div>
+                      <p className="text-foreground font-medium">
+                        Pasien: {selectedGroup.patient.name} ({selectedGroup.patient.mrNumber})
+                      </p>
+                      <p className="text-sm">Kunjungan: {selectedGroup.visit.visitNumber}</p>
+                      <p className="text-sm">Total Resep: {selectedGroup.prescriptions.length}</p>
                     </div>
+                  )}
+                </DialogDescription>
+              </div>
+              {/* Add Prescription Button */}
+              {medicalRecordId && selectedGroup?.doctor && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setAddPrescriptionDialogOpen(true)}
+                  disabled={isSubmitting}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Tambah Resep
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
 
-                    {/* Actions */}
-                    <div className="flex justify-end gap-2 pt-4">
-                        <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                            Batal
-                        </Button>
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={
-                                isSubmitting ||
-                                !fulfilledBy.trim() ||
-                                Object.values(fulfillmentData).some(
-                                    (d) => d.isLoading || d.inventoryId === 0
-                                )
-                            }
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Memproses...
-                                </>
-                            ) : (
-                                `Proses ${selectedGroup?.prescriptions.length || 0} Resep`
-                            )}
-                        </Button>
+          {validationError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-6">
+            {/* Prescription Items */}
+            {selectedGroup?.prescriptions.map((item, idx) => {
+              const data = fulfillmentData[item.prescription.id]
+
+              return (
+                <div key={item.prescription.id} className="space-y-3">
+                  {idx > 0 && <Separator />}
+
+                  {/* Drug Header */}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <Badge>{idx + 1}</Badge>
+                        <h4 className="font-semibold">{item.drug.name}</h4>
+                      </div>
+                      {item.drug.genericName && (
+                        <p className="text-muted-foreground ml-8 text-sm">
+                          {item.drug.genericName}
+                        </p>
+                      )}
+                      <div className="text-muted-foreground mt-1 ml-8 flex gap-4 text-sm">
+                        <span>Dosis: {item.prescription.dosage}</span>
+                        <span>Frekuensi: {item.prescription.frequency}</span>
+                        <span>
+                          Jumlah Resep: {item.prescription.quantity} {item.drug.unit}
+                        </span>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Batch Selector */}
+                  <div className="ml-8">
+                    <BatchSelector
+                      isLoading={data?.isLoading || false}
+                      batches={data?.availableBatches || []}
+                      selectedBatch={data?.selectedBatch || null}
+                      onBatchSelect={(batch) => handleBatchSelect(item.prescription.id, batch)}
+                      drugId={item.drug.id}
+                      drugName={item.drug.name}
+                    />
+                  </div>
+
+                  {/* Display Prescription Quantity (Read-only) */}
+                  {!data?.isLoading && !data?.error && data?.selectedBatch && (
+                    <div className="ml-8">
+                      <p className="text-muted-foreground text-sm">
+                        Jumlah Diberikan:{" "}
+                        <span className="text-foreground font-medium">
+                          {item.prescription.quantity} {item.drug.unit}
+                        </span>
+                      </p>
+                    </div>
+                  )}
                 </div>
-            </DialogContent>
-        </Dialog>
+              )
+            })}
 
-        {/* Add Prescription Dialog */}
-        {medicalRecordId && selectedGroup?.doctor && (
-            <AddPrescriptionDialog
-                open={addPrescriptionDialogOpen}
-                onOpenChange={setAddPrescriptionDialogOpen}
-                medicalRecordId={medicalRecordId}
-                doctor={selectedGroup.doctor}
-                onSuccess={handlePrescriptionAdded}
-            />
-        )}
-        </>
-    );
+            <Separator />
+
+            {/* Common Fields */}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fulfilledBy">
+                  Petugas Farmasi <span className="text-destructive">*</span>
+                </Label>
+                <Select
+                  value={fulfilledBy}
+                  onValueChange={(value) => setFulfilledBy(value)}
+                  disabled={isLoadingPharmacists}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        isLoadingPharmacists
+                          ? "Memuat farmasi..."
+                          : pharmacists.length === 0
+                            ? "Tidak ada farmasi tersedia"
+                            : "Pilih petugas farmasi"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pharmacists.map((pharmacist) => (
+                      <SelectItem key={pharmacist.id} value={pharmacist.id}>
+                        {pharmacist.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Catatan (Opsional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Catatan tambahan untuk semua resep..."
+                  rows={3}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-2 pt-4">
+              <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+                Batal
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={
+                  isSubmitting ||
+                  !fulfilledBy.trim() ||
+                  Object.values(fulfillmentData).some((d) => d.isLoading || d.inventoryId === 0)
+                }
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Memproses...
+                  </>
+                ) : (
+                  `Proses ${selectedGroup?.prescriptions.length || 0} Resep`
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Prescription Dialog */}
+      {medicalRecordId && selectedGroup?.doctor && (
+        <AddPrescriptionDialog
+          open={addPrescriptionDialogOpen}
+          onOpenChange={setAddPrescriptionDialogOpen}
+          medicalRecordId={medicalRecordId}
+          doctor={selectedGroup.doctor}
+          onSuccess={handlePrescriptionAdded}
+        />
+      )}
+    </>
+  )
 }

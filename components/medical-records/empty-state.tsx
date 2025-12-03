@@ -3,13 +3,13 @@
  */
 
 interface EmptyStateProps {
-    message: string;
+  message: string
 }
 
 export function EmptyState({ message }: EmptyStateProps) {
-    return (
-        <div className="rounded-md border border-dashed p-8 text-center">
-            <p className="text-sm text-muted-foreground">{message}</p>
-        </div>
-    );
+  return (
+    <div className="rounded-md border border-dashed p-8 text-center">
+      <p className="text-muted-foreground text-sm">{message}</p>
+    </div>
+  )
 }

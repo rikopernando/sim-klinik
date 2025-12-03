@@ -7,11 +7,13 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 ## 1. Frontend Architecture
 
 **Core Frameworks and Libraries**
+
 - **Next.js (App Router)**: A React-based framework that provides file-based routing, server-side rendering (SSR), static site generation (SSG), and built-in API endpoints all in one project.
 - **React 18**: The library for building user interfaces using components and hooks.
 - **TypeScript**: A superset of JavaScript that adds static types, helping catch errors early and making the code easier to understand and refactor.
 
 **How It’s Organized**
+
 - The `app/` folder holds all pages and layouts. Each URL path corresponds to a folder:
   - `/app/sign-in` and `/app/sign-up` for authentication pages.
   - `/app/dashboard` for the protected user area.
@@ -22,6 +24,7 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
   - Styles (e.g., `theme.css` in the dashboard).
 
 **Why This Works**
+
 - **Scalability**: Adding new pages or features means creating new folders with their own layouts and pages. You don’t have to touch a central router file.
 - **Maintainability**: Code is separated by feature. Backend logic (API routes) lives alongside the frontend code for that feature, reducing context-switching.
 - **Performance**: Next.js pre-renders pages where possible and splits code by route, so users download only what’s needed.
@@ -36,6 +39,7 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 4. **Consistency**: Shared global layout and styling mean pages look and feel like part of the same app.
 
 **How We Apply Them**
+
 - Form fields use `aria-*` attributes and visible labels.
 - Error messages appear inline under inputs.
 - Navigation elements (header, sidebar) appear in every layout.
@@ -46,6 +50,7 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 ## 3. Styling and Theming
 
 **Approach**
+
 - **Global Styles (`globals.css`)**: Resets, base typography, and common utility classes.
 - **Section Styles (`theme.css` in dashboard)**: Styles specific to the dashboard area (colors, layouts).
 - We follow a **BEM-inspired naming** for classes when writing new CSS to avoid conflicts and keep selectors clear.
@@ -53,25 +58,28 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 **Visual Style**: Modern flat design with subtle shadows for depth. Clear spacing and large touch targets on mobile.
 
 **Color Palette**
-- **Primary Blue**: #1E90FF  (buttons, highlights)
-- **Secondary Navy**: #2C3E50  (header, sidebar background)
-- **Accent Cyan**: #00CEC9  (links, hover states)
-- **Neutral Light**: #F8F9FA  (page backgrounds)
-- **Neutral Dark**: #2D3436  (text, icons)
+
+- **Primary Blue**: #1E90FF (buttons, highlights)
+- **Secondary Navy**: #2C3E50 (header, sidebar background)
+- **Accent Cyan**: #00CEC9 (links, hover states)
+- **Neutral Light**: #F8F9FA (page backgrounds)
+- **Neutral Dark**: #2D3436 (text, icons)
 
 **Font**
+
 - **Inter** (sans-serif): Clean, modern, highly legible on screens. Fallback to system fonts like `-apple-system, BlinkMacSystemFont, sans-serif`.
 
 **Theming**
+
 - To keep a consistent look, all colors and font sizes are defined in CSS variables in `globals.css`:
   ```css
   :root {
-    --color-primary: #1E90FF;
-    --color-secondary: #2C3E50;
-    --color-accent: #00CEC9;
-    --color-bg: #F8F9FA;
-    --color-text: #2D3436;
-    --font-family: 'Inter', sans-serif;
+    --color-primary: #1e90ff;
+    --color-secondary: #2c3e50;
+    --color-accent: #00cec9;
+    --color-bg: #f8f9fa;
+    --color-text: #2d3436;
+    --font-family: "Inter", sans-serif;
   }
   ```
 - Components consume these variables for backgrounds, borders, and text.
@@ -81,6 +89,7 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 ## 4. Component Structure
 
 **File Layout**
+
 - `/app` (top-level folder)
   - `layout.tsx`: Global wrapper (nav, footer).
   - `page.tsx`: Landing or redirect logic.
@@ -89,10 +98,12 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 - **Common Components**: Put reusable UI pieces (buttons, inputs, cards) into a `/components` folder at the project root.
 
 **Reusability & Encapsulation**
+
 - Components are self-contained: each has its own styles (class names scoped to BEM) and behavior.
 - Shared logic (e.g., API calls) lives in `/lib` or `/hooks` so pages import only what they need.
 
 **Benefits**
+
 - **Easier Maintenance**: Fix a bug in one button component, and it updates everywhere.
 - **Better Team Collaboration**: Developers can own specific components or pages without stepping on each other’s code.
 
@@ -101,14 +112,17 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 ## 5. State Management
 
 **Current Approach**
+
 - **Local State**: React `useState` and `useEffect` for form values, loading flags, and error messages.
 - **Server State**: Fetch data (e.g., dashboard JSON) directly in page components or using React Server Components.
 
 **Sharing State**
+
 - **React Context**: A simple auth context (`AuthContext`) holds the user’s session info, login/logout methods, and makes it available to any component.
   - Located in `/context/AuthContext.tsx`.
 
 **Future Growth**
+
 - If complexity grows (deeply nested data, multiple user roles), consider:
   - **Zustand** for centralized state.
   - Query libraries like **React Query** or **SWR** for caching and re-fetch logic.
@@ -118,13 +132,16 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 ## 6. Routing and Navigation
 
 **Routing Library**
+
 - Built into **Next.js App Router**. Each folder under `/app` becomes a route automatically.
 - Layouts (`layout.tsx`) and pages (`page.tsx`) are colocated for that route.
 
 **Protected Pages**
+
 - The dashboard’s `layout.tsx` checks for a valid session (via cookie or context). If missing, it issues a server-side redirect to `/sign-in`.
 
 **Navigation Structure**
+
 - **Header**: Present in global layout with the app logo and conditional Sign In/Sign Out links.
 - **Sidebar**: Included in `dashboard/layout.tsx` with links to dashboard sections (expandable in future).
 
@@ -147,21 +164,26 @@ These steps ensure fast page loads and smooth interactions.
 ## 8. Testing and Quality Assurance
 
 **Unit Tests**
+
 - **Jest** + **React Testing Library** for components and utility functions.
 - Example: test that the Sign In form shows an error message when fields are empty.
 
 **Integration Tests**
+
 - Combine multiple components and hooks; test API calls with **msw** (Mock Service Worker).
 
 **End-to-End (E2E) Tests**
+
 - **Cypress** or **Playwright** to simulate real user flows: signing up, logging in, and viewing the dashboard.
 
 **Linting & Formatting**
+
 - **ESLint** enforces code style and catches common bugs.
 - **Prettier** applies consistent formatting.
 - **Git Hooks** (via Husky) run linting/tests before each commit.
 
 **Continuous Integration (CI)**
+
 - **GitHub Actions** runs tests and lint on each pull request, preventing regressions.
 
 ---
@@ -171,6 +193,7 @@ These steps ensure fast page loads and smooth interactions.
 The `Sim-Klinik` frontend is built on modern, well-established tools—Next.js, React, and TypeScript—and follows clear principles around usability, accessibility, and maintainability. Its file-based structure, component-driven approach, and CSS-variable theming keep things organized and consistent.
 
 Key takeaways:
+
 - **Scalable Structure**: Add new features by creating new folders under `app/` without touching a central router.
 - **Component Reuse**: Shared UI pieces live in one place, making updates quick and error-free.
 - **Simple Styling**: Global and section-specific CSS, underpinned by CSS variables, ensures a unified look.

@@ -30,6 +30,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 **RBAC Protected:** ✅ Yes
 
 **Request Body:**
+
 ```json
 {
   "id": 123,
@@ -50,6 +51,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -66,6 +68,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 ```
 
 **Error Responses:**
+
 ```json
 // Validation error
 {
@@ -80,6 +83,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 ```
 
 **Features:**
+
 - ✅ Partial updates supported (only send fields to update)
 - ✅ Zod schema validation
 - ✅ NIK uniqueness check (if updating NIK)
@@ -93,6 +97,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 **RBAC Protected:** ✅ Yes
 
 **Request Body:**
+
 ```json
 {
   "id": 456,
@@ -106,6 +111,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -122,6 +128,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 ```
 
 **Features:**
+
 - ✅ Flexible updates for any visit field
 - ✅ Auto-update of updatedAt timestamp
 - ✅ No validation constraints (allows staff flexibility)
@@ -136,6 +143,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 **Purpose:** Reusable dialog component for editing patient information
 
 **Features:**
+
 - ✅ Comprehensive patient information form
 - ✅ React Hook Form + Zod validation
 - ✅ Organized sections (Personal, Contact, Insurance, Emergency, Medical)
@@ -146,17 +154,19 @@ Both update endpoints were already implemented and are RBAC-protected.
 - ✅ Form reset on open
 
 **Props:**
+
 ```typescript
 interface EditPatientDialogProps {
-  open: boolean;                    // Dialog open state
-  onOpenChange: (open: boolean) => void; // Handle dialog close
-  patientId: number;                // Patient ID to update
-  initialData?: Partial<PatientUpdateData>; // Pre-fill data
-  onSuccess?: () => void;           // Callback after successful update
+  open: boolean // Dialog open state
+  onOpenChange: (open: boolean) => void // Handle dialog close
+  patientId: number // Patient ID to update
+  initialData?: Partial<PatientUpdateData> // Pre-fill data
+  onSuccess?: () => void // Callback after successful update
 }
 ```
 
 **Usage Example:**
+
 ```typescript
 import { EditPatientDialog } from "@/components/patients/edit-patient-dialog";
 
@@ -228,6 +238,7 @@ const [selectedPatient, setSelectedPatient] = useState(null);
 **Purpose:** Reusable dialog component for editing visit information
 
 **Features:**
+
 - ✅ Dynamic form based on visit type
 - ✅ React Hook Form + Zod validation
 - ✅ Conditional fields for outpatient/inpatient/emergency
@@ -237,20 +248,24 @@ const [selectedPatient, setSelectedPatient] = useState(null);
 - ✅ Auto-populate with initial data
 
 **Props:**
+
 ```typescript
 interface EditVisitDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  visitId: number;
-  initialData?: Partial<VisitUpdateData & {
-    visitNumber: string;
-    patientName: string
-  }>;
-  onSuccess?: () => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  visitId: number
+  initialData?: Partial<
+    VisitUpdateData & {
+      visitNumber: string
+      patientName: string
+    }
+  >
+  onSuccess?: () => void
 }
 ```
 
 **Usage Example:**
+
 ```typescript
 import { EditVisitDialog } from "@/components/visits/edit-visit-dialog";
 
@@ -322,6 +337,7 @@ The edit dialogs can be integrated into various parts of the application:
 #### 1. Patient Management Pages
 
 **Patient List/Search Results:**
+
 ```typescript
 // In patient search results or patient list
 {patients.map((patient) => (
@@ -342,6 +358,7 @@ The edit dialogs can be integrated into various parts of the application:
 ```
 
 **Patient Detail Page:**
+
 ```typescript
 // In patient detail view
 <div className="flex justify-between">
@@ -356,6 +373,7 @@ The edit dialogs can be integrated into various parts of the application:
 #### 2. Visit Management Pages
 
 **Visit Queue:**
+
 ```typescript
 // In visit queue (outpatient/inpatient/emergency)
 {visits.map((visit) => (
@@ -375,6 +393,7 @@ The edit dialogs can be integrated into various parts of the application:
 ```
 
 **Registration/Dashboard:**
+
 ```typescript
 // In registration form or dashboard
 <EditPatientDialog ... />
@@ -388,11 +407,13 @@ The edit dialogs can be integrated into various parts of the application:
 ### RBAC Protection
 
 **Patients API:**
+
 - **Write Permission:** `patients:write`
 - **Roles with Access:** Admin, Receptionist, Registration Staff
 - **Read Permission:** `patients:read` (for fetching patient data)
 
 **Visits API:**
+
 - **Write Permission:** `visits:write`
 - **Roles with Access:** Admin, Receptionist, Doctor, Nurse
 - **Read Permission:** `visits:read` (for fetching visit data)
@@ -400,6 +421,7 @@ The edit dialogs can be integrated into various parts of the application:
 ### Validation
 
 **Patient Updates:**
+
 1. **Name:** Min 2 characters, max 255
 2. **NIK:** Exactly 16 digits (if provided)
 3. **Email:** Valid email format (if provided)
@@ -407,6 +429,7 @@ The edit dialogs can be integrated into various parts of the application:
 5. **Date of Birth:** Valid date format
 
 **Visit Updates:**
+
 1. **Visit Type:** Must be outpatient, inpatient, or emergency
 2. **Poli ID:** Positive integer (for outpatient)
 3. **Room ID:** Positive integer (for inpatient)
@@ -502,24 +525,28 @@ The edit dialogs can be integrated into various parts of the application:
 ## Benefits
 
 ### Data Accuracy
+
 - ✅ Correct mistakes in patient data
 - ✅ Update outdated information
 - ✅ Fix registration errors
 - ✅ Complete incomplete data
 
 ### User Experience
+
 - ✅ Easy-to-use dialog interface
 - ✅ Clear form organization
 - ✅ Immediate feedback
 - ✅ No need to create new records
 
 ### Operational Efficiency
+
 - ✅ Quick updates without page reload
 - ✅ Validation prevents errors
 - ✅ RBAC ensures security
 - ✅ Audit trail with updatedAt timestamp
 
 ### Data Integrity
+
 - ✅ Schema validation
 - ✅ Cannot change immutable fields (MR Number, Visit Number)
 - ✅ Proper type conversions
@@ -660,18 +687,21 @@ export function PatientListPage() {
 
 **Problem:** "Patient not found" error
 **Solution:**
+
 - Verify patient ID is correct
 - Check if patient was deleted
 - Refresh patient list
 
 **Problem:** "Validation error" on NIK
 **Solution:**
+
 - Ensure NIK is exactly 16 digits
 - Remove any spaces or special characters
 - NIK must be numeric only
 
 **Problem:** Changes not appearing after update
 **Solution:**
+
 - Check if onSuccess callback refreshes data
 - Verify API response was successful
 - Check browser console for errors
@@ -679,6 +709,7 @@ export function PatientListPage() {
 
 **Problem:** Permission denied
 **Solution:**
+
 - Verify user has `patients:write` or `visits:write` permission
 - Check user role in RBAC system
 - Contact administrator
@@ -699,6 +730,7 @@ export function PatientListPage() {
 ✅ **Task B.6 Complete**
 
 **What was implemented:**
+
 - ✅ Patient update API (pre-existing, RBAC-protected)
 - ✅ Visit update API (pre-existing, RBAC-protected)
 - ✅ Edit Patient Dialog component (comprehensive form)
@@ -708,6 +740,7 @@ export function PatientListPage() {
 - ✅ Complete documentation with examples
 
 **Impact:**
+
 - Staff can update patient demographic information
 - Visit details can be corrected
 - Data quality improved
@@ -715,12 +748,14 @@ export function PatientListPage() {
 - User-friendly dialog interface
 
 **Integration Ready:**
+
 - Components can be used anywhere in the app
 - Just import and provide patient/visit ID
 - Auto-refresh after updates
 - Consistent with existing design system
 
 **Next Steps:**
+
 - Integrate edit buttons in patient search results
 - Add edit functionality to visit queue pages
 - Implement change audit trail

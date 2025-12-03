@@ -3,9 +3,9 @@
  * Get drugs that are expiring soon (< 30 days)
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { getExpiringDrugs } from "@/lib/pharmacy/api-service";
-import { APIResponse } from "@/types/pharmacy";
+import { NextRequest, NextResponse } from "next/server"
+import { getExpiringDrugs } from "@/lib/pharmacy/api-service"
+import { APIResponse } from "@/types/pharmacy"
 
 /**
  * GET /api/pharmacy/expiring
@@ -13,34 +13,34 @@ import { APIResponse } from "@/types/pharmacy";
  * Returns drugs sorted by expiry date (earliest first)
  */
 export async function GET() {
-    try {
-        const expiringDrugs = await getExpiringDrugs();
+  try {
+    const expiringDrugs = await getExpiringDrugs()
 
-        // Group by alert level for better UX
-        const expired = expiringDrugs.filter((d) => d.expiryAlertLevel === "expired");
-        const expiringSoon = expiringDrugs.filter((d) => d.expiryAlertLevel === "expiring_soon");
-        const warning = expiringDrugs.filter((d) => d.expiryAlertLevel === "warning");
+    // Group by alert level for better UX
+    const expired = expiringDrugs.filter((d) => d.expiryAlertLevel === "expired")
+    const expiringSoon = expiringDrugs.filter((d) => d.expiryAlertLevel === "expiring_soon")
+    const warning = expiringDrugs.filter((d) => d.expiryAlertLevel === "warning")
 
-        const response: APIResponse = {
-            success: true,
-            data: {
-                all: expiringDrugs,
-                expired,
-                expiringSoon,
-                warning,
-            },
-            count: expiringDrugs.length,
-        };
-
-        return NextResponse.json(response);
-    } catch (error) {
-        console.error("Expiring drugs fetch error:", error);
-
-        const response: APIResponse = {
-            success: false,
-            error: error instanceof Error ? error.message : "Failed to fetch expiring drugs",
-        };
-
-        return NextResponse.json(response, { status: 500 });
+    const response: APIResponse = {
+      success: true,
+      data: {
+        all: expiringDrugs,
+        expired,
+        expiringSoon,
+        warning,
+      },
+      count: expiringDrugs.length,
     }
+
+    return NextResponse.json(response)
+  } catch (error) {
+    console.error("Expiring drugs fetch error:", error)
+
+    const response: APIResponse = {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch expiring drugs",
+    }
+
+    return NextResponse.json(response, { status: 500 })
+  }
 }

@@ -93,12 +93,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -168,12 +164,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -183,9 +175,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -258,16 +248,12 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         },
         "user_username_unique": {
           "name": "user_username_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "username"
-          ]
+          "columns": ["username"]
         }
       },
       "policies": {},
@@ -415,12 +401,8 @@
           "name": "billing_items_billing_id_billings_id_fk",
           "tableFrom": "billing_items",
           "tableTo": "billings",
-          "columnsFrom": [
-            "billing_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["billing_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -564,12 +546,8 @@
           "name": "billings_visit_id_visits_id_fk",
           "tableFrom": "billings",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -577,12 +555,8 @@
           "name": "billings_processed_by_user_id_fk",
           "tableFrom": "billings",
           "tableTo": "user",
-          "columnsFrom": [
-            "processed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["processed_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -592,9 +566,7 @@
         "billings_visit_id_unique": {
           "name": "billings_visit_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "visit_id"
-          ]
+          "columns": ["visit_id"]
         }
       },
       "policies": {},
@@ -711,12 +683,8 @@
           "name": "discharge_summaries_visit_id_visits_id_fk",
           "tableFrom": "discharge_summaries",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -724,12 +692,8 @@
           "name": "discharge_summaries_discharged_by_user_id_fk",
           "tableFrom": "discharge_summaries",
           "tableTo": "user",
-          "columnsFrom": [
-            "discharged_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["discharged_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -739,9 +703,7 @@
         "discharge_summaries_visit_id_unique": {
           "name": "discharge_summaries_visit_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "visit_id"
-          ]
+          "columns": ["visit_id"]
         }
       },
       "policies": {},
@@ -827,12 +789,8 @@
           "name": "payments_billing_id_billings_id_fk",
           "tableFrom": "payments",
           "tableTo": "billings",
-          "columnsFrom": [
-            "billing_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["billing_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -840,12 +798,8 @@
           "name": "payments_received_by_user_id_fk",
           "tableFrom": "payments",
           "tableTo": "user",
-          "columnsFrom": [
-            "received_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["received_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -931,9 +885,7 @@
         "services_code_unique": {
           "name": "services_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -1021,9 +973,7 @@
         "icd10_codes_code_unique": {
           "name": "icd10_codes_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -1080,9 +1030,7 @@
         "roles_name_unique": {
           "name": "roles_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -1131,12 +1079,8 @@
           "name": "user_roles_user_id_user_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1144,12 +1088,8 @@
           "name": "user_roles_role_id_roles_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "roles",
-          "columnsFrom": [
-            "role_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["role_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1157,12 +1097,8 @@
           "name": "user_roles_assigned_by_user_id_fk",
           "tableFrom": "user_roles",
           "tableTo": "user",
-          "columnsFrom": [
-            "assigned_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1289,16 +1225,12 @@
         "patients_mr_number_unique": {
           "name": "patients_mr_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "mr_number"
-          ]
+          "columns": ["mr_number"]
         },
         "patients_nik_unique": {
           "name": "patients_nik_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "nik"
-          ]
+          "columns": ["nik"]
         }
       },
       "policies": {},
@@ -1355,9 +1287,7 @@
         "polis_code_unique": {
           "name": "polis_code_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "code"
-          ]
+          "columns": ["code"]
         }
       },
       "policies": {},
@@ -1499,12 +1429,8 @@
           "name": "visits_patient_id_patients_id_fk",
           "tableFrom": "visits",
           "tableTo": "patients",
-          "columnsFrom": [
-            "patient_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["patient_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1512,12 +1438,8 @@
           "name": "visits_doctor_id_user_id_fk",
           "tableFrom": "visits",
           "tableTo": "user",
-          "columnsFrom": [
-            "doctor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["doctor_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1527,9 +1449,7 @@
         "visits_visit_number_unique": {
           "name": "visits_visit_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "visit_number"
-          ]
+          "columns": ["visit_number"]
         }
       },
       "policies": {},
@@ -1614,12 +1534,8 @@
           "name": "cppt_visit_id_visits_id_fk",
           "tableFrom": "cppt",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1627,12 +1543,8 @@
           "name": "cppt_author_id_user_id_fk",
           "tableFrom": "cppt",
           "tableTo": "user",
-          "columnsFrom": [
-            "author_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["author_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1692,12 +1604,8 @@
           "name": "diagnoses_medical_record_id_medical_records_id_fk",
           "tableFrom": "diagnoses",
           "tableTo": "medical_records",
-          "columnsFrom": [
-            "medical_record_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["medical_record_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1819,12 +1727,8 @@
           "name": "medical_records_visit_id_visits_id_fk",
           "tableFrom": "medical_records",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1832,12 +1736,8 @@
           "name": "medical_records_doctor_id_user_id_fk",
           "tableFrom": "medical_records",
           "tableTo": "user",
-          "columnsFrom": [
-            "doctor_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["doctor_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1845,12 +1745,8 @@
           "name": "medical_records_locked_by_user_id_fk",
           "tableFrom": "medical_records",
           "tableTo": "user",
-          "columnsFrom": [
-            "locked_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["locked_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1860,9 +1756,7 @@
         "medical_records_visit_id_unique": {
           "name": "medical_records_visit_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "visit_id"
-          ]
+          "columns": ["visit_id"]
         }
       },
       "policies": {},
@@ -1936,12 +1830,8 @@
           "name": "procedures_medical_record_id_medical_records_id_fk",
           "tableFrom": "procedures",
           "tableTo": "medical_records",
-          "columnsFrom": [
-            "medical_record_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["medical_record_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1949,12 +1839,8 @@
           "name": "procedures_service_id_services_id_fk",
           "tableFrom": "procedures",
           "tableTo": "services",
-          "columnsFrom": [
-            "service_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -1962,12 +1848,8 @@
           "name": "procedures_performed_by_user_id_fk",
           "tableFrom": "procedures",
           "tableTo": "user",
-          "columnsFrom": [
-            "performed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["performed_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2053,12 +1935,8 @@
           "name": "drug_inventory_drug_id_drugs_id_fk",
           "tableFrom": "drug_inventory",
           "tableTo": "drugs",
-          "columnsFrom": [
-            "drug_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["drug_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2299,12 +2177,8 @@
           "name": "prescriptions_medical_record_id_medical_records_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "medical_records",
-          "columnsFrom": [
-            "medical_record_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["medical_record_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2312,12 +2186,8 @@
           "name": "prescriptions_drug_id_drugs_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "drugs",
-          "columnsFrom": [
-            "drug_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["drug_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2325,12 +2195,8 @@
           "name": "prescriptions_fulfilled_by_user_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "user",
-          "columnsFrom": [
-            "fulfilled_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["fulfilled_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2338,12 +2204,8 @@
           "name": "prescriptions_inventory_id_drug_inventory_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "drug_inventory",
-          "columnsFrom": [
-            "inventory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inventory_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2351,12 +2213,8 @@
           "name": "prescriptions_added_by_pharmacist_id_user_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "user",
-          "columnsFrom": [
-            "added_by_pharmacist_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["added_by_pharmacist_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2364,12 +2222,8 @@
           "name": "prescriptions_approved_by_user_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "user",
-          "columnsFrom": [
-            "approved_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["approved_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2440,12 +2294,8 @@
           "name": "stock_movements_inventory_id_drug_inventory_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "drug_inventory",
-          "columnsFrom": [
-            "inventory_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["inventory_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2453,12 +2303,8 @@
           "name": "stock_movements_performed_by_user_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "user",
-          "columnsFrom": [
-            "performed_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["performed_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2536,12 +2382,8 @@
           "name": "bed_assignments_visit_id_visits_id_fk",
           "tableFrom": "bed_assignments",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2549,12 +2391,8 @@
           "name": "bed_assignments_room_id_rooms_id_fk",
           "tableFrom": "bed_assignments",
           "tableTo": "rooms",
-          "columnsFrom": [
-            "room_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["room_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -2562,12 +2400,8 @@
           "name": "bed_assignments_assigned_by_user_id_fk",
           "tableFrom": "bed_assignments",
           "tableTo": "user",
-          "columnsFrom": [
-            "assigned_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["assigned_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2657,12 +2491,8 @@
           "name": "material_usage_visit_id_visits_id_fk",
           "tableFrom": "material_usage",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2670,12 +2500,8 @@
           "name": "material_usage_used_by_user_id_fk",
           "tableFrom": "material_usage",
           "tableTo": "user",
-          "columnsFrom": [
-            "used_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["used_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -2788,9 +2614,7 @@
         "rooms_room_number_unique": {
           "name": "rooms_room_number_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "room_number"
-          ]
+          "columns": ["room_number"]
         }
       },
       "policies": {},
@@ -2912,12 +2736,8 @@
           "name": "vitals_history_visit_id_visits_id_fk",
           "tableFrom": "vitals_history",
           "tableTo": "visits",
-          "columnsFrom": [
-            "visit_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["visit_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2925,12 +2745,8 @@
           "name": "vitals_history_recorded_by_user_id_fk",
           "tableFrom": "vitals_history",
           "tableTo": "user",
-          "columnsFrom": [
-            "recorded_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["recorded_by"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }

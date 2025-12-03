@@ -63,6 +63,7 @@ When a doctor creates a new digital prescription in the medical record system, p
 A singleton service that manages all SSE connections and broadcasts notifications.
 
 **Key Features:**
+
 - Channel-based connection management (e.g., "pharmacy", "billing", etc.)
 - Automatic connection cleanup
 - Heartbeat mechanism to keep connections alive
@@ -70,6 +71,7 @@ A singleton service that manages all SSE connections and broadcasts notification
 - Error handling and failed connection removal
 
 **Key Functions:**
+
 ```typescript
 // Add a new SSE connection
 sseManager.addConnection(channel: string, controller: ReadableStreamDefaultController)
@@ -96,6 +98,7 @@ sendNotification(channel: string, type: NotificationType, data: any)
 Establishes an SSE connection for pharmacy notifications.
 
 **Headers:**
+
 ```
 Content-Type: text/event-stream
 Cache-Control: no-cache, no-transform
@@ -104,6 +107,7 @@ X-Accel-Buffering: no
 ```
 
 **Response Format:**
+
 ```
 data: {"type":"new_prescription","data":{...},"timestamp":"2025-11-19T...","id":"..."}\n\n
 ```
@@ -111,12 +115,14 @@ data: {"type":"new_prescription","data":{...},"timestamp":"2025-11-19T...","id":
 #### 3. Prescription Creation Integration
 
 Updated `/app/api/medical-records/prescriptions/route.ts` to:
+
 1. Create the prescription record
 2. Fetch complete prescription data with patient and drug information
 3. Send notification to pharmacy channel
 4. Return enhanced response message
 
 **Notification Payload:**
+
 ```typescript
 {
   prescriptionId: number,
@@ -139,6 +145,7 @@ Updated `/app/api/medical-records/prescriptions/route.ts` to:
 Custom React hook that manages SSE connection and notification state.
 
 **Features:**
+
 - Automatic connection establishment and cleanup
 - Connection status tracking
 - Browser notification integration
@@ -146,15 +153,16 @@ Custom React hook that manages SSE connection and notification state.
 - Error handling and auto-reconnect
 
 **Usage:**
+
 ```typescript
 const {
-  notifications,        // Array of notifications
-  isConnected,         // Connection status
-  error,               // Error message if any
+  notifications, // Array of notifications
+  isConnected, // Connection status
+  error, // Error message if any
   requestNotificationPermission,
   clearNotifications,
   removeNotification,
-} = usePharmacyNotifications();
+} = usePharmacyNotifications()
 ```
 
 #### 2. Notification Panel Component (`/components/notifications/pharmacy-notification-panel.tsx`)
@@ -162,6 +170,7 @@ const {
 A pre-built UI component that displays real-time notifications.
 
 **Features:**
+
 - Real-time notification list with auto-scroll
 - Connection status indicator
 - Visual notification cards with patient and drug info
@@ -171,6 +180,7 @@ A pre-built UI component that displays real-time notifications.
 - Empty state when no notifications
 
 **Integration:**
+
 ```typescript
 import { PharmacyNotificationPanel } from "@/components/notifications/pharmacy-notification-panel";
 
@@ -185,11 +195,11 @@ import { PharmacyNotificationPanel } from "@/components/notifications/pharmacy-n
 
 ```typescript
 type NotificationType =
-    | "new_prescription"
-    | "prescription_updated"
-    | "prescription_fulfilled"
-    | "low_stock_alert"
-    | "expiring_drug_alert";
+  | "new_prescription"
+  | "prescription_updated"
+  | "prescription_fulfilled"
+  | "low_stock_alert"
+  | "expiring_drug_alert"
 ```
 
 Currently implemented: `new_prescription`
@@ -221,6 +231,7 @@ The system integrates with native browser notifications:
 3. **Click Handling:** Can be extended to navigate to specific prescription
 
 **Example Notification:**
+
 ```
 Title: "New Prescription"
 Body: "John Doe - Paracetamol 500mg"
@@ -290,6 +301,7 @@ Establishes SSE connection for pharmacy notifications.
 **Response:** Event stream
 
 **Events:**
+
 ```
 # Connection established
 data: {"type":"connection_established","channel":"pharmacy","timestamp":"..."}
@@ -306,6 +318,7 @@ data: {"type":"new_prescription","data":{...},"timestamp":"...","id":"..."}
 Create a new prescription (with notification).
 
 **Request Body:**
+
 ```json
 {
   "medicalRecordId": 123,
@@ -320,6 +333,7 @@ Create a new prescription (with notification).
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -365,7 +379,7 @@ export function MyPharmacyComponent() {
 ### Backend - Sending Custom Notifications
 
 ```typescript
-import { sendNotification } from "@/lib/notifications/sse-manager";
+import { sendNotification } from "@/lib/notifications/sse-manager"
 
 // Send a low stock alert
 sendNotification("pharmacy", "low_stock_alert", {
@@ -373,7 +387,7 @@ sendNotification("pharmacy", "low_stock_alert", {
   drugName: "Paracetamol 500mg",
   currentStock: 5,
   minimumStock: 10,
-});
+})
 
 // Send an expiring drug alert
 sendNotification("pharmacy", "expiring_drug_alert", {
@@ -382,7 +396,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
   batchNumber: "BATCH001",
   expiryDate: "2025-12-01",
   daysUntilExpiry: 15,
-});
+})
 ```
 
 ---
@@ -425,18 +439,21 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 ## Benefits
 
 ### Operational Efficiency
+
 - ✅ Eliminates manual refresh of prescription queue
 - ✅ Instant notification reduces prescription processing time
 - ✅ Improved patient wait time
 - ✅ Better coordination between doctors and pharmacy
 
 ### User Experience
+
 - ✅ Real-time updates without page refresh
 - ✅ Visual and audio feedback
 - ✅ Clear notification history
 - ✅ Connection status indicator
 
 ### Technical
+
 - ✅ Scalable architecture (SSE supports multiple concurrent connections)
 - ✅ Low server overhead (no polling required)
 - ✅ Automatic reconnection on network issues
@@ -506,6 +523,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 
 **Problem:** "Disconnected" status shown
 **Solutions:**
+
 1. Check network connectivity
 2. Verify user has `prescriptions:read` permission
 3. Check server logs for errors
@@ -515,6 +533,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 
 **Problem:** Prescription created but no notification shown
 **Solutions:**
+
 1. Check browser console for errors
 2. Verify SSE connection is established
 3. Check server logs for notification broadcast
@@ -524,6 +543,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 
 **Problem:** Desktop notifications don't appear
 **Solutions:**
+
 1. Check browser notification permission
 2. Click "Enable Notifications" in panel
 3. Check browser notification settings
@@ -546,6 +566,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 ✅ **Task H.1.1 Complete**
 
 **What was implemented:**
+
 - Server-Sent Events (SSE) notification system
 - SSE manager for connection and broadcast management
 - Real-time notification endpoint for pharmacy
@@ -556,6 +577,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 - RBAC protection for notification endpoint
 
 **Impact:**
+
 - Instant communication between RME and Pharmacy modules
 - Eliminated need for manual queue refresh
 - Improved prescription processing speed
@@ -563,6 +585,7 @@ sendNotification("pharmacy", "expiring_drug_alert", {
 - Scalable real-time architecture for future modules
 
 **Next Steps:**
+
 - H.1.3: Implement UGD handover workflow
 - Add notification sound alerts
 - Implement notification preferences

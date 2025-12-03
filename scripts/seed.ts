@@ -3,22 +3,22 @@
  * Run with: npm run db:seed
  */
 
-import { runAllSeeders } from "@/lib/seeders";
+import { runAllSeeders } from "@/lib/seeders"
 
 async function main() {
-    console.log("=" .repeat(50));
-    console.log("  Klinik Bumi Andalas - Database Seeder");
-    console.log("=" .repeat(50));
-    console.log("");
+  console.log("=".repeat(50))
+  console.log("  Klinik Bumi Andalas - Database Seeder")
+  console.log("=".repeat(50))
+  console.log("")
 
-    await runAllSeeders();
+  await runAllSeeders()
 
-    console.log("");
-    console.log("=" .repeat(50));
-    process.exit(0);
+  console.log("")
+  console.log("=".repeat(50))
+  process.exit(0)
 }
 
 main().catch((error) => {
-    console.error("Fatal error during seeding:", error);
-    process.exit(1);
-});
+  console.error("Fatal error during seeding:", error)
+  process.exit(1)
+})

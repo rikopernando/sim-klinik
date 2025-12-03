@@ -1,11 +1,13 @@
 # Inpatient Care (Rawat Inap) Module
 
 ## Overview
+
 The Inpatient Care module provides comprehensive management for hospitalized patients, including room management, bed assignments, vital signs monitoring, integrated progress notes (CPPT), and medical materials tracking.
 
 ## Architecture
 
 ### Directory Structure
+
 ```
 inpatient/
 ├── README.md                          # This file
@@ -34,6 +36,7 @@ inpatient/
 ## Database Schema
 
 ### Tables (Already Implemented)
+
 - **`rooms`** - Hospital room master data
   - Room number, type, bed count, daily rate
   - Floor, building, facilities
@@ -65,6 +68,7 @@ inpatient/
 ## Key Features
 
 ### 1. **Room Management**
+
 ✅ Complete CRUD operations for rooms
 ✅ Real-time occupancy tracking
 ✅ Visual occupancy dashboard with color coding
@@ -73,6 +77,7 @@ inpatient/
 ✅ Auto-refresh support
 
 ### 2. **Bed Assignment**
+
 ✅ Assign patients to specific beds
 ✅ Validate bed availability before assignment
 ✅ Prevent double-booking
@@ -81,6 +86,7 @@ inpatient/
 ✅ Link visits to rooms
 
 ### 3. **Vital Signs Monitoring**
+
 ✅ Comprehensive vital signs recording
 ✅ Auto-calculated BMI
 ✅ Timeline tracking (multiple recordings per day)
@@ -89,6 +95,7 @@ inpatient/
 ✅ Audit trail (who recorded when)
 
 ### 4. **CPPT (Integrated Progress Notes)**
+
 ✅ Shared documentation for doctors and nurses
 ✅ SOAP format support
 ✅ Role-based entries (doctor/nurse)
@@ -97,6 +104,7 @@ inpatient/
 ✅ Complete communication trail
 
 ### 5. **Material/Supply Tracking**
+
 ✅ Record medical supplies usage
 ✅ Auto-calculated total costs
 ✅ Quantity and unit tracking
@@ -107,7 +115,9 @@ inpatient/
 ## Refactored Architecture
 
 ### Type System (`types/inpatient.ts`)
+
 Complete TypeScript coverage with:
+
 - Entity types (Room, VitalSigns, CPPT, MaterialUsage)
 - Input types for API calls
 - Response types
@@ -116,23 +126,25 @@ Complete TypeScript coverage with:
 - Statistics types
 
 ```typescript
-import { Room, VitalSigns, CPPT } from "@/types/inpatient";
+import { Room, VitalSigns, CPPT } from "@/types/inpatient"
 ```
 
 ### Utility Functions
 
 **Room Utils** (`lib/inpatient/room-utils.ts`):
+
 ```typescript
 import {
   getRoomStatusConfig,
   getRoomCardClasses,
   calculateRoomStatistics,
   filterRoomsByStatus,
-  formatCurrency
-} from "@/lib/inpatient/room-utils";
+  formatCurrency,
+} from "@/lib/inpatient/room-utils"
 ```
 
 **Vital Signs Utils** (`lib/inpatient/vitals-utils.ts`):
+
 ```typescript
 import {
   calculateBMI,
@@ -143,23 +155,27 @@ import {
   getPulseStatus,
   getOxygenSaturationStatus,
   getPainScaleDescription,
-  areVitalsNormal
-} from "@/lib/inpatient/vitals-utils";
+  areVitalsNormal,
+} from "@/lib/inpatient/vitals-utils"
 ```
 
 ### Validation Schemas (`lib/inpatient/validation.ts`)
+
 Centralized Zod schemas:
+
 ```typescript
 import {
   roomSchema,
   vitalSignsSchema,
   cpptSchema,
-  materialUsageSchema
-} from "@/lib/inpatient/validation";
+  materialUsageSchema,
+} from "@/lib/inpatient/validation"
 ```
 
 ### Service Layer (`lib/inpatient/api-service.ts`)
+
 Database operations separated from API routes:
+
 ```typescript
 import {
   getAllRoomsWithOccupancy,
@@ -167,99 +183,110 @@ import {
   assignBedToPatient,
   recordVitalSigns,
   createCPPTEntry,
-  recordMaterialUsage
-} from "@/lib/inpatient/api-service";
+  recordMaterialUsage,
+} from "@/lib/inpatient/api-service"
 ```
 
 ### Custom Hooks
 
 **useRooms**
+
 ```typescript
 const {
-  rooms,              // All rooms
-  sortedRooms,        // Sorted by room number
-  statistics,         // Calculated statistics
-  isLoading,          // Loading state
-  error,              // Error state
-  refresh             // Manual refresh
+  rooms, // All rooms
+  sortedRooms, // Sorted by room number
+  statistics, // Calculated statistics
+  isLoading, // Loading state
+  error, // Error state
+  refresh, // Manual refresh
 } = useRooms({
   autoRefresh: true,
-  refreshInterval: 60000
-});
+  refreshInterval: 60000,
+})
 ```
 
 **useVitals**
+
 ```typescript
 const {
-  recordVitals,       // Record function
-  fetchVitals,        // Fetch history
-  isSubmitting,       // Submit state
-  error,              // Error state
-  success             // Success state
-} = useVitals();
+  recordVitals, // Record function
+  fetchVitals, // Fetch history
+  isSubmitting, // Submit state
+  error, // Error state
+  success, // Success state
+} = useVitals()
 ```
 
 **useCPPT**
+
 ```typescript
 const {
-  createEntry,        // Create CPPT entry
-  fetchEntries,       // Fetch entries
-  isSubmitting,       // Submit state
-  error,              // Error state
-  success             // Success state
-} = useCPPT();
+  createEntry, // Create CPPT entry
+  fetchEntries, // Fetch entries
+  isSubmitting, // Submit state
+  error, // Error state
+  success, // Success state
+} = useCPPT()
 ```
 
 **useMaterials**
+
 ```typescript
 const {
-  recordUsage,        // Record usage
-  fetchUsage,         // Fetch history with total
-  isSubmitting,       // Submit state
-  error,              // Error state
-  success             // Success state
-} = useMaterials();
+  recordUsage, // Record usage
+  fetchUsage, // Fetch history with total
+  isSubmitting, // Submit state
+  error, // Error state
+  success, // Success state
+} = useMaterials()
 ```
 
 ## API Endpoints
 
 ### Room Management
+
 - `GET /api/rooms` - Get all rooms with occupancy
 - `POST /api/rooms` - Create new room
 - `PATCH /api/rooms` - Update room
 
 ### Bed Assignment
+
 - `POST /api/rooms/assign` - Assign patient to bed
 - `PATCH /api/rooms/assign` - Discharge patient from bed
 
 ### Vital Signs
+
 - `POST /api/vitals` - Record vital signs
 - `GET /api/vitals?visitId=X` - Get vital signs history
 
 ### CPPT
+
 - `POST /api/cppt` - Create progress note
 - `GET /api/cppt?visitId=X` - Get progress notes
 
 ### Material Usage
+
 - `POST /api/materials` - Record material usage
 - `GET /api/materials?visitId=X` - Get usage history with total cost
 
 ## Usage Examples
 
 ### Room Dashboard
-```typescript
-import { useRooms } from "@/hooks/use-rooms";
-import { calculateRoomStatistics } from "@/lib/inpatient/room-utils";
 
-const { rooms, isLoading } = useRooms({ autoRefresh: true });
-const stats = calculateRoomStatistics(rooms);
+```typescript
+import { useRooms } from "@/hooks/use-rooms"
+import { calculateRoomStatistics } from "@/lib/inpatient/room-utils"
+
+const { rooms, isLoading } = useRooms({ autoRefresh: true })
+const stats = calculateRoomStatistics(rooms)
 ```
 
 ### Record Vital Signs
-```typescript
-import { useVitals } from "@/hooks/use-vitals";
 
-const { recordVitals, isSubmitting, success } = useVitals();
+```typescript
+import { useVitals } from "@/hooks/use-vitals"
+
+const { recordVitals, isSubmitting, success } = useVitals()
 
 await recordVitals({
   visitId: 1,
@@ -269,15 +296,16 @@ await recordVitals({
   pulse: 75,
   respiratoryRate: 18,
   oxygenSaturation: "98",
-  recordedBy: "nurse-123"
-});
+  recordedBy: "nurse-123",
+})
 ```
 
 ### Create CPPT Entry
-```typescript
-import { useCPPT } from "@/hooks/use-cppt";
 
-const { createEntry } = useCPPT();
+```typescript
+import { useCPPT } from "@/hooks/use-cppt"
+
+const { createEntry } = useCPPT()
 
 await createEntry({
   visitId: 1,
@@ -288,32 +316,35 @@ await createEntry({
   assessment: "Mild hypertension",
   plan: "Monitor BP, continue medication",
   progressNote: "Patient showing improvement",
-  instructions: "Check BP every 4 hours"
-});
+  instructions: "Check BP every 4 hours",
+})
 ```
 
 ## Utility Function Examples
 
 ### BMI Calculation
-```typescript
-import { calculateBMI, getBMICategoryID } from "@/lib/inpatient/vitals-utils";
 
-const bmi = calculateBMI("170", "70"); // "24.22"
-const category = getBMICategoryID(bmi); // "Normal"
+```typescript
+import { calculateBMI, getBMICategoryID } from "@/lib/inpatient/vitals-utils"
+
+const bmi = calculateBMI("170", "70") // "24.22"
+const category = getBMICategoryID(bmi) // "Normal"
 ```
 
 ### Blood Pressure Status
-```typescript
-import { getBloodPressureCategoryID } from "@/lib/inpatient/vitals-utils";
 
-const status = getBloodPressureCategoryID(140, 90); // "Tinggi Tahap 1"
+```typescript
+import { getBloodPressureCategoryID } from "@/lib/inpatient/vitals-utils"
+
+const status = getBloodPressureCategoryID(140, 90) // "Tinggi Tahap 1"
 ```
 
 ### Room Statistics
-```typescript
-import { calculateRoomStatistics } from "@/lib/inpatient/room-utils";
 
-const stats = calculateRoomStatistics(rooms);
+```typescript
+import { calculateRoomStatistics } from "@/lib/inpatient/room-utils"
+
+const stats = calculateRoomStatistics(rooms)
 // {
 //   total: 20,
 //   available: 5,
@@ -338,13 +369,17 @@ const stats = calculateRoomStatistics(rooms);
 ## Best Practices
 
 ### Type Safety
+
 Always import and use types:
+
 ```typescript
-import { VitalSignsInput, CPPT } from "@/types/inpatient";
+import { VitalSignsInput, CPPT } from "@/types/inpatient"
 ```
 
 ### Use Service Layer
+
 Don't write database queries in API routes:
+
 ```typescript
 // ✅ Good
 import { recordVitalSigns } from "@/lib/inpatient/api-service";
@@ -355,18 +390,22 @@ const vitals = await db.insert(vitalsHistory).values(...);
 ```
 
 ### Use Utility Functions
+
 Don't duplicate logic:
+
 ```typescript
 // ✅ Good
-import { calculateBMI } from "@/lib/inpatient/vitals-utils";
-const bmi = calculateBMI(height, weight);
+import { calculateBMI } from "@/lib/inpatient/vitals-utils"
+const bmi = calculateBMI(height, weight)
 
 // ❌ Bad
-const bmi = (weight / ((height/100) * (height/100))).toFixed(2);
+const bmi = (weight / ((height / 100) * (height / 100))).toFixed(2)
 ```
 
 ### Use Custom Hooks
+
 Don't write API calls directly in components:
+
 ```typescript
 // ✅ Good
 const { rooms, isLoading } = useRooms();
@@ -379,24 +418,28 @@ useEffect(() => { fetch("/api/rooms")... }, []);
 ## Room Dashboard Features
 
 ✅ **Visual Status Indicators**
+
 - Green border: Empty rooms
 - Yellow border: Partially occupied
 - Red border: Full rooms
 - Gray border: Maintenance
 
 ✅ **Statistics Cards**
+
 - Total rooms count
 - Available rooms (green)
 - Partially occupied (yellow)
 - Overall occupancy rate (blue)
 
 ✅ **Filtering**
+
 - All rooms
 - Available only
 - Occupied only
 - Full only
 
 ✅ **Room Cards Display**
+
 - Room number and type
 - Bed occupancy (X/Y beds)
 - Occupancy progress bar
@@ -410,16 +453,19 @@ useEffect(() => { fetch("/api/rooms")... }, []);
 The module is designed for seamless billing integration:
 
 ### Room Charges
+
 - Daily rates tracked in `rooms.dailyRate`
 - Admission and discharge dates in `visits`
 - Auto-calculate: `days * dailyRate`
 
 ### Material Charges
+
 - All usage tracked in `material_usage`
 - Total cost pre-calculated
 - Ready to aggregate for billing
 
 ### API for Billing Module
+
 ```typescript
 GET /api/materials?visitId=X
 // Returns: { materials: [], totalCost: "150000.00" }
@@ -444,16 +490,19 @@ GET /api/rooms
 ## Testing Considerations
 
 ### Unit Tests
+
 - Utility functions (BMI calculation, BP categorization)
 - Validation schemas
 - Service layer functions
 
 ### Integration Tests
+
 - API endpoints with mock database
 - Custom hooks with mock fetch
 - Form submissions
 
 ### E2E Tests
+
 - Room assignment workflow
 - Vital signs recording
 - CPPT creation
@@ -462,16 +511,19 @@ GET /api/rooms
 ## Related Modules
 
 **Dependencies:**
+
 - Emergency Module (ER → Inpatient handover)
 - Registration Module (Patient admission)
 
 **Integration Points:**
+
 - Billing Module (room charges, material costs)
 - Pharmacy Module (medication administration)
 
 ## Contributors
 
 Module created with clean architecture principles:
+
 - Modular design
 - Type safety
 - Service layer separation

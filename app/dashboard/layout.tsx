@@ -1,19 +1,12 @@
 import { cookies } from "next/headers"
 
-import {
-  SidebarInset,
-  SidebarProvider,
-} from "@/components/ui/sidebar"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebarRBAC } from "@/components/app-sidebar-rbac"
 import { SiteHeader } from "@/components/site-header"
 
 import "@/app/dashboard/theme.css"
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 

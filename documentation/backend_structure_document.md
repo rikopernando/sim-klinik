@@ -7,26 +7,26 @@ This document outlines the backend architecture, hosting, and infrastructure for
 - **Framework and Design Pattern**
   - We use **Next.js API Routes** to handle all server-side logic. These routes live alongside the frontend code in the same repository, making development and deployment simpler.
   - The backend follows a **layered pattern**:
-    1. **API Layer**: Receives requests (login, registration, data fetch).  
-    2. **Service Layer**: Contains the core business logic (user validation, password hashing).  
+    1. **API Layer**: Receives requests (login, registration, data fetch).
+    2. **Service Layer**: Contains the core business logic (user validation, password hashing).
     3. **Data Access Layer**: Talks to the database via a simple ORM (e.g., Prisma or TypeORM).
 
 - **Scalability**
-  - Stateless API routes can scale horizontally—new instances can spin up on demand.  
+  - Stateless API routes can scale horizontally—new instances can spin up on demand.
   - We can add caching or a message queue (e.g., Redis or RabbitMQ) without changing the core code.
 
 - **Maintainability**
-  - Code for each feature is grouped by route (authentication, dashboard).  
+  - Code for each feature is grouped by route (authentication, dashboard).
   - A service layer separates complex logic from request handling.
 
 - **Performance**
-  - Lightweight Node.js handlers keep response times low.  
+  - Lightweight Node.js handlers keep response times low.
   - Future use of database connection pooling and Redis for caching repeated queries.
 
 ## 2. Database Management
 
 - **Database Choice**
-  - We recommend **PostgreSQL** for structured data and reliable transactions.  
+  - We recommend **PostgreSQL** for structured data and reliable transactions.
   - In-memory caching can be added later with **Redis** for session tokens or frequently read data.
 
 - **Data Storage and Access**
@@ -38,20 +38,19 @@ This document outlines the backend architecture, hosting, and infrastructure for
   - Passwords are never stored in plain text—they are salted and hashed with **bcrypt** before saving.
   - All outgoing data is typed and validated to prevent malformed records.
 
-
 - **Communication**
-  - Frontend sends JSON requests; backend replies with JSON and appropriate HTTP status codes.  
+  - Frontend sends JSON requests; backend replies with JSON and appropriate HTTP status codes.
   - Protected routes check for a valid session token (in cookies or Authorization header).
 
 ## 5. Hosting Solutions
 
-- **Cloud Provider**:  
-  - **Vercel** (recommended) offers seamless Next.js deployments, auto-scaling, and built-in CDN.  
+- **Cloud Provider**:
+  - **Vercel** (recommended) offers seamless Next.js deployments, auto-scaling, and built-in CDN.
   - Alternatively, **Netlify** or any Node.js-capable host will work.
 
 - **Benefits**
-  - **Reliability**: Global servers and failover across regions.  
-  - **Scalability**: Auto-scale serverless functions based on traffic.  
+  - **Reliability**: Global servers and failover across regions.
+  - **Scalability**: Auto-scale serverless functions based on traffic.
   - **Cost-Effectiveness**: Pay-per-use model means low cost for small projects.
 
 ## 6. Infrastructure Components
@@ -74,26 +73,26 @@ This document outlines the backend architecture, hosting, and infrastructure for
 ## 7. Security Measures
 
 - **Authentication & Authorization**
-  - Passwords hashed with **bcrypt** and salted.  
-  - Session tokens stored in secure, HttpOnly cookies or Authorization headers.  
+  - Passwords hashed with **bcrypt** and salted.
+  - Session tokens stored in secure, HttpOnly cookies or Authorization headers.
   - Protected endpoints verify tokens before proceeding.
 
 - **Data Encryption**
-  - **HTTPS/TLS** encrypts data in transit.  
+  - **HTTPS/TLS** encrypts data in transit.
   - Database connections use SSL to encrypt data between the app and the database.
 
 - **Input Validation**
   - Every incoming request is validated (e.g., valid email format, password length) to prevent SQL injection or other attacks.
 
 - **Web Security Best Practices**
-  - Enable **CORS** policies to limit allowed origins.  
-  - Use **CSRF tokens** or same-site cookies to prevent cross-site requests.  
+  - Enable **CORS** policies to limit allowed origins.
+  - Use **CSRF tokens** or same-site cookies to prevent cross-site requests.
   - Set secure headers with **Helmet** or a similar middleware.
 
 ## 8. Monitoring and Maintenance
 
 - **Performance Monitoring**
-  - Integrate **Sentry** or **LogRocket** for real-time crash reporting and performance tracing.  
+  - Integrate **Sentry** or **LogRocket** for real-time crash reporting and performance tracing.
   - Use Vercel’s built-in analytics to track request latencies and error rates.
 
 - **Logging**
@@ -103,7 +102,7 @@ This document outlines the backend architecture, hosting, and infrastructure for
   - Define a `/health` endpoint that returns a 200 status if the service is up and the database is reachable.
 
 - **Maintenance Strategies**
-  - Automated migrations run on deploy to keep the database schema up to date.  
+  - Automated migrations run on deploy to keep the database schema up to date.
   - Scheduled dependency audits and security scans (e.g., `npm audit`).
   - Regular backups of the database (daily or weekly depending on usage).
 

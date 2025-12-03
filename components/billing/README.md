@@ -1,11 +1,13 @@
 # Billing, Cashier & Patient Discharge Module
 
 ## Overview
+
 The Billing module provides comprehensive financial management including automated billing aggregation (billing engine), payment processing with automatic change calculation, billing gate for discharge control, and discharge summary generation. This is the final critical module that ensures no patient is discharged without payment completion.
 
 ## Architecture
 
 ### Directory Structure
+
 ```
 billing/
 ├── README.md                           # This file
@@ -29,6 +31,7 @@ billing/
 ## Database Schema
 
 ### Tables (Already Implemented)
+
 - **`services`** - Master data for billable services
   - Code, name, service type, price
   - Category for grouping/reports
@@ -63,18 +66,21 @@ billing/
 ## Key Features
 
 ### 1. **Billing Engine** (Automatic Aggregation)
+
 ✅ Automatically aggregates ALL charges from a visit:
+
 - **Fulfilled prescriptions** (drugs) from pharmacy
 - **Material usage** from inpatient care
 - **Room charges** with automatic day calculation
 - **Services** from procedures/consultations
-✅ Smart calculation of total days stayed for room charges
-✅ Discount support (fixed amount or percentage)
-✅ Insurance coverage handling
-✅ Tax calculation support
-✅ Patient payable calculation (total - insurance)
+  ✅ Smart calculation of total days stayed for room charges
+  ✅ Discount support (fixed amount or percentage)
+  ✅ Insurance coverage handling
+  ✅ Tax calculation support
+  ✅ Patient payable calculation (total - insurance)
 
 ### 2. **Payment Processing**
+
 ✅ Multiple payment methods (cash, transfer, card, insurance)
 ✅ **Automatic change calculation** for cash payments
 ✅ Partial payment support
@@ -84,6 +90,7 @@ billing/
 ✅ Cashier audit trail
 
 ### 3. **Billing Gate Logic** ⭐ **CRITICAL FEATURE**
+
 ✅ **Prevents patient discharge if payment is not complete**
 ✅ Checks payment_status before allowing discharge
 ✅ Returns clear error messages with remaining balance
@@ -91,6 +98,7 @@ billing/
 ✅ Protects clinic revenue
 
 ### 4. **Cashier Dashboard**
+
 ✅ **Sticky total box** prominently displays billing amount
 ✅ Color-coded payment status (red/yellow/green)
 ✅ Tabbed billing items (All/Services/Drugs/Materials/Rooms)
@@ -101,6 +109,7 @@ billing/
 ✅ Responsive layout (mobile-friendly)
 
 ### 5. **Discharge Management**
+
 ✅ Complete discharge summary form
 ✅ SOAP-style medical summary
 ✅ Medications on discharge listing
@@ -111,6 +120,7 @@ billing/
 ✅ Automatic bed release for inpatient
 
 ### 6. **Financial Tracking**
+
 ✅ Billing statistics (total, pending, paid, partial)
 ✅ Revenue tracking (total revenue, pending revenue)
 ✅ Daily collections report
@@ -120,7 +130,9 @@ billing/
 ## Refactored Architecture
 
 ### Type System (`types/billing.ts`)
+
 Complete TypeScript coverage:
+
 - Entity types (Service, Billing, BillingItem, Payment, DischargeSummary)
 - Extended types (BillingWithDetails)
 - Input types for API calls
@@ -129,20 +141,19 @@ Complete TypeScript coverage:
 - Receipt data structure
 
 ```typescript
-import { Billing, BillingWithDetails, Payment, DischargeSummary } from "@/types/billing";
+import { Billing, BillingWithDetails, Payment, DischargeSummary } from "@/types/billing"
 ```
 
 ### Utility Functions (`lib/billing/billing-utils.ts`)
 
 **Currency Functions**:
+
 ```typescript
-import {
-  formatCurrency,
-  parseCurrency
-} from "@/lib/billing/billing-utils";
+import { formatCurrency, parseCurrency } from "@/lib/billing/billing-utils"
 ```
 
 **Calculation Functions**:
+
 ```typescript
 import {
   calculateItemTotal,
@@ -151,38 +162,37 @@ import {
   calculateTotalAmount,
   calculatePatientPayable,
   calculateRemainingAmount,
-  calculateChange
-} from "@/lib/billing/billing-utils";
+  calculateChange,
+} from "@/lib/billing/billing-utils"
 ```
 
 **Status Functions**:
+
 ```typescript
 import {
   determinePaymentStatus,
   getPaymentStatusConfig,
   getPaymentMethodLabel,
-  canDischarge
-} from "@/lib/billing/billing-utils";
+  canDischarge,
+} from "@/lib/billing/billing-utils"
 ```
 
 **Grouping Functions**:
+
 ```typescript
-import {
-  groupItemsByType,
-  calculateTotalByType
-} from "@/lib/billing/billing-utils";
+import { groupItemsByType, calculateTotalByType } from "@/lib/billing/billing-utils"
 ```
 
 **Validation Functions**:
+
 ```typescript
-import {
-  validatePaymentAmount,
-  generateReceiptNumber
-} from "@/lib/billing/billing-utils";
+import { validatePaymentAmount, generateReceiptNumber } from "@/lib/billing/billing-utils"
 ```
 
 ### Validation Schemas (`lib/billing/validation.ts`)
+
 Centralized Zod schemas:
+
 ```typescript
 import {
   serviceSchema,
@@ -190,12 +200,14 @@ import {
   billingItemSchema,
   createBillingSchema,
   paymentSchema,
-  dischargeSummarySchema
-} from "@/lib/billing/validation";
+  dischargeSummarySchema,
+} from "@/lib/billing/validation"
 ```
 
 ### Service Layer (`lib/billing/api-service.ts`)
+
 **THE BILLING ENGINE** - Core business logic:
+
 ```typescript
 import {
   // Service master
@@ -216,59 +228,65 @@ import {
   // Discharge operations
   canDischarge, // 🔒 BILLING GATE
   createDischargeSummary,
-  getDischargeSummary
-} from "@/lib/billing/api-service";
+  getDischargeSummary,
+} from "@/lib/billing/api-service"
 ```
 
 ### Custom Hooks
 
 **useBilling**
+
 ```typescript
 const {
-  createBilling,      // Create billing (runs engine)
-  fetchBilling,       // Get billing by visit ID
-  isSubmitting,       // Create state
-  isLoading,          // Fetch state
-  error,              // Error state
-  success,            // Success state
-  billing             // Current billing data
-} = useBilling();
+  createBilling, // Create billing (runs engine)
+  fetchBilling, // Get billing by visit ID
+  isSubmitting, // Create state
+  isLoading, // Fetch state
+  error, // Error state
+  success, // Success state
+  billing, // Current billing data
+} = useBilling()
 ```
 
 **usePayment**
+
 ```typescript
 const {
-  processPayment,     // Process payment with change calc
-  isSubmitting,       // Submit state
-  error,              // Error state
-  success             // Success state
-} = usePayment();
+  processPayment, // Process payment with change calc
+  isSubmitting, // Submit state
+  error, // Error state
+  success, // Success state
+} = usePayment()
 ```
 
 **useDischarge**
+
 ```typescript
 const {
-  createDischargeSummary,  // Create discharge summary
-  checkCanDischarge,       // Check billing gate
-  isSubmitting,            // Submit state
-  isChecking,              // Check state
-  error,                   // Error state
-  success                  // Success state
-} = useDischarge();
+  createDischargeSummary, // Create discharge summary
+  checkCanDischarge, // Check billing gate
+  isSubmitting, // Submit state
+  isChecking, // Check state
+  error, // Error state
+  success, // Success state
+} = useDischarge()
 ```
 
 ## API Endpoints
 
 ### Billing Operations
+
 - `GET /api/billing?visitId=1` - Get billing by visit ID
 - `GET /api/billing?stats=true` - Get billing statistics
 - `GET /api/billing?pending=true` - Get pending billings
 - `POST /api/billing` - Create billing (runs billing engine)
 
 ### Payment Processing
+
 - `POST /api/billing/payment` - Process payment
 
 ### Discharge Operations
+
 - `GET /api/billing/discharge?visitId=1&check=true` - Check billing gate
 - `GET /api/billing/discharge?visitId=1` - Get discharge summary
 - `POST /api/billing/discharge` - Create discharge summary
@@ -276,16 +294,17 @@ const {
 ## Usage Examples
 
 ### Create Billing (Run Billing Engine)
+
 ```typescript
-const { createBilling } = useBilling();
+const { createBilling } = useBilling()
 
 await createBilling({
   visitId: 1,
   items: [], // Engine auto-aggregates from visit
   discount: "0",
   insuranceCoverage: "0",
-  notes: "Regular billing"
-});
+  notes: "Regular billing",
+})
 
 // Billing engine automatically adds:
 // - Fulfilled prescriptions from pharmacy
@@ -295,8 +314,9 @@ await createBilling({
 ```
 
 ### Process Payment
+
 ```typescript
-const { processPayment } = usePayment();
+const { processPayment } = usePayment()
 
 await processPayment({
   billingId: 1,
@@ -304,18 +324,19 @@ await processPayment({
   paymentMethod: "cash",
   amountReceived: "600000", // For cash only
   receivedBy: "cashier-001",
-  notes: "Pembayaran lunas"
-});
+  notes: "Pembayaran lunas",
+})
 
 // Automatic change calculation: 600000 - 500000 = 100000
 // Automatic payment status update
 ```
 
 ### Check Billing Gate Before Discharge
-```typescript
-const { checkCanDischarge } = useDischarge();
 
-const result = await checkCanDischarge(visitId);
+```typescript
+const { checkCanDischarge } = useDischarge()
+
+const result = await checkCanDischarge(visitId)
 
 if (result.canDischarge) {
   // Proceed with discharge
@@ -326,8 +347,9 @@ if (result.canDischarge) {
 ```
 
 ### Create Discharge Summary
+
 ```typescript
-const { createDischargeSummary } = useDischarge();
+const { createDischargeSummary } = useDischarge()
 
 await createDischargeSummary({
   visitId: 1,
@@ -341,8 +363,8 @@ await createDischargeSummary({
   activityRestrictions: "Istirahat total 1 minggu",
   followUpDate: "2025-12-01",
   followUpInstructions: "Kontrol untuk cek darah lengkap",
-  dischargedBy: "doctor-001"
-});
+  dischargedBy: "doctor-001",
+})
 
 // Automatic billing gate check
 // Automatic visit status update to "completed"
@@ -352,26 +374,29 @@ await createDischargeSummary({
 ## Utility Function Examples
 
 ### Calculate Change
-```typescript
-import { calculateChange } from "@/lib/billing/billing-utils";
 
-const change = calculateChange("600000", "500000"); // "100000.00"
+```typescript
+import { calculateChange } from "@/lib/billing/billing-utils"
+
+const change = calculateChange("600000", "500000") // "100000.00"
 ```
 
 ### Determine Payment Status
-```typescript
-import { determinePaymentStatus } from "@/lib/billing/billing-utils";
 
-const status = determinePaymentStatus("500000", "0"); // "pending"
-const status2 = determinePaymentStatus("500000", "300000"); // "partial"
-const status3 = determinePaymentStatus("500000", "500000"); // "paid"
+```typescript
+import { determinePaymentStatus } from "@/lib/billing/billing-utils"
+
+const status = determinePaymentStatus("500000", "0") // "pending"
+const status2 = determinePaymentStatus("500000", "300000") // "partial"
+const status3 = determinePaymentStatus("500000", "500000") // "paid"
 ```
 
 ### Group Items by Type
-```typescript
-import { groupItemsByType } from "@/lib/billing/billing-utils";
 
-const grouped = groupItemsByType(billingItems);
+```typescript
+import { groupItemsByType } from "@/lib/billing/billing-utils"
+
+const grouped = groupItemsByType(billingItems)
 // {
 //   services: [...],
 //   drugs: [...],
@@ -381,10 +406,11 @@ const grouped = groupItemsByType(billingItems);
 ```
 
 ### Format Currency
-```typescript
-import { formatCurrency } from "@/lib/billing/billing-utils";
 
-const formatted = formatCurrency("500000"); // "Rp 500,000"
+```typescript
+import { formatCurrency } from "@/lib/billing/billing-utils"
+
+const formatted = formatCurrency("500000") // "Rp 500,000"
 ```
 
 ## Billing Engine Details
@@ -425,7 +451,7 @@ The billing gate (`canDischarge`) ensures revenue protection:
 
 ```typescript
 // Check before discharge
-const check = await canDischarge(visitId);
+const check = await canDischarge(visitId)
 
 if (!check.canDischarge) {
   // Reasons for blocking:
@@ -433,7 +459,7 @@ if (!check.canDischarge) {
   // 2. "Pembayaran belum lunas. Status: pending. Sisa: Rp 500,000"
   // 3. "Pembayaran belum lunas. Status: partial. Sisa: Rp 200,000"
 
-  throw new Error(check.reason);
+  throw new Error(check.reason)
 }
 
 // Only proceed if payment_status === "paid"
@@ -442,10 +468,12 @@ if (!check.canDischarge) {
 ## Dashboard Features
 
 ### Cashier Dashboard
+
 ✅ **Search by Visit ID** - Quick billing lookup
 ✅ **Patient Information Card** - Name, MR number, visit number
 ✅ **Payment Status Badge** - Color-coded (green/yellow/red)
 ✅ **Billing Items Tabs**:
+
 - All items view
 - Services only
 - Drugs only
@@ -454,6 +482,7 @@ if (!check.canDischarge) {
 - Subtotals by category
 
 ✅ **Sticky Total Box** (Right sidebar):
+
 - Prominent display of amounts
 - Color-coded border matching payment status
 - Subtotal breakdown
@@ -466,6 +495,7 @@ if (!check.canDischarge) {
 - LUNAS indicator (when paid)
 
 ✅ **Payment Dialog**:
+
 - Payment method selector
 - Amount received input (cash only)
 - **Real-time change calculation**
@@ -473,6 +503,7 @@ if (!check.canDischarge) {
 - Validation (prevents negative change)
 
 ✅ **Payment History**:
+
 - All payment transactions
 - Payment method labels (in Indonesian)
 - Timestamps
@@ -492,11 +523,13 @@ if (!check.canDischarge) {
 ## Best Practices
 
 ### Type Safety
+
 ```typescript
-import { BillingWithDetails, PaymentInput } from "@/types/billing";
+import { BillingWithDetails, PaymentInput } from "@/types/billing"
 ```
 
 ### Use Service Layer
+
 ```typescript
 // ✅ Good
 import { createBillingForVisit } from "@/lib/billing/api-service";
@@ -507,22 +540,24 @@ const billing = await db.insert(billings).values(...);
 ```
 
 ### Use Utility Functions
+
 ```typescript
 // ✅ Good
-import { calculateChange } from "@/lib/billing/billing-utils";
-const change = calculateChange(received, due);
+import { calculateChange } from "@/lib/billing/billing-utils"
+const change = calculateChange(received, due)
 
 // ❌ Bad
-const change = parseFloat(received) - parseFloat(due);
+const change = parseFloat(received) - parseFloat(due)
 ```
 
 ### Use Custom Hooks
+
 ```typescript
 // ✅ Good
-const { processPayment, isSubmitting } = usePayment();
+const { processPayment, isSubmitting } = usePayment()
 
 // ❌ Bad
-const [isSubmitting, setIsSubmitting] = useState(false);
+const [isSubmitting, setIsSubmitting] = useState(false)
 // ... manual fetch logic
 ```
 
@@ -538,7 +573,9 @@ const [isSubmitting, setIsSubmitting] = useState(false);
 ## Integration Points
 
 ### With All Modules
+
 The billing module is the **FINAL INTEGRATION POINT** for:
+
 - **EMR Module**: Prescriptions become drug billing items
 - **Pharmacy Module**: Fulfilled prescriptions trigger billing
 - **Inpatient Module**: Material usage and room charges
@@ -546,6 +583,7 @@ The billing module is the **FINAL INTEGRATION POINT** for:
 - **Registration Module**: Patient and visit data
 
 ### Billing Flow
+
 1. Patient visits (any type: outpatient/inpatient/ER)
 2. Services provided, prescriptions written
 3. **Cashier creates billing** → Billing engine aggregates ALL charges
@@ -570,17 +608,20 @@ The billing module is the **FINAL INTEGRATION POINT** for:
 ## Testing Considerations
 
 ### Unit Tests
+
 - Utility functions (calculate change, determine status)
 - Validation schemas
 - Service layer functions
 
 ### Integration Tests
+
 - Billing engine aggregation
 - Payment processing workflow
 - Billing gate logic
 - Discharge summary creation
 
 ### E2E Tests
+
 - Complete patient journey (visit → billing → payment → discharge)
 - Billing gate blocking unpaid discharge
 - Multiple payment processing
@@ -592,6 +633,7 @@ The billing module is the **FINAL INTEGRATION POINT** for:
 ALL modules (final integration point)
 
 **Integration Points:**
+
 - EMR Module (prescriptions)
 - Pharmacy Module (fulfilled prescriptions)
 - Inpatient Module (materials, rooms)
@@ -600,6 +642,7 @@ ALL modules (final integration point)
 ## Contributors
 
 Module created with clean architecture principles:
+
 - Modular design
 - Type safety
 - Service layer separation

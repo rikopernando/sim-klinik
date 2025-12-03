@@ -9,6 +9,7 @@ This directory contains database seeder scripts to populate the database with sa
 Seeds the `drugs` table with 32 common medications used in Indonesian clinics.
 
 **Categories included:**
+
 - Analgesics (Pereda Nyeri) - 3 drugs
 - Antibiotics (Antibiotik) - 4 drugs
 - Antihistamines (Antihistamin) - 3 drugs
@@ -43,6 +44,7 @@ npm run db:seed:drugs
 #### Sample Data
 
 Examples of seeded drugs:
+
 - Paracetamol 500mg
 - Amoxicillin 500mg
 - Omeprazole 20mg
@@ -55,8 +57,8 @@ Examples of seeded drugs:
 1. Create a new file in `db/seeders/` (e.g., `seed-patients.ts`)
 2. Import required schema and database connection:
    ```typescript
-   import { db } from "@/db";
-   import { patients } from "@/db/schema";
+   import { db } from "@/db"
+   import { patients } from "@/db/schema"
    ```
 3. Create an async function to perform the seeding
 4. Export the function

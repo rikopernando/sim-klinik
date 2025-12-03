@@ -1,25 +1,40 @@
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { FlatCompat } from "@eslint/eslintrc";
+import js from "@eslint/js"
+import globals from "globals"
+import { FlatCompat } from "@eslint/eslintrc"
+import pluginPrettier from "eslint-plugin-prettier"
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
+const __dirname = process.cwd() // Required in the flat config
 const compat = new FlatCompat({
   baseDirectory: __dirname,
-});
+  recommendedConfig: js.configs.recommended,
+})
 
-const eslintConfig = [
+export default [
+  // Base recommended JS config
+  js.configs.recommended,
+
+  // Next.js recommended configs using compat
   ...compat.extends("next/core-web-vitals", "next/typescript"),
-  {
-    ignores: [
-      "node_modules/**",
-      ".next/**",
-      "out/**",
-      "build/**",
-      "next-env.d.ts",
-    ],
-  },
-];
 
-export default eslintConfig;
+  // Prettier config
+  {
+    plugins: {
+      prettier: pluginPrettier,
+    },
+    rules: {
+      "prettier/prettier": "error",
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.es2021,
+      },
+    },
+  },
+
+  // Ignore patterns
+  {
+    ignores: ["node_modules/**", ".next/**", "out/**", "build/**", "next-env.d.ts"],
+  },
+]

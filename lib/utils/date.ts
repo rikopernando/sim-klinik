@@ -8,23 +8,23 @@
  * @returns Age in years, or null if invalid date
  */
 export function calculateAge(dateOfBirth: string | Date | null | undefined): number | null {
-    if (!dateOfBirth) return null;
+  if (!dateOfBirth) return null
 
-    const today = new Date();
-    const birthDate = new Date(dateOfBirth);
+  const today = new Date()
+  const birthDate = new Date(dateOfBirth)
 
-    // Check for invalid date
-    if (isNaN(birthDate.getTime())) return null;
+  // Check for invalid date
+  if (isNaN(birthDate.getTime())) return null
 
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const monthDiff = today.getMonth() - birthDate.getMonth();
+  let age = today.getFullYear() - birthDate.getFullYear()
+  const monthDiff = today.getMonth() - birthDate.getMonth()
 
-    // Adjust if birthday hasn't occurred this year
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-    }
+  // Adjust if birthday hasn't occurred this year
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    age--
+  }
 
-    return age;
+  return age
 }
 
 /**
@@ -33,20 +33,20 @@ export function calculateAge(dateOfBirth: string | Date | null | undefined): num
  * @returns Formatted date string (e.g., "31 Desember 2023")
  */
 export function formatDate(dateString: string | Date | null | undefined): string {
-    if (!dateString) return "-";
+  if (!dateString) return "-"
 
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return "-";
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "-"
 
-        return date.toLocaleDateString("id-ID", {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-        });
-    } catch {
-        return "-";
-    }
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })
+  } catch {
+    return "-"
+  }
 }
 
 /**
@@ -55,16 +55,16 @@ export function formatDate(dateString: string | Date | null | undefined): string
  * @returns Formatted date string (e.g., "31/12/2023")
  */
 export function formatDateShort(dateString: string | Date | null | undefined): string {
-    if (!dateString) return "-";
+  if (!dateString) return "-"
 
-    try {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) return "-";
+  try {
+    const date = new Date(dateString)
+    if (isNaN(date.getTime())) return "-"
 
-        return date.toLocaleDateString("id-ID");
-    } catch {
-        return "-";
-    }
+    return date.toLocaleDateString("id-ID")
+  } catch {
+    return "-"
+  }
 }
 
 /**
@@ -73,8 +73,8 @@ export function formatDateShort(dateString: string | Date | null | undefined): s
  * @returns Age text (e.g., "25 tahun") or "-"
  */
 export function getAgeDisplay(dateOfBirth: string | Date | null | undefined): string {
-    const age = calculateAge(dateOfBirth);
-    return age !== null ? `${age} tahun` : "-";
+  const age = calculateAge(dateOfBirth)
+  return age !== null ? `${age} tahun` : "-"
 }
 
 /**
@@ -83,7 +83,7 @@ export function getAgeDisplay(dateOfBirth: string | Date | null | undefined): st
  * @returns True if date is in the past
  */
 export function isPastDate(date: Date): boolean {
-    return date < new Date();
+  return date < new Date()
 }
 
 /**
@@ -92,10 +92,10 @@ export function isPastDate(date: Date): boolean {
  * @returns True if date is today
  */
 export function isToday(date: Date): boolean {
-    const today = new Date();
-    return (
-        date.getDate() === today.getDate() &&
-        date.getMonth() === today.getMonth() &&
-        date.getFullYear() === today.getFullYear()
-    );
+  const today = new Date()
+  return (
+    date.getDate() === today.getDate() &&
+    date.getMonth() === today.getMonth() &&
+    date.getFullYear() === today.getFullYear()
+  )
 }

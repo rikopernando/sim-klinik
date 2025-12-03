@@ -3,103 +3,103 @@
  * Centralized Zod schemas for API validation
  */
 
-import { z } from "zod";
+import { z } from "zod"
 
 /**
  * Room Schema
  */
 export const roomSchema = z.object({
-    roomNumber: z.string().min(1, "Nomor kamar wajib diisi"),
-    roomType: z.string().min(1, "Tipe kamar wajib diisi"),
-    bedCount: z.number().int().positive("Jumlah bed harus positif"),
-    floor: z.string().optional(),
-    building: z.string().optional(),
-    dailyRate: z.string().min(1, "Tarif harian wajib diisi"),
-    facilities: z.string().optional(),
-    description: z.string().optional(),
-});
+  roomNumber: z.string().min(1, "Nomor kamar wajib diisi"),
+  roomType: z.string().min(1, "Tipe kamar wajib diisi"),
+  bedCount: z.number().int().positive("Jumlah bed harus positif"),
+  floor: z.string().optional(),
+  building: z.string().optional(),
+  dailyRate: z.string().min(1, "Tarif harian wajib diisi"),
+  facilities: z.string().optional(),
+  description: z.string().optional(),
+})
 
 /**
  * Bed Assignment Schema
  */
 export const bedAssignmentSchema = z.object({
-    visitId: z.number().int().positive("Visit ID harus valid"),
-    roomId: z.number().int().positive("Room ID harus valid"),
-    bedNumber: z.string().min(1, "Nomor bed wajib diisi"),
-    notes: z.string().optional(),
-});
+  visitId: z.number().int().positive("Visit ID harus valid"),
+  roomId: z.number().int().positive("Room ID harus valid"),
+  bedNumber: z.string().min(1, "Nomor bed wajib diisi"),
+  notes: z.string().optional(),
+})
 
 /**
  * Vital Signs Schema
  */
 export const vitalSignsSchema = z.object({
-    visitId: z.number().int().positive("Visit ID harus valid"),
-    temperature: z.string().optional(),
-    bloodPressureSystolic: z.number().int().optional(),
-    bloodPressureDiastolic: z.number().int().optional(),
-    pulse: z.number().int().optional(),
-    respiratoryRate: z.number().int().optional(),
-    oxygenSaturation: z.string().optional(),
-    weight: z.string().optional(),
-    height: z.string().optional(),
-    painScale: z.number().int().min(0).max(10).optional(),
-    consciousness: z.string().optional(),
-    notes: z.string().optional(),
-    recordedBy: z.string().min(1, "Recorded by is required"),
-});
+  visitId: z.number().int().positive("Visit ID harus valid"),
+  temperature: z.string().optional(),
+  bloodPressureSystolic: z.number().int().optional(),
+  bloodPressureDiastolic: z.number().int().optional(),
+  pulse: z.number().int().optional(),
+  respiratoryRate: z.number().int().optional(),
+  oxygenSaturation: z.string().optional(),
+  weight: z.string().optional(),
+  height: z.string().optional(),
+  painScale: z.number().int().min(0).max(10).optional(),
+  consciousness: z.string().optional(),
+  notes: z.string().optional(),
+  recordedBy: z.string().min(1, "Recorded by is required"),
+})
 
 /**
  * CPPT Schema
  */
 export const cpptSchema = z.object({
-    visitId: z.number().int().positive("Visit ID harus valid"),
-    authorId: z.string().min(1, "Author ID is required"),
-    authorRole: z.enum(["doctor", "nurse"], {
-        required_error: "Author role is required",
-    }),
-    subjective: z.string().optional(),
-    objective: z.string().optional(),
-    assessment: z.string().optional(),
-    plan: z.string().optional(),
-    progressNote: z.string().min(1, "Progress note is required"),
-    instructions: z.string().optional(),
-});
+  visitId: z.number().int().positive("Visit ID harus valid"),
+  authorId: z.string().min(1, "Author ID is required"),
+  authorRole: z.enum(["doctor", "nurse"], {
+    required_error: "Author role is required",
+  }),
+  subjective: z.string().optional(),
+  objective: z.string().optional(),
+  assessment: z.string().optional(),
+  plan: z.string().optional(),
+  progressNote: z.string().min(1, "Progress note is required"),
+  instructions: z.string().optional(),
+})
 
 /**
  * Material Usage Schema
  */
 export const materialUsageSchema = z.object({
-    visitId: z.number().int().positive("Visit ID harus valid"),
-    materialName: z.string().min(1, "Nama material wajib diisi"),
-    quantity: z.number().int().positive("Jumlah harus positif"),
-    unit: z.string().min(1, "Satuan wajib diisi"),
-    unitPrice: z.string().min(1, "Harga satuan wajib diisi"),
-    usedBy: z.string().optional(),
-    notes: z.string().optional(),
-});
+  visitId: z.number().int().positive("Visit ID harus valid"),
+  materialName: z.string().min(1, "Nama material wajib diisi"),
+  quantity: z.number().int().positive("Jumlah harus positif"),
+  unit: z.string().min(1, "Satuan wajib diisi"),
+  unitPrice: z.string().min(1, "Harga satuan wajib diisi"),
+  usedBy: z.string().optional(),
+  notes: z.string().optional(),
+})
 
 /**
  * Room Update Schema
  */
 export const roomUpdateSchema = z.object({
-    id: z.number().int().positive("Room ID harus valid"),
-    roomNumber: z.string().optional(),
-    roomType: z.string().optional(),
-    bedCount: z.number().int().positive().optional(),
-    floor: z.string().optional(),
-    building: z.string().optional(),
-    dailyRate: z.string().optional(),
-    facilities: z.string().optional(),
-    status: z.enum(["available", "occupied", "maintenance", "reserved"]).optional(),
-    description: z.string().optional(),
-});
+  id: z.number().int().positive("Room ID harus valid"),
+  roomNumber: z.string().optional(),
+  roomType: z.string().optional(),
+  bedCount: z.number().int().positive().optional(),
+  floor: z.string().optional(),
+  building: z.string().optional(),
+  dailyRate: z.string().optional(),
+  facilities: z.string().optional(),
+  status: z.enum(["available", "occupied", "maintenance", "reserved"]).optional(),
+  description: z.string().optional(),
+})
 
 /**
  * Type exports
  */
-export type RoomInput = z.infer<typeof roomSchema>;
-export type BedAssignmentInput = z.infer<typeof bedAssignmentSchema>;
-export type VitalSignsInput = z.infer<typeof vitalSignsSchema>;
-export type CPPTInput = z.infer<typeof cpptSchema>;
-export type MaterialUsageInput = z.infer<typeof materialUsageSchema>;
-export type RoomUpdateInput = z.infer<typeof roomUpdateSchema>;
+export type RoomInput = z.infer<typeof roomSchema>
+export type BedAssignmentInput = z.infer<typeof bedAssignmentSchema>
+export type VitalSignsInput = z.infer<typeof vitalSignsSchema>
+export type CPPTInput = z.infer<typeof cpptSchema>
+export type MaterialUsageInput = z.infer<typeof materialUsageSchema>
+export type RoomUpdateInput = z.infer<typeof roomUpdateSchema>

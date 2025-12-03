@@ -82,6 +82,7 @@ The emergency handover system enables seamless patient transfer from the Emergen
 **RBAC Protected:** ✅ Yes
 
 **Request Body:**
+
 ```typescript
 {
   visitId: number,                           // Required
@@ -94,6 +95,7 @@ The emergency handover system enables seamless patient transfer from the Emergen
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -177,25 +179,26 @@ The emergency handover system enables seamless patient transfer from the Emergen
    - Format: `[HANDOVER - timestamp] notes`
 
 **Code Example:**
+
 ```typescript
 // Status reset (H.1.3)
-const currentStatus = existingVisit[0].status as VisitStatus;
-const newStatus = getInitialVisitStatus(data.newVisitType);
+const currentStatus = existingVisit[0].status as VisitStatus
+const newStatus = getInitialVisitStatus(data.newVisitType)
 // newStatus will be "registered" for both outpatient and inpatient
 
-updateData.status = newStatus; // Reset workflow
+updateData.status = newStatus // Reset workflow
 
 // Clear ER-specific fields
-updateData.triageStatus = null;
-updateData.chiefComplaint = null;
+updateData.triageStatus = null
+updateData.chiefComplaint = null
 
 // Set department-specific fields
 if (data.newVisitType === "outpatient") {
-  const queueNumber = await generateQueueNumber(data.poliId);
-  updateData.poliId = data.poliId;
-  updateData.queueNumber = queueNumber;
-  updateData.roomId = null;
-  updateData.admissionDate = null;
+  const queueNumber = await generateQueueNumber(data.poliId)
+  updateData.poliId = data.poliId
+  updateData.queueNumber = queueNumber
+  updateData.roomId = null
+  updateData.admissionDate = null
 }
 ```
 
@@ -206,6 +209,7 @@ if (data.newVisitType === "outpatient") {
 Pre-built dialog component for handover workflow.
 
 **Features:**
+
 - Select destination (Outpatient/Inpatient)
 - Conditional fields based on destination
 - Poli selection for outpatient
@@ -216,17 +220,19 @@ Pre-built dialog component for handover workflow.
 - Loading state during submission
 
 **Props:**
+
 ```typescript
 interface HandoverDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  visitId: number;
-  patientName: string;
-  onSuccess?: () => void;
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  visitId: number
+  patientName: string
+  onSuccess?: () => void
 }
 ```
 
 **Usage:**
+
 ```typescript
 <HandoverDialog
   open={showHandoverDialog}
@@ -245,6 +251,7 @@ interface HandoverDialogProps {
 **File:** `/components/emergency/er-queue-item.tsx`
 
 **Changes Made (H.1.3):**
+
 - Added `HandoverDialog` import
 - Added `showHandoverDialog` state
 - Added "Handover" button with `ArrowRight` icon
@@ -252,6 +259,7 @@ interface HandoverDialogProps {
 - Integrated handover dialog at component bottom
 
 **Handover Button:**
+
 ```typescript
 <Button
   size="sm"
@@ -268,6 +276,7 @@ interface HandoverDialogProps {
 **File:** `/app/dashboard/emergency/page.tsx`
 
 **Changes Made:**
+
 - Passed `onHandoverSuccess={refresh}` to ERQueueItemCard
 - Auto-refreshes queue after successful handover
 
@@ -278,16 +287,19 @@ interface HandoverDialogProps {
 ### Status Lifecycle
 
 **Emergency Visit:**
+
 ```
 registered → waiting → in_examination → examined → ...
 ```
 
 **After Handover to Outpatient/Inpatient:**
+
 ```
 registered → waiting → in_examination → examined → ready_for_billing → ...
 ```
 
 **Key Points:**
+
 - Status is **reset** to `registered` during handover
 - This allows the visit to go through the full workflow in the new department
 - Emergency treatment history is preserved in notes
@@ -472,24 +484,28 @@ GET /api/visits?poliId=1&status=registered
 ## Benefits
 
 ### Operational Efficiency
+
 - ✅ Streamlined patient transfer process
 - ✅ No need to re-register patient
 - ✅ Automatic queue number generation
 - ✅ Clear handoff between departments
 
 ### Data Integrity
+
 - ✅ Visit status properly reset for new workflow
 - ✅ ER treatment history preserved
 - ✅ No data duplication
 - ✅ Audit trail with timestamped notes
 
 ### User Experience
+
 - ✅ One-click handover from ER queue
 - ✅ Clear UI with conditional fields
 - ✅ Immediate feedback
 - ✅ Error prevention with validation
 
 ### Clinical Workflow
+
 - ✅ Proper care continuity
 - ✅ Handover notes for receiving team
 - ✅ Separate billing for ER vs. continued care
@@ -555,6 +571,7 @@ GET /api/visits?poliId=1&status=registered
 
 **Problem:** Visit doesn't appear in destination queue
 **Solution:**
+
 1. Check visit status is "registered"
 2. Verify poliId or roomId is correctly set
 3. Refresh destination queue
@@ -562,6 +579,7 @@ GET /api/visits?poliId=1&status=registered
 
 **Problem:** Handover notes not showing
 **Solution:**
+
 1. Check notes field in database
 2. Verify handover timestamp is added
 3. Check note formatting in UI
@@ -583,6 +601,7 @@ GET /api/visits?poliId=1&status=registered
 ✅ **Task H.1.3 Complete**
 
 **What was implemented:**
+
 - RBAC-protected handover API endpoint
 - Visit status reset and validation
 - ER-specific field clearing
@@ -593,6 +612,7 @@ GET /api/visits?poliId=1&status=registered
 - Queue auto-refresh after handover
 
 **Impact:**
+
 - Seamless patient transfer from ER to other departments
 - Proper visit status lifecycle management
 - Complete audit trail of patient journey
@@ -600,12 +620,14 @@ GET /api/visits?poliId=1&status=registered
 - Better inter-department communication
 
 **Integration Points:**
+
 - H.2.1/H.2.2: Visit Status Lifecycle (status reset to "registered")
 - Emergency Module: Quick registration and queue management
 - Outpatient Module: Poli queue integration
 - Inpatient Module: Room assignment integration
 
 **Next Steps:**
+
 - Add handover acknowledgment workflow
 - Implement notification system for receiving department
 - Create handover history tracking

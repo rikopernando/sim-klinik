@@ -3,19 +3,19 @@
  * Handle poli/poliklinik-related API operations
  */
 
-import axios from "axios";
+import axios from "axios"
 
 export interface Poli {
-    id: number;
-    name: string;
-    code: string;
-    description: string | null;
-    isActive: string;
+  id: number
+  name: string
+  code: string
+  description: string | null
+  isActive: string
 }
 
 interface GetPolisResponse {
-    success: boolean;
-    data: Poli[];
+  success: boolean
+  data: Poli[]
 }
 
 /**
@@ -23,23 +23,19 @@ interface GetPolisResponse {
  * @returns Promise<Poli[]>
  */
 export async function getPolis(): Promise<Poli[]> {
-    try {
-        const { data } = await axios.get<GetPolisResponse>("/api/polis");
-        return data.data || [];
-    } catch (error) {
-        console.error("Error in getPolis service:", error);
+  try {
+    const { data } = await axios.get<GetPolisResponse>("/api/polis")
+    return data.data || []
+  } catch (error) {
+    console.error("Error in getPolis service:", error)
 
-        // Re-throw with more context
-        if (axios.isAxiosError(error)) {
-            throw new Error(
-                error.response?.data?.error ||
-                error.message ||
-                "Failed to fetch polis"
-            );
-        }
-
-        throw error;
+    // Re-throw with more context
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.error || error.message || "Failed to fetch polis")
     }
+
+    throw error
+  }
 }
 
 /**
@@ -48,11 +44,11 @@ export async function getPolis(): Promise<Poli[]> {
  * @returns Promise<Poli | null>
  */
 export async function getPoliById(id: number): Promise<Poli | null> {
-    try {
-        const polis = await getPolis();
-        return polis.find(p => p.id === id) || null;
-    } catch (error) {
-        console.error("Error in getPoliById service:", error);
-        throw error;
-    }
+  try {
+    const polis = await getPolis()
+    return polis.find((p) => p.id === id) || null
+  } catch (error) {
+    console.error("Error in getPoliById service:", error)
+    throw error
+  }
 }

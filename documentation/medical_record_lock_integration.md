@@ -62,9 +62,10 @@ When a doctor locks a medical record (indicating the examination is complete and
 **Permission Required:** `medical_records:lock`
 
 **Request Body:**
+
 ```json
 {
-  "id": 123  // Medical record ID
+  "id": 123 // Medical record ID
 }
 ```
 
@@ -188,6 +189,7 @@ cancelled → ready_for_billing ❌
 ```
 
 **Reason:** The visit must be in `examined` status to ensure:
+
 1. Medical examination is complete
 2. Medical record has been created
 3. All clinical data is documented
@@ -224,30 +226,29 @@ cancelled → ready_for_billing ❌
 ```typescript
 async function lockMedicalRecord(medicalRecordId: number) {
   try {
-    const response = await fetch('/api/medical-records/lock', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+    const response = await fetch("/api/medical-records/lock", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: medicalRecordId }),
-    });
+    })
 
-    const data = await response.json();
+    const data = await response.json()
 
     if (!response.ok) {
-      throw new Error(data.message || data.error);
+      throw new Error(data.message || data.error)
     }
 
-    console.log('Medical record locked');
-    console.log('Visit status updated to:', data.data.visit.newStatus);
+    console.log("Medical record locked")
+    console.log("Visit status updated to:", data.data.visit.newStatus)
 
     // Show success message
-    toast.success(data.message);
+    toast.success(data.message)
 
     // Optionally navigate to billing
-    router.push(`/dashboard/cashier?visitId=${data.data.visit.id}`);
-
+    router.push(`/dashboard/cashier?visitId=${data.data.visit.id}`)
   } catch (error) {
-    console.error('Error locking medical record:', error);
-    toast.error(error.message);
+    console.error("Error locking medical record:", error)
+    toast.error(error.message)
   }
 }
 ```
@@ -255,19 +256,19 @@ async function lockMedicalRecord(medicalRecordId: number) {
 ### Backend - Check Visit Status Before Creating Billing
 
 ```typescript
-import { canCreateBilling } from "@/types/visit-status";
+import { canCreateBilling } from "@/types/visit-status"
 
 // In billing creation endpoint
-const visit = await getVisit(visitId);
+const visit = await getVisit(visitId)
 
 if (!canCreateBilling(visit.status)) {
   return NextResponse.json(
     {
       error: "Cannot create billing",
-      message: "Visit is not ready for billing. Medical record must be locked first."
+      message: "Visit is not ready for billing. Medical record must be locked first.",
     },
     { status: 400 }
-  );
+  )
 }
 
 // Proceed with billing creation
@@ -358,6 +359,7 @@ if (!canCreateBilling(visit.status)) {
 **`/app/api/medical-records/lock/route.ts`**
 
 **Changes:**
+
 1. ✅ Added RBAC protection with `withRBAC`
 2. ✅ Added imports for visit status validation
 3. ✅ Removed `userId` from request schema (use authenticated user)
@@ -372,21 +374,25 @@ if (!canCreateBilling(visit.status)) {
 ## Benefits
 
 ### Data Integrity
+
 - ✅ Ensures visits progress through proper lifecycle
 - ✅ Validates status transitions before allowing lock
 - ✅ Prevents locked records for visits not ready for billing
 
 ### Workflow Automation
+
 - ✅ Eliminates manual status update step
 - ✅ Reduces human error
 - ✅ Streamlines doctor-to-cashier handoff
 
 ### User Experience
+
 - ✅ One-click operation (lock + status update)
 - ✅ Clear success/error messages
 - ✅ Immediate feedback on workflow progression
 
 ### Business Logic
+
 - ✅ Enforces that billing can only happen after examination complete
 - ✅ Prevents premature billing
 - ✅ Maintains clinical workflow integrity
@@ -396,6 +402,7 @@ if (!canCreateBilling(visit.status)) {
 ## Future Enhancements
 
 ### Notifications (H.1.1)
+
 When H.1.1 is implemented, add real-time notification to cashier:
 
 ```typescript
@@ -407,11 +414,12 @@ await sendNotification({
     visitId: visit.id,
     visitNumber: visit.visitNumber,
     patientName: patient.name,
-  }
-});
+  },
+})
 ```
 
 ### Status History Tracking
+
 Log all status changes for audit trail:
 
 ```typescript
@@ -423,7 +431,7 @@ await db.insert(visitStatusHistory).values({
   changedAt: new Date(),
   trigger: "medical_record_locked",
   medicalRecordId: medicalRecord.id,
-});
+})
 ```
 
 ---
@@ -442,6 +450,7 @@ await db.insert(visitStatusHistory).values({
 ✅ **Task H.1.2 Complete**
 
 **What was implemented:**
+
 - Automatic visit status update when medical record is locked
 - Status transition validation
 - RBAC protection
@@ -449,12 +458,14 @@ await db.insert(visitStatusHistory).values({
 - Enhanced response with visit status information
 
 **Impact:**
+
 - Seamless integration between Medical Records and Billing modules
 - Automated workflow progression
 - Data integrity maintained
 - Better user experience for doctors and cashiers
 
 **Next Steps:**
+
 - H.1.1: Implement real-time notifications for prescriptions
 - H.1.3: Implement UGD handover workflow
 - Test end-to-end workflow from examination to billing

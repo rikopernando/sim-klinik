@@ -15,6 +15,7 @@ Successfully created a comprehensive drug seeder to populate the `drugs` table w
 ### 1. **Seeder Script** (`db/seeders/seed-drugs.ts`)
 
 A production-ready seeder script with:
+
 - ✅ 32 common medications used in Indonesian clinics
 - ✅ Organized by medical categories
 - ✅ Realistic pricing in Indonesian Rupiah
@@ -26,6 +27,7 @@ A production-ready seeder script with:
 ### 2. **NPM Script** (package.json)
 
 Added convenient command:
+
 ```bash
 npm run db:seed:drugs
 ```
@@ -33,6 +35,7 @@ npm run db:seed:drugs
 ### 3. **Documentation** (`db/seeders/README.md`)
 
 Comprehensive documentation including:
+
 - How to run seeders
 - How to create new seeders
 - Best practices
@@ -44,26 +47,27 @@ Comprehensive documentation including:
 
 ### Total: 32 Drugs across 12 Categories
 
-| Category | Count | Examples |
-|----------|-------|----------|
-| **Analgesics** | 3 | Paracetamol, Ibuprofen, Asam Mefenamat |
-| **Antibiotics** | 4 | Amoxicillin, Ciprofloxacin, Azithromycin, Cefadroxil |
-| **Antihistamines** | 3 | Cetirizine, Loratadine, CTM |
-| **Gastrointestinal** | 4 | Omeprazole, Antasida, Domperidone, Loperamide |
-| **Vitamins** | 3 | B Complex, Vitamin C, Multivitamin |
-| **Cough & Cold** | 3 | Ambroxol, DMP Sirup, Pseudoephedrine |
-| **Cardiovascular** | 3 | Amlodipine, Captopril, Simvastatin |
-| **Diabetes** | 2 | Metformin, Glimepiride |
-| **Topical** | 3 | Betadine, Hydrocortisone Cream, Ketoconazole Cream |
-| **Eye Drops** | 1 | Chloramphenicol Eye Drops |
-| **Ear Drops** | 1 | Otopain Ear Drops |
-| **Injections** | 2 | Dexamethasone, Vitamin B12 Injection |
+| Category             | Count | Examples                                             |
+| -------------------- | ----- | ---------------------------------------------------- |
+| **Analgesics**       | 3     | Paracetamol, Ibuprofen, Asam Mefenamat               |
+| **Antibiotics**      | 4     | Amoxicillin, Ciprofloxacin, Azithromycin, Cefadroxil |
+| **Antihistamines**   | 3     | Cetirizine, Loratadine, CTM                          |
+| **Gastrointestinal** | 4     | Omeprazole, Antasida, Domperidone, Loperamide        |
+| **Vitamins**         | 3     | B Complex, Vitamin C, Multivitamin                   |
+| **Cough & Cold**     | 3     | Ambroxol, DMP Sirup, Pseudoephedrine                 |
+| **Cardiovascular**   | 3     | Amlodipine, Captopril, Simvastatin                   |
+| **Diabetes**         | 2     | Metformin, Glimepiride                               |
+| **Topical**          | 3     | Betadine, Hydrocortisone Cream, Ketoconazole Cream   |
+| **Eye Drops**        | 1     | Chloramphenicol Eye Drops                            |
+| **Ear Drops**        | 1     | Otopain Ear Drops                                    |
+| **Injections**       | 2     | Dexamethasone, Vitamin B12 Injection                 |
 
 ---
 
 ## Data Structure
 
 Each drug includes:
+
 - **name**: Trade/brand name (e.g., "Paracetamol 500mg")
 - **genericName**: Generic name (e.g., "Paracetamol")
 - **category**: Medical category (e.g., "Analgesics")
@@ -78,16 +82,19 @@ Each drug includes:
 ## How It Works
 
 ### 1. **Run the Seeder**
+
 ```bash
 npm run db:seed:drugs
 ```
 
 ### 2. **Safety Features**
+
 - Checks if drugs already exist before inserting
 - Won't create duplicates
 - All-or-nothing transaction (if one fails, none are inserted)
 
 ### 3. **Output**
+
 ```
 🌱 Starting drug seeding...
 ✅ Successfully seeded 32 drugs!
@@ -116,6 +123,7 @@ npm run db:seed:drugs
 ### Drug Search Feature (`useDrugSearch` hook)
 
 The seeded drugs are now searchable through:
+
 1. **API Endpoint**: `/api/drugs?search=query`
 2. **Custom Hook**: `useDrugSearch` with 300ms debouncing
 3. **UI Component**: `DrugSearch` component in prescription tab
@@ -133,11 +141,13 @@ The seeded drugs are now searchable through:
 ## Testing the Feature
 
 ### 1. Start the development server
+
 ```bash
 npm run dev
 ```
 
 ### 2. Navigate to Medical Record page
+
 ```
 /dashboard/medical-records/[visitId]
 ```
@@ -147,6 +157,7 @@ npm run dev
 ### 4. Click "Tambah Resep"
 
 ### 5. Try searching for drugs:
+
 - Type "para" → Should find Paracetamol
 - Type "amox" → Should find Amoxicillin
 - Type "vitamin" → Should find Vitamin B Complex, Vitamin C
@@ -158,12 +169,14 @@ npm run dev
 ## Benefits
 
 ### For Development
+
 - ✅ No need to manually create test drugs
 - ✅ Consistent test data across team
 - ✅ Quick database reset and re-seed
 - ✅ Realistic data for testing
 
 ### For Testing
+
 - ✅ Test prescription creation flow
 - ✅ Test drug search functionality
 - ✅ Test autocomplete behavior
@@ -171,6 +184,7 @@ npm run dev
 - ✅ Test Indonesian language support
 
 ### For Demo
+
 - ✅ Professional demo data
 - ✅ Familiar medication names
 - ✅ Realistic pricing
@@ -181,6 +195,7 @@ npm run dev
 ## Future Enhancements
 
 Potential improvements:
+
 1. Add more drugs (expand to 100+ drugs)
 2. Add drug interactions data
 3. Add contraindications
@@ -193,11 +208,13 @@ Potential improvements:
 ## Files Created/Modified
 
 ### New Files
+
 1. ✅ `db/seeders/seed-drugs.ts` - Main seeder script
 2. ✅ `db/seeders/README.md` - Seeder documentation
 3. ✅ `documentation/drug_seeder_summary.md` - This file
 
 ### Modified Files
+
 1. ✅ `package.json` - Added `db:seed:drugs` script
 
 ---

@@ -24,6 +24,7 @@ This document provides a step-by-step guide for implementing Role-Based Access C
 ### What Has Been Completed
 
 ✅ **Better Auth Session Enhancement (Task J.15)**
+
 - Updated `/lib/auth.ts` to include role and permissions in session using `customSession` plugin
 - Updated `/lib/auth-client.ts` with `customSessionClient` for type inference
 - Session now automatically includes:
@@ -32,6 +33,7 @@ This document provides a step-by-step guide for implementing Role-Based Access C
   - `user.permissions` - Array of permissions based on role
 
 ✅ **Protected API Routes**
+
 - `/api/patients/*` - All routes (GET, POST, PATCH, search)
 - `/api/visits/*` - All methods (GET, POST, PATCH)
 - `/api/medical-records` - Main route (GET, POST, PATCH)
@@ -39,6 +41,7 @@ This document provides a step-by-step guide for implementing Role-Based Access C
 ### What Needs to Be Done
 
 ⏳ **Remaining Routes (~20 files)**
+
 - Medical Records sub-routes (4 files)
 - Emergency routes (3 files)
 - Inpatient routes (4 files)
@@ -67,72 +70,74 @@ Every API route should follow this pattern:
 #### Step 1: Import the RBAC middleware
 
 ```typescript
-import { withRBAC } from "@/lib/rbac/middleware";
+import { withRBAC } from "@/lib/rbac/middleware"
 ```
 
 #### Step 2: Wrap the handler
 
 **Before:**
+
 ```typescript
 export async function GET(request: NextRequest) {
-    try {
-        // handler logic
-    } catch (error) {
-        // error handling
-    }
+  try {
+    // handler logic
+  } catch (error) {
+    // error handling
+  }
 }
 ```
 
 **After:**
+
 ```typescript
 export const GET = withRBAC(
-    async (request: NextRequest) => {
-        try {
-            // handler logic (unchanged)
-        } catch (error) {
-            // error handling (unchanged)
-        }
-    },
-    { permissions: ["appropriate:permission"] }
-);
+  async (request: NextRequest) => {
+    try {
+      // handler logic (unchanged)
+    } catch (error) {
+      // error handling (unchanged)
+    }
+  },
+  { permissions: ["appropriate:permission"] }
+)
 ```
 
 #### Step 3: Remove manual auth checks (if present)
 
 **Before:**
+
 ```typescript
 const session = await auth.api.getSession({
-    headers: request.headers,
-});
+  headers: request.headers,
+})
 
 if (!session?.user) {
-    return NextResponse.json(
-        { error: "Unauthorized. Please login." },
-        { status: 401 }
-    );
+  return NextResponse.json({ error: "Unauthorized. Please login." }, { status: 401 })
 }
 
-const doctorId = session.user.id;
+const doctorId = session.user.id
 ```
 
 **After:**
+
 ```typescript
 // withRBAC provides user object automatically
 export const POST = withRBAC(
-    async (request: NextRequest, { user }) => {
-        // user.id, user.email, user.name are available
-        const doctorId = user.id;
-    },
-    { permissions: ["medical_records:write"] }
-);
+  async (request: NextRequest, { user }) => {
+    // user.id, user.email, user.name are available
+    const doctorId = user.id
+  },
+  { permissions: ["medical_records:write"] }
+)
 ```
 
 #### Step 4: Remove auth import (if no longer needed)
 
 If the file only used `auth` for session checking:
+
 ```typescript
 // Remove this line if not used elsewhere
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth"
 ```
 
 ---
@@ -143,68 +148,68 @@ Use this comprehensive mapping to determine which permissions each route needs.
 
 ### Medical Records Sub-routes
 
-| Route | Method | Permission(s) | Roles with Access |
-|-------|--------|---------------|-------------------|
-| `/api/medical-records/lock` | POST | `medical_records:lock` | doctor, super_admin |
-| `/api/medical-records/diagnoses` | GET | `medical_records:read` | doctor, super_admin, admin |
-| `/api/medical-records/diagnoses` | POST | `medical_records:write` | doctor, super_admin |
-| `/api/medical-records/diagnoses` | PATCH | `medical_records:write` | doctor, super_admin |
-| `/api/medical-records/diagnoses` | DELETE | `medical_records:write` | doctor, super_admin |
-| `/api/medical-records/procedures` | GET | `medical_records:read` | doctor, super_admin, admin |
-| `/api/medical-records/procedures` | POST | `medical_records:write` | doctor, super_admin |
-| `/api/medical-records/procedures` | PATCH | `medical_records:write` | doctor, super_admin |
-| `/api/medical-records/procedures` | DELETE | `medical_records:write` | doctor, super_admin |
-| `/api/medical-records/prescriptions` | GET | `prescriptions:read` | doctor, pharmacist, super_admin, admin |
-| `/api/medical-records/prescriptions` | POST | `prescriptions:write` | doctor, super_admin |
-| `/api/medical-records/prescriptions` | PATCH | `prescriptions:write` | doctor, super_admin |
-| `/api/medical-records/prescriptions` | DELETE | `prescriptions:write` | doctor, super_admin |
+| Route                                | Method | Permission(s)           | Roles with Access                      |
+| ------------------------------------ | ------ | ----------------------- | -------------------------------------- |
+| `/api/medical-records/lock`          | POST   | `medical_records:lock`  | doctor, super_admin                    |
+| `/api/medical-records/diagnoses`     | GET    | `medical_records:read`  | doctor, super_admin, admin             |
+| `/api/medical-records/diagnoses`     | POST   | `medical_records:write` | doctor, super_admin                    |
+| `/api/medical-records/diagnoses`     | PATCH  | `medical_records:write` | doctor, super_admin                    |
+| `/api/medical-records/diagnoses`     | DELETE | `medical_records:write` | doctor, super_admin                    |
+| `/api/medical-records/procedures`    | GET    | `medical_records:read`  | doctor, super_admin, admin             |
+| `/api/medical-records/procedures`    | POST   | `medical_records:write` | doctor, super_admin                    |
+| `/api/medical-records/procedures`    | PATCH  | `medical_records:write` | doctor, super_admin                    |
+| `/api/medical-records/procedures`    | DELETE | `medical_records:write` | doctor, super_admin                    |
+| `/api/medical-records/prescriptions` | GET    | `prescriptions:read`    | doctor, pharmacist, super_admin, admin |
+| `/api/medical-records/prescriptions` | POST   | `prescriptions:write`   | doctor, super_admin                    |
+| `/api/medical-records/prescriptions` | PATCH  | `prescriptions:write`   | doctor, super_admin                    |
+| `/api/medical-records/prescriptions` | DELETE | `prescriptions:write`   | doctor, super_admin                    |
 
 ### Emergency Routes
 
-| Route | Method | Permission(s) | Roles with Access |
-|-------|--------|---------------|-------------------|
-| `/api/emergency/quick-register` | POST | `visits:write` | receptionist, admin, super_admin, doctor |
-| `/api/emergency/complete-registration` | PATCH | `patients:write` | receptionist, admin, super_admin |
-| `/api/emergency/handover` | POST | `visits:write` | doctor, admin, super_admin |
+| Route                                  | Method | Permission(s)    | Roles with Access                        |
+| -------------------------------------- | ------ | ---------------- | ---------------------------------------- |
+| `/api/emergency/quick-register`        | POST   | `visits:write`   | receptionist, admin, super_admin, doctor |
+| `/api/emergency/complete-registration` | PATCH  | `patients:write` | receptionist, admin, super_admin         |
+| `/api/emergency/handover`              | POST   | `visits:write`   | doctor, admin, super_admin               |
 
 ### Inpatient Routes
 
-| Route | Method | Permission(s) | Roles with Access |
-|-------|--------|---------------|-------------------|
-| `/api/rooms` | GET | `inpatient:read` | nurse, doctor, admin, super_admin |
-| `/api/rooms` | POST | `inpatient:manage_beds` | nurse, super_admin |
-| `/api/rooms` | PATCH | `inpatient:manage_beds` | nurse, super_admin |
-| `/api/rooms/assign` | POST | `inpatient:manage_beds` | nurse, super_admin |
-| `/api/vitals` | GET | `inpatient:read` | nurse, doctor, admin, super_admin |
-| `/api/vitals` | POST | `inpatient:write` | nurse, doctor, super_admin |
-| `/api/cppt` | GET | `inpatient:read` | nurse, doctor, admin, super_admin |
-| `/api/cppt` | POST | `inpatient:write` | nurse, doctor, super_admin |
-| `/api/cppt` | PATCH | `inpatient:write` | nurse, doctor, super_admin |
-| `/api/materials` | POST | `inpatient:write` | nurse, doctor, super_admin |
+| Route               | Method | Permission(s)           | Roles with Access                 |
+| ------------------- | ------ | ----------------------- | --------------------------------- |
+| `/api/rooms`        | GET    | `inpatient:read`        | nurse, doctor, admin, super_admin |
+| `/api/rooms`        | POST   | `inpatient:manage_beds` | nurse, super_admin                |
+| `/api/rooms`        | PATCH  | `inpatient:manage_beds` | nurse, super_admin                |
+| `/api/rooms/assign` | POST   | `inpatient:manage_beds` | nurse, super_admin                |
+| `/api/vitals`       | GET    | `inpatient:read`        | nurse, doctor, admin, super_admin |
+| `/api/vitals`       | POST   | `inpatient:write`       | nurse, doctor, super_admin        |
+| `/api/cppt`         | GET    | `inpatient:read`        | nurse, doctor, admin, super_admin |
+| `/api/cppt`         | POST   | `inpatient:write`       | nurse, doctor, super_admin        |
+| `/api/cppt`         | PATCH  | `inpatient:write`       | nurse, doctor, super_admin        |
+| `/api/materials`    | POST   | `inpatient:write`       | nurse, doctor, super_admin        |
 
 ### Pharmacy Routes
 
-| Route | Method | Permission(s) | Roles with Access |
-|-------|--------|---------------|-------------------|
-| `/api/drugs` | GET | `pharmacy:read` | pharmacist, doctor, admin, super_admin |
-| `/api/drugs` | POST | `pharmacy:write` | pharmacist, super_admin |
-| `/api/drugs` | PATCH | `pharmacy:write` | pharmacist, super_admin |
-| `/api/drugs` | DELETE | `pharmacy:write` | pharmacist, super_admin |
-| `/api/inventory` | GET | `pharmacy:read` | pharmacist, admin, super_admin |
-| `/api/inventory` | POST | `pharmacy:manage_inventory` | pharmacist, super_admin |
-| `/api/inventory` | PATCH | `pharmacy:manage_inventory` | pharmacist, super_admin |
-| `/api/pharmacy/expiring` | GET | `pharmacy:read` | pharmacist, admin, super_admin |
-| `/api/pharmacy/queue` | GET | `prescriptions:read` | pharmacist, super_admin |
-| `/api/pharmacy/queue` | PATCH | `prescriptions:fulfill` | pharmacist, super_admin |
+| Route                    | Method | Permission(s)               | Roles with Access                      |
+| ------------------------ | ------ | --------------------------- | -------------------------------------- |
+| `/api/drugs`             | GET    | `pharmacy:read`             | pharmacist, doctor, admin, super_admin |
+| `/api/drugs`             | POST   | `pharmacy:write`            | pharmacist, super_admin                |
+| `/api/drugs`             | PATCH  | `pharmacy:write`            | pharmacist, super_admin                |
+| `/api/drugs`             | DELETE | `pharmacy:write`            | pharmacist, super_admin                |
+| `/api/inventory`         | GET    | `pharmacy:read`             | pharmacist, admin, super_admin         |
+| `/api/inventory`         | POST   | `pharmacy:manage_inventory` | pharmacist, super_admin                |
+| `/api/inventory`         | PATCH  | `pharmacy:manage_inventory` | pharmacist, super_admin                |
+| `/api/pharmacy/expiring` | GET    | `pharmacy:read`             | pharmacist, admin, super_admin         |
+| `/api/pharmacy/queue`    | GET    | `prescriptions:read`        | pharmacist, super_admin                |
+| `/api/pharmacy/queue`    | PATCH  | `prescriptions:fulfill`     | pharmacist, super_admin                |
 
 ### Billing Routes
 
-| Route | Method | Permission(s) | Roles with Access |
-|-------|--------|---------------|-------------------|
-| `/api/billing` | GET | `billing:read` | cashier, admin, super_admin |
-| `/api/billing` | POST | `billing:write` | cashier, super_admin |
-| `/api/billing/payment` | POST | `billing:process_payment` | cashier, super_admin |
-| `/api/billing/discharge` | POST | `discharge:write` | doctor, cashier, super_admin |
+| Route                    | Method | Permission(s)             | Roles with Access            |
+| ------------------------ | ------ | ------------------------- | ---------------------------- |
+| `/api/billing`           | GET    | `billing:read`            | cashier, admin, super_admin  |
+| `/api/billing`           | POST   | `billing:write`           | cashier, super_admin         |
+| `/api/billing/payment`   | POST   | `billing:process_payment` | cashier, super_admin         |
+| `/api/billing/discharge` | POST   | `discharge:write`         | doctor, cashier, super_admin |
 
 ---
 
@@ -215,163 +220,150 @@ Use this comprehensive mapping to determine which permissions each route needs.
 **File:** `/api/medical-records/lock/route.ts`
 
 **Original Code:**
+
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { medicalRecords } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import { medicalRecords } from "@/db/schema"
+import { eq } from "drizzle-orm"
+import { z } from "zod"
 
 const lockSchema = z.object({
-    id: z.number().int().positive(),
-    userId: z.string(),
-});
+  id: z.number().int().positive(),
+  userId: z.string(),
+})
 
 export async function POST(request: NextRequest) {
-    try {
-        const body = await request.json();
-        const validatedData = lockSchema.parse(body);
+  try {
+    const body = await request.json()
+    const validatedData = lockSchema.parse(body)
 
-        // Check if record exists
-        const existing = await db
-            .select()
-            .from(medicalRecords)
-            .where(eq(medicalRecords.id, validatedData.id))
-            .limit(1);
+    // Check if record exists
+    const existing = await db
+      .select()
+      .from(medicalRecords)
+      .where(eq(medicalRecords.id, validatedData.id))
+      .limit(1)
 
-        if (existing.length === 0) {
-            return NextResponse.json(
-                { error: "Medical record not found" },
-                { status: 404 }
-            );
-        }
-
-        if (existing[0].isLocked) {
-            return NextResponse.json(
-                { error: "Medical record is already locked" },
-                { status: 400 }
-            );
-        }
-
-        // Lock the medical record
-        const lockedRecord = await db
-            .update(medicalRecords)
-            .set({
-                isLocked: true,
-                isDraft: false,
-                lockedAt: new Date(),
-                lockedBy: validatedData.userId,
-                updatedAt: new Date(),
-            })
-            .where(eq(medicalRecords.id, validatedData.id))
-            .returning();
-
-        return NextResponse.json({
-            success: true,
-            message: "Medical record locked successfully",
-            data: lockedRecord[0],
-        });
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: "Validation error", details: error.issues },
-                { status: 400 }
-            );
-        }
-
-        console.error("Medical record lock error:", error);
-        return NextResponse.json(
-            { error: "Failed to lock medical record" },
-            { status: 500 }
-        );
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
     }
+
+    if (existing[0].isLocked) {
+      return NextResponse.json({ error: "Medical record is already locked" }, { status: 400 })
+    }
+
+    // Lock the medical record
+    const lockedRecord = await db
+      .update(medicalRecords)
+      .set({
+        isLocked: true,
+        isDraft: false,
+        lockedAt: new Date(),
+        lockedBy: validatedData.userId,
+        updatedAt: new Date(),
+      })
+      .where(eq(medicalRecords.id, validatedData.id))
+      .returning()
+
+    return NextResponse.json({
+      success: true,
+      message: "Medical record locked successfully",
+      data: lockedRecord[0],
+    })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation error", details: error.issues },
+        { status: 400 }
+      )
+    }
+
+    console.error("Medical record lock error:", error)
+    return NextResponse.json({ error: "Failed to lock medical record" }, { status: 500 })
+  }
 }
 ```
 
 **Protected Code:**
+
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { medicalRecords } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-import { withRBAC } from "@/lib/rbac/middleware"; // 1. Add import
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import { medicalRecords } from "@/db/schema"
+import { eq } from "drizzle-orm"
+import { z } from "zod"
+import { withRBAC } from "@/lib/rbac/middleware" // 1. Add import
 
 // 2. Update schema - remove userId (we'll use authenticated user)
 const lockSchema = z.object({
-    id: z.number().int().positive(),
-});
+  id: z.number().int().positive(),
+})
 
 /**
  * POST /api/medical-records/lock
  * Lock a medical record (make it immutable)
  * Requires: medical_records:lock permission
  */
-export const POST = withRBAC( // 3. Change to const + withRBAC
-    async (request: NextRequest, { user }) => { // 4. Add user from context
-        try {
-            const body = await request.json();
-            const validatedData = lockSchema.parse(body);
+export const POST = withRBAC(
+  // 3. Change to const + withRBAC
+  async (request: NextRequest, { user }) => {
+    // 4. Add user from context
+    try {
+      const body = await request.json()
+      const validatedData = lockSchema.parse(body)
 
-            // Check if record exists
-            const existing = await db
-                .select()
-                .from(medicalRecords)
-                .where(eq(medicalRecords.id, validatedData.id))
-                .limit(1);
+      // Check if record exists
+      const existing = await db
+        .select()
+        .from(medicalRecords)
+        .where(eq(medicalRecords.id, validatedData.id))
+        .limit(1)
 
-            if (existing.length === 0) {
-                return NextResponse.json(
-                    { error: "Medical record not found" },
-                    { status: 404 }
-                );
-            }
+      if (existing.length === 0) {
+        return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
+      }
 
-            if (existing[0].isLocked) {
-                return NextResponse.json(
-                    { error: "Medical record is already locked" },
-                    { status: 400 }
-                );
-            }
+      if (existing[0].isLocked) {
+        return NextResponse.json({ error: "Medical record is already locked" }, { status: 400 })
+      }
 
-            // Lock the medical record
-            const lockedRecord = await db
-                .update(medicalRecords)
-                .set({
-                    isLocked: true,
-                    isDraft: false,
-                    lockedAt: new Date(),
-                    lockedBy: user.id, // 5. Use authenticated user ID
-                    updatedAt: new Date(),
-                })
-                .where(eq(medicalRecords.id, validatedData.id))
-                .returning();
+      // Lock the medical record
+      const lockedRecord = await db
+        .update(medicalRecords)
+        .set({
+          isLocked: true,
+          isDraft: false,
+          lockedAt: new Date(),
+          lockedBy: user.id, // 5. Use authenticated user ID
+          updatedAt: new Date(),
+        })
+        .where(eq(medicalRecords.id, validatedData.id))
+        .returning()
 
-            return NextResponse.json({
-                success: true,
-                message: "Medical record locked successfully",
-                data: lockedRecord[0],
-            });
-        } catch (error) {
-            if (error instanceof z.ZodError) {
-                return NextResponse.json(
-                    { error: "Validation error", details: error.issues },
-                    { status: 400 }
-                );
-            }
+      return NextResponse.json({
+        success: true,
+        message: "Medical record locked successfully",
+        data: lockedRecord[0],
+      })
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation error", details: error.issues },
+          { status: 400 }
+        )
+      }
 
-            console.error("Medical record lock error:", error);
-            return NextResponse.json(
-                { error: "Failed to lock medical record" },
-                { status: 500 }
-            );
-        }
-    },
-    { permissions: ["medical_records:lock"] } // 6. Specify required permission
-);
+      console.error("Medical record lock error:", error)
+      return NextResponse.json({ error: "Failed to lock medical record" }, { status: 500 })
+    }
+  },
+  { permissions: ["medical_records:lock"] } // 6. Specify required permission
+)
 ```
 
 **Changes Made:**
+
 1. ✅ Added `withRBAC` import
 2. ✅ Removed `userId` from schema (use authenticated user instead)
 3. ✅ Changed `export async function` to `export const` with `withRBAC`
@@ -386,80 +378,82 @@ export const POST = withRBAC( // 3. Change to const + withRBAC
 **File:** `/api/emergency/quick-register/route.ts` (hypothetical)
 
 **Original Code:**
+
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { db } from "@/db";
+import { NextRequest, NextResponse } from "next/server"
+import { auth } from "@/lib/auth"
+import { db } from "@/db"
 
 export async function POST(request: NextRequest) {
-    // Manual auth check
-    const session = await auth.api.getSession({
-        headers: request.headers,
-    });
+  // Manual auth check
+  const session = await auth.api.getSession({
+    headers: request.headers,
+  })
 
-    if (!session?.user) {
-        return NextResponse.json(
-            { error: "Unauthorized. Please login." },
-            { status: 401 }
-        );
-    }
+  if (!session?.user) {
+    return NextResponse.json({ error: "Unauthorized. Please login." }, { status: 401 })
+  }
 
-    try {
-        const body = await request.json();
+  try {
+    const body = await request.json()
 
-        // Create quick registration
-        const newVisit = await db.insert(visits).values({
-            // ... data
-            registeredBy: session.user.id, // Using session
-        }).returning();
+    // Create quick registration
+    const newVisit = await db
+      .insert(visits)
+      .values({
+        // ... data
+        registeredBy: session.user.id, // Using session
+      })
+      .returning()
 
-        return NextResponse.json({ success: true, data: newVisit[0] });
-    } catch (error) {
-        return NextResponse.json(
-            { error: "Failed to register patient" },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({ success: true, data: newVisit[0] })
+  } catch (error) {
+    return NextResponse.json({ error: "Failed to register patient" }, { status: 500 })
+  }
 }
 ```
 
 **Protected Code:**
+
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"
 // import { auth } from "@/lib/auth"; // 1. Remove auth import (no longer needed)
-import { withRBAC } from "@/lib/rbac/middleware"; // 2. Add withRBAC import
-import { db } from "@/db";
+import { withRBAC } from "@/lib/rbac/middleware" // 2. Add withRBAC import
+import { db } from "@/db"
 
 /**
  * POST /api/emergency/quick-register
  * Quick registration for emergency patients
  * Requires: visits:write permission
  */
-export const POST = withRBAC( // 3. Wrap with withRBAC
-    async (request: NextRequest, { user }) => { // 4. Get user from context
-        // 5. Remove manual auth check - withRBAC handles it
-        try {
-            const body = await request.json();
+export const POST = withRBAC(
+  // 3. Wrap with withRBAC
+  async (request: NextRequest, { user }) => {
+    // 4. Get user from context
+    // 5. Remove manual auth check - withRBAC handles it
+    try {
+      const body = await request.json()
 
-            // Create quick registration
-            const newVisit = await db.insert(visits).values({
-                // ... data
-                registeredBy: user.id, // 6. Use user from context
-            }).returning();
+      // Create quick registration
+      const newVisit = await db
+        .insert(visits)
+        .values({
+          // ... data
+          registeredBy: user.id, // 6. Use user from context
+        })
+        .returning()
 
-            return NextResponse.json({ success: true, data: newVisit[0] });
-        } catch (error) {
-            return NextResponse.json(
-                { error: "Failed to register patient" },
-                { status: 500 }
-            );
-        }
-    },
-    { permissions: ["visits:write"] } // 7. Specify permission
-);
+      return NextResponse.json({ success: true, data: newVisit[0] })
+    } catch (error) {
+      return NextResponse.json({ error: "Failed to register patient" }, { status: 500 })
+    }
+  },
+  { permissions: ["visits:write"] } // 7. Specify permission
+)
 ```
 
 **Changes Made:**
+
 1. ✅ Removed `auth` import (no longer needed)
 2. ✅ Added `withRBAC` import
 3. ✅ Wrapped handler with `withRBAC`
@@ -475,36 +469,38 @@ export const POST = withRBAC( // 3. Wrap with withRBAC
 **File:** `/api/drugs/route.ts`
 
 **Original Code:**
+
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { drugs } from "@/db/schema";
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import { drugs } from "@/db/schema"
 
 export async function GET(request: NextRequest) {
-    const allDrugs = await db.select().from(drugs);
-    return NextResponse.json({ data: allDrugs });
+  const allDrugs = await db.select().from(drugs)
+  return NextResponse.json({ data: allDrugs })
 }
 
 export async function POST(request: NextRequest) {
-    const body = await request.json();
-    const newDrug = await db.insert(drugs).values(body).returning();
-    return NextResponse.json({ data: newDrug[0] });
+  const body = await request.json()
+  const newDrug = await db.insert(drugs).values(body).returning()
+  return NextResponse.json({ data: newDrug[0] })
 }
 
 export async function PATCH(request: NextRequest) {
-    const body = await request.json();
-    const { id, ...updateData } = body;
-    const updated = await db.update(drugs).set(updateData).where(eq(drugs.id, id)).returning();
-    return NextResponse.json({ data: updated[0] });
+  const body = await request.json()
+  const { id, ...updateData } = body
+  const updated = await db.update(drugs).set(updateData).where(eq(drugs.id, id)).returning()
+  return NextResponse.json({ data: updated[0] })
 }
 ```
 
 **Protected Code:**
+
 ```typescript
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { drugs } from "@/db/schema";
-import { withRBAC } from "@/lib/rbac/middleware"; // Add import
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import { drugs } from "@/db/schema"
+import { withRBAC } from "@/lib/rbac/middleware" // Add import
 
 /**
  * GET /api/drugs
@@ -512,12 +508,12 @@ import { withRBAC } from "@/lib/rbac/middleware"; // Add import
  * Requires: pharmacy:read permission
  */
 export const GET = withRBAC(
-    async (request: NextRequest) => {
-        const allDrugs = await db.select().from(drugs);
-        return NextResponse.json({ data: allDrugs });
-    },
-    { permissions: ["pharmacy:read"] } // Read permission
-);
+  async (request: NextRequest) => {
+    const allDrugs = await db.select().from(drugs)
+    return NextResponse.json({ data: allDrugs })
+  },
+  { permissions: ["pharmacy:read"] } // Read permission
+)
 
 /**
  * POST /api/drugs
@@ -525,13 +521,13 @@ export const GET = withRBAC(
  * Requires: pharmacy:write permission
  */
 export const POST = withRBAC(
-    async (request: NextRequest) => {
-        const body = await request.json();
-        const newDrug = await db.insert(drugs).values(body).returning();
-        return NextResponse.json({ data: newDrug[0] });
-    },
-    { permissions: ["pharmacy:write"] } // Write permission
-);
+  async (request: NextRequest) => {
+    const body = await request.json()
+    const newDrug = await db.insert(drugs).values(body).returning()
+    return NextResponse.json({ data: newDrug[0] })
+  },
+  { permissions: ["pharmacy:write"] } // Write permission
+)
 
 /**
  * PATCH /api/drugs
@@ -539,14 +535,14 @@ export const POST = withRBAC(
  * Requires: pharmacy:write permission
  */
 export const PATCH = withRBAC(
-    async (request: NextRequest) => {
-        const body = await request.json();
-        const { id, ...updateData } = body;
-        const updated = await db.update(drugs).set(updateData).where(eq(drugs.id, id)).returning();
-        return NextResponse.json({ data: updated[0] });
-    },
-    { permissions: ["pharmacy:write"] } // Write permission
-);
+  async (request: NextRequest) => {
+    const body = await request.json()
+    const { id, ...updateData } = body
+    const updated = await db.update(drugs).set(updateData).where(eq(drugs.id, id)).returning()
+    return NextResponse.json({ data: updated[0] })
+  },
+  { permissions: ["pharmacy:write"] } // Write permission
+)
 ```
 
 **Key Point:** Each HTTP method gets its own protection with appropriate permissions!
@@ -561,14 +557,14 @@ Some routes might be accessible by users with ANY of several permissions:
 
 ```typescript
 export const GET = withRBAC(
-    async (request: NextRequest) => {
-        // Handler logic
-    },
-    {
-        permissions: ["medical_records:read", "medical_records:write"],
-        requireAll: false // Default: user needs ANY of these permissions
-    }
-);
+  async (request: NextRequest) => {
+    // Handler logic
+  },
+  {
+    permissions: ["medical_records:read", "medical_records:write"],
+    requireAll: false, // Default: user needs ANY of these permissions
+  }
+)
 ```
 
 ### Scenario 2: Requiring All Permissions
@@ -577,14 +573,14 @@ For routes that need multiple specific permissions:
 
 ```typescript
 export const POST = withRBAC(
-    async (request: NextRequest) => {
-        // Handler logic
-    },
-    {
-        permissions: ["billing:write", "discharge:write"],
-        requireAll: true // User must have ALL these permissions
-    }
-);
+  async (request: NextRequest) => {
+    // Handler logic
+  },
+  {
+    permissions: ["billing:write", "discharge:write"],
+    requireAll: true, // User must have ALL these permissions
+  }
+)
 ```
 
 ### Scenario 3: Role-Based Protection
@@ -593,13 +589,13 @@ If you want to restrict by role instead of permission:
 
 ```typescript
 export const DELETE = withRBAC(
-    async (request: NextRequest) => {
-        // Handler logic
-    },
-    {
-        roles: ["super_admin"] // Only super_admin can access
-    }
-);
+  async (request: NextRequest) => {
+    // Handler logic
+  },
+  {
+    roles: ["super_admin"], // Only super_admin can access
+  }
+)
 ```
 
 ### Scenario 4: Accessing User Information
@@ -608,20 +604,20 @@ The `withRBAC` middleware provides user context:
 
 ```typescript
 export const POST = withRBAC(
-    async (request: NextRequest, { user, role }) => {
-        console.log(user.id);    // User ID
-        console.log(user.email); // User email
-        console.log(user.name);  // User name
-        console.log(role);       // User's role (e.g., "doctor")
+  async (request: NextRequest, { user, role }) => {
+    console.log(user.id) // User ID
+    console.log(user.email) // User email
+    console.log(user.name) // User name
+    console.log(role) // User's role (e.g., "doctor")
 
-        // Use in your logic
-        const record = await createRecord({
-            doctorId: user.id,
-            doctorName: user.name,
-        });
-    },
-    { permissions: ["medical_records:write"] }
-);
+    // Use in your logic
+    const record = await createRecord({
+      doctorId: user.id,
+      doctorName: user.name,
+    })
+  },
+  { permissions: ["medical_records:write"] }
+)
 ```
 
 ---
@@ -645,6 +641,7 @@ curl -X GET http://localhost:3000/api/patients
 #### 2. Test with Different Roles
 
 **Test as Doctor:**
+
 ```bash
 # Login as doctor first, get token
 # Then test allowed endpoints
@@ -660,6 +657,7 @@ curl -X POST http://localhost:3000/api/inventory \
 ```
 
 **Test as Pharmacist:**
+
 ```bash
 # ✅ Should work: Fulfill prescriptions
 curl -X PATCH http://localhost:3000/api/pharmacy/queue \
@@ -672,6 +670,7 @@ curl -X POST http://localhost:3000/api/medical-records/lock \
 ```
 
 **Test as Super Admin:**
+
 ```bash
 # ✅ Should work: Everything!
 curl -X DELETE http://localhost:3000/api/users/123 \
@@ -682,14 +681,14 @@ curl -X DELETE http://localhost:3000/api/users/123 \
 
 Create a test matrix for critical routes:
 
-| Route | Doctor | Nurse | Pharmacist | Cashier | Receptionist | Super Admin |
-|-------|--------|-------|------------|---------|--------------|-------------|
-| POST /api/patients | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
-| GET /api/patients | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| POST /api/medical-records | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| POST /api/medical-records/lock | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ |
-| PATCH /api/pharmacy/queue | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
-| POST /api/billing/payment | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ |
+| Route                          | Doctor | Nurse | Pharmacist | Cashier | Receptionist | Super Admin |
+| ------------------------------ | ------ | ----- | ---------- | ------- | ------------ | ----------- |
+| POST /api/patients             | ❌     | ❌    | ❌         | ❌      | ✅           | ✅          |
+| GET /api/patients              | ✅     | ✅    | ✅         | ✅      | ✅           | ✅          |
+| POST /api/medical-records      | ✅     | ❌    | ❌         | ❌      | ❌           | ✅          |
+| POST /api/medical-records/lock | ✅     | ❌    | ❌         | ❌      | ❌           | ✅          |
+| PATCH /api/pharmacy/queue      | ❌     | ❌    | ✅         | ❌      | ❌           | ✅          |
+| POST /api/billing/payment      | ❌     | ❌    | ❌         | ✅      | ❌           | ✅          |
 
 ### Automated Testing (Optional)
 
@@ -735,12 +734,13 @@ describe('RBAC Protection', () => {
 **Cause:** Import path is incorrect or middleware file doesn't exist.
 
 **Solution:**
+
 ```typescript
 // Check that this file exists:
 // /lib/rbac/middleware.ts
 
 // Correct import:
-import { withRBAC } from "@/lib/rbac/middleware";
+import { withRBAC } from "@/lib/rbac/middleware"
 ```
 
 ### Issue 2: "User is undefined in handler"
@@ -748,46 +748,52 @@ import { withRBAC } from "@/lib/rbac/middleware";
 **Cause:** Not destructuring the user from context parameter.
 
 **Incorrect:**
+
 ```typescript
 export const POST = withRBAC(
-    async (request: NextRequest) => {
-        const userId = user.id; // ❌ user is not defined
-    },
-    { permissions: ["medical_records:write"] }
-);
+  async (request: NextRequest) => {
+    const userId = user.id // ❌ user is not defined
+  },
+  { permissions: ["medical_records:write"] }
+)
 ```
 
 **Correct:**
+
 ```typescript
 export const POST = withRBAC(
-    async (request: NextRequest, { user }) => { // ✅ Destructure user
-        const userId = user.id;
-    },
-    { permissions: ["medical_records:write"] }
-);
+  async (request: NextRequest, { user }) => {
+    // ✅ Destructure user
+    const userId = user.id
+  },
+  { permissions: ["medical_records:write"] }
+)
 ```
 
 ### Issue 3: Always getting 403 Forbidden
 
 **Possible Causes:**
+
 1. User doesn't have the required role assigned in database
 2. Permission name is misspelled
 3. Role permissions mapping is incorrect
 
 **Debug Steps:**
+
 ```typescript
 // Temporarily log user permissions
 export const POST = withRBAC(
-    async (request: NextRequest, { user, role }) => {
-        console.log('User role:', role);
-        console.log('User permissions:', user.permissions);
-        // ... rest of handler
-    },
-    { permissions: ["medical_records:write"] }
-);
+  async (request: NextRequest, { user, role }) => {
+    console.log("User role:", role)
+    console.log("User permissions:", user.permissions)
+    // ... rest of handler
+  },
+  { permissions: ["medical_records:write"] }
+)
 ```
 
 **Check Database:**
+
 ```sql
 -- Verify user has a role
 SELECT u.id, u.name, u.email, r.name as role_name
@@ -800,30 +806,32 @@ WHERE u.id = 'USER_ID_HERE';
 ### Issue 4: TypeScript Errors with Context Parameter
 
 **Error:**
+
 ```
 Parameter 'context' implicitly has an 'any' type.
 ```
 
 **Solution:**
+
 ```typescript
 // Add proper type annotation
 export const POST = withRBAC(
-    async (
-        request: NextRequest,
-        context: { user: { id: string; email: string; name: string }; role?: string | null }
-    ) => {
-        const userId = context.user.id;
-    },
-    { permissions: ["medical_records:write"] }
-);
+  async (
+    request: NextRequest,
+    context: { user: { id: string; email: string; name: string }; role?: string | null }
+  ) => {
+    const userId = context.user.id
+  },
+  { permissions: ["medical_records:write"] }
+)
 
 // Or use destructuring (simpler)
 export const POST = withRBAC(
-    async (request: NextRequest, { user, role }) => {
-        const userId = user.id;
-    },
-    { permissions: ["medical_records:write"] }
-);
+  async (request: NextRequest, { user, role }) => {
+    const userId = user.id
+  },
+  { permissions: ["medical_records:write"] }
+)
 ```
 
 ### Issue 5: Session Doesn't Include Role Data
@@ -831,23 +839,25 @@ export const POST = withRBAC(
 **Cause:** Better Auth session customization not working.
 
 **Verify:**
+
 1. Check `/lib/auth.ts` has `customSession` plugin
 2. Check `/lib/auth-client.ts` has `customSessionClient` plugin
 3. Restart dev server after changes
 
 **Test Session:**
+
 ```typescript
 // In a protected route
 export const GET = withRBAC(
-    async (request: NextRequest, { user, role }) => {
-        return NextResponse.json({
-            userId: user.id,
-            role: role,
-            // This should show role and permissions
-        });
-    },
-    { permissions: ["patients:read"] }
-);
+  async (request: NextRequest, { user, role }) => {
+    return NextResponse.json({
+      userId: user.id,
+      role: role,
+      // This should show role and permissions
+    })
+  },
+  { permissions: ["patients:read"] }
+)
 ```
 
 ---
@@ -871,17 +881,20 @@ Use this checklist when protecting each route:
 ## Complete File List
 
 **Medical Records Sub-routes (4 files):**
+
 - [ ] `/app/api/medical-records/lock/route.ts`
 - [ ] `/app/api/medical-records/diagnoses/route.ts`
 - [ ] `/app/api/medical-records/procedures/route.ts`
 - [ ] `/app/api/medical-records/prescriptions/route.ts`
 
 **Emergency Routes (3 files):**
+
 - [ ] `/app/api/emergency/quick-register/route.ts`
 - [ ] `/app/api/emergency/complete-registration/route.ts`
 - [ ] `/app/api/emergency/handover/route.ts`
 
 **Inpatient Routes (4 files):**
+
 - [ ] `/app/api/rooms/route.ts`
 - [ ] `/app/api/rooms/assign/route.ts`
 - [ ] `/app/api/vitals/route.ts`
@@ -889,12 +902,14 @@ Use this checklist when protecting each route:
 - [ ] `/app/api/materials/route.ts`
 
 **Pharmacy Routes (4 files):**
+
 - [ ] `/app/api/drugs/route.ts`
 - [ ] `/app/api/inventory/route.ts`
 - [ ] `/app/api/pharmacy/expiring/route.ts`
 - [ ] `/app/api/pharmacy/queue/route.ts`
 
 **Billing Routes (3 files):**
+
 - [ ] `/app/api/billing/route.ts`
 - [ ] `/app/api/billing/payment/route.ts`
 - [ ] `/app/api/billing/discharge/route.ts`
@@ -914,6 +929,7 @@ Use this checklist when protecting each route:
 ## Summary
 
 **Key Points:**
+
 1. Every API route must be protected with `withRBAC`
 2. Use permission-based protection (not role-based) for flexibility
 3. Remove manual authentication checks - `withRBAC` handles it
@@ -921,6 +937,7 @@ Use this checklist when protecting each route:
 5. Test with different user roles after implementation
 
 **Benefits:**
+
 - 🔒 Secure API routes with proper authorization
 - 🎯 Fine-grained permission control
 - 🧹 Cleaner code (no manual auth checks)
@@ -928,6 +945,7 @@ Use this checklist when protecting each route:
 - 📊 Easy to audit and maintain
 
 **Next Steps:**
+
 1. Work through each file in the checklist
 2. Apply the pattern systematically
 3. Test each route after protection

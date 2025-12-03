@@ -5,6 +5,7 @@
 This is a **sim-klinik** project (likely Simulasi Klinik in Indonesian, meaning Clinic Simulation), built as a modern web application using the **Codeguide Starter Fullstack** template. Under the hood, it's a Next.js 15 full-stack application with TypeScript, authentication, and database integration.
 
 ### Tech Stack
+
 - **Framework:** Next.js 15 with App Router and Turbopack
 - **Language:** TypeScript
 - **Authentication:** Better Auth
@@ -15,6 +16,7 @@ This is a **sim-klinik** project (likely Simulasi Klinik in Indonesian, meaning 
 - **Theme System:** next-themes
 
 ### Project Purpose
+
 Based on the project name "sim-klinik", this appears to be a clinic simulation system - likely for medical training, clinic management simulations, or healthcare education purposes.
 
 ## Key Documentation
@@ -22,18 +24,22 @@ Based on the project name "sim-klinik", this appears to be a clinic simulation s
 The following key documents define the project requirements and workflow. Always refer to these for alignment with project workflow and requirements:
 
 ### 1. User Stories Documentation
+
 - **File:** `documentation/app_flow_document.md`
 - **Content:** Detailed user stories for all modules (Registration, RME, Inpatient, Pharmacy, Billing, Discharge, UGD) organized by user role (Admin, Doctor, Nurse, Pharmacist, Cashier)
 
 ### 2. Product Requirements Document
+
 - **File:** `documentation/project_requirements_document.md`
 - **Content:** Complete product requirements including goals, scope, features, role-based access control, and non-functional requirements
 
 ### 3. Visit Status Lifecycle
+
 - **File:** `documentation/visit_status_lifecycle.md`
 - **Content:** Complete visit status state machine with valid transitions, API endpoints, and integration points
 
 ## Project Structure
+
 ```
 sim-klinik/ (codeguide-starter-fullstack template)
 ├── app/                        # Next.js app router pages
@@ -70,12 +76,14 @@ sim-klinik/ (codeguide-starter-fullstack template)
 ## Development Commands
 
 ### Application
+
 - `npm run dev` - Start development server with Turbopack (port 3000)
 - `npm run build` - Build for production with Turbopack
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
 
 ### Database
+
 - `npm run db:up` - Start PostgreSQL in Docker (port 5432)
 - `npm run db:down` - Stop PostgreSQL container
 - `npm run db:dev` - Start development PostgreSQL (port 5433)
@@ -88,6 +96,7 @@ sim-klinik/ (codeguide-starter-fullstack template)
 - `npm run db:seed:drugs` - Seed the database with drug data
 
 ### Docker
+
 - `npm run docker:build` - Build application Docker image
 - `npm run docker:up` - Start full application stack (app + database)
 - `npm run docker:down` - Stop all containers
@@ -96,6 +105,7 @@ sim-klinik/ (codeguide-starter-fullstack template)
 ## Environment Variables
 
 The project uses the following environment variables:
+
 ```env
 # Database Configuration
 DATABASE_URL=postgresql://postgres:postgres@localhost:5433/postgres
@@ -125,6 +135,7 @@ NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 ## Development Setup
 
 To start development:
+
 1. Install dependencies: `npm install`
 2. Start database: `npm run db:dev` (for development database on port 5433)
 3. Start development server: `npm run dev`
@@ -142,12 +153,14 @@ This starter includes modern database integration:
 ## Project Context and Focus
 
 As a clinic simulation system, this project is designed to:
+
 - Simulate clinic operations and workflows
 - Provide a platform for medical training or healthcare education
 - Demonstrate healthcare management concepts
 - Offer a realistic clinic management interface for educational purposes
 
 The system follows a **Simple UX** philosophy ("Satu Tugas, Satu Layar") and is designed to be **Mobile-Friendly** (PWA) for adoption in rural settings. Key modules include:
+
 - Registration & Registration (Admin role)
 - Emergency Unit (UGD) with quick registration and triage
 - Electronic Medical Records (RME) with SOAP documentation

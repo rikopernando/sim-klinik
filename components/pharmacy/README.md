@@ -1,11 +1,13 @@
 # Pharmacy (Farmasi) Module
 
 ## Overview
+
 The Pharmacy module provides comprehensive medication management including drug master data, inventory tracking with batch/expiry management, prescription queue processing, and stock movement tracking with FEFO (First Expiry, First Out) principles.
 
 ## Architecture
 
 ### Directory Structure
+
 ```
 pharmacy/
 ├── README.md                          # This file
@@ -30,6 +32,7 @@ pharmacy/
 ## Database Schema
 
 ### Tables (Already Implemented)
+
 - **`drugs`** - Drug master data
   - Name, generic name, category
   - Unit, price, minimum stock
@@ -54,6 +57,7 @@ pharmacy/
 ## Key Features
 
 ### 1. **Drug Master Management**
+
 ✅ Complete CRUD operations
 ✅ Search by name or generic name (case-insensitive)
 ✅ Active/inactive status
@@ -62,6 +66,7 @@ pharmacy/
 ✅ Minimum stock tracking
 
 ### 2. **Inventory Management**
+
 ✅ Batch-level tracking with expiry dates
 ✅ Stock in/out operations
 ✅ Manual stock adjustments with reason tracking
@@ -70,6 +75,7 @@ pharmacy/
 ✅ Purchase price and supplier tracking
 
 ### 3. **Expiry Management**
+
 ✅ Days until expiry calculation
 ✅ Alert levels (expired/expiring_soon/warning/safe)
 ✅ Color-coded alerts (red/orange/yellow/green)
@@ -78,6 +84,7 @@ pharmacy/
 ✅ Visual indicators on inventory cards
 
 ### 4. **Prescription Queue**
+
 ✅ Real-time pending prescriptions
 ✅ Auto-refresh every 30 seconds
 ✅ Patient and doctor information display
@@ -86,6 +93,7 @@ pharmacy/
 ✅ Queue count statistics
 
 ### 5. **Prescription Fulfillment**
+
 ✅ Stock availability validation
 ✅ Automatic stock deduction
 ✅ Batch selection (FEFO principle)
@@ -95,6 +103,7 @@ pharmacy/
 ✅ Stock movement recording
 
 ### 6. **Stock Alerts**
+
 ✅ Critical stock (0 quantity)
 ✅ Low stock (≤ minimum stock)
 ✅ Color-coded indicators
@@ -104,7 +113,9 @@ pharmacy/
 ## Refactored Architecture
 
 ### Type System (`types/pharmacy.ts`)
+
 Complete TypeScript coverage with:
+
 - Entity types (Drug, DrugInventory, Prescription, StockMovement)
 - Extended types (DrugWithStock, DrugInventoryWithDetails)
 - Input types for API calls
@@ -112,56 +123,62 @@ Complete TypeScript coverage with:
 - Response types
 
 ```typescript
-import { Drug, DrugWithStock, DrugInventory } from "@/types/pharmacy";
+import { Drug, DrugWithStock, DrugInventory } from "@/types/pharmacy"
 ```
 
 ### Utility Functions (`lib/pharmacy/stock-utils.ts`)
 
 **Expiry Functions**:
+
 ```typescript
 import {
   calculateDaysUntilExpiry,
   getExpiryAlertLevel,
   getExpiryAlertColor,
   getExpiryAlertLabel,
-  formatExpiryDate
-} from "@/lib/pharmacy/stock-utils";
+  formatExpiryDate,
+} from "@/lib/pharmacy/stock-utils"
 ```
 
 **Stock Functions**:
+
 ```typescript
 import {
   getStockAlertLevel,
   getStockAlertColor,
   getStockAlertLabel,
   needsReorder,
-  suggestReorderQuantity
-} from "@/lib/pharmacy/stock-utils";
+  suggestReorderQuantity,
+} from "@/lib/pharmacy/stock-utils"
 ```
 
 **Inventory Functions**:
+
 ```typescript
 import {
   calculateTotalStock,
   getAvailableStock,
   sortByFEFO,
   findBestBatchForDispensing,
-  hasAvailableStock
-} from "@/lib/pharmacy/stock-utils";
+  hasAvailableStock,
+} from "@/lib/pharmacy/stock-utils"
 ```
 
 **Display Functions**:
+
 ```typescript
 import {
   formatCurrency,
   calculateStockValue,
   getStockStatusIcon,
-  getExpiryStatusIcon
-} from "@/lib/pharmacy/stock-utils";
+  getExpiryStatusIcon,
+} from "@/lib/pharmacy/stock-utils"
 ```
 
 ### Validation Schemas (`lib/pharmacy/validation.ts`)
+
 Centralized Zod schemas:
+
 ```typescript
 import {
   drugSchema,
@@ -169,12 +186,14 @@ import {
   drugInventorySchema,
   prescriptionFulfillmentSchema,
   stockAdjustmentSchema,
-  stockMovementSchema
-} from "@/lib/pharmacy/validation";
+  stockMovementSchema,
+} from "@/lib/pharmacy/validation"
 ```
 
 ### Service Layer (`lib/pharmacy/api-service.ts`)
+
 Database operations separated from API routes:
+
 ```typescript
 import {
   getAllDrugsWithStock,
@@ -190,53 +209,57 @@ import {
   getPendingPrescriptions,
   fulfillPrescription,
   adjustStock,
-  getStockMovements
-} from "@/lib/pharmacy/api-service";
+  getStockMovements,
+} from "@/lib/pharmacy/api-service"
 ```
 
 ### Custom Hooks
 
 **usePharmacyQueue**
+
 ```typescript
 const {
-  queue,              // Pending prescriptions
-  isLoading,          // Loading state
-  error,              // Error state
-  lastRefresh,        // Last refresh timestamp
-  refresh             // Manual refresh function
+  queue, // Pending prescriptions
+  isLoading, // Loading state
+  error, // Error state
+  lastRefresh, // Last refresh timestamp
+  refresh, // Manual refresh function
 } = usePharmacyQueue({
   autoRefresh: true,
-  refreshInterval: 30000
-});
+  refreshInterval: 30000,
+})
 ```
 
 **usePrescriptionFulfillment**
+
 ```typescript
 const {
   fulfillPrescription, // Fulfill function
-  isSubmitting,        // Submit state
-  error,               // Error state
-  success              // Success state
-} = usePrescriptionFulfillment();
+  isSubmitting, // Submit state
+  error, // Error state
+  success, // Success state
+} = usePrescriptionFulfillment()
 ```
 
 **useExpiringDrugs**
+
 ```typescript
 const {
-  expiringDrugs,      // Grouped by alert level
-  isLoading,          // Loading state
-  error,              // Error state
-  lastRefresh,        // Last refresh timestamp
-  refresh             // Manual refresh function
+  expiringDrugs, // Grouped by alert level
+  isLoading, // Loading state
+  error, // Error state
+  lastRefresh, // Last refresh timestamp
+  refresh, // Manual refresh function
 } = useExpiringDrugs({
   autoRefresh: true,
-  refreshInterval: 60000
-});
+  refreshInterval: 60000,
+})
 ```
 
 ## API Endpoints
 
 ### Drug Master
+
 - `GET /api/drugs` - Get all drugs with stock
 - `GET /api/drugs?search=query` - Search drugs
 - `GET /api/drugs?id=1` - Get specific drug
@@ -245,6 +268,7 @@ const {
 - `DELETE /api/drugs?id=1` - Soft delete drug
 
 ### Inventory Management
+
 - `GET /api/inventory` - Get all inventory
 - `GET /api/inventory?drugId=1` - Get inventory for specific drug
 - `GET /api/inventory?movements=1` - Get stock movements
@@ -252,15 +276,18 @@ const {
 - `PATCH /api/inventory` - Adjust stock manually
 
 ### Prescription Queue
+
 - `GET /api/pharmacy/queue` - Get pending prescriptions
 - `POST /api/pharmacy/queue` - Fulfill prescription
 
 ### Expiry Notifications
+
 - `GET /api/pharmacy/expiring` - Get drugs expiring < 30 days
 
 ## Usage Examples
 
 ### Create New Drug
+
 ```typescript
 const response = await fetch("/api/drugs", {
   method: "POST",
@@ -272,12 +299,13 @@ const response = await fetch("/api/drugs", {
     unit: "Tablet",
     price: "2500",
     minimumStock: 100,
-    description: "Pain reliever and fever reducer"
-  })
-});
+    description: "Pain reliever and fever reducer",
+  }),
+})
 ```
 
 ### Add Stock (Stock In)
+
 ```typescript
 const response = await fetch("/api/inventory", {
   method: "POST",
@@ -288,64 +316,70 @@ const response = await fetch("/api/inventory", {
     expiryDate: "2026-12-31",
     stockQuantity: 500,
     purchasePrice: "2000",
-    supplier: "PT. Pharma Indonesia"
-  })
-});
+    supplier: "PT. Pharma Indonesia",
+  }),
+})
 ```
 
 ### Fulfill Prescription
+
 ```typescript
-const { fulfillPrescription } = usePrescriptionFulfillment();
+const { fulfillPrescription } = usePrescriptionFulfillment()
 
 await fulfillPrescription({
   prescriptionId: 1,
   inventoryId: 5,
   dispensedQuantity: 10,
   fulfilledBy: "pharmacist-123",
-  notes: "Pasien sudah diberi instruksi"
-});
+  notes: "Pasien sudah diberi instruksi",
+})
 ```
 
 ### Check Expiring Drugs
-```typescript
-const { expiringDrugs } = useExpiringDrugs();
 
-console.log(`Expired: ${expiringDrugs.expired.length}`);
-console.log(`Expiring Soon: ${expiringDrugs.expiringSoon.length}`);
-console.log(`Warning: ${expiringDrugs.warning.length}`);
+```typescript
+const { expiringDrugs } = useExpiringDrugs()
+
+console.log(`Expired: ${expiringDrugs.expired.length}`)
+console.log(`Expiring Soon: ${expiringDrugs.expiringSoon.length}`)
+console.log(`Warning: ${expiringDrugs.warning.length}`)
 ```
 
 ## Utility Function Examples
 
 ### Calculate Days Until Expiry
-```typescript
-import { calculateDaysUntilExpiry, getExpiryAlertLevel } from "@/lib/pharmacy/stock-utils";
 
-const days = calculateDaysUntilExpiry("2025-12-31"); // 409
-const alertLevel = getExpiryAlertLevel(days); // "safe"
+```typescript
+import { calculateDaysUntilExpiry, getExpiryAlertLevel } from "@/lib/pharmacy/stock-utils"
+
+const days = calculateDaysUntilExpiry("2025-12-31") // 409
+const alertLevel = getExpiryAlertLevel(days) // "safe"
 ```
 
 ### FEFO Sorting
-```typescript
-import { sortByFEFO } from "@/lib/pharmacy/stock-utils";
 
-const sorted = sortByFEFO(inventories); // Sorted by expiry date (earliest first)
+```typescript
+import { sortByFEFO } from "@/lib/pharmacy/stock-utils"
+
+const sorted = sortByFEFO(inventories) // Sorted by expiry date (earliest first)
 ```
 
 ### Find Best Batch for Dispensing
-```typescript
-import { findBestBatchForDispensing } from "@/lib/pharmacy/stock-utils";
 
-const batch = findBestBatchForDispensing(inventories, 50);
+```typescript
+import { findBestBatchForDispensing } from "@/lib/pharmacy/stock-utils"
+
+const batch = findBestBatchForDispensing(inventories, 50)
 // Returns earliest expiring batch with sufficient stock
 ```
 
 ### Stock Alert Levels
-```typescript
-import { getStockAlertLevel } from "@/lib/pharmacy/stock-utils";
 
-const alertLevel = getStockAlertLevel(5, 10); // "low"
-const alertLevel2 = getStockAlertLevel(0, 10); // "critical"
+```typescript
+import { getStockAlertLevel } from "@/lib/pharmacy/stock-utils"
+
+const alertLevel = getStockAlertLevel(5, 10) // "low"
+const alertLevel2 = getStockAlertLevel(0, 10) // "critical"
 ```
 
 ## Performance Optimizations
@@ -362,13 +396,17 @@ const alertLevel2 = getStockAlertLevel(0, 10); // "critical"
 ## Best Practices
 
 ### Type Safety
+
 Always import and use types:
+
 ```typescript
-import { DrugInput, PrescriptionFulfillmentInput } from "@/types/pharmacy";
+import { DrugInput, PrescriptionFulfillmentInput } from "@/types/pharmacy"
 ```
 
 ### Use Service Layer
+
 Don't write database queries in API routes:
+
 ```typescript
 // ✅ Good
 import { createDrug } from "@/lib/pharmacy/api-service";
@@ -379,18 +417,22 @@ const drug = await db.insert(drugs).values(...);
 ```
 
 ### Use Utility Functions
+
 Don't duplicate logic:
+
 ```typescript
 // ✅ Good
-import { calculateDaysUntilExpiry } from "@/lib/pharmacy/stock-utils";
-const days = calculateDaysUntilExpiry(expiryDate);
+import { calculateDaysUntilExpiry } from "@/lib/pharmacy/stock-utils"
+const days = calculateDaysUntilExpiry(expiryDate)
 
 // ❌ Bad
-const days = Math.ceil((new Date(expiryDate) - new Date()) / (1000*60*60*24));
+const days = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
 ```
 
 ### Use Custom Hooks
+
 Don't write API calls directly in components:
+
 ```typescript
 // ✅ Good
 const { queue, isLoading } = usePharmacyQueue();
@@ -403,13 +445,16 @@ useEffect(() => { fetch("/api/pharmacy/queue")... }, []);
 ## Dashboard Features
 
 ### Pharmacy Queue Dashboard
+
 ✅ **Statistics Cards**
+
 - Pending prescriptions count
 - Expired drugs (red)
 - Expiring soon (< 30 days, orange)
 - Warning (30-90 days, yellow)
 
 ✅ **Prescription Queue Tab**
+
 - Patient and doctor information
 - Drug details with dosage
 - Frequency and duration
@@ -418,6 +463,7 @@ useEffect(() => { fetch("/api/pharmacy/queue")... }, []);
 - Real-time auto-refresh (30s)
 
 ✅ **Expiring Drugs Tab**
+
 - Color-coded cards by alert level
 - Batch number display
 - Formatted expiry dates with countdown
@@ -425,6 +471,7 @@ useEffect(() => { fetch("/api/pharmacy/queue")... }, []);
 - Visual indicators (red/orange/yellow borders)
 
 ✅ **Fulfillment Dialog**
+
 - Inventory selection
 - Dispensed quantity input
 - Pharmacist name
@@ -434,16 +481,19 @@ useEffect(() => { fetch("/api/pharmacy/queue")... }, []);
 ## Integration Points
 
 ### With EMR Module
+
 - Prescriptions created in EMR automatically appear in pharmacy queue
 - Real-time notification when new prescription is created
 - Drug search autocomplete for prescription form
 
 ### With Billing Module
+
 - Drug prices from master data
 - Dispensed quantities for billing calculation
 - Fulfillment timestamp for audit
 
 ### With Inventory
+
 - Automatic stock deduction on fulfillment
 - Stock movement tracking for audit trail
 - FEFO principle ensures oldest stock used first
@@ -473,16 +523,19 @@ The system implements FEFO to minimize waste:
 ## Testing Considerations
 
 ### Unit Tests
+
 - Utility functions (expiry calculation, FEFO sorting)
 - Validation schemas
 - Service layer functions
 
 ### Integration Tests
+
 - API endpoints with mock database
 - Custom hooks with mock fetch
 - Fulfillment workflow
 
 ### E2E Tests
+
 - Complete prescription flow (EMR → Pharmacy → Fulfillment)
 - Stock management workflow
 - Expiry alert system
@@ -490,16 +543,19 @@ The system implements FEFO to minimize waste:
 ## Related Modules
 
 **Dependencies:**
+
 - EMR Module (prescription creation)
 - Registration Module (patient data)
 
 **Integration Points:**
+
 - Billing Module (drug pricing, fulfillment tracking)
 - Inventory Module (stock management)
 
 ## Contributors
 
 Module created with clean architecture principles:
+
 - Modular design
 - Type safety
 - Service layer separation

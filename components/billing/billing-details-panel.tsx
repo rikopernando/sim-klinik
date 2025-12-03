@@ -3,206 +3,206 @@
  * Main panel displaying billing summary, payment history, and payment action
  */
 
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent } from "@/components/ui/card";
-import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react";
-import { BillingSummaryCard } from "./billing-summary-card";
-import { PaymentHistoryCard } from "./payment-history-card";
-import { ReceiptPrint } from "./receipt-print";
-import type { PaymentStatus } from "@/types/billing";
-import { useMemo, useRef } from "react";
+import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Card, CardContent } from "@/components/ui/card"
+import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+import { BillingSummaryCard } from "./billing-summary-card"
+import { PaymentHistoryCard } from "./payment-history-card"
+import { ReceiptPrint } from "./receipt-print"
+import type { PaymentStatus } from "@/types/billing"
+import { useMemo, useRef } from "react"
 
 interface BillingItem {
-    itemName: string;
-    quantity: number;
-    unitPrice: string;
-    totalPrice: string;
+  itemName: string
+  quantity: number
+  unitPrice: string
+  totalPrice: string
 }
 
 interface Payment {
-    id: number;
-    amount: string;
-    paymentMethod: string;
-    paymentReference: string | null;
-    changeGiven: string | null;
-    receivedAt: Date | string;
+  id: number
+  amount: string
+  paymentMethod: string
+  paymentReference: string | null
+  changeGiven: string | null
+  receivedAt: Date | string
 }
 
 interface Billing {
-    subtotal: string;
-    discount: string;
-    insuranceCoverage: string;
-    totalAmount: string;
-    paidAmount: string;
-    remainingAmount: string;
-    patientPayable: string;
-    paymentStatus: PaymentStatus;
+  subtotal: string
+  discount: string
+  insuranceCoverage: string
+  totalAmount: string
+  paidAmount: string
+  remainingAmount: string
+  patientPayable: string
+  paymentStatus: PaymentStatus
 }
 
 interface BillingDetails {
-    billing: Billing;
-    items: BillingItem[];
-    payments: Payment[];
-    patient: {
-        name: string;
-        mrNumber: string;
-    };
-    visit: {
-        visitNumber: string;
-        createdAt: Date | string;
-    };
+  billing: Billing
+  items: BillingItem[]
+  payments: Payment[]
+  patient: {
+    name: string
+    mrNumber: string
+  }
+  visit: {
+    visitNumber: string
+    createdAt: Date | string
+  }
 }
 
 interface BillingDetailsPanelProps {
-    selectedVisitId: number | null;
-    billingDetails: BillingDetails | null;
-    isLoading: boolean;
-    onRefresh: () => void;
-    onProcessPayment: () => void;
-    onApplyDiscount?: () => void;
-    isSubmitting?: boolean;
+  selectedVisitId: number | null
+  billingDetails: BillingDetails | null
+  isLoading: boolean
+  onRefresh: () => void
+  onProcessPayment: () => void
+  onApplyDiscount?: () => void
+  isSubmitting?: boolean
 }
 
 export function BillingDetailsPanel({
-    selectedVisitId,
-    billingDetails,
-    isLoading,
-    onRefresh,
-    onProcessPayment,
-    onApplyDiscount,
-    isSubmitting = false,
+  selectedVisitId,
+  billingDetails,
+  isLoading,
+  onRefresh,
+  onProcessPayment,
+  onApplyDiscount,
+  isSubmitting = false,
 }: BillingDetailsPanelProps) {
-    const printRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null)
 
-    // Calculate remaining amount
-    const remainingAmount = useMemo(() => {
-        if (!billingDetails) return 0;
-        return parseFloat(
-            billingDetails.billing.remainingAmount || billingDetails.billing.patientPayable
-        );
-    }, [billingDetails]);
+  // Calculate remaining amount
+  const remainingAmount = useMemo(() => {
+    if (!billingDetails) return 0
+    return parseFloat(
+      billingDetails.billing.remainingAmount || billingDetails.billing.patientPayable
+    )
+  }, [billingDetails])
 
-    // Handle print receipt
-    const handlePrint = () => {
-        window.print();
-    };
+  // Handle print receipt
+  const handlePrint = () => {
+    window.print()
+  }
 
-    // No visit selected
-    if (!selectedVisitId) {
-        return (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                    <User className="h-16 w-16 mx-auto mb-4 opacity-20" />
-                    <p className="text-lg">Pilih pasien dari antrian</p>
-                    <p className="text-sm">untuk melihat detail pembayaran</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Loading state
-    if (isLoading) {
-        return (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                    <RefreshCw className="h-8 w-8 mx-auto mb-4 animate-spin" />
-                    <p>Memuat detail pembayaran...</p>
-                </div>
-            </div>
-        );
-    }
-
-    // Error state (no billing details found)
-    if (!billingDetails) {
-        return (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                    <p className="text-lg">Gagal memuat detail pembayaran</p>
-                    <Button variant="outline" className="mt-4" onClick={onRefresh}>
-                        Coba Lagi
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
-    // Success state with billing details
-    const isPaid = billingDetails.billing.paymentStatus === "paid";
-
+  // No visit selected
+  if (!selectedVisitId) {
     return (
-        <>
-            <ScrollArea className="flex-1">
-                <div className="p-4 space-y-4">
-                    {/* Billing Summary */}
-                    <BillingSummaryCard items={billingDetails.items} summary={billingDetails.billing} />
+      <div className="text-muted-foreground flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <User className="mx-auto mb-4 h-16 w-16 opacity-20" />
+          <p className="text-lg">Pilih pasien dari antrian</p>
+          <p className="text-sm">untuk melihat detail pembayaran</p>
+        </div>
+      </div>
+    )
+  }
 
-                    {/* Payment History */}
-                    <PaymentHistoryCard payments={billingDetails.payments} />
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="text-muted-foreground flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="mx-auto mb-4 h-8 w-8 animate-spin" />
+          <p>Memuat detail pembayaran...</p>
+        </div>
+      </div>
+    )
+  }
 
-                    {/* Action Buttons */}
-                    {!isPaid ? (
-                        <>
-                            {/* Discount Button */}
-                            {onApplyDiscount && (
-                                <Card>
-                                    <CardContent className="pt-6">
-                                        <Button
-                                            onClick={onApplyDiscount}
-                                            variant="outline"
-                                            className="w-full"
-                                            size="lg"
-                                        >
-                                            <Percent className="h-5 w-5 mr-2" />
-                                            Terapkan Diskon / Jaminan
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            )}
+  // Error state (no billing details found)
+  if (!billingDetails) {
+    return (
+      <div className="text-muted-foreground flex flex-1 items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Gagal memuat detail pembayaran</p>
+          <Button variant="outline" className="mt-4" onClick={onRefresh}>
+            Coba Lagi
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
-                            {/* Payment Button */}
-                            <Card className="border-primary">
-                                <CardContent className="pt-6">
-                                    <Button
-                                        onClick={onProcessPayment}
-                                        className="w-full"
-                                        size="lg"
-                                        disabled={isSubmitting}
-                                    >
-                                        <CreditCard className="h-5 w-5 mr-2" />
-                                        {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                                        <span className="ml-2 font-bold">
-                                            Rp {remainingAmount.toLocaleString("id-ID")}
-                                        </span>
-                                    </Button>
-                                </CardContent>
-                            </Card>
-                        </>
-                    ) : (
-                        /* Print Receipt Button */
-                        <Card className="border-green-500 bg-green-50">
-                            <CardContent className="pt-6">
-                                <Button
-                                    onClick={handlePrint}
-                                    variant="outline"
-                                    className="w-full border-green-600 text-green-700 hover:bg-green-100"
-                                    size="lg"
-                                >
-                                    <Printer className="h-5 w-5 mr-2" />
-                                    Cetak Kuitansi
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
-            </ScrollArea>
+  // Success state with billing details
+  const isPaid = billingDetails.billing.paymentStatus === "paid"
 
-            {/* Hidden Receipt for Printing */}
-            {isPaid && (
-                <div ref={printRef}>
-                    <ReceiptPrint data={billingDetails} />
-                </div>
-            )}
-        </>
-    );
+  return (
+    <>
+      <ScrollArea className="flex-1">
+        <div className="space-y-4 p-4">
+          {/* Billing Summary */}
+          <BillingSummaryCard items={billingDetails.items} summary={billingDetails.billing} />
+
+          {/* Payment History */}
+          <PaymentHistoryCard payments={billingDetails.payments} />
+
+          {/* Action Buttons */}
+          {!isPaid ? (
+            <>
+              {/* Discount Button */}
+              {onApplyDiscount && (
+                <Card>
+                  <CardContent className="pt-6">
+                    <Button
+                      onClick={onApplyDiscount}
+                      variant="outline"
+                      className="w-full"
+                      size="lg"
+                    >
+                      <Percent className="mr-2 h-5 w-5" />
+                      Terapkan Diskon / Jaminan
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Payment Button */}
+              <Card className="border-primary">
+                <CardContent className="pt-6">
+                  <Button
+                    onClick={onProcessPayment}
+                    className="w-full"
+                    size="lg"
+                    disabled={isSubmitting}
+                  >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+                    <span className="ml-2 font-bold">
+                      Rp {remainingAmount.toLocaleString("id-ID")}
+                    </span>
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
+          ) : (
+            /* Print Receipt Button */
+            <Card className="border-green-500 bg-green-50">
+              <CardContent className="pt-6">
+                <Button
+                  onClick={handlePrint}
+                  variant="outline"
+                  className="w-full border-green-600 text-green-700 hover:bg-green-100"
+                  size="lg"
+                >
+                  <Printer className="mr-2 h-5 w-5" />
+                  Cetak Kuitansi
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Hidden Receipt for Printing */}
+      {isPaid && (
+        <div ref={printRef}>
+          <ReceiptPrint data={billingDetails} />
+        </div>
+      )}
+    </>
+  )
 }

@@ -4,26 +4,26 @@
  */
 
 // Auth schemas
-export * from "./auth";
+export * from "./auth"
 
 // User management
-export * from "./roles";
+export * from "./roles"
 
 // Patient management
-export * from "./patients";
-export * from "./visits";
+export * from "./patients"
+export * from "./visits"
 
 // Medical records
-export * from "./medical-records";
+export * from "./medical-records"
 
 // ICD-10 Codes
-export * from "./icd10";
+export * from "./icd10"
 
 // Pharmacy
-export * from "./pharmacy";
+export * from "./pharmacy"
 
 // Inpatient care
-export * from "./inpatient";
+export * from "./inpatient"
 
 // Billing
-export * from "./billing";
+export * from "./billing"

@@ -69,6 +69,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 ## Status Definitions
 
 ### 1. **registered**
+
 - **Description:** Patient has just been registered, visit record created
 - **Initial Status:** YES (for all visit types)
 - **Who Sets:** Receptionist (Registration module)
@@ -77,6 +78,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Color:** Blue (`bg-blue-100`, `text-blue-700`)
 
 ### 2. **waiting**
+
 - **Description:** Patient is in queue, waiting to be called for examination
 - **Who Sets:** System (when patient moves to queue) or Receptionist
 - **Can Transition To:** `in_examination`, `cancelled`
@@ -84,6 +86,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Color:** Yellow (`bg-yellow-100`, `text-yellow-700`)
 
 ### 3. **in_examination**
+
 - **Description:** Patient is currently being examined by a doctor
 - **Who Sets:** Doctor or Nurse (when calling patient), or auto-set when doctor opens medical record
 - **Can Transition To:** `examined`, `ready_for_billing`, `waiting` (if doctor unavailable), `cancelled`
@@ -93,6 +96,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Color:** Purple (`bg-purple-100`, `text-purple-700`)
 
 ### 4. **examined**
+
 - **Description:** Examination is complete, medical record has been created
 - **Who Sets:** System (when medical record is saved) or Doctor
 - **Can Transition To:** `ready_for_billing`, `in_examination` (if need to re-examine), `cancelled`
@@ -101,6 +105,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Color:** Indigo (`bg-indigo-100`, `text-indigo-700`)
 
 ### 5. **ready_for_billing**
+
 - **Description:** Medical record is locked, visit is ready for billing
 - **Who Sets:** System (automatically when medical record is locked) or Doctor
 - **Can Transition To:** `billed`, `cancelled`
@@ -109,18 +114,21 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Color:** Cyan (`bg-cyan-100`, `text-cyan-700`)
 
 ### 6. **billed**
+
 - **Description:** Billing has been created for this visit
 - **Who Sets:** Cashier or System (when billing record is created)
 - **Can Transition To:** `paid`, `cancelled`
 - **Color:** Teal (`bg-teal-100`, `text-teal-700`)
 
 ### 7. **paid**
+
 - **Description:** Payment has been completed
 - **Who Sets:** Cashier (when payment is processed)
 - **Can Transition To:** `completed`
 - **Color:** Green (`bg-green-100`, `text-green-700`)
 
 ### 8. **completed**
+
 - **Description:** Visit is fully completed (terminal state)
 - **Terminal:** YES - No further transitions allowed
 - **Who Sets:** System or Cashier (for outpatient after payment, for inpatient after discharge)
@@ -128,6 +136,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 - **Color:** Gray (`bg-gray-100`, `text-gray-700`)
 
 ### 9. **cancelled**
+
 - **Description:** Visit has been cancelled
 - **Terminal:** YES - No further transitions allowed
 - **Who Sets:** Any authorized staff with reason
@@ -141,28 +150,31 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 
 ### Valid Transitions Matrix
 
-| From Status | To Status(es) |
-|------------|---------------|
-| `registered` | `waiting`, `in_examination`, `cancelled` |
-| `waiting` | `in_examination`, `cancelled` |
-| `in_examination` | `examined`, `ready_for_billing`, `waiting`, `cancelled` |
-| `examined` | `ready_for_billing`, `in_examination`, `cancelled` |
-| `ready_for_billing` | `billed`, `cancelled` |
-| `billed` | `paid`, `cancelled` |
-| `paid` | `completed` |
-| `completed` | None (terminal) |
-| `cancelled` | None (terminal) |
+| From Status         | To Status(es)                                           |
+| ------------------- | ------------------------------------------------------- |
+| `registered`        | `waiting`, `in_examination`, `cancelled`                |
+| `waiting`           | `in_examination`, `cancelled`                           |
+| `in_examination`    | `examined`, `ready_for_billing`, `waiting`, `cancelled` |
+| `examined`          | `ready_for_billing`, `in_examination`, `cancelled`      |
+| `ready_for_billing` | `billed`, `cancelled`                                   |
+| `billed`            | `paid`, `cancelled`                                     |
+| `paid`              | `completed`                                             |
+| `completed`         | None (terminal)                                         |
+| `cancelled`         | None (terminal)                                         |
 
 ### Special Transition Cases
 
 **Backward Transitions (Allowed):**
+
 1. `in_examination` → `waiting`: Doctor not available or patient needs to wait again
 2. `examined` → `in_examination`: Need to re-examine patient
 
 **Cancelled Transitions (Always Allowed):**
+
 - From any non-terminal status → `cancelled` with required reason
 
 **Terminal States:**
+
 - `completed` and `cancelled` are terminal - no further transitions allowed
 
 ---
@@ -176,6 +188,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 **Permission Required:** `visits:write`
 
 **Request Body:**
+
 ```json
 {
   "visitId": 123,
@@ -185,6 +198,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 ```
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -206,6 +220,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 ```
 
 **Error Response - Invalid Transition (400):**
+
 ```json
 {
   "error": "Invalid status transition",
@@ -222,6 +237,7 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 **Permission Required:** `visits:read`
 
 **Success Response (200):**
+
 ```json
 {
   "success": true,
@@ -282,53 +298,58 @@ The Visit Status Lifecycle implements a state machine to manage the progression 
 **Implementation Location:** `/app/api/medical-records/lock/route.ts`
 
 **Required Logic:**
+
 ```typescript
 // After locking medical record successfully
 await updateVisitStatus({
-    visitId: medicalRecord.visitId,
-    newStatus: "ready_for_billing"
-});
+  visitId: medicalRecord.visitId,
+  newStatus: "ready_for_billing",
+})
 ```
 
 ### Billing Module Integration
 
 **Check Before Creating Billing:**
+
 ```typescript
-import { canCreateBilling } from "@/types/visit-status";
+import { canCreateBilling } from "@/types/visit-status"
 
 if (!canCreateBilling(visit.status)) {
-    return error("Cannot create billing - visit not ready");
+  return error("Cannot create billing - visit not ready")
 }
 ```
 
 ### Discharge Module Integration
 
 **Check Before Discharging:**
+
 ```typescript
-import { canCompleteVisit } from "@/types/visit-status";
+import { canCompleteVisit } from "@/types/visit-status"
 
 if (!canCompleteVisit(visit.status)) {
-    return error("Cannot discharge - payment not completed");
+  return error("Cannot discharge - payment not completed")
 }
 ```
 
 ### Medical Records Module Integration
 
 **Check Before Creating Medical Record:**
+
 ```typescript
-import { canCreateMedicalRecord } from "@/types/visit-status";
+import { canCreateMedicalRecord } from "@/types/visit-status"
 
 if (!canCreateMedicalRecord(visit.status)) {
-    return error("Cannot create medical record - patient not in examination");
+  return error("Cannot create medical record - patient not in examination")
 }
 ```
 
 **Check Before Locking Medical Record:**
+
 ```typescript
-import { canLockMedicalRecord } from "@/types/visit-status";
+import { canLockMedicalRecord } from "@/types/visit-status"
 
 if (!canLockMedicalRecord(visit.status)) {
-    return error("Cannot lock medical record - examination not complete");
+  return error("Cannot lock medical record - examination not complete")
 }
 ```
 
@@ -339,54 +360,59 @@ if (!canLockMedicalRecord(visit.status)) {
 All utility functions are available in `/types/visit-status.ts`:
 
 ### `isValidStatusTransition(currentStatus, newStatus): boolean`
+
 Check if a status transition is valid.
 
 ```typescript
-import { isValidStatusTransition } from "@/types/visit-status";
+import { isValidStatusTransition } from "@/types/visit-status"
 
 if (isValidStatusTransition("waiting", "in_examination")) {
-    // Allowed
+  // Allowed
 }
 ```
 
 ### `getAllowedNextStatuses(currentStatus): VisitStatus[]`
+
 Get list of allowed next statuses.
 
 ```typescript
-import { getAllowedNextStatuses } from "@/types/visit-status";
+import { getAllowedNextStatuses } from "@/types/visit-status"
 
-const allowed = getAllowedNextStatuses("waiting");
+const allowed = getAllowedNextStatuses("waiting")
 // Returns: ["in_examination", "cancelled"]
 ```
 
 ### `isTerminalStatus(status): boolean`
+
 Check if status is terminal (no further transitions).
 
 ```typescript
-import { isTerminalStatus } from "@/types/visit-status";
+import { isTerminalStatus } from "@/types/visit-status"
 
 if (isTerminalStatus("completed")) {
-    // Cannot change status anymore
+  // Cannot change status anymore
 }
 ```
 
 ### `getStatusTransitionError(currentStatus, attemptedStatus): string`
+
 Get detailed error message for invalid transition.
 
 ```typescript
-import { getStatusTransitionError } from "@/types/visit-status";
+import { getStatusTransitionError } from "@/types/visit-status"
 
-const error = getStatusTransitionError("completed", "waiting");
+const error = getStatusTransitionError("completed", "waiting")
 // Returns: "Cannot change status from terminal state: Selesai"
 ```
 
 ### `getInitialVisitStatus(visitType): VisitStatus`
+
 Get correct initial status for visit type.
 
 ```typescript
-import { getInitialVisitStatus } from "@/types/visit-status";
+import { getInitialVisitStatus } from "@/types/visit-status"
 
-const initialStatus = getInitialVisitStatus("emergency");
+const initialStatus = getInitialVisitStatus("emergency")
 // Returns: "registered"
 ```
 
@@ -394,23 +420,31 @@ const initialStatus = getInitialVisitStatus("emergency");
 
 ```typescript
 import {
-    canCreateBilling,
-    canCompleteVisit,
-    canCreateMedicalRecord,
-    canLockMedicalRecord
-} from "@/types/visit-status";
+  canCreateBilling,
+  canCompleteVisit,
+  canCreateMedicalRecord,
+  canLockMedicalRecord,
+} from "@/types/visit-status"
 
 // Check if billing can be created
-if (canCreateBilling(visit.status)) { /* allowed */ }
+if (canCreateBilling(visit.status)) {
+  /* allowed */
+}
 
 // Check if visit can be completed/discharged
-if (canCompleteVisit(visit.status)) { /* allowed */ }
+if (canCompleteVisit(visit.status)) {
+  /* allowed */
+}
 
 // Check if medical record can be created
-if (canCreateMedicalRecord(visit.status)) { /* allowed */ }
+if (canCreateMedicalRecord(visit.status)) {
+  /* allowed */
+}
 
 // Check if medical record can be locked
-if (canLockMedicalRecord(visit.status)) { /* allowed */ }
+if (canLockMedicalRecord(visit.status)) {
+  /* allowed */
+}
 ```
 
 ---
@@ -420,40 +454,40 @@ if (canLockMedicalRecord(visit.status)) { /* allowed */ }
 ### Display Status Badge
 
 ```tsx
-import { VISIT_STATUS_INFO, VisitStatus } from "@/types/visit-status";
+import { VISIT_STATUS_INFO, VisitStatus } from "@/types/visit-status"
 
 function VisitStatusBadge({ status }: { status: VisitStatus }) {
-    const statusInfo = VISIT_STATUS_INFO[status];
+  const statusInfo = VISIT_STATUS_INFO[status]
 
-    return (
-        <span className={`px-2 py-1 rounded text-sm ${statusInfo.bgColor} ${statusInfo.color}`}>
-            {statusInfo.label}
-        </span>
-    );
+  return (
+    <span className={`rounded px-2 py-1 text-sm ${statusInfo.bgColor} ${statusInfo.color}`}>
+      {statusInfo.label}
+    </span>
+  )
 }
 ```
 
 ### Status Transition Button
 
 ```tsx
-import { getAllowedNextStatuses, VISIT_STATUS_INFO } from "@/types/visit-status";
+import { getAllowedNextStatuses, VISIT_STATUS_INFO } from "@/types/visit-status"
 
 function StatusTransitionButtons({ currentStatus, onTransition }: Props) {
-    const allowedStatuses = getAllowedNextStatuses(currentStatus);
+  const allowedStatuses = getAllowedNextStatuses(currentStatus)
 
-    return (
-        <div>
-            {allowedStatuses.map(status => (
-                <button
-                    key={status}
-                    onClick={() => onTransition(status)}
-                    className={VISIT_STATUS_INFO[status].bgColor}
-                >
-                    {VISIT_STATUS_INFO[status].label}
-                </button>
-            ))}
-        </div>
-    );
+  return (
+    <div>
+      {allowedStatuses.map((status) => (
+        <button
+          key={status}
+          onClick={() => onTransition(status)}
+          className={VISIT_STATUS_INFO[status].bgColor}
+        >
+          {VISIT_STATUS_INFO[status].label}
+        </button>
+      ))}
+    </div>
+  )
 }
 ```
 
@@ -602,6 +636,7 @@ From any non-terminal status:
 ## Summary
 
 ✅ **Completed:**
+
 - Designed visit status state machine with 9 statuses
 - Created validation utilities for status transitions
 - Implemented API endpoints for status updates
@@ -610,6 +645,7 @@ From any non-terminal status:
 - Created comprehensive documentation
 
 ✅ **Benefits:**
+
 - **Data Integrity:** Prevents invalid status transitions
 - **Clear Workflows:** Well-defined patient journey
 - **Integration Ready:** Helper functions for other modules
@@ -617,6 +653,7 @@ From any non-terminal status:
 - **User-Friendly:** Clear status labels and descriptions
 
 📚 **Related Documentation:**
+
 - `/types/visit-status.ts` - Type definitions and utilities
 - `/app/api/visits/status/route.ts` - API implementation
 - `/documentation/rbac_implementation_guide.md` - Permission requirements

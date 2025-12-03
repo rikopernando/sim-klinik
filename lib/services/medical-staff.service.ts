@@ -3,18 +3,18 @@
  * Handle medical staff (doctors and nurses) related API operations
  */
 
-import axios from "axios";
+import axios from "axios"
 
 export interface MedicalStaff {
-    id: string;
-    name: string;
-    email: string;
-    roleName: string;
+  id: string
+  name: string
+  email: string
+  roleName: string
 }
 
 interface GetMedicalStaffResponse {
-    success: boolean;
-    data: MedicalStaff[];
+  success: boolean
+  data: MedicalStaff[]
 }
 
 /**
@@ -22,23 +22,21 @@ interface GetMedicalStaffResponse {
  * @returns Promise<MedicalStaff[]>
  */
 export async function getMedicalStaff(): Promise<MedicalStaff[]> {
-    try {
-        const { data } = await axios.get<GetMedicalStaffResponse>("/api/medical-staff");
-        return data.data || [];
-    } catch (error) {
-        console.error("Error in getMedicalStaff service:", error);
+  try {
+    const { data } = await axios.get<GetMedicalStaffResponse>("/api/medical-staff")
+    return data.data || []
+  } catch (error) {
+    console.error("Error in getMedicalStaff service:", error)
 
-        // Re-throw with more context
-        if (axios.isAxiosError(error)) {
-            throw new Error(
-                error.response?.data?.error ||
-                error.message ||
-                "Failed to fetch medical staff"
-            );
-        }
-
-        throw error;
+    // Re-throw with more context
+    if (axios.isAxiosError(error)) {
+      throw new Error(
+        error.response?.data?.error || error.message || "Failed to fetch medical staff"
+      )
     }
+
+    throw error
+  }
 }
 
 /**
@@ -47,13 +45,13 @@ export async function getMedicalStaff(): Promise<MedicalStaff[]> {
  * @returns Promise<MedicalStaff | null>
  */
 export async function getMedicalStaffById(id: string): Promise<MedicalStaff | null> {
-    try {
-        const staff = await getMedicalStaff();
-        return staff.find(s => s.id === id) || null;
-    } catch (error) {
-        console.error("Error in getMedicalStaffById service:", error);
-        throw error;
-    }
+  try {
+    const staff = await getMedicalStaff()
+    return staff.find((s) => s.id === id) || null
+  } catch (error) {
+    console.error("Error in getMedicalStaffById service:", error)
+    throw error
+  }
 }
 
 /**
@@ -62,6 +60,6 @@ export async function getMedicalStaffById(id: string): Promise<MedicalStaff | nu
  * @returns Formatted name with role
  */
 export function formatMedicalStaffName(staff: MedicalStaff): string {
-    const roleLabel = staff.roleName === "doctor" ? "Dr." : "Ns.";
-    return `${roleLabel} ${staff.name}`;
+  const roleLabel = staff.roleName === "doctor" ? "Dr." : "Ns."
+  return `${roleLabel} ${staff.name}`
 }

@@ -1,24 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db";
-import { medicalRecords, diagnoses, procedures, prescriptions, visits, drugs, user, services } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { z } from "zod";
-import { withRBAC } from "@/lib/rbac/middleware";
+import { NextRequest, NextResponse } from "next/server"
+import { db } from "@/db"
+import {
+  medicalRecords,
+  diagnoses,
+  procedures,
+  prescriptions,
+  visits,
+  drugs,
+  user,
+  services,
+} from "@/db/schema"
+import { eq } from "drizzle-orm"
+import { z } from "zod"
+import { withRBAC } from "@/lib/rbac/middleware"
 
 /**
  * Medical Record Schema
  */
 const medicalRecordSchema = z.object({
-    visitId: z.number().int().positive(),
-    soapSubjective: z.string().optional(),
-    soapObjective: z.string().optional(),
-    soapAssessment: z.string().optional(),
-    soapPlan: z.string().optional(),
-    physicalExam: z.string().optional(),
-    laboratoryResults: z.string().optional(),
-    radiologyResults: z.string().optional(),
-    isDraft: z.boolean().default(true),
-});
+  visitId: z.number().int().positive(),
+  soapSubjective: z.string().optional(),
+  soapObjective: z.string().optional(),
+  soapAssessment: z.string().optional(),
+  soapPlan: z.string().optional(),
+  physicalExam: z.string().optional(),
+  laboratoryResults: z.string().optional(),
+  radiologyResults: z.string().optional(),
+  isDraft: z.boolean().default(true),
+})
 
 /**
  * POST /api/medical-records
@@ -26,84 +35,78 @@ const medicalRecordSchema = z.object({
  * Requires: medical_records:write permission
  */
 export const POST = withRBAC(
-    async (request: NextRequest, { user }) => {
-        try {
-            const body = await request.json();
-            const validatedData = medicalRecordSchema.parse(body);
+  async (request: NextRequest, { user }) => {
+    try {
+      const body = await request.json()
+      const validatedData = medicalRecordSchema.parse(body)
 
-        // Verify visit exists and doesn't already have a medical record
-        const visit = await db
-            .select()
-            .from(visits)
-            .where(eq(visits.id, validatedData.visitId))
-            .limit(1);
+      // Verify visit exists and doesn't already have a medical record
+      const visit = await db
+        .select()
+        .from(visits)
+        .where(eq(visits.id, validatedData.visitId))
+        .limit(1)
 
-        if (visit.length === 0) {
-            return NextResponse.json(
-                { error: "Visit not found" },
-                { status: 404 }
-            );
-        }
+      if (visit.length === 0) {
+        return NextResponse.json({ error: "Visit not found" }, { status: 404 })
+      }
 
-        // Check if medical record already exists for this visit
-        const existingRecord = await db
-            .select()
-            .from(medicalRecords)
-            .where(eq(medicalRecords.visitId, validatedData.visitId))
-            .limit(1);
+      // Check if medical record already exists for this visit
+      const existingRecord = await db
+        .select()
+        .from(medicalRecords)
+        .where(eq(medicalRecords.visitId, validatedData.visitId))
+        .limit(1)
 
-        if (existingRecord.length > 0) {
-            return NextResponse.json(
-                { error: "Medical record already exists for this visit" },
-                { status: 400 }
-            );
-        }
-
-        // Create medical record with authenticated user as doctor
-        const newRecord = await db
-            .insert(medicalRecords)
-            .values({
-                visitId: validatedData.visitId,
-                doctorId: user.id,
-                soapSubjective: validatedData.soapSubjective || null,
-                soapObjective: validatedData.soapObjective || null,
-                soapAssessment: validatedData.soapAssessment || null,
-                soapPlan: validatedData.soapPlan || null,
-                physicalExam: validatedData.physicalExam || null,
-                laboratoryResults: validatedData.laboratoryResults || null,
-                radiologyResults: validatedData.radiologyResults || null,
-                isDraft: validatedData.isDraft,
-                isLocked: false,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            })
-            .returning();
-
+      if (existingRecord.length > 0) {
         return NextResponse.json(
-            {
-                success: true,
-                message: "Medical record created successfully",
-                data: newRecord[0],
-            },
-            { status: 201 }
-        );
+          { error: "Medical record already exists for this visit" },
+          { status: 400 }
+        )
+      }
+
+      // Create medical record with authenticated user as doctor
+      const newRecord = await db
+        .insert(medicalRecords)
+        .values({
+          visitId: validatedData.visitId,
+          doctorId: user.id,
+          soapSubjective: validatedData.soapSubjective || null,
+          soapObjective: validatedData.soapObjective || null,
+          soapAssessment: validatedData.soapAssessment || null,
+          soapPlan: validatedData.soapPlan || null,
+          physicalExam: validatedData.physicalExam || null,
+          laboratoryResults: validatedData.laboratoryResults || null,
+          radiologyResults: validatedData.radiologyResults || null,
+          isDraft: validatedData.isDraft,
+          isLocked: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning()
+
+      return NextResponse.json(
+        {
+          success: true,
+          message: "Medical record created successfully",
+          data: newRecord[0],
+        },
+        { status: 201 }
+      )
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return NextResponse.json(
-                { error: "Validation error", details: error.issues },
-                { status: 400 }
-            );
-        }
-
-        console.error("Medical record creation error:", error);
+      if (error instanceof z.ZodError) {
         return NextResponse.json(
-            { error: "Failed to create medical record" },
-            { status: 500 }
-        );
+          { error: "Validation error", details: error.issues },
+          { status: 400 }
+        )
+      }
+
+      console.error("Medical record creation error:", error)
+      return NextResponse.json({ error: "Failed to create medical record" }, { status: 500 })
     }
-    },
-    { permissions: ["medical_records:write"] }
-);
+  },
+  { permissions: ["medical_records:write"] }
+)
 
 /**
  * GET /api/medical-records?visitId=X
@@ -111,143 +114,140 @@ export const POST = withRBAC(
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
-    async (request: NextRequest) => {
+  async (request: NextRequest) => {
     try {
-        const searchParams = request.nextUrl.searchParams;
-        const visitId = searchParams.get("visitId");
-        const patientId = searchParams.get("patientId");
+      const searchParams = request.nextUrl.searchParams
+      const visitId = searchParams.get("visitId")
+      const patientId = searchParams.get("patientId")
 
-        if (visitId) {
-            const parsedVisitId = parseInt(visitId, 10);
+      if (visitId) {
+        const parsedVisitId = parseInt(visitId, 10)
 
-            // Get medical record for specific visit with all related data
-            const record = await db
-                .select()
-                .from(medicalRecords)
-                .where(eq(medicalRecords.visitId, parsedVisitId))
-                .limit(1);
+        // Get medical record for specific visit with all related data
+        const record = await db
+          .select()
+          .from(medicalRecords)
+          .where(eq(medicalRecords.visitId, parsedVisitId))
+          .limit(1)
 
-            if (record.length === 0) {
-                return NextResponse.json(
-                    { error: "Medical record not found for this visit" },
-                    { status: 404 }
-                );
-            }
-
-            // Get diagnoses
-            const diagnosisList = await db
-                .select()
-                .from(diagnoses)
-                .where(eq(diagnoses.medicalRecordId, record[0].id));
-
-            // Get procedures with performer and service information
-            const proceduresList = await db
-                .select({
-                    id: procedures.id,
-                    medicalRecordId: procedures.medicalRecordId,
-                    serviceId: procedures.serviceId,
-                    serviceName: services.name,
-                    servicePrice: services.price,
-                    icd9Code: procedures.icd9Code,
-                    description: procedures.description,
-                    performedBy: procedures.performedBy,
-                    performedByName: user.name,
-                    performedAt: procedures.performedAt,
-                    notes: procedures.notes,
-                    createdAt: procedures.createdAt,
-                })
-                .from(procedures)
-                .leftJoin(user, eq(procedures.performedBy, user.id))
-                .leftJoin(services, eq(procedures.serviceId, services.id))
-                .where(eq(procedures.medicalRecordId, record[0].id));
-
-            // Get prescriptions with drug information and pharmacist info
-            const prescriptionsList = await db
-                .select({
-                    id: prescriptions.id,
-                    medicalRecordId: prescriptions.medicalRecordId,
-                    drugId: prescriptions.drugId,
-                    drugName: drugs.name,
-                    drugPrice: drugs.price,
-                    dosage: prescriptions.dosage,
-                    frequency: prescriptions.frequency,
-                    duration: prescriptions.duration,
-                    quantity: prescriptions.quantity,
-                    instructions: prescriptions.instructions,
-                    route: prescriptions.route,
-                    isFulfilled: prescriptions.isFulfilled,
-                    fulfilledBy: prescriptions.fulfilledBy,
-                    fulfilledAt: prescriptions.fulfilledAt,
-                    dispensedQuantity: prescriptions.dispensedQuantity,
-                    inventoryId: prescriptions.inventoryId,
-                    notes: prescriptions.notes,
-                    // Pharmacist-added prescription fields
-                    addedByPharmacist: prescriptions.addedByPharmacist,
-                    addedByPharmacistId: prescriptions.addedByPharmacistId,
-                    addedByPharmacistName: user.name,
-                    approvedBy: prescriptions.approvedBy,
-                    approvedAt: prescriptions.approvedAt,
-                    pharmacistNote: prescriptions.pharmacistNote,
-                    createdAt: prescriptions.createdAt,
-                    updatedAt: prescriptions.updatedAt,
-                })
-                .from(prescriptions)
-                .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-                .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
-                .where(eq(prescriptions.medicalRecordId, record[0].id));
-
-            // Get visit information
-            const [visitInfo] = await db
-                .select()
-                .from(visits)
-                .where(eq(visits.id, record[0].visitId))
-                .limit(1);
-
-            return NextResponse.json({
-                success: true,
-                data: {
-                    medicalRecord: record[0],
-                    diagnoses: diagnosisList,
-                    procedures: proceduresList,
-                    prescriptions: prescriptionsList,
-                    visit: visitInfo,
-                },
-            });
+        if (record.length === 0) {
+          return NextResponse.json(
+            { error: "Medical record not found for this visit" },
+            { status: 404 }
+          )
         }
 
-        if (patientId) {
-            // Get all medical records for a patient (via visits)
-            const records = await db
-                .select({
-                    medicalRecord: medicalRecords,
-                    visit: visits,
-                })
-                .from(medicalRecords)
-                .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
-                .where(eq(visits.patientId, parseInt(patientId, 10)))
-                .orderBy(medicalRecords.createdAt);
+        // Get diagnoses
+        const diagnosisList = await db
+          .select()
+          .from(diagnoses)
+          .where(eq(diagnoses.medicalRecordId, record[0].id))
 
-            return NextResponse.json({
-                success: true,
-                data: records,
-                count: records.length,
-            });
-        }
+        // Get procedures with performer and service information
+        const proceduresList = await db
+          .select({
+            id: procedures.id,
+            medicalRecordId: procedures.medicalRecordId,
+            serviceId: procedures.serviceId,
+            serviceName: services.name,
+            servicePrice: services.price,
+            icd9Code: procedures.icd9Code,
+            description: procedures.description,
+            performedBy: procedures.performedBy,
+            performedByName: user.name,
+            performedAt: procedures.performedAt,
+            notes: procedures.notes,
+            createdAt: procedures.createdAt,
+          })
+          .from(procedures)
+          .leftJoin(user, eq(procedures.performedBy, user.id))
+          .leftJoin(services, eq(procedures.serviceId, services.id))
+          .where(eq(procedures.medicalRecordId, record[0].id))
 
-        return NextResponse.json(
-            { error: "visitId or patientId parameter is required" },
-            { status: 400 }
-        );
+        // Get prescriptions with drug information and pharmacist info
+        const prescriptionsList = await db
+          .select({
+            id: prescriptions.id,
+            medicalRecordId: prescriptions.medicalRecordId,
+            drugId: prescriptions.drugId,
+            drugName: drugs.name,
+            drugPrice: drugs.price,
+            dosage: prescriptions.dosage,
+            frequency: prescriptions.frequency,
+            duration: prescriptions.duration,
+            quantity: prescriptions.quantity,
+            instructions: prescriptions.instructions,
+            route: prescriptions.route,
+            isFulfilled: prescriptions.isFulfilled,
+            fulfilledBy: prescriptions.fulfilledBy,
+            fulfilledAt: prescriptions.fulfilledAt,
+            dispensedQuantity: prescriptions.dispensedQuantity,
+            inventoryId: prescriptions.inventoryId,
+            notes: prescriptions.notes,
+            // Pharmacist-added prescription fields
+            addedByPharmacist: prescriptions.addedByPharmacist,
+            addedByPharmacistId: prescriptions.addedByPharmacistId,
+            addedByPharmacistName: user.name,
+            approvedBy: prescriptions.approvedBy,
+            approvedAt: prescriptions.approvedAt,
+            pharmacistNote: prescriptions.pharmacistNote,
+            createdAt: prescriptions.createdAt,
+            updatedAt: prescriptions.updatedAt,
+          })
+          .from(prescriptions)
+          .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+          .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
+          .where(eq(prescriptions.medicalRecordId, record[0].id))
+
+        // Get visit information
+        const [visitInfo] = await db
+          .select()
+          .from(visits)
+          .where(eq(visits.id, record[0].visitId))
+          .limit(1)
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            medicalRecord: record[0],
+            diagnoses: diagnosisList,
+            procedures: proceduresList,
+            prescriptions: prescriptionsList,
+            visit: visitInfo,
+          },
+        })
+      }
+
+      if (patientId) {
+        // Get all medical records for a patient (via visits)
+        const records = await db
+          .select({
+            medicalRecord: medicalRecords,
+            visit: visits,
+          })
+          .from(medicalRecords)
+          .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
+          .where(eq(visits.patientId, parseInt(patientId, 10)))
+          .orderBy(medicalRecords.createdAt)
+
+        return NextResponse.json({
+          success: true,
+          data: records,
+          count: records.length,
+        })
+      }
+
+      return NextResponse.json(
+        { error: "visitId or patientId parameter is required" },
+        { status: 400 }
+      )
     } catch (error) {
-        console.error("Medical record fetch error:", error);
-        return NextResponse.json(
-            { error: "Failed to fetch medical record" },
-            { status: 500 }
-        );
+      console.error("Medical record fetch error:", error)
+      return NextResponse.json({ error: "Failed to fetch medical record" }, { status: 500 })
     }
-    },
-    { permissions: ["medical_records:read"] }
-);
+  },
+  { permissions: ["medical_records:read"] }
+)
 
 /**
  * PATCH /api/medical-records
@@ -255,61 +255,49 @@ export const GET = withRBAC(
  * Requires: medical_records:write permission
  */
 export const PATCH = withRBAC(
-    async (request: NextRequest) => {
+  async (request: NextRequest) => {
     try {
-        const body = await request.json();
-        const { id, ...updateData } = body;
+      const body = await request.json()
+      const { id, ...updateData } = body
 
-        if (!id) {
-            return NextResponse.json(
-                { error: "Medical record ID is required" },
-                { status: 400 }
-            );
-        }
+      if (!id) {
+        return NextResponse.json({ error: "Medical record ID is required" }, { status: 400 })
+      }
 
-        // Check if record exists and is not locked
-        const existing = await db
-            .select()
-            .from(medicalRecords)
-            .where(eq(medicalRecords.id, id))
-            .limit(1);
+      // Check if record exists and is not locked
+      const existing = await db
+        .select()
+        .from(medicalRecords)
+        .where(eq(medicalRecords.id, id))
+        .limit(1)
 
-        if (existing.length === 0) {
-            return NextResponse.json(
-                { error: "Medical record not found" },
-                { status: 404 }
-            );
-        }
+      if (existing.length === 0) {
+        return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
+      }
 
-        if (existing[0].isLocked) {
-            return NextResponse.json(
-                { error: "Cannot update locked medical record" },
-                { status: 403 }
-            );
-        }
+      if (existing[0].isLocked) {
+        return NextResponse.json({ error: "Cannot update locked medical record" }, { status: 403 })
+      }
 
-        // Update medical record
-        const updatedRecord = await db
-            .update(medicalRecords)
-            .set({
-                ...updateData,
-                updatedAt: new Date(),
-            })
-            .where(eq(medicalRecords.id, id))
-            .returning();
+      // Update medical record
+      const updatedRecord = await db
+        .update(medicalRecords)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(eq(medicalRecords.id, id))
+        .returning()
 
-        return NextResponse.json({
-            success: true,
-            message: "Medical record updated successfully",
-            data: updatedRecord[0],
-        });
+      return NextResponse.json({
+        success: true,
+        message: "Medical record updated successfully",
+        data: updatedRecord[0],
+      })
     } catch (error) {
-        console.error("Medical record update error:", error);
-        return NextResponse.json(
-            { error: "Failed to update medical record" },
-            { status: 500 }
-        );
+      console.error("Medical record update error:", error)
+      return NextResponse.json({ error: "Failed to update medical record" }, { status: 500 })
     }
-    },
-    { permissions: ["medical_records:write"] }
-);
+  },
+  { permissions: ["medical_records:write"] }
+)

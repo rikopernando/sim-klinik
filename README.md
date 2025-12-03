@@ -16,6 +16,7 @@ A modern web application starter template built with Next.js 15, featuring authe
 ## Prerequisites
 
 Before you begin, ensure you have the following:
+
 - Node.js 18+ installed
 - Docker and Docker Compose (for database setup)
 - Generated project documents from [CodeGuide](https://codeguide.dev/) for best development experience
@@ -23,12 +24,14 @@ Before you begin, ensure you have the following:
 ## Getting Started
 
 1. **Clone the repository**
+
    ```bash
    git clone <repository-url>
    cd codeguide-starter-fullstack
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    # or
@@ -45,6 +48,7 @@ Before you begin, ensure you have the following:
    - The default values work with Docker setup, modify as needed
 
 4. **Start the development server**
+
    ```bash
    npm run dev
    # or
@@ -58,10 +62,13 @@ Before you begin, ensure you have the following:
 ## Configuration
 
 ### Option 1: Docker Setup (Recommended)
+
 1. **Start PostgreSQL with Docker:**
+
    ```bash
    npm run db:up
    ```
+
    This starts PostgreSQL in a Docker container with default credentials.
 
 2. **Push database schema:**
@@ -70,6 +77,7 @@ Before you begin, ensure you have the following:
    ```
 
 ### Option 2: Local Database Setup
+
 1. Create a PostgreSQL database locally
 2. Update your environment variables in `.env`:
    ```env
@@ -151,12 +159,14 @@ This starter includes modern database integration:
 ## Development Commands
 
 ### Application
+
 - `npm run dev` - Start development server with Turbopack
 - `npm run build` - Build for production with Turbopack
 - `npm start` - Start production server
 - `npm run lint` - Run ESLint
 
 ### Database
+
 - `npm run db:up` - Start PostgreSQL in Docker
 - `npm run db:down` - Stop PostgreSQL container
 - `npm run db:dev` - Start development PostgreSQL (port 5433)
@@ -167,12 +177,14 @@ This starter includes modern database integration:
 - `npm run db:reset` - Reset database (drop all tables and recreate)
 
 ### Styling with shadcn/ui
+
 - Pre-configured with 40+ shadcn/ui components in New York style
 - Components are fully customizable and use CSS variables for theming
 - Automatic dark mode support with next-themes integration
 - Add new components: `npx shadcn@latest add [component-name]`
 
 ### Docker
+
 - `npm run docker:build` - Build application Docker image
 - `npm run docker:up` - Start full application stack (app + database)
 - `npm run docker:down` - Stop all containers
@@ -182,6 +194,7 @@ This starter includes modern database integration:
 ## Docker Development
 
 ### Quick Start with Docker
+
 ```bash
 # Start the entire stack (recommended for new users)
 npm run docker:up
@@ -194,6 +207,7 @@ npm run docker:down
 ```
 
 ### Development Workflow
+
 ```bash
 # Option 1: Database only (develop app locally)
 npm run db:up          # Start PostgreSQL
@@ -228,6 +242,7 @@ npm run db:dev
 #### Option 1: Docker Compose (VPS/Server)
 
 1. **Clone and setup on your server:**
+
    ```bash
    git clone <your-repo>
    cd codeguide-starter-fullstack
@@ -235,6 +250,7 @@ npm run db:dev
    ```
 
 2. **Configure environment variables:**
+
    ```bash
    # Edit .env with production values
    DATABASE_URL=postgresql://postgres:your_secure_password@postgres:5432/postgres
@@ -254,10 +270,11 @@ npm run db:dev
 #### Option 2: Container Registry (AWS/GCP/Azure)
 
 1. **Build and push image:**
+
    ```bash
    # Build the image
    docker build -t your-registry/codeguide-starter-fullstack:latest .
-   
+
    # Push to registry
    docker push your-registry/codeguide-starter-fullstack:latest
    ```
@@ -267,6 +284,7 @@ npm run db:dev
 #### Option 3: Vercel + External Database
 
 1. **Deploy to Vercel:**
+
    ```bash
    npm i -g vercel
    vercel
@@ -326,4 +344,5 @@ This starter is optimized for AI coding agents:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
 # codeguide-starter-fullstack

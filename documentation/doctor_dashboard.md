@@ -65,6 +65,7 @@ The doctor dashboard is a role-specific view that helps doctors manage their dai
 **File:** `/app/api/dashboard/doctor/stats/route.ts`
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -83,6 +84,7 @@ The doctor dashboard is a role-specific view that helps doctors manage their dai
 ```
 
 **Query Logic:**
+
 - Filters visits by `doctorId` (current logged-in doctor)
 - Counts visits by status (registered/waiting, in_examination, completed)
 - Counts unlocked medical records for this doctor
@@ -96,11 +98,13 @@ The doctor dashboard is a role-specific view that helps doctors manage their dai
 **File:** `/app/api/dashboard/doctor/queue/route.ts`
 
 **Query Parameters:**
+
 ```
 status (optional): "waiting" | "in_examination" | "all"
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -138,6 +142,7 @@ status (optional): "waiting" | "in_examination" | "all"
 ```
 
 **Query Logic:**
+
 - Joins visits + patients + polis tables
 - Filters by doctor ID
 - Filters by status (if provided)
@@ -155,6 +160,7 @@ status (optional): "waiting" | "in_examination" | "all"
 **Permission Required:** Doctor role
 
 **Component Structure:**
+
 ```tsx
 <DoctorDashboard>
   {/* Header with title and refresh button */}
@@ -192,20 +198,22 @@ status (optional): "waiting" | "in_examination" | "all"
 #### 2. Custom Hooks
 
 **useDoctorStats** (`/hooks/use-doctor-stats.ts`)
+
 ```tsx
 const { stats, isLoading, lastRefresh, refresh } = useDoctorStats({
-    autoRefresh: true,
-    refreshInterval: 60000, // 60 seconds
-});
+  autoRefresh: true,
+  refreshInterval: 60000, // 60 seconds
+})
 ```
 
 **useDoctorQueue** (`/hooks/use-doctor-queue.ts`)
+
 ```tsx
 const { queue, isLoading, refresh } = useDoctorQueue({
-    status: "all",
-    autoRefresh: true,
-    refreshInterval: 30000, // 30 seconds
-});
+  status: "all",
+  autoRefresh: true,
+  refreshInterval: 30000, // 30 seconds
+})
 ```
 
 ---
@@ -256,22 +264,26 @@ const { queue, isLoading, refresh } = useDoctorQueue({
 ### 1. Statistics Cards (Top Row)
 
 **Antrian Menunggu**
+
 - Icon: Clock (blue)
 - Value: Number of patients waiting
 - Badge: "Butuh Perhatian" (if > 0)
 - Click: Navigate to "Menunggu" tab
 
 **Sedang Diperiksa**
+
 - Icon: Activity (green)
 - Value: Patients currently being examined
 - No badge
 
 **Selesai Hari Ini**
+
 - Icon: Stethoscope (purple)
 - Value: Completed patients today
 - Shows doctor productivity
 
 **RME Belum Dikunci**
+
 - Icon: FileText (orange)
 - Value: Number of unlocked medical records
 - Badge: "Action Required" (if > 0, red)
@@ -280,6 +292,7 @@ const { queue, isLoading, refresh } = useDoctorQueue({
 ### 2. Patient Queue Tabs
 
 **Tab 1: Menunggu**
+
 - Shows patients with status "registered" or "waiting"
 - Sorted by arrival time
 - Action: "Mulai" → Start examination
@@ -287,11 +300,13 @@ const { queue, isLoading, refresh } = useDoctorQueue({
 - Displays: Name, visit number, poli, queue number
 
 **Tab 2: Sedang Diperiksa**
+
 - Shows patients with status "in_examination"
 - Action: "Lanjutkan" → Continue examination
 - Badge: "Dalam Pemeriksaan" (blue)
 
 **Tab 3: RME Belum Dikunci**
+
 - Shows visits with existing but unlocked medical records
 - Action: "Kunci RME" → Go to record and lock it
 - Badge: "Belum Dikunci" (red)
@@ -345,16 +360,19 @@ const { queue, isLoading, refresh } = useDoctorQueue({
 ### Empty States
 
 **No Waiting Patients:**
+
 ```
 Tidak ada pasien dalam antrian
 ```
 
 **No In-Progress Examinations:**
+
 ```
 Tidak ada pasien yang sedang diperiksa
 ```
 
 **All Records Locked:**
+
 ```
 Semua RME sudah dikunci
 ```
@@ -426,23 +444,21 @@ CREATE INDEX idx_medical_records_doctor_locked ON medical_records(doctor_id, is_
 
 ```tsx
 if (error) {
-    return (
-        <div className="text-destructive">
-            Failed to load dashboard: {error}
-        </div>
-    );
+  return <div className="text-destructive">Failed to load dashboard: {error}</div>
 }
 ```
 
 ### Loading States
 
 ```tsx
-{isLoading && (
+{
+  isLoading && (
     <div className="flex items-center justify-center py-12">
-        <Loader2 className="animate-spin" />
-        <span>Loading dashboard...</span>
+      <Loader2 className="animate-spin" />
+      <span>Loading dashboard...</span>
     </div>
-)}
+  )
+}
 ```
 
 ### Network Failures
@@ -470,6 +486,7 @@ if (error) {
 ### Audit Trail
 
 All actions logged:
+
 - Dashboard access
 - Medical record views
 - Examination starts
@@ -553,11 +570,11 @@ All actions logged:
 ## Usage Example
 
 ```tsx
-import DoctorDashboard from "@/app/dashboard/doctor/page";
+import DoctorDashboard from "@/app/dashboard/doctor/page"
 
 // In routing or role-based redirect
 if (user.role === "doctor") {
-    return <DoctorDashboard />;
+  return <DoctorDashboard />
 }
 ```
 
@@ -570,6 +587,7 @@ if (user.role === "doctor") {
 ✅ **Task H.3.3 Complete**
 
 **What was implemented:**
+
 - ✅ Real-time doctor dashboard with auto-refresh
 - ✅ Patient queue management (3 tabs)
 - ✅ Quick access to medical records
@@ -583,6 +601,7 @@ if (user.role === "doctor") {
 - ✅ Comprehensive documentation
 
 **Benefits:**
+
 - Centralized workflow for doctors
 - Real-time patient queue visibility
 - Quick access to patient history
@@ -591,6 +610,7 @@ if (user.role === "doctor") {
 - Better patient care with context
 
 **Next Steps:**
+
 - H.3.2 - Admin Dashboard
 - H.3.4 - Nurse Dashboard
 - H.4.1 - Quick Actions Header
