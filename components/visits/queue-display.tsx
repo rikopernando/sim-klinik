@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status";
 
 interface QueueItem {
     visit: {
@@ -119,15 +120,22 @@ export function QueueDisplay({
     };
 
     const getStatusBadge = (status: string) => {
-        const variants: Record<string, { variant: "secondary" | "default" | "outline"; label: string }> = {
-            pending: { variant: "secondary", label: "Menunggu" },
-            in_progress: { variant: "default", label: "Dalam Proses" },
-            completed: { variant: "outline", label: "Selesai" },
-        };
+        // Use actual visit status info from the system
+        const statusInfo = VISIT_STATUS_INFO[status as VisitStatus];
 
-        const config = variants[status] || variants.pending;
+        if (!statusInfo) {
+            // Fallback for unknown status
+            return <Badge variant="secondary">{status}</Badge>;
+        }
 
-        return <Badge variant={config.variant}>{config.label}</Badge>;
+        return (
+            <Badge
+                className={cn(statusInfo.bgColor, statusInfo.color, "border-0")}
+                variant="outline"
+            >
+                {statusInfo.label}
+            </Badge>
+        );
     };
 
     return (
