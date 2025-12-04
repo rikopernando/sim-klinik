@@ -3,6 +3,9 @@ import { db } from "@/db"
 import { patients } from "@/db/schema"
 import { or, like, sql } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { RegisteredPatient } from "@/types/registration"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * GET /api/patients/search
@@ -17,10 +20,15 @@ export const GET = withRBAC(
       const query = searchParams.get("q")
 
       if (!query || query.trim().length < 2) {
-        return NextResponse.json(
-          { error: "Search query must be at least 2 characters" },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: "Search query must be at least 2 characters",
+          message: "Search query must be at least 2 characters",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        })
       }
 
       const searchTerm = `%${query.trim()}%`
@@ -49,14 +57,24 @@ export const GET = withRBAC(
         .limit(20) // Limit results for performance
         .orderBy(patients.name)
 
-      return NextResponse.json({
-        success: true,
-        data: results,
-        count: results.length,
-      })
+      const response: ResponseApi<RegisteredPatient[]> = {
+        message: "Patient search completed successfully",
+        data: results as RegisteredPatient[],
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Patient search error:", error)
-      return NextResponse.json({ error: "Failed to search patients" }, { status: 500 })
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to search patients",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["patients:read"] }
