@@ -17,15 +17,15 @@
   - [x] Pada List Resep, Field Dosis tidak perlu ditampilkan
   -  [x] Pada Form Tambah Resep, Form Tambah Tindakan dan Form Tambah Diagnosis Buat validasi jika ada item yang sama, atau menginput item yang sudah diinput sebelumnya
   -  [x] Pada Form Tambah Tindakan, kolom Dilakukan Oleh Wajib isi
-  - Saat ingin mengunci rekam medik, dokter bisa input diskon harga subtotal atau menambahkan harga subtotal, yang nantinya akan masuk ke cashier, dan akan mempengaruhi subtotal harga pada cashier
-  - Rekam Medik yang sudah dikunci masih bisa diedit, selama pasien belum pulang.
+  - [x]  Saat ingin mengunci rekam medik, dokter bisa input diskon harga subtotal atau menambahkan harga subtotal, yang nantinya akan masuk ke cashier, dan akan mempengaruhi subtotal harga pada cashier
+  - [x]  Rekam Medik yang sudah dikunci masih bisa diedit, selama pasien belum pulang.
 4. Farmasi
   - [x] Pada Proses Resep - Bulk, Farmasi tidak bisa merubah jumlah obat yang diberikan, bisa dihapus saja kolom jumlahnya
-  - Pada Proses Resep - Bulk, Farmasi bisa menambahkan Resep obat dengan persetujuan dokter, tujuannya ketika ada urgensi atau dokter tidak bisa input
+  - [x]  Pada Proses Resep - Bulk, Farmasi bisa menambahkan Resep obat dengan persetujuan dokter, tujuannya ketika ada urgensi atau dokter tidak bisa input
 5. Kasir
-  - Daftar Antrian Pembayaran hanya pada pasien yang sudah selesai (RME/Pulang dikunci)
-  - Pada Dialog Terapkan Diskon & Jaminan, Tambahkan opsi diskon: [Diskon Seluruh Obat, Diskon Seluruh Tindakan], ini biasanya berguna untuk pasien BPJS
-  - Pada Proses Pembayaran Buatkan Struk Pembayaran atau invoice
+  - [x]  Daftar Antrian Pembayaran hanya pada pasien yang sudah selesai (RME/Pulang dikunci)
+  - [x]  Pada Dialog Terapkan Diskon & Jaminan, Tambahkan opsi diskon: [Diskon Seluruh Obat, Diskon Seluruh Tindakan], ini biasanya berguna untuk pasien BPJS
+  - [x]  Pada Proses Pembayaran Buatkan Struk Pembayaran atau invoice
 
 
 New Feedback
@@ -34,7 +34,7 @@ New Feedback
   - Pada Antrian Resep Urutkan berdasarkan yang datang lebih dulu
 2. Billing
   - Pastikan flow billing pada rawat jalan sudah firm. Kapan billing diproses harus jelas
-3. Setup prettier dan eslint
+3. [x] Setup prettier dan eslint
 4. gunakan uuid pada setiap table
 5. Master Data
-6. Grouping Menu
+6. [x] Grouping Menu

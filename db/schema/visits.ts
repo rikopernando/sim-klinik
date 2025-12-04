@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, timestamp, text } from "drizzle-orm/pg-core"
+import { pgTable, varchar, timestamp, text } from "drizzle-orm/pg-core"
 import { patients } from "./patients"
 import { user } from "./auth"
 
@@ -7,15 +7,17 @@ import { user } from "./auth"
  * Tracks patient visits/encounters across all service types
  */
 export const visits = pgTable("visits", {
-  id: serial("id").primaryKey(),
-  patientId: integer("patient_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  patientId: text("patient_id")
     .notNull()
     .references(() => patients.id, { onDelete: "cascade" }),
   visitType: varchar("visit_type", { length: 20 }).notNull(), // outpatient, inpatient, emergency
   visitNumber: varchar("visit_number", { length: 30 }).notNull().unique(), // Auto-generated visit identifier
 
   // For outpatient
-  poliId: integer("poli_id"), // Reference to poli/department (will create polis table)
+  poliId: text("poli_id"), // Reference to poli/department (will create polis table)
   doctorId: text("doctor_id").references(() => user.id), // Assigned doctor
   queueNumber: varchar("queue_number", { length: 10 }), // Queue number for outpatient
 
@@ -24,7 +26,7 @@ export const visits = pgTable("visits", {
   chiefComplaint: text("chief_complaint"), // Main complaint (required for ER)
 
   // For inpatient
-  roomId: integer("room_id"), // Reference to room (will create rooms table)
+  roomId: text("room_id"), // Reference to room (will create rooms table)
   admissionDate: timestamp("admission_date"),
   dischargeDate: timestamp("discharge_date"),
 
@@ -47,7 +49,9 @@ export const visits = pgTable("visits", {
  * Master data for clinic departments/poli
  */
 export const polis = pgTable("polis", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 100 }).notNull(), // e.g., "Poli Umum", "Poli Gigi", "Poli Anak"
   code: varchar("code", { length: 20 }).notNull().unique(),
   description: text("description"),

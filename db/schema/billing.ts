@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  serial,
-  integer,
-  varchar,
-  text,
-  timestamp,
-  decimal,
-  boolean,
-} from "drizzle-orm/pg-core"
+import { pgTable, varchar, text, timestamp, decimal, boolean, integer } from "drizzle-orm/pg-core"
 import { visits } from "./visits"
 import { user } from "./auth"
 
@@ -16,7 +7,9 @@ import { user } from "./auth"
  * Master data for all billable services
  */
 export const services = pgTable("services", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   code: varchar("code", { length: 50 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   serviceType: varchar("service_type", { length: 50 }).notNull(), // consultation, procedure, room, laboratory, radiology, etc.
@@ -33,8 +26,10 @@ export const services = pgTable("services", {
  * Main billing record for each visit
  */
 export const billings = pgTable("billings", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .unique() // One billing per visit
     .references(() => visits.id, { onDelete: "cascade" }),
@@ -73,14 +68,16 @@ export const billings = pgTable("billings", {
  * Individual line items in a bill
  */
 export const billingItems = pgTable("billing_items", {
-  id: serial("id").primaryKey(),
-  billingId: integer("billing_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  billingId: text("billing_id")
     .notNull()
     .references(() => billings.id, { onDelete: "cascade" }),
 
   // Item details
   itemType: varchar("item_type", { length: 50 }).notNull(), // service, drug, material, room
-  itemId: integer("item_id"), // Reference to services, drugs, etc.
+  itemId: text("item_id"), // Reference to services, drugs, etc.
   itemName: varchar("item_name", { length: 255 }).notNull(),
   itemCode: varchar("item_code", { length: 50 }),
 
@@ -100,8 +97,10 @@ export const billingItems = pgTable("billing_items", {
  * Track payment transactions (supports partial payments)
  */
 export const payments = pgTable("payments", {
-  id: serial("id").primaryKey(),
-  billingId: integer("billing_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  billingId: text("billing_id")
     .notNull()
     .references(() => billings.id, { onDelete: "cascade" }),
 
@@ -129,8 +128,10 @@ export const payments = pgTable("payments", {
  * Medical summary for patient discharge (especially inpatient)
  */
 export const dischargeSummaries = pgTable("discharge_summaries", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .unique()
     .references(() => visits.id, { onDelete: "cascade" }),

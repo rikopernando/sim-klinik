@@ -82,7 +82,7 @@ export async function seedRoles() {
 /**
  * Get role ID by name
  */
-export async function getRoleIdByName(roleName: string): Promise<number | null> {
+export async function getRoleIdByName(roleName: string): Promise<string | null> {
   const [role] = await db.select().from(roles).where(eq(roles.name, roleName)).limit(1)
 
   return role?.id || null

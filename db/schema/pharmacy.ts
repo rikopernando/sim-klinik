@@ -1,13 +1,4 @@
-import {
-  pgTable,
-  serial,
-  integer,
-  varchar,
-  text,
-  timestamp,
-  decimal,
-  boolean,
-} from "drizzle-orm/pg-core"
+import { pgTable, varchar, text, timestamp, decimal, boolean, integer } from "drizzle-orm/pg-core"
 import { medicalRecords } from "./medical-records"
 import { user } from "./auth"
 
@@ -16,7 +7,9 @@ import { user } from "./auth"
  * Master data for all medications
  */
 export const drugs = pgTable("drugs", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 255 }).notNull(),
   genericName: varchar("generic_name", { length: 255 }),
   category: varchar("category", { length: 100 }), // Antibiotics, Analgesics, etc.
@@ -34,8 +27,10 @@ export const drugs = pgTable("drugs", {
  * Tracks drug stock with batch numbers and expiry dates
  */
 export const drugInventory = pgTable("drug_inventory", {
-  id: serial("id").primaryKey(),
-  drugId: integer("drug_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  drugId: text("drug_id")
     .notNull()
     .references(() => drugs.id, { onDelete: "cascade" }),
   batchNumber: varchar("batch_number", { length: 100 }).notNull(),
@@ -53,11 +48,13 @@ export const drugInventory = pgTable("drug_inventory", {
  * Digital prescriptions from doctors
  */
 export const prescriptions = pgTable("prescriptions", {
-  id: serial("id").primaryKey(),
-  medicalRecordId: integer("medical_record_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  medicalRecordId: text("medical_record_id")
     .notNull()
     .references(() => medicalRecords.id, { onDelete: "cascade" }),
-  drugId: integer("drug_id")
+  drugId: text("drug_id")
     .notNull()
     .references(() => drugs.id),
 
@@ -78,7 +75,7 @@ export const prescriptions = pgTable("prescriptions", {
   dispensedQuantity: integer("dispensed_quantity"), // Actual quantity dispensed
 
   // Stock tracking
-  inventoryId: integer("inventory_id").references(() => drugInventory.id), // Which batch was used
+  inventoryId: text("inventory_id").references(() => drugInventory.id), // Which batch was used
 
   // Pharmacist-added prescriptions (for urgent cases)
   addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false), // Flag for pharmacist-added prescriptions
@@ -97,14 +94,16 @@ export const prescriptions = pgTable("prescriptions", {
  * Track all inventory movements (in/out)
  */
 export const stockMovements = pgTable("stock_movements", {
-  id: serial("id").primaryKey(),
-  inventoryId: integer("inventory_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  inventoryId: text("inventory_id")
     .notNull()
     .references(() => drugInventory.id, { onDelete: "cascade" }),
   movementType: varchar("movement_type", { length: 20 }).notNull(), // in, out, adjustment, expired
   quantity: integer("quantity").notNull(), // Positive for in, negative for out
   reason: text("reason"), // Reason for movement
-  referenceId: integer("reference_id"), // Reference to prescription if type is "out"
+  referenceId: text("reference_id"), // Reference to prescription if type is "out"
   performedBy: text("performed_by").references(() => user.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })

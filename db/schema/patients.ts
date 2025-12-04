@@ -1,11 +1,13 @@
-import { pgTable, text, timestamp, varchar, serial } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core"
 
 /**
  * Patients Table
  * Stores core patient demographic information
  */
 export const patients = pgTable("patients", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   mrNumber: varchar("mr_number", { length: 20 }).notNull().unique(), // Medical Record Number (auto-generated)
   nik: varchar("nik", { length: 16 }).unique(), // National ID Number (Nomor Induk Kependudukan)
   name: varchar("name", { length: 255 }).notNull(),

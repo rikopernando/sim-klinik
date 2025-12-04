@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core"
 import { user } from "./auth"
 
 /**
@@ -6,7 +6,9 @@ import { user } from "./auth"
  * Define user roles for RBAC (Role-Based Access Control)
  */
 export const roles = pgTable("roles", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 50 }).notNull().unique(), // admin, doctor, nurse, pharmacist, cashier, receptionist
   description: text("description"),
   permissions: text("permissions"), // JSON array of permissions
@@ -19,11 +21,13 @@ export const roles = pgTable("roles", {
  * Many-to-many relationship between users and roles
  */
 export const userRoles = pgTable("user_roles", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  roleId: serial("role_id")
+  roleId: text("role_id")
     .notNull()
     .references(() => roles.id, { onDelete: "cascade" }),
   assignedAt: timestamp("assigned_at").defaultNow().notNull(),

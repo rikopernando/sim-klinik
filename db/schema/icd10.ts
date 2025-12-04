@@ -3,12 +3,14 @@
  * Master data for ICD-10 diagnosis codes
  */
 
-import { pgTable, serial, varchar, text, timestamp, index } from "drizzle-orm/pg-core"
+import { pgTable, varchar, text, timestamp, index } from "drizzle-orm/pg-core"
 
 export const icd10Codes = pgTable(
   "icd10_codes",
   {
-    id: serial("id").primaryKey(),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     code: varchar("code", { length: 10 }).notNull().unique(),
     description: text("description").notNull(),
     category: varchar("category", { length: 100 }),

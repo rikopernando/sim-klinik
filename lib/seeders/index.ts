@@ -8,6 +8,7 @@ import { seedUsers } from "./seed-users"
 import { seedPolis } from "./seed-polis"
 import { seedServices } from "./seed-services"
 import { seedDrugs } from "./seed-drugs"
+import { seedICD10 } from "./seed-icd10"
 
 export async function runAllSeeders() {
   console.log("🚀 Starting database seeding...\n")
@@ -31,6 +32,10 @@ export async function runAllSeeders() {
 
     // 5. Seed drugs (master data for pharmacy)
     await seedDrugs()
+    console.log("")
+
+    // 6. Seed ICD 10 (master data for dianosis)
+    await seedICD10()
     console.log("")
 
     console.log("🎉 All seeders completed successfully!")

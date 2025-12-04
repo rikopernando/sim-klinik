@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, text, timestamp, boolean } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core"
 import { visits } from "./visits"
 import { user } from "./auth"
 import { services } from "./billing"
@@ -8,8 +8,10 @@ import { services } from "./billing"
  * Electronic Medical Record (EMR) using SOAP format
  */
 export const medicalRecords = pgTable("medical_records", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .unique() // One medical record per visit
     .references(() => visits.id, { onDelete: "cascade" }),
@@ -44,8 +46,10 @@ export const medicalRecords = pgTable("medical_records", {
  * ICD-10 diagnoses linked to medical records
  */
 export const diagnoses = pgTable("diagnoses", {
-  id: serial("id").primaryKey(),
-  medicalRecordId: integer("medical_record_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  medicalRecordId: text("medical_record_id")
     .notNull()
     .references(() => medicalRecords.id, { onDelete: "cascade" }),
   icd10Code: text("icd10_code").notNull(), // ICD-10 code
@@ -59,11 +63,13 @@ export const diagnoses = pgTable("diagnoses", {
  * ICD-9 procedures/actions performed
  */
 export const procedures = pgTable("procedures", {
-  id: serial("id").primaryKey(),
-  medicalRecordId: integer("medical_record_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  medicalRecordId: text("medical_record_id")
     .notNull()
     .references(() => medicalRecords.id, { onDelete: "cascade" }),
-  serviceId: integer("service_id").references(() => services.id), // Reference to services table
+  serviceId: text("service_id").references(() => services.id), // Reference to services table
   icd9Code: text("icd9_code").notNull(), // ICD-9-CM procedure code (kept for legacy)
   description: text("description").notNull(), // Procedure description
   performedBy: text("performed_by").references(() => user.id),
@@ -77,8 +83,10 @@ export const procedures = pgTable("procedures", {
  * Integrated Progress Notes - for inpatient care
  */
 export const cppt = pgTable("cppt", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
   authorId: text("author_id")

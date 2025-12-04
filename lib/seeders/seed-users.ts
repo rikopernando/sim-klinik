@@ -18,53 +18,63 @@ const DEFAULT_PASSWORD = "password123"
 interface DemoUser {
   name: string
   email: string
+  username: string
   role: string
 }
 
 const DEMO_USERS: DemoUser[] = [
   {
     name: "Super Admin",
+    username: "superadmin",
     email: "superadmin@simklinik.test",
     role: USER_ROLES.SUPER_ADMIN,
   },
   {
     name: "Admin User",
+    username: "admin",
     email: "admin@simklinik.test",
     role: USER_ROLES.ADMIN,
   },
   {
     name: "Dr. Ahmad Wijaya",
     email: "doctor@simklinik.test",
+    username: "dokter",
     role: USER_ROLES.DOCTOR,
   },
   {
     name: "Dr. Siti Nurhaliza",
     email: "doctor2@simklinik.test",
+    username: "dokter2",
     role: USER_ROLES.DOCTOR,
   },
   {
     name: "Ns. Budi Santoso",
     email: "nurse@simklinik.test",
+    username: "perawat",
     role: USER_ROLES.NURSE,
   },
   {
     name: "Ns. Indah Permata",
     email: "nurse2@simklinik.test",
+    username: "perawat2",
     role: USER_ROLES.NURSE,
   },
   {
     name: "Apt. Rudi Hartono",
     email: "pharmacist@simklinik.test",
+    username: "apoteker",
     role: USER_ROLES.PHARMACIST,
   },
   {
     name: "Dewi Lestari",
     email: "cashier@simklinik.test",
+    username: "kasir",
     role: USER_ROLES.CASHIER,
   },
   {
     name: "Fitri Handayani",
     email: "receptionist@simklinik.test",
+    username: "resepsionis",
     role: USER_ROLES.RECEPTIONIST,
   },
 ]
@@ -98,6 +108,7 @@ export async function seedUsers() {
         email: demoUser.email,
         password: DEFAULT_PASSWORD,
         name: demoUser.name,
+        username: demoUser.username,
       },
     })
 

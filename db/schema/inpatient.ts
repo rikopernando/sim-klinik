@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, varchar, text, timestamp, decimal } from "drizzle-orm/pg-core"
+import { pgTable, varchar, text, timestamp, decimal, integer } from "drizzle-orm/pg-core"
 import { visits } from "./visits"
 import { user } from "./auth"
 
@@ -7,7 +7,9 @@ import { user } from "./auth"
  * Hospital rooms and bed management
  */
 export const rooms = pgTable("rooms", {
-  id: serial("id").primaryKey(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   roomNumber: varchar("room_number", { length: 20 }).notNull().unique(),
   roomType: varchar("room_type", { length: 50 }).notNull(), // VIP, Class 1, Class 2, ICU, etc.
   bedCount: integer("bed_count").notNull().default(1),
@@ -28,8 +30,10 @@ export const rooms = pgTable("rooms", {
  * Track patient vital signs over time (especially for inpatient)
  */
 export const vitalsHistory = pgTable("vitals_history", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
 
@@ -63,11 +67,13 @@ export const vitalsHistory = pgTable("vitals_history", {
  * Track patient bed assignments for inpatient care
  */
 export const bedAssignments = pgTable("bed_assignments", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
-  roomId: integer("room_id")
+  roomId: text("room_id")
     .notNull()
     .references(() => rooms.id),
   bedNumber: varchar("bed_number", { length: 10 }).notNull(), // Bed identifier within room
@@ -83,8 +89,10 @@ export const bedAssignments = pgTable("bed_assignments", {
  * Track medical materials/supplies used for inpatient care
  */
 export const materialUsage = pgTable("material_usage", {
-  id: serial("id").primaryKey(),
-  visitId: integer("visit_id")
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  visitId: text("visit_id")
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
   materialName: varchar("material_name", { length: 255 }).notNull(),

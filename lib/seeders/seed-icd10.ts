@@ -105,7 +105,7 @@ const commonICD10Codes = [
   { code: "T78.4", description: "Allergy, unspecified", category: "Injury" },
 ]
 
-async function seedICD10() {
+export async function seedICD10() {
   console.log("Starting ICD-10 seeding...")
 
   try {
@@ -126,14 +126,3 @@ async function seedICD10() {
     throw error
   }
 }
-
-// Run the seed function
-seedICD10()
-  .then(() => {
-    console.log("ICD-10 seeding completed!")
-    process.exit(0)
-  })
-  .catch((error) => {
-    console.error("ICD-10 seeding failed:", error)
-    process.exit(1)
-  })

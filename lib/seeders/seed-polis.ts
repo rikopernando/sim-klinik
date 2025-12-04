@@ -111,7 +111,7 @@ export async function seedPolis() {
 /**
  * Get poli ID by code
  */
-export async function getPoliIdByCode(code: string): Promise<number | null> {
+export async function getPoliIdByCode(code: string): Promise<string | null> {
   const [poli] = await db.select().from(polis).where(eq(polis.code, code)).limit(1)
 
   return poli?.id || null

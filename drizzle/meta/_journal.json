@@ -57,6 +57,13 @@
       "when": 1764757237813,
       "tag": "0007_glorious_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1764820335966,
+      "tag": "0008_new_cerise",
+      "breakpoints": true
     }
   ]
 }
