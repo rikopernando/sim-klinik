@@ -31,7 +31,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { getNavigationForRole } from "@/lib/rbac/navigation"
+import { getNavigationGroupsForRole } from "@/lib/rbac/navigation"
 import type { UserRole } from "@/types/rbac"
 import { ROLE_INFO } from "@/types/rbac"
 import { Badge } from "@/components/ui/badge"
@@ -112,12 +112,12 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
         avatar: "/bumi-andalas-logo.jpg",
       }
 
-  // Get navigation items based on role
-  const navigationItems = React.useMemo(() => {
+  // Get navigation groups based on role
+  const navigationGroups = React.useMemo(() => {
     if (isLoadingRole) {
       return []
     }
-    return getNavigationForRole(userRole)
+    return getNavigationGroupsForRole(userRole)
   }, [userRole, isLoadingRole])
 
   // Get role info for display
@@ -170,7 +170,7 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
       </SidebarHeader>
       <SidebarContent>
         {/* Role-based Navigation */}
-        {navigationItems.length > 0 && <NavMain items={navigationItems} />}
+        {navigationGroups.length > 0 && <NavMain groups={navigationGroups} />}
 
         {/* Static Documents - Only for admin */}
         {userRole === "admin" && <NavDocuments items={staticDocuments} />}

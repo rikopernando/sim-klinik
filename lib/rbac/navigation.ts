@@ -29,275 +29,404 @@ export interface NavItem {
     title: string
     url: string
   }[]
+  isActive?: boolean
+}
+
+export interface NavGroup {
+  label: string
+  items: NavItem[]
 }
 
 /**
- * Navigation items per role
+ * Grouped navigation items per role
  */
-export const ROLE_NAVIGATION: Record<UserRole, NavItem[]> = {
+export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
   super_admin: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
     },
     {
-      title: "Manajemen User",
-      url: "/dashboard/users",
-      icon: IconUsers,
+      label: "Pendaftaran & Antrian",
+      items: [
+        {
+          title: "Pendaftaran Pasien",
+          url: "/dashboard/registration",
+          icon: IconUserPlus,
+        },
+        {
+          title: "Antrian",
+          url: "/dashboard/queue",
+          icon: IconClipboardList,
+        },
+        {
+          title: "Data Pasien",
+          url: "/dashboard/patients",
+          icon: IconUser,
+        },
+        {
+          title: "Kunjungan",
+          url: "/dashboard/visits",
+          icon: IconClipboardList,
+        },
+      ],
     },
     {
-      title: "Pendaftaran Pasien",
-      url: "/dashboard/registration",
-      icon: IconUserPlus,
+      label: "Pelayanan Medis",
+      items: [
+        {
+          title: "Rekam Medis",
+          url: "/dashboard/medical-records",
+          icon: IconStethoscope,
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
+        {
+          title: "Rawat Inap",
+          url: "/dashboard/inpatient",
+          icon: IconBed,
+        },
+      ],
     },
     {
-      title: "Data Pasien",
-      url: "/dashboard/patients",
-      icon: IconUser,
+      label: "Penunjang Medis",
+      items: [
+        {
+          title: "Farmasi",
+          url: "/dashboard/pharmacy",
+          icon: IconPill,
+        },
+        {
+          title: "Kasir",
+          url: "/dashboard/cashier",
+          icon: IconCash,
+        },
+      ],
     },
     {
-      title: "Antrian",
-      url: "/dashboard/queue",
-      icon: IconClipboardList,
-    },
-    {
-      title: "Kunjungan",
-      url: "/dashboard/visits",
-      icon: IconClipboardList,
-    },
-    {
-      title: "Rekam Medis",
-      url: "/dashboard/medical-records",
-      icon: IconStethoscope,
-    },
-    {
-      title: "UGD",
-      url: "/dashboard/emergency",
-      icon: IconEmergencyBed,
-    },
-    {
-      title: "Rawat Inap",
-      url: "/dashboard/inpatient",
-      icon: IconBed,
-    },
-    {
-      title: "Farmasi",
-      url: "/dashboard/pharmacy",
-      icon: IconPill,
-    },
-    {
-      title: "Kasir",
-      url: "/dashboard/cashier",
-      icon: IconCash,
-    },
-    {
-      title: "Pasien Pulang",
-      url: "/dashboard/discharge",
-      icon: IconUserCheck,
-    },
-    {
-      title: "Laporan",
-      url: "/dashboard/reports",
-      icon: IconReportMedical,
-    },
-    {
-      title: "Pengaturan",
-      url: "/dashboard/settings",
-      icon: IconSettings,
+      label: "Administrasi",
+      items: [
+        {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
+        },
+        {
+          title: "Laporan",
+          url: "/dashboard/reports",
+          icon: IconReportMedical,
+        },
+        {
+          title: "Manajemen User",
+          url: "/dashboard/users",
+          icon: IconUsers,
+        },
+        {
+          title: "Pengaturan",
+          url: "/dashboard/settings",
+          icon: IconSettings,
+        },
+      ],
     },
   ],
 
   admin: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
     },
     {
-      title: "Pendaftaran Pasien",
-      url: "/dashboard/patients",
-      icon: IconUserPlus,
+      label: "Pendaftaran & Antrian",
+      items: [
+        {
+          title: "Pendaftaran Pasien",
+          url: "/dashboard/patients",
+          icon: IconUserPlus,
+        },
+        {
+          title: "Antrian",
+          url: "/dashboard/queue",
+          icon: IconClipboardList,
+        },
+        {
+          title: "Kunjungan",
+          url: "/dashboard/visits",
+          icon: IconClipboardList,
+        },
+      ],
     },
     {
-      title: "Antrian",
-      url: "/dashboard/queue",
-      icon: IconClipboardList,
+      label: "Pelayanan Medis",
+      items: [
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
+        {
+          title: "Rawat Inap",
+          url: "/dashboard/inpatient",
+          icon: IconBed,
+        },
+      ],
     },
     {
-      title: "Kunjungan",
-      url: "/dashboard/visits",
-      icon: IconClipboardList,
+      label: "Penunjang Medis",
+      items: [
+        {
+          title: "Farmasi",
+          url: "/dashboard/pharmacy",
+          icon: IconPill,
+        },
+        {
+          title: "Kasir",
+          url: "/dashboard/cashier",
+          icon: IconCash,
+        },
+      ],
     },
     {
-      title: "UGD",
-      url: "/dashboard/emergency",
-      icon: IconEmergencyBed,
-    },
-    {
-      title: "Rawat Inap",
-      url: "/dashboard/inpatient",
-      icon: IconBed,
-    },
-    {
-      title: "Farmasi",
-      url: "/dashboard/pharmacy",
-      icon: IconPill,
-    },
-    {
-      title: "Kasir",
-      url: "/dashboard/cashier",
-      icon: IconCash,
-    },
-    {
-      title: "Pasien Pulang",
-      url: "/dashboard/discharge",
-      icon: IconUserCheck,
-    },
-    {
-      title: "Laporan",
-      url: "/dashboard/reports",
-      icon: IconReportMedical,
+      label: "Administrasi",
+      items: [
+        {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
+        },
+        {
+          title: "Laporan",
+          url: "/dashboard/reports",
+          icon: IconReportMedical,
+        },
+      ],
     },
   ],
 
   doctor: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+        {
+          title: "Antrian Pasien",
+          url: "/dashboard/doctor",
+          icon: IconStethoscope,
+        },
+      ],
     },
     {
-      title: "Antrian Pasien",
-      url: "/dashboard/doctor",
-      icon: IconStethoscope,
+      label: "Data Pasien",
+      items: [
+        {
+          title: "Data Pasien",
+          url: "/dashboard/patients",
+          icon: IconUserPlus,
+        },
+        {
+          title: "Kunjungan",
+          url: "/dashboard/visits",
+          icon: IconClipboardList,
+        },
+      ],
     },
     {
-      title: "Data Pasien",
-      url: "/dashboard/patients",
-      icon: IconUserPlus,
-    },
-    {
-      title: "Kunjungan",
-      url: "/dashboard/visits",
-      icon: IconClipboardList,
-    },
-    {
-      title: "Rekam Medis",
-      url: "/dashboard/medical-records",
-      icon: IconReportMedical,
-    },
-    {
-      title: "UGD",
-      url: "/dashboard/emergency",
-      icon: IconEmergencyBed,
-    },
-    {
-      title: "Pasien Pulang",
-      url: "/dashboard/discharge",
-      icon: IconUserCheck,
+      label: "Pelayanan Medis",
+      items: [
+        {
+          title: "Rekam Medis",
+          url: "/dashboard/medical-records",
+          icon: IconReportMedical,
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
+        {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
+        },
+      ],
     },
   ],
 
   nurse: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
     },
     {
-      title: "Antrian",
-      url: "/dashboard/queue",
-      icon: IconClipboardList,
+      label: "Data Pasien",
+      items: [
+        {
+          title: "Antrian",
+          url: "/dashboard/queue",
+          icon: IconClipboardList,
+        },
+        {
+          title: "Data Pasien",
+          url: "/dashboard/patients",
+          icon: IconUserPlus,
+        },
+      ],
     },
     {
-      title: "Data Pasien",
-      url: "/dashboard/patients",
-      icon: IconUserPlus,
-    },
-    {
-      title: "Rawat Inap",
-      url: "/dashboard/inpatient",
-      icon: IconBed,
-    },
-    {
-      title: "UGD",
-      url: "/dashboard/emergency",
-      icon: IconEmergencyBed,
+      label: "Pelayanan Medis",
+      items: [
+        {
+          title: "Rawat Inap",
+          url: "/dashboard/inpatient",
+          icon: IconBed,
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
+      ],
     },
   ],
 
   pharmacist: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
     },
     {
-      title: "Farmasi",
-      url: "/dashboard/pharmacy",
-      icon: IconPill,
+      label: "Farmasi",
+      items: [
+        {
+          title: "Farmasi",
+          url: "/dashboard/pharmacy",
+          icon: IconPill,
+        },
+      ],
     },
   ],
 
   cashier: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
     },
     {
-      title: "Kasir",
-      url: "/dashboard/cashier",
-      icon: IconCash,
-    },
-    {
-      title: "Pasien Pulang",
-      url: "/dashboard/discharge",
-      icon: IconUserCheck,
+      label: "Kasir & Pembayaran",
+      items: [
+        {
+          title: "Kasir",
+          url: "/dashboard/cashier",
+          icon: IconCash,
+        },
+        {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
+        },
+      ],
     },
   ],
 
   receptionist: [
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
     },
     {
-      title: "Antrian",
-      url: "/dashboard/queue",
-      icon: IconClipboardList,
-    },
-    {
-      title: "Data Pasien",
-      url: "/dashboard/patients",
-      icon: IconUserPlus,
-    },
-    {
-      title: "Kunjungan",
-      url: "/dashboard/visits",
-      icon: IconClipboardList,
+      label: "Pendaftaran & Antrian",
+      items: [
+        {
+          title: "Antrian",
+          url: "/dashboard/queue",
+          icon: IconClipboardList,
+        },
+        {
+          title: "Data Pasien",
+          url: "/dashboard/patients",
+          icon: IconUserPlus,
+        },
+        {
+          title: "Kunjungan",
+          url: "/dashboard/visits",
+          icon: IconClipboardList,
+        },
+      ],
     },
   ],
 }
 
 /**
- * Get navigation items for a specific role
+ * Get grouped navigation items for a specific role
  */
-export function getNavigationForRole(role: UserRole | null): NavItem[] {
+export function getNavigationGroupsForRole(role: UserRole | null): NavGroup[] {
   if (!role) {
     // Default navigation for users without role
     return [
       {
-        title: "Dashboard",
-        url: "/dashboard",
-        icon: IconDashboard,
+        label: "Beranda",
+        items: [
+          {
+            title: "Dashboard",
+            url: "/dashboard",
+            icon: IconDashboard,
+          },
+        ],
       },
     ]
   }
 
-  return ROLE_NAVIGATION[role] || []
+  return ROLE_NAVIGATION_GROUPS[role] || []
+}
+
+/**
+ * Get flat navigation items for a specific role (for backwards compatibility)
+ */
+export function getNavigationForRole(role: UserRole | null): NavItem[] {
+  const groups = getNavigationGroupsForRole(role)
+  return groups.flatMap((group) => group.items)
 }
 
 /**
@@ -309,22 +438,25 @@ export function canAccessRoute(role: UserRole | null, pathname: string): boolean
     return pathname === "/dashboard"
   }
 
-  const navItems = ROLE_NAVIGATION[role]
+  const navGroups = ROLE_NAVIGATION_GROUPS[role]
 
-  // Check if pathname matches any navigation item
-  return navItems.some((item) => {
-    // Direct match
-    if (pathname === item.url || pathname.startsWith(item.url + "/")) {
-      return true
-    }
+  // Check if pathname matches any navigation item in any group
+  return navGroups.some((group) =>
+    group.items.some((item: NavItem) => {
+      // Direct match
+      if (pathname === item.url || pathname.startsWith(item.url + "/")) {
+        return true
+      }
 
-    // Check sub-items
-    if (item.items) {
-      return item.items.some(
-        (subItem) => pathname === subItem.url || pathname.startsWith(subItem.url + "/")
-      )
-    }
+      // Check sub-items
+      if (item.items) {
+        return item.items.some(
+          (subItem: { title: string; url: string }) =>
+            pathname === subItem.url || pathname.startsWith(subItem.url + "/")
+        )
+      }
 
-    return false
-  })
+      return false
+    })
+  )
 }
