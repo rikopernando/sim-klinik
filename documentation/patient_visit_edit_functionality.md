@@ -159,7 +159,7 @@ Both update endpoints were already implemented and are RBAC-protected.
 interface EditPatientDialogProps {
   open: boolean // Dialog open state
   onOpenChange: (open: boolean) => void // Handle dialog close
-  patientId: number // Patient ID to update
+  patientId: string // Patient ID to update
   initialData?: Partial<PatientUpdateData> // Pre-fill data
   onSuccess?: () => void // Callback after successful update
 }
@@ -253,7 +253,7 @@ const [selectedPatient, setSelectedPatient] = useState(null);
 interface EditVisitDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  visitId: number
+  visitId: string
   initialData?: Partial<
     VisitUpdateData & {
       visitNumber: string

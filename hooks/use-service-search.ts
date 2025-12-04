@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 
 export interface Service {
-  id: number
+  id: string
   code: string
   name: string
   serviceType: string

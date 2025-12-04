@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 
 export interface PrescriptionNotification {
-  prescriptionId: number
+  prescriptionId: string
   patientName: string
   patientMRNumber: string
   drugName: string

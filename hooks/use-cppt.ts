@@ -8,7 +8,7 @@ import { CPPT, CPPTInput, APIResponse } from "@/types/inpatient"
 
 interface UseCPPTReturn {
   createEntry: (data: CPPTInput) => Promise<void>
-  fetchEntries: (visitId: number) => Promise<CPPT[]>
+  fetchEntries: (visitId: string) => Promise<CPPT[]>
   isSubmitting: boolean
   isFetching: boolean
   error: string | null
@@ -63,7 +63,7 @@ export function useCPPT(): UseCPPTReturn {
   /**
    * Fetch CPPT entries
    */
-  const fetchEntries = useCallback(async (visitId: number): Promise<CPPT[]> => {
+  const fetchEntries = useCallback(async (visitId: string): Promise<CPPT[]> => {
     setIsFetching(true)
     setError(null)
 

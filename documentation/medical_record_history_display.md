@@ -31,7 +31,7 @@ The medical record history feature provides doctors with quick access to a patie
 **Query Parameters:**
 
 ```
-patientId: number (required) - The patient ID to fetch history for
+patientId: string (required) - The patient ID to fetch history for
 ```
 
 **Response (200):**
@@ -165,7 +165,7 @@ patientId: number (required) - The patient ID to fetch history for
 interface MedicalRecordHistoryDialogProps {
   open: boolean // Dialog open state
   onOpenChange: (open: boolean) => void // Handle dialog close
-  patientId: number // Patient ID to fetch history
+  patientId: string // Patient ID to fetch history
   patientName?: string // Optional patient name for display
 }
 ```

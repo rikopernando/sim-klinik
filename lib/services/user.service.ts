@@ -41,7 +41,7 @@ export interface User {
   createdAt: Date
   updatedAt: Date
   role: string | null
-  roleId: number | null
+  roleId: string | null
 }
 
 export interface Pagination {
@@ -129,7 +129,7 @@ export async function deleteUser(userId: string): Promise<void> {
 /**
  * Assign role to user
  */
-export async function assignRole(userId: string, roleId: number): Promise<void> {
+export async function assignRole(userId: string, roleId: string): Promise<void> {
   try {
     await axios.put(`/api/users/${userId}/role`, { roleId })
   } catch (error) {

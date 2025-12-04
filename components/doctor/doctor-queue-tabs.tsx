@@ -12,8 +12,8 @@ interface DoctorQueueTabsProps {
   inProgressQueue: QueueItem[]
   unlockedQueue: QueueItem[]
   startingExamination: number | null
-  onStartExamination: (visitId: number) => void
-  onOpenMedicalRecord: (visitId: number) => void
+  onStartExamination: (visitId: string) => void
+  onOpenMedicalRecord: (visitId: string) => void
   onViewHistory: (patient: QueuePatient | null) => void
 }
 

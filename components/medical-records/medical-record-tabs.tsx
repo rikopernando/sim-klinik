@@ -62,7 +62,7 @@ const DiagnosisTabContent = memo(function DiagnosisTabContent({
   onUpdate,
   isLocked,
 }: {
-  medicalRecordId: number
+  medicalRecordId: string
   diagnoses: MedicalRecordData["diagnoses"]
   onUpdate: () => Promise<void>
   isLocked: boolean
@@ -84,7 +84,7 @@ const PrescriptionTabContent = memo(function PrescriptionTabContent({
   onUpdate,
   isLocked,
 }: {
-  medicalRecordId: number
+  medicalRecordId: string
   prescriptions: MedicalRecordData["prescriptions"]
   onUpdate: () => Promise<void>
   isLocked: boolean
@@ -106,7 +106,7 @@ const ProcedureTabContent = memo(function ProcedureTabContent({
   onUpdate,
   isLocked,
 }: {
-  medicalRecordId: number
+  medicalRecordId: string
   procedures: MedicalRecordData["procedures"]
   onUpdate: () => Promise<void>
   isLocked: boolean

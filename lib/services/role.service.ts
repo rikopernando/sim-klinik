@@ -6,7 +6,7 @@
 import axios from "axios"
 
 export interface Role {
-  id: number
+  id: string
   name: string
   description: string | null
   createdAt: Date

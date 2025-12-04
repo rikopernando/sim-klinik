@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PrescriptionRow } from "./queue/prescription-row"
 
 interface Drug {
-  id: number
+  id: string
   name: string
   genericName?: string | null
   unit: string
@@ -17,7 +17,7 @@ interface Drug {
 }
 
 interface Patient {
-  id: number
+  id: string
   name: string
   mrNumber: string
 }
@@ -28,12 +28,12 @@ interface Doctor {
 }
 
 interface Visit {
-  id: number
+  id: string
   visitNumber: string
 }
 
 interface Prescription {
-  id: number
+  id: string
   dosage: string
   frequency: string
   quantity: number

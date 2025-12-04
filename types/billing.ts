@@ -46,7 +46,7 @@ export type BillingItemType = "service" | "drug" | "material" | "room"
  * Service Entity (Master Data)
  */
 export interface Service {
-  id: number
+  id: string
   code: string
   name: string
   serviceType: string
@@ -62,8 +62,8 @@ export interface Service {
  * Billing Entity
  */
 export interface Billing {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   subtotal: string
   discount: string
   discountPercentage: string | null
@@ -87,10 +87,10 @@ export interface Billing {
  * Billing Item Entity
  */
 export interface BillingItem {
-  id: number
-  billingId: number
+  id: string
+  billingId: string
   itemType: BillingItemType
-  itemId: number | null
+  itemId: string | null
   itemName: string
   itemCode: string | null
   quantity: number
@@ -106,8 +106,8 @@ export interface BillingItem {
  * Payment Entity
  */
 export interface Payment {
-  id: number
-  billingId: number
+  id: string
+  billingId: string
   amount: string
   paymentMethod: PaymentMethod
   paymentReference: string | null
@@ -123,8 +123,8 @@ export interface Payment {
  * Discharge Summary Entity
  */
 export interface DischargeSummary {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   admissionDiagnosis: string
   dischargeDiagnosis: string
   clinicalSummary: string
@@ -148,12 +148,12 @@ export interface BillingWithDetails extends Billing {
   items: BillingItem[]
   payments: Payment[]
   visit?: {
-    id: number
+    id: string
     visitNumber: string
     visitType: string
   }
   patient?: {
-    id: number
+    id: string
     name: string
     mrNumber: string
   }
@@ -175,7 +175,7 @@ export interface ServiceInput {
  * Service Update Input
  */
 export interface ServiceUpdateInput {
-  id: number
+  id: string
   code?: string
   name?: string
   serviceType?: string
@@ -203,7 +203,7 @@ export interface BillingItemInput {
  * Create Billing Input
  */
 export interface CreateBillingInput {
-  visitId: number
+  visitId: string
   items: BillingItemInput[]
   discount?: string
   discountPercentage?: string
@@ -215,7 +215,7 @@ export interface CreateBillingInput {
  * Payment Input
  */
 export interface PaymentInput {
-  billingId: number
+  billingId: string
   amount: string
   paymentMethod: PaymentMethod
   paymentReference?: string
@@ -228,7 +228,7 @@ export interface PaymentInput {
  * Discharge Summary Input
  */
 export interface DischargeSummaryInput {
-  visitId: number
+  visitId: string
   admissionDiagnosis: string
   dischargeDiagnosis: string
   clinicalSummary: string
@@ -259,7 +259,7 @@ export interface BillingStatistics {
  * Billing Summary (for reports)
  */
 export interface BillingSummary {
-  visitId: number
+  visitId: string
   visitNumber: string
   patientName: string
   mrNumber: string

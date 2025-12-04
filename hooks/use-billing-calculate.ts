@@ -7,7 +7,7 @@ import { useState, useCallback } from "react"
 import axios from "axios"
 
 interface CalculateBillingParams {
-  visitId: number
+  visitId: string
   discount?: number
   discountPercentage?: number
   insuranceCoverage?: number

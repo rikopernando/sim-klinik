@@ -8,7 +8,7 @@ import type { DischargeSummaryInput } from "@/types/billing"
 
 interface UseDischargeReturn {
   createDischargeSummary: (data: DischargeSummaryInput) => Promise<boolean>
-  checkCanDischarge: (visitId: number) => Promise<any>
+  checkCanDischarge: (visitId: string) => Promise<any>
   isSubmitting: boolean
   isChecking: boolean
   error: string | null
@@ -53,7 +53,7 @@ export function useDischarge(): UseDischargeReturn {
     }
   }
 
-  const checkCanDischarge = useCallback(async (visitId: number): Promise<any> => {
+  const checkCanDischarge = useCallback(async (visitId: string): Promise<any> => {
     try {
       setIsChecking(true)
       setError(null)

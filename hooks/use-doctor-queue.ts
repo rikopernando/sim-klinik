@@ -6,12 +6,12 @@
 import { useState, useEffect, useCallback } from "react"
 
 export interface QueuePatient {
-  id: number
+  id: string
   name: string
 }
 
 export interface QueueVisit {
-  id: number
+  id: string
   visitNumber: string
   visitType: string
   status: string
@@ -23,7 +23,7 @@ export interface QueuePoli {
 }
 
 export interface QueueMedicalRecord {
-  id: number
+  id: string
   isLocked: boolean
 }
 

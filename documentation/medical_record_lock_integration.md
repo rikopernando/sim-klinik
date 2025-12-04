@@ -224,7 +224,7 @@ cancelled → ready_for_billing ❌
 ### Frontend - Lock Medical Record
 
 ```typescript
-async function lockMedicalRecord(medicalRecordId: number) {
+async function lockMedicalRecord(medicalRecordId: string) {
   try {
     const response = await fetch("/api/medical-records/lock", {
       method: "POST",

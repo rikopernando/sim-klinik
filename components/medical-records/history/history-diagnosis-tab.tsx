@@ -7,7 +7,7 @@ import { TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
 interface Diagnosis {
-  id: number
+  id: string
   icd10Code: string
   description: string
   diagnosisType: string

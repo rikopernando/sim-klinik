@@ -13,7 +13,7 @@ import { QueuePatient } from "@/hooks/use-doctor-queue"
 import { Visit } from "@/types/medical-record"
 
 interface MedicalRecordHeaderProps {
-  visitId: number
+  visitId: string
   isLocked: boolean
   isDraft: boolean
   visit: Visit

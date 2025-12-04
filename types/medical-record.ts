@@ -3,8 +3,8 @@
  */
 
 export interface MedicalRecord {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   doctorId: string
   soapSubjective: string | null
   soapObjective: string | null
@@ -22,8 +22,8 @@ export interface MedicalRecord {
 }
 
 export interface Diagnosis {
-  id: number
-  medicalRecordId: number
+  id: string
+  medicalRecordId: string
   icd10Code: string
   description: string
   diagnosisType: "primary" | "secondary"
@@ -31,9 +31,9 @@ export interface Diagnosis {
 }
 
 export interface Procedure {
-  id: number
-  medicalRecordId: number
-  serviceId: number | null
+  id: string
+  medicalRecordId: string
+  serviceId: string | null
   serviceName: string | null
   servicePrice: string | null
   icd9Code: string
@@ -46,9 +46,9 @@ export interface Procedure {
 }
 
 export interface Prescription {
-  id: number
-  medicalRecordId: number
-  drugId: number
+  id: string
+  medicalRecordId: string
+  drugId: string
   drugName: string
   drugPrice: string | null
   dosage: string
@@ -61,7 +61,7 @@ export interface Prescription {
   fulfilledBy: string | null
   fulfilledAt: Date | null
   dispensedQuantity: number | null
-  inventoryId: number | null
+  inventoryId: string | null
   notes: string | null
   // Pharmacist-added prescription fields
   addedByPharmacist: boolean
@@ -75,15 +75,15 @@ export interface Prescription {
 }
 
 export interface Visit {
-  id: number
+  id: string
   visitNumber: string
-  patientId: number
+  patientId: string
   visitType: "outpatient" | "inpatient" | "emergency"
-  poliId: number | null
+  poliId: string | null
   doctorId: string | null
   triageStatus: string | null
   chiefComplaint: string | null
-  roomId: number | null
+  roomId: string | null
   status: string
   arrivalTime: Date
   startTime: Date | null
@@ -103,7 +103,7 @@ export interface MedicalRecordData {
 }
 
 export interface MedicalRecordFormData {
-  visitId: number
+  visitId: string
   soapSubjective?: string
   soapObjective?: string
   soapAssessment?: string

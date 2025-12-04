@@ -20,7 +20,7 @@ interface BillingItem {
 }
 
 interface Payment {
-  id: number
+  id: string
   amount: string
   paymentMethod: string
   paymentReference: string | null
@@ -29,7 +29,7 @@ interface Payment {
 }
 
 interface Billing {
-  id: number
+  id: string
   subtotal: string
   discount: string
   discountPercentage: string | null

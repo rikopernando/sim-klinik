@@ -22,7 +22,7 @@ import { HandoverDialog } from "./handover-dialog"
 interface ERQueueItemProps {
   item: ERQueueItem
   index: number
-  onStartExamination?: (visitId: number) => void
+  onStartExamination?: (visitId: string) => void
   onHandoverSuccess?: () => void
 }
 

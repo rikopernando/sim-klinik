@@ -5,7 +5,7 @@
 
 export interface BillingItem {
   itemType: string
-  itemId: number | null
+  itemId: string | null
   itemName: string
   itemCode: string | null
   quantity: number
@@ -17,7 +17,7 @@ export interface BillingItem {
 }
 
 export interface BillingCalculation {
-  visitId: number
+  visitId: string
   items: BillingItem[]
   subtotal: string
   totalAmount: string

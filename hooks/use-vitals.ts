@@ -8,7 +8,7 @@ import { VitalSigns, VitalSignsInput, APIResponse } from "@/types/inpatient"
 
 interface UseVitalsReturn {
   recordVitals: (data: VitalSignsInput) => Promise<void>
-  fetchVitals: (visitId: number) => Promise<VitalSigns[]>
+  fetchVitals: (visitId: string) => Promise<VitalSigns[]>
   isSubmitting: boolean
   isFetching: boolean
   error: string | null
@@ -63,7 +63,7 @@ export function useVitals(): UseVitalsReturn {
   /**
    * Fetch vital signs history
    */
-  const fetchVitals = useCallback(async (visitId: number): Promise<VitalSigns[]> => {
+  const fetchVitals = useCallback(async (visitId: string): Promise<VitalSigns[]> => {
     setIsFetching(true)
     setError(null)
 

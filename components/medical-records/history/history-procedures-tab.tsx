@@ -7,7 +7,7 @@ import { TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
 interface Procedure {
-  id: number
+  id: string
   icd9Code: string
   description: string
 }

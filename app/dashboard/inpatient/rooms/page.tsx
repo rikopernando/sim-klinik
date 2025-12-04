@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { BedDouble, Users, RefreshCw, Building2 } from "lucide-react"
 
 interface Room {
-  id: number
+  id: string
   roomNumber: string
   roomType: string
   bedCount: number

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { Search, Loader2, User, AlertCircle } from "lucide-react"
+import { Search, Loader2, User, AlertCircle, UserPlus } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 import { searchPatients as searchPatientsService } from "@/lib/services/patient.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { type RegisteredPatient } from "@/types/registration"
-import { PatientCard } from "./patient-card"
+import { PatientCard } from "@/components/patients/patient-card"
 
 interface PatientSearchProps {
   onSelectPatient?: (patient: RegisteredPatient) => void
@@ -59,7 +59,7 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
           />
         </div>
         <Button onClick={onNewPatient} variant="outline" className="w-full sm:w-auto">
-          <User className="mr-2 h-4 w-4" />
+          <UserPlus className="mr-2 h-4 w-4" />
           Pasien Baru
         </Button>
       </div>

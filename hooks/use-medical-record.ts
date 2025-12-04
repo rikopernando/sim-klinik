@@ -13,7 +13,7 @@ import { getErrorMessage } from "@/lib/utils/error"
 import { type MedicalRecordData } from "@/types/medical-record"
 
 interface UseMedicalRecordOptions {
-  visitId: number
+  visitId: string
 }
 
 interface UseMedicalRecordReturn {

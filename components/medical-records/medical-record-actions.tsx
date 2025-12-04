@@ -34,7 +34,7 @@ interface MedicalRecordActionsProps {
   isLocked: boolean
   isSaving: boolean
   isLocking: boolean
-  visitId: number
+  visitId: string
   onSave: () => Promise<void>
   onLock: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   onUnlock?: () => Promise<void>

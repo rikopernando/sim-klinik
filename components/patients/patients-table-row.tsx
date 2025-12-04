@@ -12,7 +12,7 @@ import { getGenderLabel } from "@/lib/utils/patient"
 import { formatDateShort } from "@/lib/utils/date"
 
 interface Patient {
-  id: number
+  id: string
   mrNumber: string
   nik: string | null
   name: string
@@ -24,7 +24,7 @@ interface Patient {
 
 interface PatientsTableRowProps {
   patient: Patient
-  onEdit: (patientId: number) => void
+  onEdit: (patientId: string) => void
 }
 
 export function PatientsTableRow({ patient, onEdit }: PatientsTableRowProps) {

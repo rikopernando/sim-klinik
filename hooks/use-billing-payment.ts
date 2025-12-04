@@ -7,7 +7,7 @@ import { useState, useCallback } from "react"
 import axios from "axios"
 
 interface ProcessPaymentParams {
-  visitId: number
+  visitId: string
   amount: number
   paymentMethod: string
   paymentReference?: string

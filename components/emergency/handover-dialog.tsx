@@ -48,7 +48,7 @@ type FormData = z.infer<typeof formSchema>
 interface HandoverDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  visitId: number
+  visitId: string
   patientName: string
   onSuccess?: () => void
 }

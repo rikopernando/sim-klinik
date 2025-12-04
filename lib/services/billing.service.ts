@@ -46,7 +46,7 @@ export async function getVisitsReadyForBilling() {
  * Calculate total billing for a visit
  * Aggregates costs from: admin fee, consultation, procedures, medications
  */
-export async function calculateBillingForVisit(visitId: number) {
+export async function calculateBillingForVisit(visitId: string) {
   // Get visit details
   const visitResult = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1)
 
@@ -58,7 +58,7 @@ export async function calculateBillingForVisit(visitId: number) {
 
   const items: Array<{
     itemType: string
-    itemId: number | null
+    itemId: string | null
     itemName: string
     itemCode: string | null
     quantity: number
@@ -211,7 +211,7 @@ export async function calculateBillingForVisit(visitId: number) {
  * Create or update billing record for a visit
  */
 export async function createOrUpdateBilling(
-  visitId: number,
+  visitId: string,
   userId: string,
   options?: {
     discount?: number
@@ -238,7 +238,7 @@ export async function createOrUpdateBilling(
     where: eq(billings.visitId, visitId),
   })
 
-  let billingId: number
+  let billingId: string
 
   if (existingBilling) {
     // Update existing billing
@@ -299,7 +299,7 @@ export async function createOrUpdateBilling(
  * Process payment for a billing
  */
 export async function processPayment(
-  billingId: number,
+  billingId: string,
   userId: string,
   paymentData: {
     amount: number
@@ -378,7 +378,7 @@ export async function processPayment(
 /**
  * Get billing details with items, patient, and visit info
  */
-export async function getBillingDetails(visitId: number) {
+export async function getBillingDetails(visitId: string) {
   // Get billing record
   const billingResult = await db
     .select()

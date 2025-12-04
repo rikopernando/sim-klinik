@@ -9,7 +9,7 @@ import { formatCurrency, getPaymentMethodLabel } from "@/lib/billing/billing-uti
 import { Calendar } from "lucide-react"
 
 interface Payment {
-  id: number
+  id: string
   amount: string
   paymentMethod: string
   paymentReference: string | null

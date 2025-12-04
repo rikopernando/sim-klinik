@@ -8,7 +8,7 @@ import { MaterialUsage, MaterialUsageInput, APIResponse } from "@/types/inpatien
 
 interface UseMaterialsReturn {
   recordUsage: (data: MaterialUsageInput) => Promise<void>
-  fetchUsage: (visitId: number) => Promise<{ materials: MaterialUsage[]; totalCost: string }>
+  fetchUsage: (visitId: string) => Promise<{ materials: MaterialUsage[]; totalCost: string }>
   isSubmitting: boolean
   isFetching: boolean
   error: string | null
@@ -64,7 +64,7 @@ export function useMaterials(): UseMaterialsReturn {
    * Fetch material usage
    */
   const fetchUsage = useCallback(
-    async (visitId: number): Promise<{ materials: MaterialUsage[]; totalCost: string }> => {
+    async (visitId: string): Promise<{ materials: MaterialUsage[]; totalCost: string }> => {
       setIsFetching(true)
       setError(null)
 

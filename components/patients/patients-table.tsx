@@ -7,7 +7,7 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components
 import { PatientsTableRow } from "./patients-table-row"
 
 interface Patient {
-  id: number
+  id: string
   mrNumber: string
   nik: string | null
   name: string
@@ -19,7 +19,7 @@ interface Patient {
 
 interface PatientsTableProps {
   patients: Patient[]
-  onEditPatient: (patientId: number) => void
+  onEditPatient: (patientId: string) => void
 }
 
 export function PatientsTable({ patients, onEditPatient }: PatientsTableProps) {

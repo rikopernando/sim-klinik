@@ -89,7 +89,7 @@ export async function createRoom(data: RoomInput) {
   return newRoom
 }
 
-export async function updateRoom(id: number, updateData: any) {
+export async function updateRoom(id: string, updateData: any) {
   const [updatedRoom] = await db
     .update(rooms)
     .set({
@@ -181,7 +181,7 @@ export async function assignBedToPatient(data: BedAssignmentInput) {
   return newAssignment
 }
 
-export async function dischargePatientFromBed(assignmentId: number) {
+export async function dischargePatientFromBed(assignmentId: string) {
   // Get assignment details
   const [assignment] = await db
     .select()
@@ -261,7 +261,7 @@ export async function recordVitalSigns(data: VitalSignsInput) {
   return newVitals
 }
 
-export async function getVitalSignsHistory(visitId: number) {
+export async function getVitalSignsHistory(visitId: string) {
   return await db
     .select()
     .from(vitalsHistory)
@@ -300,7 +300,7 @@ export async function createCPPTEntry(data: CPPTInput) {
   return newCPPT
 }
 
-export async function getCPPTEntries(visitId: number) {
+export async function getCPPTEntries(visitId: string) {
   return await db.select().from(cppt).where(eq(cppt.visitId, visitId)).orderBy(desc(cppt.createdAt))
 }
 
@@ -339,7 +339,7 @@ export async function recordMaterialUsage(data: MaterialUsageInput) {
   return newMaterialUsage
 }
 
-export async function getMaterialUsage(visitId: number) {
+export async function getMaterialUsage(visitId: string) {
   const materials = await db
     .select()
     .from(materialUsage)

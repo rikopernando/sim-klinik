@@ -18,7 +18,7 @@ import { APIResponse } from "@/types/billing"
  * GET /api/billing
  * Get billing by visit ID or get statistics
  * Query params:
- * - visitId: number (optional) - get billing for specific visit
+ * - visitId: string (optional) - get billing for specific visit
  * - stats: boolean (optional) - get billing statistics
  * - pending: boolean (optional) - get all pending billings
  */

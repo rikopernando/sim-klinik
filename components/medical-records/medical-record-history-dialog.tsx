@@ -22,7 +22,7 @@ import { HistoryRecordCard } from "./history/history-record-card"
 interface MedicalRecordHistoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  patientId: number
+  patientId: string
   patientName?: string
 }
 

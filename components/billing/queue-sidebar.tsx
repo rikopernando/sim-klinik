@@ -13,7 +13,7 @@ import { RefreshCw } from "lucide-react"
 
 interface QueueItem {
   visit: {
-    id: number
+    id: string
     visitNumber: string
     visitType: string
   }
@@ -30,8 +30,8 @@ interface QueueItem {
 interface QueueSidebarProps {
   queue: QueueItem[]
   isLoading: boolean
-  selectedVisitId: number | null
-  onSelectVisit: (visitId: number) => void
+  selectedVisitId: string | null
+  onSelectVisit: (visitId: string) => void
   onRefresh: () => void
 }
 

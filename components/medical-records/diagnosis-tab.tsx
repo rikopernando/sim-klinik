@@ -32,7 +32,7 @@ import { EmptyState } from "./empty-state"
 import { AddDiagnosisDialog } from "./add-diagnosis-dialog"
 
 interface DiagnosisTabProps {
-  medicalRecordId: number
+  medicalRecordId: string
   diagnoses: Diagnosis[]
   onUpdate: () => void
   isLocked: boolean
@@ -62,7 +62,7 @@ export function DiagnosisTab({
     setDiagnosisToEdit(null)
   }, [])
 
-  const handleDeleteClick = useCallback((id: number) => {
+  const handleDeleteClick = useCallback((id: string) => {
     setDiagnosisToDelete(id)
     setDeleteDialogOpen(true)
   }, [])

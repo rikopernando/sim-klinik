@@ -71,7 +71,7 @@ export async function generateVisitNumber(): Promise<string> {
  * Generate Queue Number for outpatient visits
  * Format: A001, A002, etc. per poli per day
  */
-export async function generateQueueNumber(poliId: number): Promise<string> {
+export async function generateQueueNumber(poliId: string): Promise<string> {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   const tomorrow = new Date(today)

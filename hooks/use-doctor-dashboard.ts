@@ -62,7 +62,7 @@ export function useDoctorDashboard() {
   }, [refreshStats, refreshQueue])
 
   const handleStartExamination = useCallback(
-    async (visitId: number) => {
+    async (visitId: string) => {
       try {
         setStartingExamination(visitId)
         setError(null)
@@ -95,7 +95,7 @@ export function useDoctorDashboard() {
   )
 
   const handleOpenMedicalRecord = useCallback(
-    (visitId: number) => {
+    (visitId: string) => {
       // Just navigate to medical record page (already exists)
       router.push(`/dashboard/medical-records/${visitId}`)
     },

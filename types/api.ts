@@ -1,17 +1,17 @@
 import { z } from "zod"
 
-export interface Pagination {
-  totalPages: number
-  currentPage: number
-  perPage: number
-  totalItems: number
+export interface Meta {
+  page: number
+  limit: number
+  total: number
+  hasMore: boolean
 }
 
 export interface ResponseApi<T = null> {
   message: string
   data?: T
   status: number
-  pagination?: Pagination
+  meta?: Meta
 }
 
 export interface ResponseError<T = unknown> {

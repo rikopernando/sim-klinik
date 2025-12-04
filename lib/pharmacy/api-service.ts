@@ -53,7 +53,7 @@ export async function getAllDrugsWithStock(): Promise<DrugWithStock[]> {
 /**
  * Get drug by ID with stock info
  */
-export async function getDrugById(drugId: number): Promise<DrugWithStock | null> {
+export async function getDrugById(drugId: string): Promise<DrugWithStock | null> {
   const drug = await db.select().from(drugs).where(eq(drugs.id, drugId)).limit(1)
 
   if (drug.length === 0) return null
@@ -131,7 +131,7 @@ export async function createDrug(data: DrugInput) {
 /**
  * Update drug
  */
-export async function updateDrug(drugId: number, data: Partial<DrugUpdateInput>) {
+export async function updateDrug(drugId: string, data: Partial<DrugUpdateInput>) {
   const [updatedDrug] = await db
     .update(drugs)
     .set({
@@ -151,7 +151,7 @@ export async function updateDrug(drugId: number, data: Partial<DrugUpdateInput>)
 /**
  * Soft delete drug (set isActive to false)
  */
-export async function deleteDrug(drugId: number) {
+export async function deleteDrug(drugId: string) {
   const [deletedDrug] = await db
     .update(drugs)
     .set({
@@ -202,7 +202,7 @@ export async function getAllDrugInventory(): Promise<DrugInventoryWithDetails[]>
  * Get drug inventory by drug ID
  */
 export async function getDrugInventoryByDrugId(
-  drugId: number
+  drugId: string
 ): Promise<DrugInventoryWithDetails[]> {
   const inventories = await db
     .select({
@@ -374,14 +374,14 @@ export async function getPendingPrescriptions() {
     {} as Record<
       number,
       {
-        visit: { id: number; visitNumber: string }
-        patient: { id: number; name: string; mrNumber: string }
+        visit: { id: string; visitNumber: string }
+        patient: { id: string; name: string; mrNumber: string }
         doctor: { id: string; name: string } | null
-        medicalRecordId: number // Added medical record ID
+        medicalRecordId: string // Added medical record ID
         prescriptions: Array<{
           prescription: typeof prescriptions.$inferSelect
           drug: {
-            id: number
+            id: string
             name: string
             genericName: string | null
             unit: string
@@ -606,7 +606,7 @@ export async function adjustStock(data: StockAdjustmentInput) {
 /**
  * Get stock movements by inventory ID
  */
-export async function getStockMovements(inventoryId: number) {
+export async function getStockMovements(inventoryId: string) {
   const movements = await db
     .select()
     .from(stockMovements)

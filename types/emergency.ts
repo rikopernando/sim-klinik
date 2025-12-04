@@ -48,7 +48,7 @@ export interface QuickRegistrationData {
  * Complete Registration Data
  */
 export interface CompleteRegistrationData {
-  patientId: number
+  patientId: string
   nik: string
   address: string
   birthDate: string
@@ -62,7 +62,7 @@ export interface CompleteRegistrationData {
  * ER Medical Record Data
  */
 export interface ERMedicalRecordData {
-  visitId: number
+  visitId: string
   briefHistory: string
   vitalSigns: {
     temperature?: string
@@ -84,7 +84,7 @@ export interface ERMedicalRecordData {
  * Handover Data
  */
 export interface HandoverData {
-  visitId: number
+  visitId: string
   newVisitType: "outpatient" | "inpatient"
   poliId?: number
   roomId?: number
@@ -96,7 +96,7 @@ export interface HandoverData {
  * Patient Entity
  */
 export interface Patient {
-  id: number
+  id: string
   name: string
   mrNumber: string
   nik: string | null
@@ -112,7 +112,7 @@ export interface Patient {
  * Visit Entity
  */
 export interface Visit {
-  id: number
+  id: string
   visitNumber: string
   visitType: string
   triageStatus: TriageStatus | null

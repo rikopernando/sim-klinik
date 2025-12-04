@@ -7,7 +7,7 @@ import { useState, useCallback } from "react"
 import axios from "axios"
 
 interface CalculateBillingParams {
-  visitId: number
+  visitId: string
   discount?: number
   discountPercentage?: number
   insuranceCoverage?: number
@@ -15,7 +15,7 @@ interface CalculateBillingParams {
 
 interface UseBillingReturn {
   calculateBilling: (params: CalculateBillingParams) => Promise<boolean>
-  fetchBilling: (visitId: number) => Promise<any>
+  fetchBilling: (visitId: string) => Promise<any>
   isSubmitting: boolean
   isLoading: boolean
   error: string | null
@@ -61,7 +61,7 @@ export function useBilling(): UseBillingReturn {
     }
   }
 
-  const fetchBilling = useCallback(async (visitId: number): Promise<any> => {
+  const fetchBilling = useCallback(async (visitId: string): Promise<any> => {
     try {
       setIsLoading(true)
       setError(null)

@@ -6,7 +6,7 @@
 import { useState, useEffect } from "react"
 
 export interface ICD10Code {
-  id: number
+  id: string
   code: string
   description: string
   category: string | null

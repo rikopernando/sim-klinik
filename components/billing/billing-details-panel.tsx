@@ -21,7 +21,7 @@ interface BillingItem {
 }
 
 interface Payment {
-  id: number
+  id: string
   amount: string
   paymentMethod: string
   paymentReference: string | null
@@ -55,7 +55,7 @@ interface BillingDetails {
 }
 
 interface BillingDetailsPanelProps {
-  selectedVisitId: number | null
+  selectedVisitId: string | null
   billingDetails: BillingDetails | null
   isLoading: boolean
   onRefresh: () => void

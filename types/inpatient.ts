@@ -34,7 +34,7 @@ export type ConsciousnessLevel = "Alert" | "Confused" | "Drowsy" | "Unresponsive
  * Room Entity
  */
 export interface Room {
-  id: number
+  id: string
   roomNumber: string
   roomType: string
   bedCount: number
@@ -63,9 +63,9 @@ export interface RoomWithOccupancy extends Room {
  * Bed Assignment Entity
  */
 export interface BedAssignment {
-  id: number
-  visitId: number
-  roomId: number
+  id: string
+  visitId: string
+  roomId: string
   bedNumber: string
   assignedAt: string
   dischargedAt: string | null
@@ -87,8 +87,8 @@ export interface BedAssignmentWithDetails {
  * Vital Signs Entity
  */
 export interface VitalSigns {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   temperature: string | null
   bloodPressureSystolic: number | null
   bloodPressureDiastolic: number | null
@@ -110,8 +110,8 @@ export interface VitalSigns {
  * CPPT Entity
  */
 export interface CPPT {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   authorId: string
   authorRole: AuthorRole
   subjective: string | null
@@ -127,8 +127,8 @@ export interface CPPT {
  * Material Usage Entity
  */
 export interface MaterialUsage {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   materialName: string
   quantity: number
   unit: string
@@ -157,7 +157,7 @@ export interface RoomStatistics {
  * Vital Signs Input Data
  */
 export interface VitalSignsInput {
-  visitId: number
+  visitId: string
   temperature?: string
   bloodPressureSystolic?: number
   bloodPressureDiastolic?: number
@@ -176,7 +176,7 @@ export interface VitalSignsInput {
  * CPPT Input Data
  */
 export interface CPPTInput {
-  visitId: number
+  visitId: string
   authorId: string
   authorRole: AuthorRole
   subjective?: string
@@ -191,7 +191,7 @@ export interface CPPTInput {
  * Material Usage Input Data
  */
 export interface MaterialUsageInput {
-  visitId: number
+  visitId: string
   materialName: string
   quantity: number
   unit: string
@@ -218,8 +218,8 @@ export interface RoomInput {
  * Bed Assignment Input Data
  */
 export interface BedAssignmentInput {
-  visitId: number
-  roomId: number
+  visitId: string
+  roomId: string
   bedNumber: string
   notes?: string
 }

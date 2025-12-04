@@ -8,7 +8,7 @@ import axios, { AxiosError } from "axios"
 import type { PaymentMethod, PaymentStatus, APIResponse } from "@/types/billing"
 
 export interface PaymentInput {
-  visitId: number
+  visitId: string
   amount: number
   paymentMethod: PaymentMethod
   paymentReference?: string

@@ -21,7 +21,7 @@ import { APIResponse } from "@/types/pharmacy"
  * Get all drugs with stock info or search by query
  * Query params:
  * - search: string (optional) - search by name or generic name
- * - id: number (optional) - get specific drug by ID
+ * - id: string (optional) - get specific drug by ID
  */
 export async function GET(request: NextRequest) {
   try {

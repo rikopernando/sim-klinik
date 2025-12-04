@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 
 interface Prescription {
   prescription: {
-    id: number
+    id: string
     dosage: string
     frequency: string
     duration: string | null

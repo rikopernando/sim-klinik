@@ -17,7 +17,7 @@ import { APIResponse } from "@/types/billing"
  * GET /api/billing/discharge
  * Get discharge summary or check if patient can be discharged
  * Query params:
- * - visitId: number - visit ID
+ * - visitId: string - visit ID
  * - check: boolean (optional) - check if can discharge (billing gate)
  */
 export async function GET(request: NextRequest) {

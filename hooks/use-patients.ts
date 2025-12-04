@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
 
 interface Patient {
-  id: number
+  id: string
   mrNumber: string
   nik: string | null
   name: string

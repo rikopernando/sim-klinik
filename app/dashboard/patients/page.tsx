@@ -32,7 +32,7 @@ export default function PatientsPage() {
     router.push("/dashboard/patients/new")
   }
 
-  const handleEditPatient = (patientId: number) => {
+  const handleEditPatient = (patientId: string) => {
     router.push(`/dashboard/patients/${patientId}/edit`)
   }
 

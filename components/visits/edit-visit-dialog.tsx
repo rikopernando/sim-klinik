@@ -48,7 +48,7 @@ type VisitUpdateData = z.infer<typeof visitUpdateSchema>
 interface EditVisitDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  visitId: number
+  visitId: string
   initialData?: Partial<VisitUpdateData & { visitNumber: string; patientName: string }>
   onSuccess?: () => void
 }

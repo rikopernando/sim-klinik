@@ -28,7 +28,7 @@ import { EmptyState } from "./empty-state"
 import { AddPrescriptionDialog } from "./add-prescription-dialog"
 
 interface PrescriptionTabProps {
-  medicalRecordId: number
+  medicalRecordId: string
   prescriptions: Prescription[]
   onUpdate: () => void
   isLocked: boolean
@@ -69,7 +69,7 @@ export function PrescriptionTab({
     setPrescriptionToEdit(null)
   }, [])
 
-  const handleDeleteClick = useCallback((id: number) => {
+  const handleDeleteClick = useCallback((id: string) => {
     setPrescriptionToDelete(id)
     setDeleteDialogOpen(true)
   }, [])

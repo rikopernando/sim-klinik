@@ -45,7 +45,7 @@ export async function getAllServices() {
 /**
  * Get service by ID
  */
-export async function getServiceById(serviceId: number) {
+export async function getServiceById(serviceId: string) {
   const [service] = await db.select().from(services).where(eq(services.id, serviceId)).limit(1)
 
   return service || null
@@ -73,7 +73,7 @@ export async function createService(data: ServiceInput) {
 /**
  * Update service
  */
-export async function updateService(serviceId: number, data: Partial<ServiceUpdateInput>) {
+export async function updateService(serviceId: string, data: Partial<ServiceUpdateInput>) {
   const [updatedService] = await db
     .update(services)
     .set({
@@ -93,7 +93,7 @@ export async function updateService(serviceId: number, data: Partial<ServiceUpda
 /**
  * Get billing by visit ID
  */
-export async function getBillingByVisitId(visitId: number): Promise<BillingWithDetails | null> {
+export async function getBillingByVisitId(visitId: string): Promise<BillingWithDetails | null> {
   const [billing] = await db.select().from(billings).where(eq(billings.visitId, visitId)).limit(1)
 
   if (!billing) return null
@@ -392,7 +392,7 @@ export async function getPendingBillings() {
 /**
  * Check if visit can be discharged (billing gate)
  */
-export async function canDischarge(visitId: number): Promise<{
+export async function canDischarge(visitId: string): Promise<{
   canDischarge: boolean
   reason?: string
   billing?: any
@@ -488,7 +488,7 @@ export async function createDischargeSummary(data: DischargeSummaryInput) {
 /**
  * Get discharge summary by visit ID
  */
-export async function getDischargeSummary(visitId: number) {
+export async function getDischargeSummary(visitId: string) {
   const [summary] = await db
     .select()
     .from(dischargeSummaries)

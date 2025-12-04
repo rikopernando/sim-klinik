@@ -278,7 +278,7 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
  * Role Entity
  */
 export interface Role {
-  id: number
+  id: string
   name: UserRole
   description: string | null
   permissions: string | null
@@ -290,9 +290,9 @@ export interface Role {
  * User Role Entity
  */
 export interface UserRoleAssignment {
-  id: number
+  id: string
   userId: string
-  roleId: number
+  roleId: string
   assignedAt: string
   assignedBy: string | null
 }

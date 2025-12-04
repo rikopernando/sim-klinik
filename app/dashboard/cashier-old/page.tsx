@@ -21,8 +21,8 @@ import { RefreshCw, Clock } from "lucide-react"
 
 interface BillingData {
   billing: {
-    id: number
-    visitId: number
+    id: string
+    visitId: string
     totalAmount: string
     patientPayable: string
     remainingAmount: string
@@ -53,7 +53,7 @@ export default function CashierDashboard() {
 
   // Handle billing fetch from search or queue click
   const handleSelectVisit = useCallback(
-    (visitId: number) => {
+    (visitId: string) => {
       setSelectedVisitId(visitId)
       fetchBilling(visitId)
     },

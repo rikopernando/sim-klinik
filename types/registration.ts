@@ -1,7 +1,7 @@
 // Registration Module Types
 
 export interface Patient {
-  id: number
+  id: string
   mrNumber: string
   nik: string | null
   name: string
@@ -46,43 +46,25 @@ export interface VisitFormData {
   notes?: string
 }
 
-export interface RegisteredPatient {
-  id: number
-  mrNumber: string
-  name: string
-  nik: string | null
-  dateOfBirth: string | null
-  gender: string | null
-  bloodType: string | null
-  phone: string | null
-  email: string | null
-  address: string | null
-  emergencyContact: string | null
-  emergencyPhone: string | null
-  insuranceType: string | null
-  insuranceNumber: string | null
-  allergies: string | null
-  createdAt?: string
-  updatedAt?: string
-}
+export type RegisteredPatient = Patient
 
 export interface RegisteredVisit {
   visit: {
-    id: number
+    id: string
     visitNumber: string
     queueNumber?: string
     visitType: string
     arrivalTime: string
   }
   patient: {
-    id: number
+    id: string
     mrNumber: string
     name: string
   }
 }
 
 export interface Poli {
-  id: number
+  id: string
   name: string
   code: string
 }

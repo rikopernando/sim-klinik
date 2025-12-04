@@ -28,7 +28,7 @@ import { EmptyState } from "./empty-state"
 import { AddProcedureDialog } from "./add-procedure-dialog"
 
 interface ProcedureTabProps {
-  medicalRecordId: number
+  medicalRecordId: string
   procedures: Procedure[]
   onUpdate: () => void
   isLocked: boolean
@@ -68,7 +68,7 @@ export function ProcedureTab({
     setProcedureToEdit(null)
   }, [])
 
-  const handleDeleteClick = useCallback((id: number) => {
+  const handleDeleteClick = useCallback((id: string) => {
     setProcedureToDelete(id)
     setDeleteDialogOpen(true)
   }, [])

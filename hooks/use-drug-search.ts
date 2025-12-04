@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback } from "react"
 import axios from "axios"
 
 export interface Drug {
-  id: number
+  id: string
   name: string
   genericName: string | null
   unit: string

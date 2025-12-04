@@ -8,8 +8,8 @@ import { DrugInventoryInput } from "../pharmacy/validation"
 import { ExpiryAlertLevel } from "@/types/pharmacy"
 
 export interface DrugInventory {
-  id: number
-  drugId: number
+  id: string
+  drugId: string
   batchNumber: string
   expiryDate: string
   stockQuantity: number
@@ -22,7 +22,7 @@ export interface DrugInventory {
 
 export interface DrugInventoryWithDetails extends DrugInventory {
   drug: {
-    id: number
+    id: string
     name: string
     genericName: string | null
     unit: string
@@ -33,7 +33,7 @@ export interface DrugInventoryWithDetails extends DrugInventory {
 }
 
 export interface InventoryByDrugItem {
-  drugId: number
+  drugId: string
   drugName: string
   genericName: string | null
   unit: string
@@ -57,7 +57,7 @@ export async function getAllInventories(): Promise<DrugInventoryWithDetails[]> {
 /**
  * Get inventories for a specific drug
  */
-export async function getInventoriesByDrug(drugId: number): Promise<DrugInventoryWithDetails[]> {
+export async function getInventoriesByDrug(drugId: string): Promise<DrugInventoryWithDetails[]> {
   const response = await axios.get(`/api/pharmacy/inventory/${drugId}`)
   return response.data.data || []
 }
@@ -66,7 +66,7 @@ export async function getInventoriesByDrug(drugId: number): Promise<DrugInventor
  * Check if batch number already exists for a drug
  */
 export async function checkDuplicateBatch(
-  drugId: number,
+  drugId: string,
   batchNumber: string
 ): Promise<DuplicateBatchCheck> {
   try {
@@ -111,7 +111,7 @@ export async function addInventory(
  * Get available batches for a drug (for prescription fulfillment)
  * Sorted by expiry date (FEFO - First Expired, First Out)
  */
-export async function getAvailableBatches(drugId: number): Promise<DrugInventoryWithDetails[]> {
+export async function getAvailableBatches(drugId: string): Promise<DrugInventoryWithDetails[]> {
   const response = await axios.get(`/api/pharmacy/inventory/${drugId}/available`)
   return response.data.data || []
 }

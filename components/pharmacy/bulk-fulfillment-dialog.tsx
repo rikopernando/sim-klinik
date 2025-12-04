@@ -34,7 +34,7 @@ import { Label } from "../ui/label"
 import { AddPrescriptionDialog } from "./add-prescription-dialog"
 
 interface Drug {
-  id: number
+  id: string
   name: string
   genericName?: string | null
   unit: string
@@ -42,7 +42,7 @@ interface Drug {
 }
 
 interface Prescription {
-  id: number
+  id: string
   dosage: string
   frequency: string
   quantity: number
@@ -56,13 +56,13 @@ interface PrescriptionItem {
 }
 
 interface Patient {
-  id: number
+  id: string
   name: string
   mrNumber: string
 }
 
 interface Visit {
-  id: number
+  id: string
   visitNumber: string
 }
 
@@ -70,12 +70,12 @@ interface GroupedQueueItem {
   visit: Visit
   patient: Patient
   doctor: { id: string; name: string } | null
-  medicalRecordId: number
+  medicalRecordId: string
   prescriptions: PrescriptionItem[]
 }
 
 interface FulfillmentFormData {
-  inventoryId: number
+  inventoryId: string
   dispensedQuantity: number
   availableBatches: DrugInventoryWithDetails[]
   selectedBatch: DrugInventoryWithDetails | null
@@ -90,8 +90,8 @@ interface BulkFulfillmentDialogProps {
   isSubmitting: boolean
   onSubmit: (
     data: {
-      prescriptionId: number
-      inventoryId: number
+      prescriptionId: string
+      inventoryId: string
       dispensedQuantity: number
       fulfilledBy: string
       notes?: string
@@ -188,7 +188,7 @@ export function BulkFulfillmentDialog({
     }
   }, [open, selectedGroup])
 
-  const handleBatchSelect = (prescriptionId: number, batch: DrugInventoryWithDetails) => {
+  const handleBatchSelect = (prescriptionId: string, batch: DrugInventoryWithDetails) => {
     setFulfillmentData((prev) => ({
       ...prev,
       [prescriptionId]: {
@@ -209,8 +209,8 @@ export function BulkFulfillmentDialog({
     }
 
     const prescriptionData: Array<{
-      prescriptionId: number
-      inventoryId: number
+      prescriptionId: string
+      inventoryId: string
       dispensedQuantity: number
       fulfilledBy: string
       notes?: string

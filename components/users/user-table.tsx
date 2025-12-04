@@ -26,7 +26,7 @@ interface User {
   email: string
   username: string
   role: string | null
-  roleId: number | null
+  roleId: string | null
   createdAt: Date
 }
 

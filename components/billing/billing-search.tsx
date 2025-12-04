@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
 interface BillingSearchProps {
-  onSearch: (visitId: number) => void
+  onSearch: (visitId: string) => void
   isLoading?: boolean
 }
 

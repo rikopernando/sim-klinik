@@ -76,7 +76,7 @@ export async function calculateConsultationFee(): Promise<BillingItem | null> {
 /**
  * Calculate procedure fees
  */
-export async function calculateProcedureFees(visitId: number): Promise<BillingItem[]> {
+export async function calculateProcedureFees(visitId: string): Promise<BillingItem[]> {
   const items: BillingItem[] = []
 
   // Get procedures for this visit
@@ -127,7 +127,7 @@ export async function calculateProcedureFees(visitId: number): Promise<BillingIt
 /**
  * Calculate medication fees
  */
-export async function calculateMedicationFees(visitId: number): Promise<BillingItem[]> {
+export async function calculateMedicationFees(visitId: string): Promise<BillingItem[]> {
   const items: BillingItem[] = []
 
   // Get fulfilled prescriptions for this visit

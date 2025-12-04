@@ -8,14 +8,14 @@ import axios, { AxiosError } from "axios"
 import type { PaymentStatus, APIResponse } from "@/types/billing"
 
 interface Patient {
-  id: number
+  id: string
   mrNumber: string
   name: string
   nik?: string | null
 }
 
 interface Visit {
-  id: number
+  id: string
   visitNumber: string
   visitType: string
   status: string
@@ -23,7 +23,7 @@ interface Visit {
 }
 
 interface Billing {
-  id: number
+  id: string
   totalAmount: string
   paidAmount: string
   remainingAmount: string
@@ -31,7 +31,7 @@ interface Billing {
 }
 
 interface MedicalRecord {
-  id: number
+  id: string
   isLocked: boolean
 }
 

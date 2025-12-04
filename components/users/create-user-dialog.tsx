@@ -29,7 +29,7 @@ import * as userService from "@/lib/services/user.service"
 import { toast } from "sonner"
 
 interface Role {
-  id: number
+  id: string
   name: string
 }
 

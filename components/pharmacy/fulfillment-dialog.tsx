@@ -21,14 +21,14 @@ import { BatchSelector } from "./fulfillment/batch-selector"
 import { FulfillmentForm } from "./fulfillment/fulfillment-form"
 
 interface Drug {
-  id: number
+  id: string
   name: string
   genericName?: string | null
   unit: string
 }
 
 interface Prescription {
-  id: number
+  id: string
   quantity: number
 }
 
@@ -43,7 +43,7 @@ interface FulfillmentDialogProps {
   selectedPrescription: SelectedPrescription | null
   isSubmitting: boolean
   onSubmit: (data: {
-    inventoryId: number
+    inventoryId: string
     dispensedQuantity: number
     fulfilledBy: string
     notes?: string

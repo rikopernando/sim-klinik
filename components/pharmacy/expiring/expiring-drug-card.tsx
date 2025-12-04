@@ -14,7 +14,7 @@ interface Drug {
 }
 
 interface ExpiringDrug {
-  id: number
+  id: string
   batchNumber: string
   expiryDate: Date
   stockQuantity: number

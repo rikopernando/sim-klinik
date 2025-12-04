@@ -29,11 +29,11 @@ import { toast } from "sonner"
 interface User {
   id: string
   name: string
-  roleId: number | null
+  roleId: string | null
 }
 
 interface Role {
-  id: number
+  id: string
   name: string
 }
 

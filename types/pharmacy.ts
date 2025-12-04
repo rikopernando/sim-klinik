@@ -45,7 +45,7 @@ export type ExpiryAlertLevel = "expired" | "expiring_soon" | "warning" | "safe"
  * Drug Entity
  */
 export interface Drug {
-  id: number
+  id: string
   name: string
   genericName: string | null
   category: string | null
@@ -70,8 +70,8 @@ export interface DrugWithStock extends Drug {
  * Drug Inventory Entity
  */
 export interface DrugInventory {
-  id: number
-  drugId: number
+  id: string
+  drugId: string
   batchNumber: string
   expiryDate: Date
   stockQuantity: number
@@ -95,9 +95,9 @@ export interface DrugInventoryWithDetails extends DrugInventory {
  * Prescription Entity
  */
 export interface Prescription {
-  id: number
-  medicalRecordId: number
-  drugId: number
+  id: string
+  medicalRecordId: string
+  drugId: string
   dosage: string
   frequency: string
   duration: string | null
@@ -108,7 +108,7 @@ export interface Prescription {
   fulfilledBy: string | null
   fulfilledAt: string | null
   dispensedQuantity: number | null
-  inventoryId: number | null
+  inventoryId: string | null
   notes: string | null
   createdAt: string
   updatedAt: string
@@ -121,7 +121,7 @@ export interface PrescriptionWithDetails {
   prescription: Prescription
   drug: Drug
   patient: {
-    id: number
+    id: string
     name: string
     mrNumber: string
   }
@@ -130,7 +130,7 @@ export interface PrescriptionWithDetails {
     name: string
   }
   visit: {
-    id: number
+    id: string
     visitNumber: string
   }
 }
@@ -139,12 +139,12 @@ export interface PrescriptionWithDetails {
  * Stock Movement Entity
  */
 export interface StockMovement {
-  id: number
-  inventoryId: number
+  id: string
+  inventoryId: string
   movementType: MovementType
   quantity: number
   reason: string | null
-  referenceId: number | null
+  referenceId: string | null
   performedBy: string | null
   createdAt: string
 }
@@ -173,8 +173,8 @@ export interface DrugInput {
  * Prescription Fulfillment Input
  */
 export interface PrescriptionFulfillmentInput {
-  prescriptionId: number
-  inventoryId: number
+  prescriptionId: string
+  inventoryId: string
   dispensedQuantity: number
   fulfilledBy: string
   notes?: string
@@ -184,7 +184,7 @@ export interface PrescriptionFulfillmentInput {
  * Stock Adjustment Input
  */
 export interface StockAdjustmentInput {
-  inventoryId: number
+  inventoryId: string
   quantity: number
   reason: string
   performedBy: string

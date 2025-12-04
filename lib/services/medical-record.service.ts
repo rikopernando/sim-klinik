@@ -15,7 +15,7 @@ import axios from "axios"
 /**
  * Get medical record by visit ID
  */
-export async function getMedicalRecordByVisit(visitId: number): Promise<MedicalRecordData> {
+export async function getMedicalRecordByVisit(visitId: string): Promise<MedicalRecordData> {
   const response = await axios.get<{ data: MedicalRecordData }>(
     `/api/medical-records?visitId=${visitId}`
   )
@@ -25,7 +25,7 @@ export async function getMedicalRecordByVisit(visitId: number): Promise<MedicalR
 /**
  * Get all medical records for a patient
  */
-export async function getPatientMedicalRecords(patientId: number): Promise<MedicalRecordData[]> {
+export async function getPatientMedicalRecords(patientId: string): Promise<MedicalRecordData[]> {
   const response = await axios.get<{ data: MedicalRecordData[] }>(
     `/api/medical-records?patientId=${patientId}`
   )
@@ -44,7 +44,7 @@ export async function createMedicalRecord(data: MedicalRecordFormData): Promise<
  * Update a medical record
  */
 export async function updateMedicalRecord(
-  id: number,
+  id: string,
   data: Partial<MedicalRecordFormData>
 ): Promise<MedicalRecord> {
   const response = await axios.patch<{ data: MedicalRecord }>("/api/medical-records", {
@@ -58,7 +58,7 @@ export async function updateMedicalRecord(
  * Lock a medical record with optional billing adjustment
  */
 export async function lockMedicalRecord(
-  id: number,
+  id: string,
   userId: string,
   billingAdjustment?: number,
   adjustmentNote?: string
@@ -75,7 +75,7 @@ export async function lockMedicalRecord(
 /**
  * Unlock a medical record
  */
-export async function unlockMedicalRecord(id: number): Promise<MedicalRecord> {
+export async function unlockMedicalRecord(id: string): Promise<MedicalRecord> {
   const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/unlock", { id })
   return response.data.data
 }
@@ -84,7 +84,7 @@ export async function unlockMedicalRecord(id: number): Promise<MedicalRecord> {
  * Add a diagnosis to a medical record
  */
 export async function addDiagnosis(data: {
-  medicalRecordId: number
+  medicalRecordId: string
   icd10Code: string
   description: string
   diagnosisType?: "primary" | "secondary"
@@ -97,7 +97,7 @@ export async function addDiagnosis(data: {
  * Update a diagnosis
  */
 export async function updateDiagnosis(
-  id: number,
+  id: string,
   data: {
     icd10Code?: string
     description?: string
@@ -114,7 +114,7 @@ export async function updateDiagnosis(
 /**
  * Delete a diagnosis
  */
-export async function deleteDiagnosis(id: number): Promise<void> {
+export async function deleteDiagnosis(id: string): Promise<void> {
   await axios.delete(`/api/medical-records/diagnoses?id=${id}`)
 }
 
@@ -122,7 +122,7 @@ export async function deleteDiagnosis(id: number): Promise<void> {
  * Add a procedure to a medical record
  */
 export async function addProcedure(data: {
-  medicalRecordId: number
+  medicalRecordId: string
   serviceId?: number
   icd9Code: string
   description: string
@@ -137,7 +137,7 @@ export async function addProcedure(data: {
  * Update a procedure
  */
 export async function updateProcedure(
-  id: number,
+  id: string,
   data: {
     serviceId?: number
     icd9Code?: string
@@ -156,7 +156,7 @@ export async function updateProcedure(
 /**
  * Delete a procedure
  */
-export async function deleteProcedure(id: number): Promise<void> {
+export async function deleteProcedure(id: string): Promise<void> {
   await axios.delete(`/api/medical-records/procedures?id=${id}`)
 }
 
@@ -164,8 +164,8 @@ export async function deleteProcedure(id: number): Promise<void> {
  * Add a prescription to a medical record
  */
 export async function addPrescription(data: {
-  medicalRecordId: number
-  drugId: number
+  medicalRecordId: string
+  drugId: string
   dosage: string
   frequency: string
   duration?: string
@@ -184,7 +184,7 @@ export async function addPrescription(data: {
  * Update a prescription
  */
 export async function updatePrescription(
-  id: number,
+  id: string,
   data: {
     drugId?: number
     dosage?: string
@@ -205,6 +205,6 @@ export async function updatePrescription(
 /**
  * Delete a prescription
  */
-export async function deletePrescription(id: number): Promise<void> {
+export async function deletePrescription(id: string): Promise<void> {
   await axios.delete(`/api/medical-records/prescriptions?id=${id}`)
 }

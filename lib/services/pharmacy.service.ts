@@ -7,7 +7,7 @@ import axios from "axios"
 
 export interface PrescriptionQueueItem {
   prescription: {
-    id: number
+    id: string
     dosage: string
     frequency: string
     quantity: number
@@ -17,13 +17,13 @@ export interface PrescriptionQueueItem {
     createdAt: Date
   }
   drug: {
-    id: number
+    id: string
     name: string
     genericName: string | null
     unit: string
   }
   patient: {
-    id: number
+    id: string
     name: string
     mrNumber: string
   } | null
@@ -34,8 +34,8 @@ export interface PrescriptionQueueItem {
 }
 
 export interface PrescriptionFulfillmentData {
-  prescriptionId: number
-  inventoryId: number
+  prescriptionId: string
+  inventoryId: string
   dispensedQuantity: number
   fulfilledBy: string
   notes?: string

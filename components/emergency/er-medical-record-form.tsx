@@ -60,7 +60,7 @@ const erMedicalRecordSchema = z.object({
 type ERMedicalRecordData = z.infer<typeof erMedicalRecordSchema>
 
 interface ERMedicalRecordFormProps {
-  visitId: number
+  visitId: string
   patientName: string
   triageStatus: string
   onSave?: (isDraft: boolean) => void

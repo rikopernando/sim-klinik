@@ -39,7 +39,7 @@ export async function registerPatient(data: PatientFormData): Promise<Registered
  * Update patient information
  */
 export async function updatePatient(
-  id: number,
+  id: string,
   data: Partial<PatientFormData>
 ): Promise<RegisteredPatient> {
   const payload = {
@@ -55,7 +55,7 @@ export async function updatePatient(
 /**
  * Get patient by ID
  */
-export async function getPatient(id: number): Promise<RegisteredPatient> {
+export async function getPatient(id: string): Promise<RegisteredPatient> {
   const response = await axios.get<{ data: RegisteredPatient }>(`/api/patients/${id}`)
 
   return response.data.data

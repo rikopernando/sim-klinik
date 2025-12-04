@@ -36,7 +36,7 @@ import { DrugSearch } from "./drug-search"
 interface AddPrescriptionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  medicalRecordId: number
+  medicalRecordId: string
   onSuccess: () => void
   prescription?: Prescription | null // If provided, it's edit mode
   existingPrescriptions?: Prescription[] // For duplicate checking

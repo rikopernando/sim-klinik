@@ -125,7 +125,7 @@ Updated `/app/api/medical-records/prescriptions/route.ts` to:
 
 ```typescript
 {
-  prescriptionId: number,
+  prescriptionId: string,
   patientName: string,
   patientMRNumber: string,
   drugName: string,

@@ -18,7 +18,7 @@ import { BulkFulfillmentDialog } from "@/components/pharmacy/bulk-fulfillment-di
 import { toast } from "sonner"
 
 interface Drug {
-  id: number
+  id: string
   name: string
   genericName?: string | null
   unit: string
@@ -26,7 +26,7 @@ interface Drug {
 }
 
 interface Patient {
-  id: number
+  id: string
   name: string
   mrNumber: string
 }
@@ -37,12 +37,12 @@ interface Doctor {
 }
 
 interface Visit {
-  id: number
+  id: string
   visitNumber: string
 }
 
 interface Prescription {
-  id: number
+  id: string
   dosage: string
   frequency: string
   quantity: number
@@ -54,7 +54,7 @@ interface GroupedQueueItem {
   visit: Visit
   patient: Patient
   doctor: Doctor | null
-  medicalRecordId: number
+  medicalRecordId: string
   prescriptions: Array<{
     prescription: Prescription
     drug: Drug
@@ -80,8 +80,8 @@ export default function PharmacyDashboard() {
   const handleBulkFulfill = useCallback(
     async (
       prescriptions: Array<{
-        prescriptionId: number
-        inventoryId: number
+        prescriptionId: string
+        inventoryId: string
         dispensedQuantity: number
         fulfilledBy: string
         notes?: string

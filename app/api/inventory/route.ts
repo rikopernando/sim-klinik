@@ -13,7 +13,7 @@ import { APIResponse } from "@/types/pharmacy"
  * GET /api/inventory
  * Get all drug inventory or filter by drug ID
  * Query params:
- * - drugId: number (optional) - filter by specific drug
+ * - drugId: string (optional) - filter by specific drug
  * - movements: number (optional) - get stock movements for specific inventory
  */
 export async function GET() {

@@ -54,7 +54,7 @@ type PatientUpdateData = z.infer<typeof patientUpdateSchema>
 interface EditPatientDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  patientId: number
+  patientId: string
   initialData?: Partial<PatientUpdateData>
   onSuccess?: () => void
 }

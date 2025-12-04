@@ -16,7 +16,7 @@ import { HistoryPrescriptionsTab } from "./history-prescriptions-tab"
 
 interface MedicalRecordData {
   medicalRecord: {
-    id: number
+    id: string
     isLocked: boolean
     soapSubjective: string | null
     soapObjective: string | null
@@ -28,19 +28,19 @@ interface MedicalRecordData {
     visitNumber: string
   }
   diagnoses: Array<{
-    id: number
+    id: string
     icd10Code: string
     description: string
     diagnosisType: string
   }>
   procedures: Array<{
-    id: number
+    id: string
     icd9Code: string
     description: string
   }>
   prescriptions: Array<{
     prescription: {
-      id: number
+      id: string
       dosage: string
       frequency: string
       duration: string | null

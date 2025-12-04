@@ -6,7 +6,7 @@
 import axios from "axios"
 
 export interface Poli {
-  id: number
+  id: string
   name: string
   code: string
   description: string | null
@@ -43,7 +43,7 @@ export async function getPolis(): Promise<Poli[]> {
  * @param id - Poli ID
  * @returns Promise<Poli | null>
  */
-export async function getPoliById(id: number): Promise<Poli | null> {
+export async function getPoliById(id: string): Promise<Poli | null> {
   try {
     const polis = await getPolis()
     return polis.find((p) => p.id === id) || null

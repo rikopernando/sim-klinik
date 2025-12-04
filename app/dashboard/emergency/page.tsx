@@ -48,7 +48,7 @@ export default function EmergencyQueuePage() {
   /**
    * Handle start examination
    */
-  const handleStartExamination = (visitId: number) => {
+  const handleStartExamination = (visitId: string) => {
     // TODO: Navigate to ER medical record page
     console.log("Start examination for visit:", visitId)
   }

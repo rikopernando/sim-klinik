@@ -85,7 +85,7 @@ The emergency handover system enables seamless patient transfer from the Emergen
 
 ```typescript
 {
-  visitId: number,                           // Required
+  visitId: string,                           // Required
   newVisitType: "outpatient" | "inpatient", // Required
   poliId?: number,                          // Required for outpatient
   roomId?: number,                          // Required for inpatient
@@ -225,7 +225,7 @@ Pre-built dialog component for handover workflow.
 interface HandoverDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  visitId: number
+  visitId: string
   patientName: string
   onSuccess?: () => void
 }

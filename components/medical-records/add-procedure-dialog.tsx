@@ -42,7 +42,7 @@ import { ServiceSearch } from "./service-search"
 interface AddProcedureDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  medicalRecordId: number
+  medicalRecordId: string
   onSuccess: () => void
   procedure?: Procedure | null // If provided, it's edit mode
   existingProcedures?: Procedure[] // For duplicate checking

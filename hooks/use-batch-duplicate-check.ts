@@ -7,7 +7,7 @@ import { useState, useEffect } from "react"
 import { checkDuplicateBatch, type DuplicateBatchCheck } from "@/lib/services/inventory.service"
 
 interface UseBatchDuplicateCheckOptions {
-  drugId: number
+  drugId: string
   batchNumber: string
   debounceMs?: number
 }

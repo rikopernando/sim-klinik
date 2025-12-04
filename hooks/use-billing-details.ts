@@ -8,8 +8,8 @@ import axios, { AxiosError } from "axios"
 import type { BillingItem, Payment, PaymentStatus, APIResponse } from "@/types/billing"
 
 interface Billing {
-  id: number
-  visitId: number
+  id: string
+  visitId: string
   subtotal: string
   discount: string
   discountPercentage: string | null
@@ -48,7 +48,7 @@ interface UseBillingDetailsReturn {
   refresh: () => void
 }
 
-export function useBillingDetails(visitId: number | null): UseBillingDetailsReturn {
+export function useBillingDetails(visitId: string | null): UseBillingDetailsReturn {
   const [billingDetails, setBillingDetails] = useState<BillingDetails | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)

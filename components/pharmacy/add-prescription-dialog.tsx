@@ -28,7 +28,7 @@ import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.servi
 import axios from "axios"
 
 interface Drug {
-  id: number
+  id: string
   name: string
   genericName?: string | null
   unit: string
@@ -43,7 +43,7 @@ interface Doctor {
 interface AddPrescriptionDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  medicalRecordId: number
+  medicalRecordId: string
   doctor: Doctor | null
   onSuccess: () => void
 }

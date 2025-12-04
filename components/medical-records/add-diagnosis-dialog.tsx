@@ -35,7 +35,7 @@ import { ICD10Search } from "./icd10-search"
 interface AddDiagnosisDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  medicalRecordId: number
+  medicalRecordId: string
   onSuccess: () => void
   diagnosis?: Diagnosis | null // If provided, it's edit mode
   existingDiagnoses?: Diagnosis[] // For duplicate checking

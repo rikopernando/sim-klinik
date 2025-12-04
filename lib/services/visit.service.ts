@@ -9,7 +9,7 @@ import { type VisitFormData, type RegisteredVisit } from "@/types/registration"
  * Register a new visit
  */
 export async function registerVisit(
-  patientId: number,
+  patientId: string,
   data: VisitFormData
 ): Promise<RegisteredVisit> {
   const payload = {
@@ -43,7 +43,7 @@ export async function getQueue(visitType?: string) {
  * Update visit status
  */
 export async function updateVisitStatus(
-  visitId: number,
+  visitId: string,
   newStatus: string,
   reason?: string
 ): Promise<void> {

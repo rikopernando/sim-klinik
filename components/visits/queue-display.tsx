@@ -10,7 +10,7 @@ import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status"
 
 interface QueueItem {
   visit: {
-    id: number
+    id: string
     visitNumber: string
     queueNumber: string | null
     visitType: string
@@ -19,7 +19,7 @@ interface QueueItem {
     triageStatus: string | null
   }
   patient: {
-    id: number
+    id: string
     mrNumber: string
     name: string
     gender: string | null

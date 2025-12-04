@@ -7,14 +7,14 @@ import { useState, useEffect, useCallback } from "react"
 
 interface MedicalRecordHistoryData {
   patient: {
-    id: number
+    id: string
     name: string
     mrNumber: string
     allergies: string | null
   }
   history: Array<{
     medicalRecord: {
-      id: number
+      id: string
       isLocked: boolean
       soapSubjective: string | null
       soapObjective: string | null
@@ -26,19 +26,19 @@ interface MedicalRecordHistoryData {
       visitNumber: string
     }
     diagnoses: Array<{
-      id: number
+      id: string
       icd10Code: string
       description: string
       diagnosisType: string
     }>
     procedures: Array<{
-      id: number
+      id: string
       icd9Code: string
       description: string
     }>
     prescriptions: Array<{
       prescription: {
-        id: number
+        id: string
         dosage: string
         frequency: string
         duration: string | null
@@ -53,7 +53,7 @@ interface MedicalRecordHistoryData {
 }
 
 interface UseMedicalRecordHistoryOptions {
-  patientId: number | null
+  patientId: string | null
   enabled: boolean
 }
 
