@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { Search, Loader2, User, AlertCircle, UserPlus } from "lucide-react"
+import { Search, Loader2, AlertCircle, UserPlus } from "lucide-react"
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
