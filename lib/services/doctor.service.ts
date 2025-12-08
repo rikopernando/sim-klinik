@@ -4,16 +4,9 @@
  */
 
 import axios from "axios"
-
-export interface Doctor {
-  id: string
-  name: string
-  email: string
-}
-
-interface GetDoctorsResponse {
-  doctors: Doctor[]
-}
+import { ResponseApi } from "@/types/api"
+import { Doctor } from "@/types/user"
+import { ApiServiceError, handleApiError } from "./api.service"
 
 /**
  * Fetch all doctors from the API
@@ -21,16 +14,14 @@ interface GetDoctorsResponse {
  */
 export async function getDoctors(): Promise<Doctor[]> {
   try {
-    const { data } = await axios.get<GetDoctorsResponse>("/api/doctors")
-    return data.doctors || []
-  } catch (error) {
-    console.error("Error in getDoctors service:", error)
-
-    // Re-throw with more context
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.error || error.message || "Failed to fetch doctors")
+    const response = await axios.get<ResponseApi<Doctor[]>>("/api/doctors")
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing polis data")
     }
 
-    throw error
+    return response.data.data
+  } catch (error) {
+    console.error("Error in getDoctors service:", error)
+    handleApiError(error)
   }
 }

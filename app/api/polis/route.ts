@@ -3,12 +3,16 @@
  * GET /api/polis - Get all active polis/departments
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { polis } from "@/db/schema/visits"
+import { NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
 
-export async function GET(request: NextRequest) {
+import { db } from "@/db"
+import { polis } from "@/db/schema/visits"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { Poli } from "@/types/poli"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+
+export async function GET() {
   try {
     // Get all active polis, ordered by name
     const allPolis = await db
@@ -23,18 +27,24 @@ export async function GET(request: NextRequest) {
       .where(eq(polis.isActive, "active"))
       .orderBy(polis.name)
 
-    return NextResponse.json({
-      success: true,
+    const response: ResponseApi<Poli[]> = {
+      message: "Polis fetched successfully",
       data: allPolis,
-    })
+      status: HTTP_STATUS_CODES.OK,
+    }
+
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
     console.error("Error fetching polis:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch polis data",
-      },
-      { status: 500 }
-    )
+
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to fetch polis data",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    }
+
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }

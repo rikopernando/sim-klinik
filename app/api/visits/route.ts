@@ -6,18 +6,21 @@ import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { getInitialVisitStatus } from "@/types/visit-status"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { RegisteredVisit } from "@/types/visit"
 
 /**
  * Visit Registration Schema
  */
 const visitSchema = z.object({
-  patientId: z.number().int().positive(),
+  patientId: z.string(),
   visitType: z.enum(["outpatient", "inpatient", "emergency"]),
-  poliId: z.number().int().positive().optional(),
+  poliId: z.string().optional(),
   doctorId: z.string().optional(),
   triageStatus: z.enum(["red", "yellow", "green"]).optional(),
   chiefComplaint: z.string().optional(),
-  roomId: z.number().int().positive().optional(),
+  roomId: z.string().optional(),
   notes: z.string().optional(),
 })
 
@@ -42,7 +45,14 @@ export const POST = withRBAC(
         .limit(1)
 
       if (patient.length === 0) {
-        return NextResponse.json({ error: "Patient not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Patient not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       // Generate visit number
@@ -56,17 +66,25 @@ export const POST = withRBAC(
 
       // Validate required fields based on visit type
       if (validatedData.visitType === "outpatient" && !validatedData.poliId) {
-        return NextResponse.json(
-          { error: "Poli ID is required for outpatient visits" },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Poli ID is required for outpatient visits",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       if (validatedData.visitType === "emergency" && !validatedData.chiefComplaint) {
-        return NextResponse.json(
-          { error: "Chief complaint is required for emergency visits" },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "hief complaint is required for emergency visits",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       if (validatedData.visitType === "inpatient" && !validatedData.roomId) {
@@ -94,15 +112,12 @@ export const POST = withRBAC(
           roomId: validatedData.roomId || null,
           admissionDate: validatedData.visitType === "inpatient" ? new Date() : null,
           status: initialStatus,
-          arrivalTime: new Date(),
           notes: validatedData.notes || null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         })
         .returning()
 
       // Fetch complete visit with patient data
-      const completeVisit = await db
+      const [completeVisit] = await db
         .select({
           visit: visits,
           patient: patients,
@@ -112,24 +127,63 @@ export const POST = withRBAC(
         .where(eq(visits.id, newVisit[0].id))
         .limit(1)
 
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Visit registered successfully",
-          data: completeVisit[0],
+      const response: ResponseApi<RegisteredVisit> = {
+        message: "Visit registered successfully",
+        data: {
+          visit: {
+            ...completeVisit.visit,
+            admissionDate: completeVisit.visit.admissionDate
+              ? completeVisit.visit.admissionDate.toISOString()
+              : null,
+            dischargeDate: completeVisit.visit.dischargeDate
+              ? completeVisit.visit.dischargeDate.toISOString()
+              : null,
+            startTime: completeVisit.visit.startTime
+              ? completeVisit.visit.startTime.toISOString()
+              : null,
+            endTime: completeVisit.visit.endTime ? completeVisit.visit.endTime.toISOString() : null,
+            arrivalTime: completeVisit.visit.arrivalTime.toISOString(),
+            createdAt: completeVisit.visit.createdAt.toISOString(),
+            updatedAt: completeVisit.visit.updatedAt.toISOString(),
+          },
+          patient: completeVisit.patient
+            ? {
+                ...completeVisit.patient,
+                dateOfBirth: completeVisit.patient.dateOfBirth
+                  ? completeVisit.patient.dateOfBirth.toISOString()
+                  : null,
+                createdAt: completeVisit.patient.createdAt?.toISOString(),
+                updatedAt: completeVisit.patient.updatedAt?.toISOString(),
+              }
+            : null,
         },
-        { status: 201 }
-      )
+        status: HTTP_STATUS_CODES.CREATED,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       console.error("Visit creation error:", error)
-      return NextResponse.json({ error: "Failed to create visit" }, { status: 500 })
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to create visit",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["visits:write"] }
@@ -152,7 +206,7 @@ export const GET = withRBAC(
       const conditions = []
 
       if (poliId) {
-        conditions.push(eq(visits.poliId, parseInt(poliId, 10)))
+        conditions.push(eq(visits.poliId, poliId))
       }
 
       if (status) {

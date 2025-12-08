@@ -18,18 +18,10 @@ export async function registerVisit(
   data: VisitFormData
 ): Promise<RegisteredVisit> {
   try {
-    const payload = {
+    const response = await axios.post<ResponseApi<RegisteredVisit>>("/api/visits", {
+      ...data,
       patientId,
-      visitType: data.visitType,
-      poliId: data.poliId ? parseInt(data.poliId) : undefined,
-      doctorId: data.doctorId || undefined,
-      triageStatus: data.triageStatus,
-      chiefComplaint: data.chiefComplaint,
-      roomId: data.roomId ? parseInt(data.roomId) : undefined,
-      notes: data.notes,
-    }
-
-    const response = await axios.post<ResponseApi<RegisteredVisit>>("/api/visits", payload)
+    })
 
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing visit data")

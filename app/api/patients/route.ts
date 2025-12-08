@@ -5,6 +5,9 @@ import { or, like, count, desc, eq } from "drizzle-orm"
 import { z } from "zod"
 import { generateMRNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { RegisteredPatient } from "@/types/registration"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * Patient Registration Schema
@@ -14,10 +17,10 @@ const patientSchema = z.object({
   nik: z.string().length(16, "NIK must be exactly 16 digits").optional(),
   name: z.string().min(2, "Name must be at least 2 characters").max(255),
   dateOfBirth: z.string().optional(), // ISO date string
-  gender: z.enum(["male", "female", "other"]).optional(),
+  gender: z.enum(["male", "female"]).optional(),
   address: z.string().optional(),
   phone: z.string().max(20).optional(),
-  email: z.union([z.string().email(), z.literal("")]).optional(),
+  email: z.union([z.string().email({ message: "Invalid email format" }), z.literal("")]).optional(),
   insuranceType: z.string().max(50).optional(),
   insuranceNumber: z.string().max(50).optional(),
   emergencyContact: z.string().max(255).optional(),
@@ -48,10 +51,14 @@ export const POST = withRBAC(
           .limit(1)
 
         if (existingPatient.length > 0) {
-          return NextResponse.json(
-            { error: "Patient with this NIK already exists" },
-            { status: 409 }
-          )
+          const response: ResponseError<unknown> = {
+            error: {},
+            message: "Patient with this NIK already exists",
+            status: HTTP_STATUS_CODES.CONFLICT,
+          }
+          return NextResponse.json(response, {
+            status: HTTP_STATUS_CODES.CONFLICT,
+          })
         }
       }
 
@@ -59,7 +66,7 @@ export const POST = withRBAC(
       const mrNumber = await generateMRNumber()
 
       // Create patient
-      const newPatient = await db
+      const [newPatient] = await db
         .insert(patients)
         .values({
           mrNumber,
@@ -76,29 +83,44 @@ export const POST = withRBAC(
           emergencyPhone: validatedData.emergencyPhone || null,
           bloodType: validatedData.bloodType || null,
           allergies: validatedData.allergies || null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         })
         .returning()
 
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Patient created successfully",
-          data: newPatient[0],
+      const response: ResponseApi<RegisteredPatient> = {
+        message: "Patient created successfully",
+        data: {
+          ...newPatient,
+          dateOfBirth: newPatient.dateOfBirth ? newPatient.dateOfBirth.toISOString() : null,
+          createdAt: newPatient.createdAt.toISOString(),
+          updatedAt: newPatient.updatedAt.toISOString(),
         },
-        { status: 201 }
-      )
+        status: HTTP_STATUS_CODES.CREATED,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       console.error("Patient creation error:", error)
-      return NextResponse.json({ error: "Failed to create patient" }, { status: 500 })
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to create patient",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["patients:write"] }

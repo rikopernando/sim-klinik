@@ -4,10 +4,14 @@
  */
 
 import { NextResponse } from "next/server"
+import { eq, asc } from "drizzle-orm"
+
 import { db } from "@/db"
 import { user } from "@/db/schema/auth"
 import { userRoles, roles } from "@/db/schema/roles"
-import { eq, asc } from "drizzle-orm"
+import { Doctor } from "@/types/user"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * GET /api/doctors
@@ -28,15 +32,24 @@ export async function GET() {
       .where(eq(roles.name, "doctor"))
       .orderBy(asc(user.name))
 
-    return NextResponse.json({
-      doctors: doctors.map((doc) => ({
-        id: doc.id,
-        name: doc.name,
-        email: doc.email,
-      })),
-    })
+    const response: ResponseApi<Doctor[]> = {
+      message: "Doctors fetched successfully",
+      data: doctors,
+      status: HTTP_STATUS_CODES.OK,
+    }
+
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
-    console.error("Error fetching doctors:", error)
-    return NextResponse.json({ error: "Failed to fetch doctors" }, { status: 500 })
+    console.error("Error fetching polis:", error)
+
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to fetch doctors data",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    }
+
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }
