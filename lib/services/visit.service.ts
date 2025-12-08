@@ -4,52 +4,78 @@
 
 import axios from "axios"
 import { type VisitFormData, type RegisteredVisit } from "@/types/registration"
+import { type ResponseApi } from "@/types/api"
+import { handleApiError, ApiServiceError } from "./api.service"
 
 /**
  * Register a new visit
+ * @param patientId - Patient ID
+ * @param data - Visit form data
+ * @returns Newly registered visit
  */
 export async function registerVisit(
   patientId: string,
   data: VisitFormData
 ): Promise<RegisteredVisit> {
-  const payload = {
-    patientId,
-    visitType: data.visitType,
-    poliId: data.poliId ? parseInt(data.poliId) : undefined,
-    doctorId: data.doctorId || undefined,
-    triageStatus: data.triageStatus,
-    chiefComplaint: data.chiefComplaint,
-    roomId: data.roomId ? parseInt(data.roomId) : undefined,
-    notes: data.notes,
+  try {
+    const payload = {
+      patientId,
+      visitType: data.visitType,
+      poliId: data.poliId ? parseInt(data.poliId) : undefined,
+      doctorId: data.doctorId || undefined,
+      triageStatus: data.triageStatus,
+      chiefComplaint: data.chiefComplaint,
+      roomId: data.roomId ? parseInt(data.roomId) : undefined,
+      notes: data.notes,
+    }
+
+    const response = await axios.post<ResponseApi<RegisteredVisit>>("/api/visits", payload)
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing visit data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
   }
-
-  const response = await axios.post<{ data: RegisteredVisit }>("/api/visits", payload)
-
-  return response.data.data
 }
 
 /**
  * Get queue for specific visit type
+ * @param visitType - Optional visit type filter
+ * @returns Array of visits in queue
  */
-export async function getQueue(visitType?: string) {
-  const response = await axios.get("/api/visits", {
-    params: visitType ? { visitType } : undefined,
-  })
+export async function getQueue(visitType?: string): Promise<RegisteredVisit[]> {
+  try {
+    const response = await axios.get<ResponseApi<RegisteredVisit[]>>("/api/visits", {
+      params: visitType ? { visitType } : undefined,
+    })
 
-  return response.data.data || []
+    return response.data.data || []
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**
  * Update visit status
+ * @param visitId - Visit ID
+ * @param newStatus - New status to set
+ * @param reason - Optional reason for status change
  */
 export async function updateVisitStatus(
   visitId: string,
   newStatus: string,
   reason?: string
 ): Promise<void> {
-  await axios.patch("/api/visits/status", {
-    visitId,
-    newStatus,
-    reason,
-  })
+  try {
+    await axios.patch<ResponseApi<null>>("/api/visits/status", {
+      visitId,
+      newStatus,
+      reason,
+    })
+  } catch (error) {
+    handleApiError(error)
+  }
 }

@@ -31,8 +31,8 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
     setError(null)
 
     try {
-      const patients = await searchPatientsService(searchQuery)
-      setResults(patients)
+      const response = await searchPatientsService(searchQuery)
+      setResults(response.patients as RegisteredPatient[])
     } catch (err) {
       setError(getErrorMessage(err))
       console.error("Search error:", err)

@@ -17,7 +17,7 @@ const patientSchema = z.object({
   gender: z.enum(["male", "female", "other"]).optional(),
   address: z.string().optional(),
   phone: z.string().max(20).optional(),
-  email: z.string().email().optional().or(z.literal("")),
+  email: z.union([z.string().email(), z.literal("")]).optional(),
   insuranceType: z.string().max(50).optional(),
   insuranceNumber: z.string().max(50).optional(),
   emergencyContact: z.string().max(255).optional(),
