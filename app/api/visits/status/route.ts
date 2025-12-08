@@ -10,12 +10,14 @@ import {
   getStatusTransitionError,
   VISIT_STATUS_INFO,
 } from "@/types/visit-status"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * Update Visit Status Schema
  */
 const updateStatusSchema = z.object({
-  visitId: z.number().int().positive(),
+  visitId: z.string(),
   newStatus: z.enum([
     "registered",
     "waiting",
@@ -49,7 +51,15 @@ export const PATCH = withRBAC(
         .limit(1)
 
       if (!visit) {
-        return NextResponse.json({ error: "Visit not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Visit not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       const currentStatus = visit.status as VisitStatus
@@ -57,21 +67,20 @@ export const PATCH = withRBAC(
 
       // Validate status transition
       if (!isValidStatusTransition(currentStatus, newStatus)) {
-        return NextResponse.json(
-          {
-            error: "Invalid status transition",
-            message: getStatusTransitionError(currentStatus, newStatus),
-            currentStatus,
-            attemptedStatus: newStatus,
-          },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: "Invalid status transition",
+          message: getStatusTransitionError(currentStatus, newStatus),
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       // Prepare update data
       const updateData: Record<string, unknown> = {
         status: newStatus,
-        updatedAt: new Date(),
       }
 
       // Set timestamps based on status
@@ -94,33 +103,41 @@ export const PATCH = withRBAC(
       }
 
       // Update visit status
-      const [updatedVisit] = await db
+      await db
         .update(visits)
         .set(updateData)
         .where(eq(visits.id, validatedData.visitId))
         .returning()
 
-      return NextResponse.json({
-        success: true,
+      const response: ResponseApi = {
         message: `Visit status updated to: ${VISIT_STATUS_INFO[newStatus].label}`,
-        data: {
-          visitId: updatedVisit.id,
-          previousStatus: currentStatus,
-          newStatus: updatedVisit.status,
-          statusInfo: VISIT_STATUS_INFO[newStatus],
-          updatedAt: updatedVisit.updatedAt,
-        },
-      })
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       console.error("Visit status update error:", error)
-      return NextResponse.json({ error: "Failed to update visit status" }, { status: 500 })
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to update visit status",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["visits:write"] }
@@ -142,11 +159,7 @@ export const GET = withRBAC(
       }
 
       // Get visit
-      const [visit] = await db
-        .select()
-        .from(visits)
-        .where(eq(visits.id, parseInt(visitId, 10)))
-        .limit(1)
+      const [visit] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1)
 
       if (!visit) {
         return NextResponse.json({ error: "Visit not found" }, { status: 404 })

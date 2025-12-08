@@ -4,35 +4,9 @@
  */
 
 import { useState, useEffect, useCallback } from "react"
-
-export interface QueuePatient {
-  id: string
-  name: string
-}
-
-export interface QueueVisit {
-  id: string
-  visitNumber: string
-  visitType: string
-  status: string
-  queueNumber: number | null
-}
-
-export interface QueuePoli {
-  name: string
-}
-
-export interface QueueMedicalRecord {
-  id: string
-  isLocked: boolean
-}
-
-export interface QueueItem {
-  visit: QueueVisit
-  patient: QueuePatient | null
-  poli: QueuePoli | null
-  medicalRecord: QueueMedicalRecord | null
-}
+import { getDoctorQueue } from "@/lib/services/doctor-dashboard.service"
+import { QueueItem } from "@/types/dashboard"
+import { getErrorMessage } from "@/lib/utils/error"
 
 export interface UseDoctorQueueOptions {
   status?: "waiting" | "in_examination" | "all"
@@ -53,23 +27,15 @@ export function useDoctorQueue(options: UseDoctorQueueOptions = {}) {
       setIsLoading(true)
       setError(null)
 
-      const params = new URLSearchParams()
-      if (status !== "all") {
-        params.append("status", status)
-      }
+      // Only pass status if it's not "all"
+      const filterStatus = status !== "all" ? status : undefined
+      const data = await getDoctorQueue(filterStatus)
 
-      const response = await fetch(`/api/dashboard/doctor/queue?${params.toString()}`)
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch patient queue")
-      }
-
-      setQueue(data.data.queue)
+      setQueue(data)
       setLastRefresh(new Date())
     } catch (err) {
       console.error("Fetch queue error:", err)
-      setError(err instanceof Error ? err.message : "Unknown error")
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

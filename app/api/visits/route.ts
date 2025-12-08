@@ -79,7 +79,7 @@ export const POST = withRBAC(
       if (validatedData.visitType === "emergency" && !validatedData.chiefComplaint) {
         const response: ResponseError<unknown> = {
           error: {},
-          message: "hief complaint is required for emergency visits",
+          message: "Chief complaint is required for emergency visits",
           status: HTTP_STATUS_CODES.BAD_REQUEST,
         }
         return NextResponse.json(response, {
@@ -88,10 +88,14 @@ export const POST = withRBAC(
       }
 
       if (validatedData.visitType === "inpatient" && !validatedData.roomId) {
-        return NextResponse.json(
-          { error: "Room ID is required for inpatient visits" },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Room ID is required for inpatient visits",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       // Get initial status based on visit type

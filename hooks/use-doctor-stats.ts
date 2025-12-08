@@ -4,18 +4,9 @@
  */
 
 import { useState, useEffect, useCallback } from "react"
-
-export interface DoctorStats {
-  today: {
-    total: number
-    waiting: number
-    inProgress: number
-    completed: number
-  }
-  unlockedRecords: number
-  totalPatients: number
-  lastUpdated: string
-}
+import { getDoctorStats } from "@/lib/services/doctor-dashboard.service"
+import { DoctorStats } from "@/types/dashboard"
+import { getErrorMessage } from "@/lib/utils/error"
 
 export interface UseDoctorStatsOptions {
   autoRefresh?: boolean
@@ -35,18 +26,12 @@ export function useDoctorStats(options: UseDoctorStatsOptions = {}) {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch("/api/dashboard/doctor/stats")
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch statistics")
-      }
-
-      setStats(data.data)
+      const data = await getDoctorStats()
+      setStats(data)
       setLastRefresh(new Date())
     } catch (err) {
       console.error("Fetch stats error:", err)
-      setError(err instanceof Error ? err.message : "Unknown error")
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

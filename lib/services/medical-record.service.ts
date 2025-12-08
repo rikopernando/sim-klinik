@@ -3,6 +3,7 @@
  * Service layer for medical records operations
  */
 
+import { ResponseApi } from "@/types/api"
 import {
   MedicalRecordData,
   MedicalRecordFormData,
@@ -12,6 +13,7 @@ import {
   Procedure,
 } from "@/types/medical-record"
 import axios from "axios"
+import { ApiServiceError, handleApiError } from "./api.service"
 /**
  * Get medical record by visit ID
  */
@@ -36,8 +38,16 @@ export async function getPatientMedicalRecords(patientId: string): Promise<Medic
  * Create a new medical record
  */
 export async function createMedicalRecord(data: MedicalRecordFormData): Promise<MedicalRecord> {
-  const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records", data)
-  return response.data.data
+  try {
+    const response = await axios.post<ResponseApi<MedicalRecord>>("/api/medical-records", data)
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing medical record data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**

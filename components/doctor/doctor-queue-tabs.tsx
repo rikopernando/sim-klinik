@@ -4,14 +4,14 @@
 
 import { DashboardSection, ListWidget } from "@/components/dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { QueueItem, QueuePatient } from "@/types/dashboard"
 import { Clock, Activity, FileText, Users, Stethoscope } from "lucide-react"
-import { QueueItem, QueuePatient } from "@/hooks/use-doctor-queue"
 
 interface DoctorQueueTabsProps {
   waitingQueue: QueueItem[]
   inProgressQueue: QueueItem[]
   unlockedQueue: QueueItem[]
-  startingExamination: number | null
+  startingExamination: string | null
   onStartExamination: (visitId: string) => void
   onOpenMedicalRecord: (visitId: string) => void
   onViewHistory: (patient: QueuePatient | null) => void
@@ -118,7 +118,7 @@ export function DoctorQueueTabs({
             emptyMessage="Semua RME sudah dikunci"
             maxHeight="450px"
             onItemClick={(item) => {
-              onOpenMedicalRecord(item.id as number)
+              onOpenMedicalRecord(item?.id as string)
             }}
           />
         </TabsContent>

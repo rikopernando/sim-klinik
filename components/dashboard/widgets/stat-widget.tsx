@@ -37,15 +37,9 @@ export function StatWidget({
   className,
 }: StatWidgetProps) {
   return (
-    <DashboardWidget
-      title={title}
-      icon={icon}
-      iconColor={iconColor}
-      variant="compact"
-      className={className}
-    >
+    <DashboardWidget title={title} icon={icon} iconColor={iconColor} className={className}>
       <div className="space-y-2">
-        <div className="flex items-baseline gap-2">
+        <div className="flex items-center gap-2">
           <p className="text-3xl font-bold">{value}</p>
           {badge && (
             <Badge variant={badge.variant || "secondary"} className="text-xs">

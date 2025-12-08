@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
+import { eq, and, or, asc } from "drizzle-orm"
+
 import { db } from "@/db"
 import { visits, patients, polis, medicalRecords } from "@/db/schema"
-import { eq, and, or, asc } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { QueueItem } from "@/types/dashboard"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * GET /api/dashboard/doctor/queue
@@ -68,16 +72,30 @@ export const GET = withRBAC(
         })
       )
 
-      return NextResponse.json({
-        success: true,
+      const response: ResponseApi<{
+        queue: QueueItem[]
+        total: number
+      }> = {
+        message: "Stats fetched successfully",
         data: {
-          queue: queueWithMedicalRecords,
+          queue: queueWithMedicalRecords as QueueItem[],
           total: queueWithMedicalRecords.length,
         },
-      })
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Doctor queue fetch error:", error)
-      return NextResponse.json({ error: "Failed to fetch doctor patient queue" }, { status: 500 })
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to fetch doctor patient queue",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["visits:read"] }

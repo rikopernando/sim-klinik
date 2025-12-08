@@ -5,9 +5,9 @@
  * Patient queue, quick access to RME, and patient history
  */
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle } from "lucide-react"
 import { useDoctorDashboard } from "@/hooks/use-doctor-dashboard"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
 import { DoctorHeader } from "@/components/doctor/doctor-header"
 import { DoctorStatsSection } from "@/components/doctor/doctor-stats-section"

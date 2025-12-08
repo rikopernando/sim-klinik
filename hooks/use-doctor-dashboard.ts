@@ -5,15 +5,16 @@
 import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useDoctorStats } from "@/hooks/use-doctor-stats"
-import { useDoctorQueue, QueuePatient } from "@/hooks/use-doctor-queue"
+import { useDoctorQueue } from "@/hooks/use-doctor-queue"
 import { createMedicalRecord } from "@/lib/services/medical-record.service"
 import { updateVisitStatus } from "@/lib/services/visit.service"
+import { QueuePatient } from "@/types/dashboard"
 
 export function useDoctorDashboard() {
   const router = useRouter()
   const [selectedPatient, setSelectedPatient] = useState<QueuePatient | null>(null)
   const [showHistory, setShowHistory] = useState(false)
-  const [startingExamination, setStartingExamination] = useState<number | null>(null)
+  const [startingExamination, setStartingExamination] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   // Fetch dashboard statistics with auto-refresh

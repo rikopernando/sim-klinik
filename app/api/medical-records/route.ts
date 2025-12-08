@@ -13,12 +13,15 @@ import {
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { MedicalRecord } from "@/types/medical-record"
 
 /**
  * Medical Record Schema
  */
 const medicalRecordSchema = z.object({
-  visitId: z.number().int().positive(),
+  visitId: z.string(),
   soapSubjective: z.string().optional(),
   soapObjective: z.string().optional(),
   soapAssessment: z.string().optional(),
@@ -48,7 +51,14 @@ export const POST = withRBAC(
         .limit(1)
 
       if (visit.length === 0) {
-        return NextResponse.json({ error: "Visit not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Visit not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       // Check if medical record already exists for this visit
@@ -59,10 +69,14 @@ export const POST = withRBAC(
         .limit(1)
 
       if (existingRecord.length > 0) {
-        return NextResponse.json(
-          { error: "Medical record already exists for this visit" },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Medical record already exists for this visit",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       // Create medical record with authenticated user as doctor
@@ -80,29 +94,39 @@ export const POST = withRBAC(
           radiologyResults: validatedData.radiologyResults || null,
           isDraft: validatedData.isDraft,
           isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         })
         .returning()
 
-      return NextResponse.json(
-        {
-          success: true,
-          message: "Medical record created successfully",
-          data: newRecord[0],
-        },
-        { status: 201 }
-      )
+      const response: ResponseApi<MedicalRecord> = {
+        message: "Medical record created successfully",
+        data: newRecord[0],
+        status: HTTP_STATUS_CODES.CREATED,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       console.error("Medical record creation error:", error)
-      return NextResponse.json({ error: "Failed to create medical record" }, { status: 500 })
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to create medical record",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:write"] }
@@ -121,13 +145,11 @@ export const GET = withRBAC(
       const patientId = searchParams.get("patientId")
 
       if (visitId) {
-        const parsedVisitId = parseInt(visitId, 10)
-
         // Get medical record for specific visit with all related data
         const record = await db
           .select()
           .from(medicalRecords)
-          .where(eq(medicalRecords.visitId, parsedVisitId))
+          .where(eq(medicalRecords.visitId, visitId))
           .limit(1)
 
         if (record.length === 0) {
@@ -227,7 +249,7 @@ export const GET = withRBAC(
           })
           .from(medicalRecords)
           .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
-          .where(eq(visits.patientId, parseInt(patientId, 10)))
+          .where(eq(visits.patientId, patientId))
           .orderBy(medicalRecords.createdAt)
 
         return NextResponse.json({

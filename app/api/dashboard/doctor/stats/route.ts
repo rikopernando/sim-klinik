@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { visits, medicalRecords, patients } from "@/db/schema"
+import { visits, medicalRecords } from "@/db/schema"
 import { eq, and, sql, gte } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { DoctorStats } from "@/types/dashboard"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * GET /api/dashboard/doctor/stats
@@ -11,7 +14,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest, { user }) => {
+  async (_request: NextRequest, { user }) => {
     try {
       const today = new Date()
       today.setHours(0, 0, 0, 0)
@@ -50,8 +53,8 @@ export const GET = withRBAC(
 
       const totalPatients = totalPatientsResult[0]?.count || 0
 
-      return NextResponse.json({
-        success: true,
+      const response: ResponseApi<DoctorStats> = {
+        message: "Stats fetched successfully",
         data: {
           today: {
             total: todayVisits.length,
@@ -63,13 +66,22 @@ export const GET = withRBAC(
           totalPatients: Number(totalPatients),
           lastUpdated: new Date().toISOString(),
         },
-      })
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Doctor dashboard stats error:", error)
-      return NextResponse.json(
-        { error: "Failed to fetch doctor dashboard statistics" },
-        { status: 500 }
-      )
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to fetch doctor dashboard statistics",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:read"] }
