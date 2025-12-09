@@ -46,7 +46,7 @@ export function DiagnosisTab({
 }: DiagnosisTabProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [diagnosisToDelete, setDiagnosisToDelete] = useState<number | null>(null)
+  const [diagnosisToDelete, setDiagnosisToDelete] = useState<string | null>(null)
   const [diagnosisToEdit, setDiagnosisToEdit] = useState<Diagnosis | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -117,8 +117,12 @@ export function DiagnosisTab({
               >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <Badge variant={getDiagnosisTypeBadgeVariant(diagnosis.diagnosisType)}>
-                      {formatDiagnosisType(diagnosis.diagnosisType)}
+                    <Badge
+                      variant={getDiagnosisTypeBadgeVariant(
+                        diagnosis.diagnosisType as "primary" | "secondary"
+                      )}
+                    >
+                      {formatDiagnosisType(diagnosis.diagnosisType as "primary" | "secondary")}
                     </Badge>
                     <span className="font-mono text-sm font-medium">{diagnosis.icd10Code}</span>
                   </div>

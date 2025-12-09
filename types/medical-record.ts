@@ -114,6 +114,14 @@ export interface MedicalRecordFormData {
   isDraft?: boolean
 }
 
+export interface DiagnosisFormData {
+  diagnoses: Array<{
+    icd10Code: string
+    description: string
+    diagnosisType: string
+  }>
+}
+
 export const DIAGNOSIS_TYPES = [
   { value: "primary", label: "Diagnosis Utama" },
   { value: "secondary", label: "Diagnosis Sekunder" },

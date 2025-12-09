@@ -16,6 +16,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
 import { MedicalRecord, MedicalRecordData } from "@/types/medical-record"
+import z from "zod"
 
 /**
  * GET /api/medical-records/[visitId]
@@ -158,6 +159,21 @@ export const GET = withRBAC(
 )
 
 /**
+ * Medical Record Schema
+ */
+const medicalRecordSchema = z.object({
+  visitId: z.string().optional(),
+  soapSubjective: z.string().optional(),
+  soapObjective: z.string().optional(),
+  soapAssessment: z.string().optional(),
+  soapPlan: z.string().optional(),
+  physicalExam: z.string().optional(),
+  laboratoryResults: z.string().optional(),
+  radiologyResults: z.string().optional(),
+  isDraft: z.boolean().default(true),
+})
+
+/**
  * PATCH /api/medical-records/[visitId]
  * Update medical record by visit ID
  * Requires: medical_records:write permission
@@ -167,6 +183,7 @@ export const PATCH = withRBAC(
     try {
       const { visitId } = await context.params
       const body = await request.json()
+      const validatedData = medicalRecordSchema.parse(body)
 
       if (!visitId) {
         const response: ResponseError<unknown> = {
@@ -211,10 +228,7 @@ export const PATCH = withRBAC(
       // Update medical record
       const updatedRecord = await db
         .update(medicalRecords)
-        .set({
-          ...body,
-          updatedAt: new Date(),
-        })
+        .set(validatedData)
         .where(eq(medicalRecords.id, existing[0].id))
         .returning()
 

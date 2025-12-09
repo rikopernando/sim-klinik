@@ -11,6 +11,7 @@ import {
 } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { type MedicalRecordData } from "@/types/medical-record"
+import { toast } from "sonner"
 
 interface UseMedicalRecordOptions {
   visitId: string
@@ -108,8 +109,16 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
 
       // Reload to get updated data
       await reloadMedicalRecord()
+
+      // Show success toast
+      toast.success("Draft berhasil disimpan!")
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+
+      // Show error toast
+      toast.error(`Gagal menyimpan draft: ${errorMessage}`)
+
       throw err
     } finally {
       setIsSaving(false)
@@ -174,9 +183,14 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       try {
         setError(null)
         await updateMedicalRecordByVisit(visitId, soapData)
+        // Show success toast
+        toast.success("SOAP berhasil disimpan!")
         await reloadMedicalRecord()
       } catch (err) {
-        setError(getErrorMessage(err))
+        const errorMessage = getErrorMessage(err)
+        setError(errorMessage)
+        // Show error toast
+        toast.error(`Gagal menyimpan draft: ${errorMessage}`)
         throw err
       }
     },

@@ -6,7 +6,7 @@
 import { useState } from "react"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FieldLabel, FieldDescription } from "@/components/ui/field"
 import { useICD10Search, type ICD10Code } from "@/hooks/use-icd10-search"
 
 interface ICD10SearchProps {
@@ -46,10 +46,10 @@ export function ICD10Search({
   }
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="icd10Search">
+    <>
+      <FieldLabel htmlFor="icd10Search">
         {label} {required && <span className="text-destructive">*</span>}
-      </Label>
+      </FieldLabel>
       <div className="relative">
         <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
@@ -80,10 +80,10 @@ export function ICD10Search({
           </div>
         )}
       </div>
-      {isSearching && <p className="text-muted-foreground mt-2 text-xs">Mencari...</p>}
+      {isSearching && <FieldDescription>Mencari...</FieldDescription>}
       {searchQuery && searchQuery.length >= 2 && !isSearching && codes.length === 0 && (
-        <p className="text-muted-foreground mt-2 text-xs">Tidak ada hasil ditemukan</p>
+        <FieldDescription>Tidak ada hasil ditemukan</FieldDescription>
       )}
-    </div>
+    </>
   )
 }
