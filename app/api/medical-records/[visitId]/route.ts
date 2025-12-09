@@ -23,7 +23,7 @@ import { MedicalRecord, MedicalRecordData } from "@/types/medical-record"
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (_request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
     try {
       const { visitId } = await context.params
 

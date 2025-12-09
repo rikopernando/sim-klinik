@@ -2,7 +2,9 @@
 
 import * as React from "react"
 import { Textarea } from "@/components/ui/textarea"
-import { cn } from "@/lib/utils"
+import { SuggestionItem } from "@/components/ui/suggestion-item"
+import { useAutocomplete } from "@/hooks/use-autocomplete"
+import { insertSuggestionAtLine, AUTOCOMPLETE_CONSTANTS } from "@/lib/utils/autocomplete"
 
 export interface Suggestion {
   value: string
@@ -18,191 +20,195 @@ interface AutocompleteTextareaProps extends React.TextareaHTMLAttributes<HTMLTex
 export const AutocompleteTextarea = React.forwardRef<
   HTMLTextAreaElement,
   AutocompleteTextareaProps
->(({ className, suggestions = [], onSuggestionSelect, ...props }, ref) => {
-  const [showSuggestions, setShowSuggestions] = React.useState(false)
-  const [filteredSuggestions, setFilteredSuggestions] = React.useState<Suggestion[]>([])
-  const [selectedIndex, setSelectedIndex] = React.useState(0)
-  const [cursorPosition, setCursorPosition] = React.useState(0)
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
-  const suggestionsRef = React.useRef<HTMLDivElement>(null)
+>(
+  (
+    { className, suggestions = [], onSuggestionSelect, onChange, onFocus, onKeyDown, ...props },
+    ref
+  ) => {
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+    const suggestionsRef = React.useRef<HTMLDivElement>(null)
 
-  // Combine refs
-  React.useImperativeHandle(ref, () => textareaRef.current!)
+    // Combine refs
+    React.useImperativeHandle(ref, () => textareaRef.current!)
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value
-    const cursorPos = e.target.selectionStart || 0
-    setCursorPosition(cursorPos)
+    // Use custom autocomplete hook
+    const {
+      showSuggestions,
+      filteredSuggestions,
+      selectedIndex,
+      cursorPosition,
+      setShowSuggestions,
+      setSelectedIndex,
+      updateSuggestions,
+      selectSuggestion,
+      navigateDown,
+      navigateUp,
+    } = useAutocomplete({ suggestions, onSuggestionSelect })
 
-    // Get the current line
-    const textBeforeCursor = value.substring(0, cursorPos)
-    const currentLine = textBeforeCursor.split("\n").pop() || ""
+    // Handle input change
+    const handleInputChange = React.useCallback(
+      (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value
+        const cursorPos = e.target.selectionStart || 0
 
-    // Filter suggestions based on current line
-    if (currentLine.trim().length > 0) {
-      const filtered = suggestions.filter(
-        (suggestion) =>
-          suggestion.label.toLowerCase().includes(currentLine.trim().toLowerCase()) ||
-          suggestion.value.toLowerCase().includes(currentLine.trim().toLowerCase())
-      )
-      setFilteredSuggestions(filtered)
-      setShowSuggestions(filtered.length > 0)
-      setSelectedIndex(0)
-    } else {
-      setShowSuggestions(false)
-    }
+        updateSuggestions(value, cursorPos)
 
-    // Call original onChange
-    if (props.onChange) {
-      props.onChange(e)
-    }
-  }
-
-  const insertSuggestion = (suggestion: Suggestion) => {
-    if (!textareaRef.current) return
-
-    const value = textareaRef.current.value
-    const textBeforeCursor = value.substring(0, cursorPosition)
-    const textAfterCursor = value.substring(cursorPosition)
-
-    // Get current line to replace
-    const currentLineStart = textBeforeCursor.lastIndexOf("\n") + 1
-    const beforeCurrentLine = value.substring(0, currentLineStart)
-
-    // Build new value
-    const newValue = beforeCurrentLine + suggestion.value + textAfterCursor
-
-    // Update textarea
-    textareaRef.current.value = newValue
-    const newCursorPos = currentLineStart + suggestion.value.length
-    textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
-
-    // Trigger change event
-    const event = new Event("input", { bubbles: true })
-    textareaRef.current.dispatchEvent(event)
-
-    // Call callback
-    if (onSuggestionSelect) {
-      onSuggestionSelect(suggestion)
-    }
-
-    setShowSuggestions(false)
-    textareaRef.current.focus()
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (!showSuggestions || filteredSuggestions.length === 0) {
-      if (props.onKeyDown) {
-        props.onKeyDown(e)
-      }
-      return
-    }
-
-    switch (e.key) {
-      case "ArrowDown":
-        e.preventDefault()
-        setSelectedIndex((prev) => (prev < filteredSuggestions.length - 1 ? prev + 1 : prev))
-        break
-      case "ArrowUp":
-        e.preventDefault()
-        setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0))
-        break
-      case "Enter":
-      case "Tab":
-        e.preventDefault()
-        if (filteredSuggestions[selectedIndex]) {
-          insertSuggestion(filteredSuggestions[selectedIndex])
+        // Call parent's onChange
+        if (onChange) {
+          onChange(e)
         }
-        break
-      case "Escape":
-        e.preventDefault()
-        setShowSuggestions(false)
-        break
-      default:
-        if (props.onKeyDown) {
-          props.onKeyDown(e)
+      },
+      [onChange, updateSuggestions]
+    )
+
+    // Insert suggestion into textarea
+    const insertSuggestion = React.useCallback(
+      (suggestion: Suggestion) => {
+        if (!textareaRef.current) return
+
+        const value = textareaRef.current.value
+        const { newValue, newCursorPos } = insertSuggestionAtLine(
+          value,
+          cursorPosition,
+          suggestion.value
+        )
+
+        // Update textarea
+        textareaRef.current.value = newValue
+        textareaRef.current.setSelectionRange(newCursorPos, newCursorPos)
+
+        // Create synthetic event for React
+        const syntheticEvent = {
+          target: textareaRef.current,
+          currentTarget: textareaRef.current,
+        } as React.ChangeEvent<HTMLTextAreaElement>
+
+        // Call parent's onChange to update state
+        if (onChange) {
+          onChange(syntheticEvent)
         }
-    }
-  }
 
-  // Scroll selected item into view
-  React.useEffect(() => {
-    if (suggestionsRef.current) {
-      const selectedElement = suggestionsRef.current.children[selectedIndex] as HTMLElement
-      if (selectedElement) {
-        selectedElement.scrollIntoView({ block: "nearest" })
-      }
-    }
-  }, [selectedIndex])
+        // Call selection callback
+        selectSuggestion(suggestion)
+        textareaRef.current.focus()
+      },
+      [cursorPosition, onChange, selectSuggestion]
+    )
 
-  return (
-    <div className="relative">
-      <Textarea
-        ref={textareaRef}
-        className={className}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onBlur={() => {
-          // Delay hiding to allow click on suggestion
-          setTimeout(() => setShowSuggestions(false), 200)
-        }}
-        onFocus={(e) => {
-          // Show suggestions if there's text
-          const value = e.target.value
-          const cursorPos = e.target.selectionStart || 0
-          const textBeforeCursor = value.substring(0, cursorPos)
-          const currentLine = textBeforeCursor.split("\n").pop() || ""
+    // Handle keyboard navigation
+    const handleKeyDown = React.useCallback(
+      (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+        if (!showSuggestions || filteredSuggestions.length === 0) {
+          if (onKeyDown) {
+            onKeyDown(e)
+          }
+          return
+        }
 
-          if (currentLine.trim().length > 0) {
-            const filtered = suggestions.filter(
-              (suggestion) =>
-                suggestion.label.toLowerCase().includes(currentLine.trim().toLowerCase()) ||
-                suggestion.value.toLowerCase().includes(currentLine.trim().toLowerCase())
-            )
-            if (filtered.length > 0) {
-              setFilteredSuggestions(filtered)
-              setShowSuggestions(true)
+        switch (e.key) {
+          case "ArrowDown":
+            e.preventDefault()
+            navigateDown()
+            break
+          case "ArrowUp":
+            e.preventDefault()
+            navigateUp()
+            break
+          case "Enter":
+          case "Tab":
+            e.preventDefault()
+            if (filteredSuggestions[selectedIndex]) {
+              insertSuggestion(filteredSuggestions[selectedIndex])
             }
-          }
+            break
+          case "Escape":
+            e.preventDefault()
+            setShowSuggestions(false)
+            break
+          default:
+            if (onKeyDown) {
+              onKeyDown(e)
+            }
+        }
+      },
+      [
+        showSuggestions,
+        filteredSuggestions,
+        selectedIndex,
+        onKeyDown,
+        navigateDown,
+        navigateUp,
+        insertSuggestion,
+        setShowSuggestions,
+      ]
+    )
 
-          if (props.onFocus) {
-            props.onFocus(e)
-          }
-        }}
-        {...props}
-      />
+    // Handle focus
+    const handleFocus = React.useCallback(
+      (e: React.FocusEvent<HTMLTextAreaElement>) => {
+        const value = e.target.value
+        const cursorPos = e.target.selectionStart || 0
 
-      {/* Suggestions Dropdown */}
-      {showSuggestions && filteredSuggestions.length > 0 && (
-        <div
-          ref={suggestionsRef}
-          className="bg-popover absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md"
-        >
-          {filteredSuggestions.map((suggestion, index) => (
-            <div
-              key={index}
-              className={cn(
-                "relative flex cursor-pointer items-start rounded-sm px-2 py-1.5 text-sm transition-colors outline-none select-none",
-                index === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
-              )}
-              onClick={() => insertSuggestion(suggestion)}
-              onMouseEnter={() => setSelectedIndex(index)}
-            >
-              <div className="flex-1">
-                <div className="font-medium">{suggestion.label}</div>
-                {suggestion.category && (
-                  <div className="text-muted-foreground text-xs">{suggestion.category}</div>
-                )}
-              </div>
+        updateSuggestions(value, cursorPos)
+
+        // Call parent's onFocus
+        if (onFocus) {
+          onFocus(e)
+        }
+      },
+      [onFocus, updateSuggestions]
+    )
+
+    // Handle blur with delay to allow click on suggestion
+    const handleBlur = React.useCallback(() => {
+      setTimeout(() => setShowSuggestions(false), AUTOCOMPLETE_CONSTANTS.BLUR_DELAY_MS)
+    }, [setShowSuggestions])
+
+    // Scroll selected item into view
+    React.useEffect(() => {
+      if (suggestionsRef.current && showSuggestions) {
+        const selectedElement = suggestionsRef.current.children[selectedIndex] as HTMLElement | null
+        if (selectedElement) {
+          selectedElement.scrollIntoView({ block: "nearest" })
+        }
+      }
+    }, [selectedIndex, showSuggestions])
+
+    return (
+      <div className="relative">
+        <Textarea
+          ref={textareaRef}
+          className={className}
+          {...props}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+        />
+
+        {/* Suggestions Dropdown */}
+        {showSuggestions && filteredSuggestions.length > 0 && (
+          <div
+            ref={suggestionsRef}
+            className="bg-popover absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border p-1 shadow-md"
+          >
+            {filteredSuggestions.map((suggestion, index) => (
+              <SuggestionItem
+                key={`${suggestion.value}-${index}`}
+                suggestion={suggestion}
+                isSelected={index === selectedIndex}
+                onClick={() => insertSuggestion(suggestion)}
+                onMouseEnter={() => setSelectedIndex(index)}
+              />
+            ))}
+            <div className="text-muted-foreground mt-1 border-t px-2 py-1 pt-1 text-xs">
+              ↑↓ Navigate • Enter/Tab Select • Esc Close
             </div>
-          ))}
-          <div className="text-muted-foreground mt-1 border-t px-2 py-1 pt-1 text-xs">
-            ↑↓ Navigate • Enter/Tab Select • Esc Close
           </div>
-        </div>
-      )}
-    </div>
-  )
-})
+        )}
+      </div>
+    )
+  }
+)
 
 AutocompleteTextarea.displayName = "AutocompleteTextarea"
