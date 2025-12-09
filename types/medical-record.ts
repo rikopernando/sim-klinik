@@ -2,6 +2,8 @@
  * Medical Record Types
  */
 
+import z from "zod"
+
 export interface MedicalRecord {
   id: string
   visitId: string
@@ -113,6 +115,15 @@ export interface MedicalRecordFormData {
   radiologyResults?: string
   isDraft?: boolean
 }
+
+export const diagnosisSchema = z.object({
+  medicalRecordId: z.string(),
+  icd10Code: z.string().min(1),
+  description: z.string().min(1),
+  diagnosisType: z.enum(["primary", "secondary"]).default("primary"),
+})
+
+export type DiagnosisFormDataPayload = z.infer<typeof diagnosisSchema>
 
 export interface DiagnosisFormData {
   diagnoses: Array<{

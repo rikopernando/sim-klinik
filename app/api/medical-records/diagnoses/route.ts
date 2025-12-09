@@ -3,16 +3,9 @@ import { db } from "@/db"
 import { diagnoses, medicalRecords } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
-
-/**
- * Diagnosis Schema
- */
-const diagnosisSchema = z.object({
-  medicalRecordId: z.number().int().positive(),
-  icd10Code: z.string().min(1),
-  description: z.string().min(1),
-  diagnosisType: z.enum(["primary", "secondary"]).default("primary"),
-})
+import { Diagnosis, diagnosisSchema } from "@/types/medical-record"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * POST /api/medical-records/diagnoses
@@ -31,14 +24,25 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (record.length === 0) {
-      return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
+      const response: ResponseError<unknown> = {
+        error: {},
+        message: "Medical record not found",
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      })
     }
 
     if (record[0].isLocked) {
-      return NextResponse.json(
-        { error: "Cannot add diagnosis to locked medical record" },
-        { status: 403 }
-      )
+      const response: ResponseError<unknown> = {
+        error: {},
+        message: "Cannot add diagnosis to locked medical record",
+        status: HTTP_STATUS_CODES.FORBIDDEN,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.FORBIDDEN,
+      })
     }
 
     // Add diagnosis
@@ -49,28 +53,39 @@ export async function POST(request: NextRequest) {
         icd10Code: validatedData.icd10Code,
         description: validatedData.description,
         diagnosisType: validatedData.diagnosisType,
-        createdAt: new Date(),
       })
       .returning()
 
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Diagnosis added successfully",
-        data: newDiagnosis[0],
-      },
-      { status: 201 }
-    )
+    const response: ResponseApi<Diagnosis> = {
+      message: "Diagnosis added successfully",
+      data: newDiagnosis[0],
+      status: HTTP_STATUS_CODES.CREATED,
+    }
+
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      )
+      const response: ResponseError<unknown> = {
+        error: error.issues,
+        message: "Validation error",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
 
     console.error("Diagnosis creation error:", error)
-    return NextResponse.json({ error: "Failed to add diagnosis" }, { status: 500 })
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to add diagnosis",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    }
+
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }
 
@@ -158,7 +173,7 @@ export async function DELETE(request: NextRequest) {
       })
       .from(diagnoses)
       .innerJoin(medicalRecords, eq(diagnoses.medicalRecordId, medicalRecords.id))
-      .where(eq(diagnoses.id, parseInt(id, 10)))
+      .where(eq(diagnoses.id, id))
       .limit(1)
 
     if (diagnosis.length === 0) {
@@ -173,7 +188,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Delete diagnosis
-    await db.delete(diagnoses).where(eq(diagnoses.id, parseInt(id, 10)))
+    await db.delete(diagnoses).where(eq(diagnoses.id, id))
 
     return NextResponse.json({
       success: true,
