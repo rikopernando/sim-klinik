@@ -19,12 +19,10 @@ import { useMedicalRecord } from "@/hooks/use-medical-record"
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header"
 import { MedicalRecordActions } from "@/components/medical-records/medical-record-actions"
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
-import { record } from "zod"
 
 export default function MedicalRecordPage() {
-  const params = useParams()
+  const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
-  const visitId = parseInt(params.visitId as string, 10)
   const [activeTab, setActiveTab] = useState("soap")
 
   // Use custom hook for all medical record operations
@@ -83,12 +81,7 @@ export default function MedicalRecordPage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
       {/* Header with visit info and status badges */}
-      <MedicalRecordHeader
-        visit={recordData.visit}
-        visitId={visitId}
-        isLocked={isLocked}
-        isDraft={isDraft}
-      />
+      <MedicalRecordHeader visit={recordData.visit} isLocked={isLocked} isDraft={isDraft} />
 
       {/* Error Alert (shows errors during operations) */}
       {error && (

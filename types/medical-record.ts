@@ -26,7 +26,7 @@ export interface Diagnosis {
   medicalRecordId: string
   icd10Code: string
   description: string
-  diagnosisType: "primary" | "secondary"
+  diagnosisType: string | "primary" | "secondary"
   createdAt: Date
 }
 
@@ -51,7 +51,7 @@ export interface Prescription {
   drugId: string
   drugName: string
   drugPrice: string | null
-  dosage: string
+  dosage: string | null
   frequency: string
   duration: string | null
   quantity: number
@@ -78,7 +78,7 @@ export interface Visit {
   id: string
   visitNumber: string
   patientId: string
-  visitType: "outpatient" | "inpatient" | "emergency"
+  visitType: string | "outpatient" | "inpatient" | "emergency"
   poliId: string | null
   doctorId: string | null
   triageStatus: string | null

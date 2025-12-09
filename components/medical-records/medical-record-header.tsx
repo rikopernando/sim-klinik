@@ -9,22 +9,15 @@ import { Lock, History } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
-import { QueuePatient } from "@/hooks/use-doctor-queue"
 import { Visit } from "@/types/medical-record"
 
 interface MedicalRecordHeaderProps {
-  visitId: string
   isLocked: boolean
   isDraft: boolean
   visit: Visit
 }
 
-export function MedicalRecordHeader({
-  visit,
-  visitId,
-  isLocked,
-  isDraft,
-}: MedicalRecordHeaderProps) {
+export function MedicalRecordHeader({ visit, isLocked, isDraft }: MedicalRecordHeaderProps) {
   const [showHistory, setShowHistory] = useState(false)
 
   const handleCloseHistory = useCallback(() => {
@@ -35,7 +28,7 @@ export function MedicalRecordHeader({
     <div className="flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Rekam Medis Elektronik</h1>
-        <p className="text-muted-foreground">Kunjungan #{visitId}</p>
+        <p className="text-muted-foreground">Kunjungan #{visit.visitNumber}</p>
       </div>
       <div className="flex gap-2">
         {isLocked && (

@@ -18,20 +18,19 @@ import { ApiServiceError, handleApiError } from "./api.service"
  * Get medical record by visit ID
  */
 export async function getMedicalRecordByVisit(visitId: string): Promise<MedicalRecordData> {
-  const response = await axios.get<{ data: MedicalRecordData }>(
-    `/api/medical-records?visitId=${visitId}`
-  )
-  return response.data.data
-}
+  try {
+    const response = await axios.get<ResponseApi<MedicalRecordData>>(
+      `/api/medical-records/${visitId}`
+    )
 
-/**
- * Get all medical records for a patient
- */
-export async function getPatientMedicalRecords(patientId: string): Promise<MedicalRecordData[]> {
-  const response = await axios.get<{ data: MedicalRecordData[] }>(
-    `/api/medical-records?patientId=${patientId}`
-  )
-  return response.data.data
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing medical record data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**
@@ -51,17 +50,24 @@ export async function createMedicalRecord(data: MedicalRecordFormData): Promise<
 }
 
 /**
- * Update a medical record
+ * Update a medical record by visit ID
  */
-export async function updateMedicalRecord(
-  id: string,
+export async function updateMedicalRecordByVisit(
+  visitId: string,
   data: Partial<MedicalRecordFormData>
 ): Promise<MedicalRecord> {
-  const response = await axios.patch<{ data: MedicalRecord }>("/api/medical-records", {
-    id,
-    ...data,
-  })
-  return response.data.data
+  try {
+    const response = await axios.patch<ResponseApi<MedicalRecord>>(
+      `/api/medical-records/${visitId}`,
+      data
+    )
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing medical record data")
+    }
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**

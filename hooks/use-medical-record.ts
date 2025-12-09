@@ -5,7 +5,7 @@
 import { useState, useEffect, useCallback, useRef } from "react"
 import {
   getMedicalRecordByVisit,
-  updateMedicalRecord,
+  updateMedicalRecordByVisit,
   lockMedicalRecord,
   unlockMedicalRecord,
 } from "@/lib/services/medical-record.service"
@@ -102,7 +102,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       setIsSaving(true)
       setError(null)
 
-      await updateMedicalRecord(recordData.medicalRecord.id, {
+      await updateMedicalRecordByVisit(visitId, {
         isDraft: true,
       })
 
@@ -114,7 +114,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     } finally {
       setIsSaving(false)
     }
-  }, [recordData, reloadMedicalRecord])
+  }, [visitId, recordData, reloadMedicalRecord])
 
   const lockRecord = useCallback(
     async (userId: string, billingAdjustment?: number, adjustmentNote?: string) => {
@@ -173,14 +173,14 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
 
       try {
         setError(null)
-        await updateMedicalRecord(recordData.medicalRecord.id, soapData)
+        await updateMedicalRecordByVisit(visitId, soapData)
         await reloadMedicalRecord()
       } catch (err) {
         setError(getErrorMessage(err))
         throw err
       }
     },
-    [recordData, reloadMedicalRecord]
+    [visitId, recordData, reloadMedicalRecord]
   )
 
   const updateRecord = useCallback(

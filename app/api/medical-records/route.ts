@@ -1,15 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import {
-  medicalRecords,
-  diagnoses,
-  procedures,
-  prescriptions,
-  visits,
-  drugs,
-  user,
-  services,
-} from "@/db/schema"
+import { medicalRecords, visits } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -133,193 +124,50 @@ export const POST = withRBAC(
 )
 
 /**
- * GET /api/medical-records?visitId=X
- * Get medical record by visit ID
+ * GET /api/medical-records?patientId=X
+ * Get all medical records for a patient
+ * For getting a specific medical record by visit ID, use: GET /api/medical-records/[visitId]
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest) => {
+  async () => {
     try {
-      const searchParams = request.nextUrl.searchParams
-      const visitId = searchParams.get("visitId")
-      const patientId = searchParams.get("patientId")
-
-      if (visitId) {
-        // Get medical record for specific visit with all related data
-        const record = await db
-          .select()
-          .from(medicalRecords)
-          .where(eq(medicalRecords.visitId, visitId))
-          .limit(1)
-
-        if (record.length === 0) {
-          return NextResponse.json(
-            { error: "Medical record not found for this visit" },
-            { status: 404 }
-          )
-        }
-
-        // Get diagnoses
-        const diagnosisList = await db
-          .select()
-          .from(diagnoses)
-          .where(eq(diagnoses.medicalRecordId, record[0].id))
-
-        // Get procedures with performer and service information
-        const proceduresList = await db
-          .select({
-            id: procedures.id,
-            medicalRecordId: procedures.medicalRecordId,
-            serviceId: procedures.serviceId,
-            serviceName: services.name,
-            servicePrice: services.price,
-            icd9Code: procedures.icd9Code,
-            description: procedures.description,
-            performedBy: procedures.performedBy,
-            performedByName: user.name,
-            performedAt: procedures.performedAt,
-            notes: procedures.notes,
-            createdAt: procedures.createdAt,
-          })
-          .from(procedures)
-          .leftJoin(user, eq(procedures.performedBy, user.id))
-          .leftJoin(services, eq(procedures.serviceId, services.id))
-          .where(eq(procedures.medicalRecordId, record[0].id))
-
-        // Get prescriptions with drug information and pharmacist info
-        const prescriptionsList = await db
-          .select({
-            id: prescriptions.id,
-            medicalRecordId: prescriptions.medicalRecordId,
-            drugId: prescriptions.drugId,
-            drugName: drugs.name,
-            drugPrice: drugs.price,
-            dosage: prescriptions.dosage,
-            frequency: prescriptions.frequency,
-            duration: prescriptions.duration,
-            quantity: prescriptions.quantity,
-            instructions: prescriptions.instructions,
-            route: prescriptions.route,
-            isFulfilled: prescriptions.isFulfilled,
-            fulfilledBy: prescriptions.fulfilledBy,
-            fulfilledAt: prescriptions.fulfilledAt,
-            dispensedQuantity: prescriptions.dispensedQuantity,
-            inventoryId: prescriptions.inventoryId,
-            notes: prescriptions.notes,
-            // Pharmacist-added prescription fields
-            addedByPharmacist: prescriptions.addedByPharmacist,
-            addedByPharmacistId: prescriptions.addedByPharmacistId,
-            addedByPharmacistName: user.name,
-            approvedBy: prescriptions.approvedBy,
-            approvedAt: prescriptions.approvedAt,
-            pharmacistNote: prescriptions.pharmacistNote,
-            createdAt: prescriptions.createdAt,
-            updatedAt: prescriptions.updatedAt,
-          })
-          .from(prescriptions)
-          .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-          .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
-          .where(eq(prescriptions.medicalRecordId, record[0].id))
-
-        // Get visit information
-        const [visitInfo] = await db
-          .select()
-          .from(visits)
-          .where(eq(visits.id, record[0].visitId))
-          .limit(1)
-
-        return NextResponse.json({
-          success: true,
-          data: {
-            medicalRecord: record[0],
-            diagnoses: diagnosisList,
-            procedures: proceduresList,
-            prescriptions: prescriptionsList,
-            visit: visitInfo,
-          },
+      // Get all medical records for a patient (via visits)
+      const records = await db
+        .select({
+          medicalRecord: medicalRecords,
+          visit: visits,
         })
+        .from(medicalRecords)
+        .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
+        .orderBy(medicalRecords.createdAt)
+
+      const response: ResponseApi<unknown> = {
+        message: "Medical records fetched successfully",
+        data: records,
+        status: HTTP_STATUS_CODES.OK,
+        meta: {
+          page: 1,
+          limit: records.length,
+          total: records.length,
+          hasMore: false,
+        },
       }
 
-      if (patientId) {
-        // Get all medical records for a patient (via visits)
-        const records = await db
-          .select({
-            medicalRecord: medicalRecords,
-            visit: visits,
-          })
-          .from(medicalRecords)
-          .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
-          .where(eq(visits.patientId, patientId))
-          .orderBy(medicalRecords.createdAt)
-
-        return NextResponse.json({
-          success: true,
-          data: records,
-          count: records.length,
-        })
-      }
-
-      return NextResponse.json(
-        { error: "visitId or patientId parameter is required" },
-        { status: 400 }
-      )
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
-      console.error("Medical record fetch error:", error)
-      return NextResponse.json({ error: "Failed to fetch medical record" }, { status: 500 })
+      console.error("Medical records fetch error:", error)
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to fetch medical records",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:read"] }
-)
-
-/**
- * PATCH /api/medical-records
- * Update medical record
- * Requires: medical_records:write permission
- */
-export const PATCH = withRBAC(
-  async (request: NextRequest) => {
-    try {
-      const body = await request.json()
-      const { id, ...updateData } = body
-
-      if (!id) {
-        return NextResponse.json({ error: "Medical record ID is required" }, { status: 400 })
-      }
-
-      // Check if record exists and is not locked
-      const existing = await db
-        .select()
-        .from(medicalRecords)
-        .where(eq(medicalRecords.id, id))
-        .limit(1)
-
-      if (existing.length === 0) {
-        return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
-      }
-
-      if (existing[0].isLocked) {
-        return NextResponse.json({ error: "Cannot update locked medical record" }, { status: 403 })
-      }
-
-      // Update medical record
-      const updatedRecord = await db
-        .update(medicalRecords)
-        .set({
-          ...updateData,
-          updatedAt: new Date(),
-        })
-        .where(eq(medicalRecords.id, id))
-        .returning()
-
-      return NextResponse.json({
-        success: true,
-        message: "Medical record updated successfully",
-        data: updatedRecord[0],
-      })
-    } catch (error) {
-      console.error("Medical record update error:", error)
-      return NextResponse.json({ error: "Failed to update medical record" }, { status: 500 })
-    }
-  },
-  { permissions: ["medical_records:write"] }
 )
