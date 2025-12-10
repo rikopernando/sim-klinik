@@ -3,19 +3,88 @@
  * Manages real-time notification connections for pharmacy and other modules
  */
 
-export type NotificationType =
-  | "new_prescription"
-  | "prescription_updated"
-  | "prescription_fulfilled"
-  | "low_stock_alert"
-  | "expiring_drug_alert"
-
-export interface NotificationPayload {
-  type: NotificationType
-  data: any
-  timestamp: string
-  id: string
+/**
+ * Notification Data Types
+ */
+export interface NewPrescriptionData {
+  prescriptionId: string
+  patientName: string
+  patientMRNumber: string
+  drugName: string
+  dosage: string | null
+  frequency: string
+  quantity: number
+  visitNumber: string
+  visitType: string
+  createdAt: Date
 }
+
+export interface PrescriptionUpdatedData {
+  prescriptionId: string
+  patientName: string
+  drugName: string
+  changes: string[]
+}
+
+export interface PrescriptionFulfilledData {
+  prescriptionId: string
+  patientName: string
+  drugName: string
+  fulfilledBy: string
+  fulfilledAt: Date
+}
+
+export interface LowStockAlertData {
+  drugId: string
+  drugName: string
+  currentStock: number
+  minimumStock: number
+  unit: string
+}
+
+export interface ExpiringDrugAlertData {
+  drugId: string
+  drugName: string
+  batchNumber: string
+  expiryDate: Date
+  daysUntilExpiry: number
+  stockQuantity: number
+}
+
+/**
+ * Discriminated Union for Notification Payloads
+ */
+export type NotificationPayload =
+  | {
+      type: "new_prescription"
+      data: NewPrescriptionData
+      timestamp: string
+      id: string
+    }
+  | {
+      type: "prescription_updated"
+      data: PrescriptionUpdatedData
+      timestamp: string
+      id: string
+    }
+  | {
+      type: "prescription_fulfilled"
+      data: PrescriptionFulfilledData
+      timestamp: string
+      id: string
+    }
+  | {
+      type: "low_stock_alert"
+      data: LowStockAlertData
+      timestamp: string
+      id: string
+    }
+  | {
+      type: "expiring_drug_alert"
+      data: ExpiringDrugAlertData
+      timestamp: string
+      id: string
+    }
 
 /**
  * Global SSE connection manager
@@ -158,15 +227,54 @@ export function createSSEStream(channel: string) {
 }
 
 /**
- * Send a notification to a specific channel
+ * Send a notification to a specific channel (type-safe overloads)
  */
-export function sendNotification(channel: string, type: NotificationType, data: any) {
+export function sendNotification(
+  channel: string,
+  type: "new_prescription",
+  data: NewPrescriptionData
+): void
+export function sendNotification(
+  channel: string,
+  type: "prescription_updated",
+  data: PrescriptionUpdatedData
+): void
+export function sendNotification(
+  channel: string,
+  type: "prescription_fulfilled",
+  data: PrescriptionFulfilledData
+): void
+export function sendNotification(
+  channel: string,
+  type: "low_stock_alert",
+  data: LowStockAlertData
+): void
+export function sendNotification(
+  channel: string,
+  type: "expiring_drug_alert",
+  data: ExpiringDrugAlertData
+): void
+export function sendNotification(
+  channel: string,
+  type:
+    | "new_prescription"
+    | "prescription_updated"
+    | "prescription_fulfilled"
+    | "low_stock_alert"
+    | "expiring_drug_alert",
+  data:
+    | NewPrescriptionData
+    | PrescriptionUpdatedData
+    | PrescriptionFulfilledData
+    | LowStockAlertData
+    | ExpiringDrugAlertData
+): void {
   const payload: NotificationPayload = {
     type,
     data,
     timestamp: new Date().toISOString(),
     id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  }
+  } as NotificationPayload
 
   sseManager.broadcast(channel, payload)
 }
