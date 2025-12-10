@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -40,9 +41,10 @@ export function PrescriptionTab({
   onUpdate,
   isLocked,
 }: PrescriptionTabProps) {
+  const [isDeleting, setDeleting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [prescriptionToDelete, setPrescriptionToDelete] = useState<number | null>(null)
+  const [prescriptionToDelete, setPrescriptionToDelete] = useState<string | null>(null)
   const [prescriptionToEdit, setPrescriptionToEdit] = useState<Prescription | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -79,12 +81,17 @@ export function PrescriptionTab({
 
     try {
       setError(null)
+      setDeleting(true)
       await deletePrescription(prescriptionToDelete)
       setDeleteDialogOpen(false)
       setPrescriptionToDelete(null)
       onUpdate()
+      toast.success("Resep berhasil dihapus!")
     } catch (err) {
       setError(getErrorMessage(err))
+      toast.error(`Gagal menghapus resep`)
+    } finally {
+      setDeleting(false)
     }
   }, [prescriptionToDelete, onUpdate])
 
@@ -114,77 +121,86 @@ export function PrescriptionTab({
           description="Resep obat yang telah diresepkan untuk pasien ini"
         >
           <div className="space-y-3">
-            {prescriptions.map((prescription) => (
-              <ListItem
-                key={prescription.id}
-                onEdit={() => handleEdit(prescription)}
-                onDelete={() => handleDeleteClick(prescription.id)}
-                showEdit={canDeletePrescription(isLocked, prescription.isFulfilled)}
-                showDelete={canDeletePrescription(isLocked, prescription.isFulfilled)}
-              >
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium">{prescription.drugName}</span>
-                      {prescription.addedByPharmacist && (
-                        <Badge
-                          variant="outline"
-                          className="border-teal-300 bg-teal-50 text-teal-700"
-                        >
-                          Ditambahkan Farmasi
-                        </Badge>
-                      )}
-                      {prescription.isFulfilled && <Badge variant="secondary">Sudah Diambil</Badge>}
-                    </div>
-                    {prescription.drugPrice && (
-                      <div className="text-right">
-                        <div className="text-primary text-sm font-semibold">
-                          Rp{" "}
-                          {(
-                            parseFloat(prescription.drugPrice) *
-                            (prescription.dispensedQuantity || prescription.quantity)
-                          ).toLocaleString("id-ID")}
-                        </div>
-                        <div className="text-muted-foreground text-xs">
-                          @ Rp {parseFloat(prescription.drugPrice).toLocaleString("id-ID")} ×{" "}
-                          {prescription.dispensedQuantity || prescription.quantity}
-                        </div>
+            {prescriptions.map((prescription) => {
+              const subtotal =
+                parseFloat(prescription.drugPrice || "0") *
+                (prescription.dispensedQuantity || prescription.quantity)
+              return (
+                <ListItem
+                  key={prescription.id}
+                  onEdit={() => handleEdit(prescription)}
+                  onDelete={() => handleDeleteClick(prescription.id)}
+                  showEdit={canDeletePrescription(isLocked, prescription.isFulfilled)}
+                  showDelete={canDeletePrescription(isLocked, prescription.isFulfilled)}
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{prescription.drugName}</span>
+                        {prescription.addedByPharmacist && (
+                          <Badge
+                            variant="outline"
+                            className="border-teal-300 bg-teal-50 text-teal-700"
+                          >
+                            Ditambahkan Farmasi
+                          </Badge>
+                        )}
+                        {prescription.isFulfilled && (
+                          <Badge variant="secondary">Sudah Diambil</Badge>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground grid grid-cols-1 gap-x-4 gap-y-1 text-sm md:grid-cols-2">
-                    <div className="grid grid-cols-4 md:col-span-1">
-                      <span className="col-span-1 font-medium">Frekuensi</span>
-                      <span className="col-span-3">: {prescription.frequency}</span>
                     </div>
-                    <div className="grid grid-cols-4 md:col-span-1">
-                      <span className="col-span-1 font-medium">Jumlah</span>
-                      <span className="col-span-3">: {prescription.quantity}</span>
-                    </div>
-                    {prescription.route && (
+                    <div className="text-muted-foreground grid grid-cols-1 gap-x-4 gap-y-1 text-sm md:grid-cols-2">
                       <div className="grid grid-cols-4 md:col-span-1">
-                        <span className="col-span-1 font-medium">Rute:</span>
-                        <span className="col-span-3">: {prescription.route}</span>
+                        <span className="col-span-2 font-medium">Frekuensi</span>
+                        <span className="col-span-2">: {prescription.frequency}</span>
+                      </div>
+                      <div className="grid grid-cols-4 md:col-span-1">
+                        <span className="col-span-2 font-medium">Jumlah</span>
+                        <span className="col-span-2">: {prescription.quantity}</span>
+                      </div>
+                      {prescription.route && (
+                        <div className="grid grid-cols-4 md:col-span-1">
+                          <span className="col-span-2 font-medium">Rute</span>
+                          <span className="col-span-2">: {prescription.route}</span>
+                        </div>
+                      )}
+                      {prescription.drugPrice && (
+                        <div className="grid grid-cols-4 md:col-span-1">
+                          <span className="col-span-2 font-medium">Harga</span>
+                          <span className="col-span-2">
+                            : Rp {parseFloat(prescription.drugPrice).toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      )}
+                      <div className="grid grid-cols-4 md:col-span-1">
+                        <span className="col-span-2 font-medium">Instruksi Tambahan</span>
+                        <span className="col-span-2">: {prescription.instructions || "-"}</span>
+                      </div>
+                      {prescription.drugPrice && (
+                        <div className="grid grid-cols-4 md:col-span-1">
+                          <span className="col-span-2 font-medium">Subtotal</span>
+                          <span className="text-primary col-span-2 font-semibold">
+                            : Rp {subtotal.toLocaleString("id-ID")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {prescription.addedByPharmacist && prescription.pharmacistNote && (
+                      <div className="mt-2 rounded border border-teal-200 bg-teal-50 p-2 text-sm">
+                        <div className="mb-1 font-medium text-teal-900">Catatan Farmasi:</div>
+                        <p className="text-teal-800 italic">{prescription.pharmacistNote}</p>
+                        {prescription.addedByPharmacistName && (
+                          <p className="mt-1 text-xs text-teal-600">
+                            Ditambahkan oleh: {prescription.addedByPharmacistName}
+                          </p>
+                        )}
                       </div>
                     )}
                   </div>
-                  {prescription.instructions && (
-                    <p className="text-sm italic">{prescription.instructions}</p>
-                  )}
-                  {prescription.addedByPharmacist && prescription.pharmacistNote && (
-                    <div className="mt-2 rounded border border-teal-200 bg-teal-50 p-2 text-sm">
-                      <div className="mb-1 font-medium text-teal-900">Catatan Farmasi:</div>
-                      <p className="text-teal-800 italic">{prescription.pharmacistNote}</p>
-                      {prescription.addedByPharmacistName && (
-                        <p className="mt-1 text-xs text-teal-600">
-                          Ditambahkan oleh: {prescription.addedByPharmacistName}
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </ListItem>
-            ))}
+                </ListItem>
+              )
+            })}
 
             {/* Subtotal */}
             {subtotal > 0 && (
@@ -222,8 +238,12 @@ export function PrescriptionTab({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Hapus
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

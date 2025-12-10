@@ -25,7 +25,7 @@ export function ListItem({
   const hasActions = (showEdit && onEdit) || (showDelete && onDelete)
 
   return (
-    <div className={`flex items-start justify-between rounded-lg border p-4 ${className || ""}`}>
+    <div className={`flex items-center justify-between rounded-lg border p-4 ${className || ""}`}>
       <div className="flex-1">{children}</div>
       {hasActions && (
         <div className="flex gap-1">

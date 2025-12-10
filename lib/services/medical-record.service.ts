@@ -13,7 +13,11 @@ import {
   Prescription,
   Procedure,
 } from "@/types/medical-record"
-import { CreateDiagnosisFormData, UpdateDiagnosisFormData } from "../validations/medical-record"
+import {
+  CreateDiagnosisFormData,
+  PrescriptionFormDataPayload,
+  UpdateDiagnosisFormData,
+} from "../validations/medical-record"
 
 import { ApiServiceError, handleApiError } from "./api.service"
 /**
@@ -191,48 +195,32 @@ export async function deleteProcedure(id: string): Promise<void> {
 /**
  * Add a prescription to a medical record
  */
-export async function addPrescription(data: {
-  medicalRecordId: string
-  drugId: string
-  dosage: string
-  frequency: string
-  duration?: string
-  quantity: number
-  instructions?: string
-  route?: string
-}): Promise<Prescription> {
-  const response = await axios.post<{ data: Prescription }>(
-    "/api/medical-records/prescriptions",
-    data
-  )
-  return response.data.data
+export async function addPrescription(data: PrescriptionFormDataPayload) {
+  try {
+    await axios.post<ResponseApi>("/api/medical-records/prescriptions", data)
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**
  * Update a prescription
  */
-export async function updatePrescription(
-  id: string,
-  data: {
-    drugId?: number
-    dosage?: string
-    frequency?: string
-    duration?: string
-    quantity?: number
-    instructions?: string
-    route?: string
+export async function updatePrescription(id: string, data: PrescriptionFormDataPayload) {
+  try {
+    await axios.patch<ResponseApi>(`/api/medical-records/prescriptions/${id}`, data)
+  } catch (error) {
+    handleApiError(error)
   }
-): Promise<Prescription> {
-  const response = await axios.patch<{ data: Prescription }>("/api/medical-records/prescriptions", {
-    id,
-    ...data,
-  })
-  return response.data.data
 }
 
 /**
  * Delete a prescription
  */
 export async function deletePrescription(id: string): Promise<void> {
-  await axios.delete(`/api/medical-records/prescriptions?id=${id}`)
+  try {
+    await axios.delete(`/api/medical-records/prescriptions/${id}`)
+  } catch (error) {
+    handleApiError(error)
+  }
 }

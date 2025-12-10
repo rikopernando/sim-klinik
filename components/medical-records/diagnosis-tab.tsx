@@ -83,7 +83,7 @@ export function DiagnosisTab({
     } catch (err) {
       const errorMessage = getErrorMessage(err)
       setError(errorMessage)
-      toast.error(`Gagal menyimpan draft: ${errorMessage}`)
+      toast.error(`Gagal menghapus diagnosis`)
     } finally {
       setDeleting(false)
       setDeleteDialogOpen(false)
@@ -101,7 +101,7 @@ export function DiagnosisTab({
 
       {/* Add Button */}
       {canEdit && (
-        <div className="flex justify-end">
+        <div className="flex">
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Tambah Diagnosis

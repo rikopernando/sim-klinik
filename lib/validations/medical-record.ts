@@ -56,16 +56,29 @@ export type UpdateDiagnosisFormData = z.infer<typeof updateDiagnosisSchema>
  * Prescription Form Schema
  */
 export const prescriptionFormSchema = z.object({
-  drugId: z.number().int().positive("Obat wajib dipilih"),
-  dosage: z.string().min(1, "Dosis wajib diisi").max(100, "Dosis maksimal 100 karakter"),
-  frequency: z.string().min(1, "Frekuensi wajib diisi").max(100, "Frekuensi maksimal 100 karakter"),
-  duration: z.string().max(100, "Durasi maksimal 100 karakter").optional(),
-  quantity: z.number().int().positive("Jumlah harus lebih dari 0"),
-  instructions: z.string().max(500, "Instruksi maksimal 500 karakter").optional(),
-  route: z.string().max(50, "Rute maksimal 50 karakter").optional(),
+  drugId: z.string().min(1, "Obat wajib dipilih"),
+  drugName: z.string().optional(),
+  drugPrice: z.string().optional(),
+  dosage: z.string().optional(), // Made optional per feedback 4.5
+  frequency: z.string().min(1, "Frekuensi wajib diisi"),
+  quantity: z.number().min(1, "Jumlah minimal 1"),
+  instructions: z.string().optional(),
+  route: z.string().optional(),
 })
 
+export const createPrescriptionFormSchema = z.object({
+  ...prescriptionFormSchema.shape,
+  medicalRecordId: z.string(),
+})
+
+// Schema for the entire form with array of prescriptions
+export const prescriptionFormBulkSchema = z.object({
+  prescriptions: z.array(prescriptionFormSchema).min(1, "Minimal 1 resep harus ditambahkan"),
+})
+
+export type PrescriptionFormDataPayload = z.infer<typeof createPrescriptionFormSchema>
 export type PrescriptionFormData = z.infer<typeof prescriptionFormSchema>
+export type PrescriptionFormBulkData = z.infer<typeof prescriptionFormBulkSchema>
 
 /**
  * Procedure Form Schema
