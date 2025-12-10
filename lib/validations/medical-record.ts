@@ -28,10 +28,29 @@ export const diagnosisFormSchema = z.object({
     .string()
     .min(1, "Deskripsi diagnosis wajib diisi")
     .max(500, "Deskripsi maksimal 500 karakter"),
-  diagnosisType: z.enum(["primary", "secondary"]).default("primary"),
+  diagnosisType: z.enum(["primary", "secondary"]).or(z.string()),
 })
 
 export type DiagnosisFormData = z.infer<typeof diagnosisFormSchema>
+
+// Schema for the entire form with array of diagnoses
+export const createDiagnosisBulkFormSchema = z.object({
+  diagnoses: z.array(diagnosisFormSchema).min(1, "Minimal 1 diagnosis harus ditambahkan"),
+})
+
+export const createDiagnosisSchema = z.object({
+  ...diagnosisFormSchema.shape,
+  medicalRecordId: z.string(),
+})
+
+export const updateDiagnosisSchema = z.object({
+  ...diagnosisFormSchema.shape,
+  diagnosisId: z.string(),
+})
+
+export type CreateDiagnosisFormData = z.infer<typeof createDiagnosisSchema>
+export type CreateDiagnosisBulkFormData = z.infer<typeof createDiagnosisBulkFormSchema>
+export type UpdateDiagnosisFormData = z.infer<typeof updateDiagnosisSchema>
 
 /**
  * Prescription Form Schema

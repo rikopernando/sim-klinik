@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Loader2 } from "lucide-react"
-import { z } from "zod"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -20,7 +19,7 @@ import { Separator } from "@/components/ui/separator"
 
 import { addDiagnosis, updateDiagnosis } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
-import { type Diagnosis, type DiagnosisFormData } from "@/types/medical-record"
+import { type Diagnosis } from "@/types/medical-record"
 import { formatIcdCode } from "@/lib/utils/medical-record"
 import {
   DEFAULT_DIAGNOSIS_ITEM,
@@ -28,6 +27,10 @@ import {
   findDuplicateDiagnosis,
 } from "@/lib/utils/diagnosis"
 import { DiagnosisItem } from "./diagnosis-item"
+import {
+  CreateDiagnosisBulkFormData,
+  createDiagnosisBulkFormSchema,
+} from "@/lib/validations/medical-record"
 
 interface AddDiagnosisDialogProps {
   open: boolean
@@ -37,18 +40,6 @@ interface AddDiagnosisDialogProps {
   diagnosis?: Diagnosis | null // If provided, it's edit mode
   existingDiagnoses?: Diagnosis[] // For duplicate checking
 }
-
-// Validation schema for a single diagnosis item
-const diagnosisItemSchema = z.object({
-  icd10Code: z.string().min(1, "Kode ICD-10 wajib diisi"),
-  description: z.string().min(1, "Deskripsi wajib diisi"),
-  diagnosisType: z.enum(["primary", "secondary"]).or(z.string()),
-})
-
-// Schema for the entire form with array of diagnoses
-const diagnosisFormSchema = z.object({
-  diagnoses: z.array(diagnosisItemSchema).min(1, "Minimal 1 diagnosis harus ditambahkan"),
-})
 
 export function AddDiagnosisDialog({
   open,
@@ -62,8 +53,8 @@ export function AddDiagnosisDialog({
   const [error, setError] = useState<string | null>(null)
   const isEditMode = !!diagnosis
 
-  const form = useForm<DiagnosisFormData>({
-    resolver: zodResolver(diagnosisFormSchema),
+  const form = useForm<CreateDiagnosisBulkFormData>({
+    resolver: zodResolver(createDiagnosisBulkFormSchema),
     defaultValues: {
       diagnoses: [DEFAULT_DIAGNOSIS_ITEM],
     },
@@ -115,7 +106,7 @@ export function AddDiagnosisDialog({
   )
 
   const onSubmit = useCallback(
-    async (data: DiagnosisFormData) => {
+    async (data: CreateDiagnosisBulkFormData) => {
       try {
         setIsSaving(true)
         setError(null)
@@ -130,7 +121,8 @@ export function AddDiagnosisDialog({
             return
           }
 
-          await updateDiagnosis(diagnosis.id, {
+          await updateDiagnosis({
+            diagnosisId: diagnosis.id,
             icd10Code: formattedCode,
             description: data.diagnoses[0].description,
             diagnosisType: data.diagnoses[0].diagnosisType as "primary" | "secondary",

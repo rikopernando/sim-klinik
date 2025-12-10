@@ -3,6 +3,7 @@
  * Service layer for medical records operations
  */
 
+import axios from "axios"
 import { ResponseApi } from "@/types/api"
 import {
   MedicalRecordData,
@@ -11,9 +12,9 @@ import {
   Diagnosis,
   Prescription,
   Procedure,
-  DiagnosisFormDataPayload,
 } from "@/types/medical-record"
-import axios from "axios"
+import { CreateDiagnosisFormData, UpdateDiagnosisFormData } from "../validations/medical-record"
+
 import { ApiServiceError, handleApiError } from "./api.service"
 /**
  * Get medical record by visit ID
@@ -100,14 +101,14 @@ export async function unlockMedicalRecord(id: string): Promise<MedicalRecord> {
 /**
  * Add a diagnosis to a medical record
  */
-export async function addDiagnosis(data: DiagnosisFormDataPayload): Promise<Diagnosis> {
+export async function addDiagnosis(data: CreateDiagnosisFormData): Promise<Diagnosis> {
   try {
     const response = await axios.post<ResponseApi<Diagnosis>>(
       "/api/medical-records/diagnoses",
       data
     )
     if (!response.data.data) {
-      throw new ApiServiceError("Invalid response: missing medical record data")
+      throw new ApiServiceError("Invalid response: missing diagnosis data")
     }
     return response.data.data
   } catch (error) {
@@ -118,19 +119,19 @@ export async function addDiagnosis(data: DiagnosisFormDataPayload): Promise<Diag
 /**
  * Update a diagnosis
  */
-export async function updateDiagnosis(
-  id: string,
-  data: {
-    icd10Code?: string
-    description?: string
-    diagnosisType?: "primary" | "secondary"
+export async function updateDiagnosis(data: UpdateDiagnosisFormData): Promise<Diagnosis> {
+  try {
+    const response = await axios.patch<ResponseApi<Diagnosis>>(
+      "/api/medical-records/diagnoses",
+      data
+    )
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing diagnosis data")
+    }
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
   }
-): Promise<Diagnosis> {
-  const response = await axios.patch<{ data: Diagnosis }>("/api/medical-records/diagnoses", {
-    id,
-    ...data,
-  })
-  return response.data.data
 }
 
 /**

@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
+import { eq } from "drizzle-orm"
+
 import { db } from "@/db"
 import { diagnoses, medicalRecords } from "@/db/schema"
-import { eq } from "drizzle-orm"
-import { z } from "zod"
-import { Diagnosis, diagnosisSchema } from "@/types/medical-record"
+import { Diagnosis } from "@/types/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { createDiagnosisSchema, updateDiagnosisSchema } from "@/lib/validations/medical-record"
 
 /**
  * POST /api/medical-records/diagnoses
@@ -14,7 +16,7 @@ import HTTP_STATUS_CODES from "@/lib/constans/http"
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const validatedData = diagnosisSchema.parse(body)
+    const validatedData = createDiagnosisSchema.parse(body)
 
     // Check if medical record exists and is not locked
     const record = await db
@@ -96,14 +98,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const { id, ...updateData } = body
-
-    if (!id) {
-      return NextResponse.json({ error: "Diagnosis ID is required" }, { status: 400 })
-    }
-
-    // Validate update data
-    const validatedData = diagnosisSchema.partial().parse(updateData)
+    const validatedData = updateDiagnosisSchema.parse(body)
 
     // Get diagnosis and check if medical record is locked
     const diagnosis = await db
@@ -113,42 +108,68 @@ export async function PATCH(request: NextRequest) {
       })
       .from(diagnoses)
       .innerJoin(medicalRecords, eq(diagnoses.medicalRecordId, medicalRecords.id))
-      .where(eq(diagnoses.id, id))
+      .where(eq(diagnoses.id, validatedData.diagnosisId))
       .limit(1)
 
     if (diagnosis.length === 0) {
-      return NextResponse.json({ error: "Diagnosis not found" }, { status: 404 })
+      const response: ResponseError<unknown> = {
+        error: {},
+        message: "Diagnosis not found",
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      })
     }
 
     if (diagnosis[0].medicalRecord.isLocked) {
-      return NextResponse.json(
-        { error: "Cannot update diagnosis in locked medical record" },
-        { status: 403 }
-      )
+      const response: ResponseError<unknown> = {
+        error: {},
+        message: "Cannot update diagnosis in locked medical record",
+        status: HTTP_STATUS_CODES.FORBIDDEN,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.FORBIDDEN,
+      })
     }
 
     // Update diagnosis
     const updatedDiagnosis = await db
       .update(diagnoses)
       .set(validatedData)
-      .where(eq(diagnoses.id, id))
+      .where(eq(diagnoses.id, validatedData.diagnosisId))
       .returning()
 
-    return NextResponse.json({
-      success: true,
+    const response: ResponseApi<Diagnosis> = {
       message: "Diagnosis updated successfully",
       data: updatedDiagnosis[0],
-    })
+      status: HTTP_STATUS_CODES.OK,
+    }
+
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      )
+      const response: ResponseError<unknown> = {
+        error: error.issues,
+        message: "Validation error",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
 
     console.error("Diagnosis update error:", error)
-    return NextResponse.json({ error: "Failed to update diagnosis" }, { status: 500 })
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to update diagnosis",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    }
+
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }
 

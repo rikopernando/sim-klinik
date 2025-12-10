@@ -17,11 +17,12 @@ import {
 } from "@/components/ui/select"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
 import { ICD10Search } from "./icd10-search"
-import { DIAGNOSIS_TYPES, type DiagnosisFormData } from "@/types/medical-record"
+import { DIAGNOSIS_TYPES } from "@/types/medical-record"
+import { CreateDiagnosisBulkFormData } from "@/lib/validations/medical-record"
 
 interface DiagnosisItemProps {
   index: number
-  form: UseFormReturn<DiagnosisFormData>
+  form: UseFormReturn<CreateDiagnosisBulkFormData>
   showHeader?: boolean
   showRemoveButton?: boolean
   onRemove?: () => void
