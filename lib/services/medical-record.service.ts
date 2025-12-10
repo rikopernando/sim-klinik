@@ -4,22 +4,22 @@
  */
 
 import axios from "axios"
+
 import { ResponseApi } from "@/types/api"
 import {
   MedicalRecordData,
   MedicalRecordFormData,
   MedicalRecord,
   Diagnosis,
-  Prescription,
-  Procedure,
 } from "@/types/medical-record"
 import {
   CreateDiagnosisFormData,
+  CreateProcedureFormData,
   PrescriptionFormDataPayload,
+  ProcedureFormData,
   UpdateDiagnosisFormData,
-} from "../validations/medical-record"
-
-import { ApiServiceError, handleApiError } from "./api.service"
+} from "@/lib/validations/medical-record"
+import { ApiServiceError, handleApiError } from "@/lib/services/api.service"
 /**
  * Get medical record by visit ID
  */
@@ -153,43 +153,34 @@ export async function deleteDiagnosis(id: string): Promise<void> {
 /**
  * Add a procedure to a medical record
  */
-export async function addProcedure(data: {
-  medicalRecordId: string
-  serviceId?: number
-  icd9Code: string
-  description: string
-  performedBy?: string
-  notes?: string
-}): Promise<Procedure> {
-  const response = await axios.post<{ data: Procedure }>("/api/medical-records/procedures", data)
-  return response.data.data
+export async function addProcedure(data: CreateProcedureFormData) {
+  try {
+    await axios.post<ResponseApi>("/api/medical-records/procedures", data)
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**
  * Update a procedure
  */
-export async function updateProcedure(
-  id: string,
-  data: {
-    serviceId?: number
-    icd9Code?: string
-    description?: string
-    performedBy?: string
-    notes?: string
+export async function updateProcedure(id: string, data: ProcedureFormData) {
+  try {
+    await axios.patch<ResponseApi>(`/api/medical-records/procedures/${id}`, data)
+  } catch (error) {
+    handleApiError(error)
   }
-): Promise<Procedure> {
-  const response = await axios.patch<{ data: Procedure }>("/api/medical-records/procedures", {
-    id,
-    ...data,
-  })
-  return response.data.data
 }
 
 /**
  * Delete a procedure
  */
 export async function deleteProcedure(id: string): Promise<void> {
-  await axios.delete(`/api/medical-records/procedures?id=${id}`)
+  try {
+    await axios.delete(`/api/medical-records/procedures/${id}`)
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**

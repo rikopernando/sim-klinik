@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -40,9 +41,10 @@ export function ProcedureTab({
   onUpdate,
   isLocked,
 }: ProcedureTabProps) {
+  const [isDeleting, setDeleting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [procedureToDelete, setProcedureToDelete] = useState<number | null>(null)
+  const [procedureToDelete, setProcedureToDelete] = useState<string | null>(null)
   const [procedureToEdit, setProcedureToEdit] = useState<Procedure | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -78,12 +80,17 @@ export function ProcedureTab({
 
     try {
       setError(null)
+      setDeleting(false)
       await deleteProcedure(procedureToDelete)
       setDeleteDialogOpen(false)
       setProcedureToDelete(null)
       onUpdate()
+      toast.success("Tindakan berhasil dihapus!")
     } catch (err) {
       setError(getErrorMessage(err))
+      toast.error(`Gagal menghapus resep`)
+    } finally {
+      setDeleting(false)
     }
   }, [procedureToDelete, onUpdate])
 
@@ -120,6 +127,7 @@ export function ProcedureTab({
                 onDelete={() => handleDeleteClick(procedure.id)}
                 showEdit={canEdit}
                 showDelete={canEdit}
+                className="gap-4"
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
@@ -190,8 +198,12 @@ export function ProcedureTab({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Hapus
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

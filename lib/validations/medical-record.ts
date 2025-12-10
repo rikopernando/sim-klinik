@@ -80,17 +80,27 @@ export type PrescriptionFormDataPayload = z.infer<typeof createPrescriptionFormS
 export type PrescriptionFormData = z.infer<typeof prescriptionFormSchema>
 export type PrescriptionFormBulkData = z.infer<typeof prescriptionFormBulkSchema>
 
-/**
- * Procedure Form Schema
- */
-export const procedureFormSchema = z.object({
-  icd9Code: z.string().min(1, "Kode ICD-9 wajib diisi").max(10, "Kode ICD-9 maksimal 10 karakter"),
-  description: z
-    .string()
-    .min(1, "Deskripsi tindakan wajib diisi")
-    .max(500, "Deskripsi maksimal 500 karakter"),
-  performedBy: z.string().max(255, "Nama maksimal 255 karakter").optional(),
-  notes: z.string().max(1000, "Catatan maksimal 1000 karakter").optional(),
+// Validation schema for a single procedure item
+export const procedureItemSchema = z.object({
+  serviceId: z.string().min(1, "Tindakan wajib dipilih"),
+  serviceName: z.string().min(1, "Tindakan wajib dipilih"),
+  servicePrice: z.string().optional(),
+  icd9Code: z.string().min(1, "Kode ICD-9 wajib diisi"),
+  description: z.string().min(1, "Deskripsi wajib diisi"),
+  performedBy: z.string().min(1, "Dilakukan oleh wajib diisi"),
+  notes: z.string().optional(),
 })
 
-export type ProcedureFormData = z.infer<typeof procedureFormSchema>
+// Schema for the entire form with array of procedures
+export const procedureFormBulkSchema = z.object({
+  procedures: z.array(procedureItemSchema).min(1, "Minimal 1 tindakan harus ditambahkan"),
+})
+
+export const createProcedureFormSchema = z.object({
+  ...procedureItemSchema.shape,
+  medicalRecordId: z.string(),
+})
+
+export type CreateProcedureFormData = z.infer<typeof createProcedureFormSchema>
+export type ProcedureFormData = z.infer<typeof procedureItemSchema>
+export type ProcedureFormBulkData = z.infer<typeof procedureFormBulkSchema>

@@ -6,7 +6,7 @@
 import { useState } from "react"
 import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { FieldLabel, FieldDescription } from "@/components/ui/field"
 import { Spinner } from "@/components/ui/spinner"
 import { useServiceSearch, type Service } from "@/hooks/use-service-search"
 import { formatCurrency } from "@/lib/billing/billing-utils"
@@ -49,10 +49,10 @@ export function ServiceSearch({
   }
 
   return (
-    <div className="space-y-2">
-      <Label htmlFor="serviceSearch">
+    <>
+      <FieldLabel htmlFor="serviceSearch">
         {label} {required && <span className="text-destructive">*</span>}
-      </Label>
+      </FieldLabel>
       <div className="relative">
         {isSearching ? (
           <Spinner className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -67,7 +67,7 @@ export function ServiceSearch({
           className="pl-10"
         />
         {services.length > 0 && searchQuery && showDropdown && (
-          <div className="bg-background absolute z-50 mt-1 max-h-60 w-full space-y-1 overflow-y-auto rounded-md border p-2 shadow-xl">
+          <div className="bg-background absolute z-[9999] mt-1 max-h-60 w-full space-y-1 overflow-y-auto rounded-md border p-2 shadow-xl">
             {services.map((service) => (
               <button
                 key={service.id}
@@ -92,6 +92,10 @@ export function ServiceSearch({
           </div>
         )}
       </div>
-    </div>
+      {isSearching && <FieldDescription>Mencari tindakan...</FieldDescription>}
+      {searchQuery && searchQuery.length >= 2 && !isSearching && services.length === 0 && (
+        <FieldDescription>Tidak ada tindakan ditemukan</FieldDescription>
+      )}
+    </>
   )
 }
