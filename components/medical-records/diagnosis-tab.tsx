@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -48,6 +49,7 @@ export function DiagnosisTab({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [diagnosisToDelete, setDiagnosisToDelete] = useState<string | null>(null)
   const [diagnosisToEdit, setDiagnosisToEdit] = useState<Diagnosis | null>(null)
+  const [isDeleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked])
@@ -72,12 +74,19 @@ export function DiagnosisTab({
 
     try {
       setError(null)
+      setDeleting(true)
       await deleteDiagnosis(diagnosisToDelete)
-      setDeleteDialogOpen(false)
       setDiagnosisToDelete(null)
       onUpdate()
+      // Show success toast
+      toast.success("Diagnosis berhasil dihapus!")
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+      toast.error(`Gagal menyimpan draft: ${errorMessage}`)
+    } finally {
+      setDeleting(false)
+      setDeleteDialogOpen(false)
     }
   }, [diagnosisToDelete, onUpdate])
 
@@ -157,8 +166,12 @@ export function DiagnosisTab({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
-              Hapus
+            <AlertDialogAction
+              disabled={isDeleting}
+              onClick={confirmDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

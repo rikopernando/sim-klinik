@@ -121,9 +121,10 @@ export async function addDiagnosis(data: CreateDiagnosisFormData): Promise<Diagn
  */
 export async function updateDiagnosis(data: UpdateDiagnosisFormData): Promise<Diagnosis> {
   try {
+    const { diagnosisId, ...updateData } = data
     const response = await axios.patch<ResponseApi<Diagnosis>>(
-      "/api/medical-records/diagnoses",
-      data
+      `/api/medical-records/diagnoses/${diagnosisId}`,
+      updateData
     )
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing diagnosis data")
@@ -138,7 +139,11 @@ export async function updateDiagnosis(data: UpdateDiagnosisFormData): Promise<Di
  * Delete a diagnosis
  */
 export async function deleteDiagnosis(id: string): Promise<void> {
-  await axios.delete(`/api/medical-records/diagnoses?id=${id}`)
+  try {
+    await axios.delete(`/api/medical-records/diagnoses/${id}`)
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**

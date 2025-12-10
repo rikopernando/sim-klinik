@@ -7,11 +7,11 @@ import { diagnoses, medicalRecords } from "@/db/schema"
 import { Diagnosis } from "@/types/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
-import { createDiagnosisSchema, updateDiagnosisSchema } from "@/lib/validations/medical-record"
+import { createDiagnosisSchema } from "@/lib/validations/medical-record"
 
 /**
  * POST /api/medical-records/diagnoses
- * Add a diagnosis to a medical record
+ * Create a new diagnosis for a medical record
  */
 export async function POST(request: NextRequest) {
   try {
@@ -88,135 +88,5 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response, {
       status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     })
-  }
-}
-
-/**
- * PATCH /api/medical-records/diagnoses
- * Update a diagnosis
- */
-export async function PATCH(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const validatedData = updateDiagnosisSchema.parse(body)
-
-    // Get diagnosis and check if medical record is locked
-    const diagnosis = await db
-      .select({
-        diagnosis: diagnoses,
-        medicalRecord: medicalRecords,
-      })
-      .from(diagnoses)
-      .innerJoin(medicalRecords, eq(diagnoses.medicalRecordId, medicalRecords.id))
-      .where(eq(diagnoses.id, validatedData.diagnosisId))
-      .limit(1)
-
-    if (diagnosis.length === 0) {
-      const response: ResponseError<unknown> = {
-        error: {},
-        message: "Diagnosis not found",
-        status: HTTP_STATUS_CODES.NOT_FOUND,
-      }
-      return NextResponse.json(response, {
-        status: HTTP_STATUS_CODES.NOT_FOUND,
-      })
-    }
-
-    if (diagnosis[0].medicalRecord.isLocked) {
-      const response: ResponseError<unknown> = {
-        error: {},
-        message: "Cannot update diagnosis in locked medical record",
-        status: HTTP_STATUS_CODES.FORBIDDEN,
-      }
-      return NextResponse.json(response, {
-        status: HTTP_STATUS_CODES.FORBIDDEN,
-      })
-    }
-
-    // Update diagnosis
-    const updatedDiagnosis = await db
-      .update(diagnoses)
-      .set(validatedData)
-      .where(eq(diagnoses.id, validatedData.diagnosisId))
-      .returning()
-
-    const response: ResponseApi<Diagnosis> = {
-      message: "Diagnosis updated successfully",
-      data: updatedDiagnosis[0],
-      status: HTTP_STATUS_CODES.OK,
-    }
-
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      const response: ResponseError<unknown> = {
-        error: error.issues,
-        message: "Validation error",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-      }
-
-      return NextResponse.json(response, {
-        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      })
-    }
-
-    console.error("Diagnosis update error:", error)
-    const response: ResponseError<unknown> = {
-      error,
-      message: "Failed to update diagnosis",
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-    }
-
-    return NextResponse.json(response, {
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-    })
-  }
-}
-
-/**
- * DELETE /api/medical-records/diagnoses?id=X
- * Remove a diagnosis
- */
-export async function DELETE(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams
-    const id = searchParams.get("id")
-
-    if (!id) {
-      return NextResponse.json({ error: "Diagnosis ID is required" }, { status: 400 })
-    }
-
-    // Get diagnosis and check if medical record is locked
-    const diagnosis = await db
-      .select({
-        diagnosis: diagnoses,
-        medicalRecord: medicalRecords,
-      })
-      .from(diagnoses)
-      .innerJoin(medicalRecords, eq(diagnoses.medicalRecordId, medicalRecords.id))
-      .where(eq(diagnoses.id, id))
-      .limit(1)
-
-    if (diagnosis.length === 0) {
-      return NextResponse.json({ error: "Diagnosis not found" }, { status: 404 })
-    }
-
-    if (diagnosis[0].medicalRecord.isLocked) {
-      return NextResponse.json(
-        { error: "Cannot delete diagnosis from locked medical record" },
-        { status: 403 }
-      )
-    }
-
-    // Delete diagnosis
-    await db.delete(diagnoses).where(eq(diagnoses.id, id))
-
-    return NextResponse.json({
-      success: true,
-      message: "Diagnosis deleted successfully",
-    })
-  } catch (error) {
-    console.error("Diagnosis deletion error:", error)
-    return NextResponse.json({ error: "Failed to delete diagnosis" }, { status: 500 })
   }
 }
