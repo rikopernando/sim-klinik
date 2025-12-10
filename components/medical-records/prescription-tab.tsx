@@ -106,7 +106,7 @@ export function PrescriptionTab({
 
       {/* Add Button */}
       {canEdit && (
-        <div className="flex justify-end">
+        <div className="flex">
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Tambah Resep
