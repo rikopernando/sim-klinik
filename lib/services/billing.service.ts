@@ -225,7 +225,7 @@ export async function calculateBillingForVisit(visitId: string) {
     }
   }
 
-  // 4. Add Medications (only fulfilled prescriptions)
+  // 4. Add Medications (all prescribed medications, regardless of fulfillment status)
   const prescriptionsList = await db
     .select({
       prescription: prescriptions,
@@ -234,10 +234,12 @@ export async function calculateBillingForVisit(visitId: string) {
     .from(prescriptions)
     .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
     .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
-    .where(and(eq(medicalRecords.visitId, visitId), eq(prescriptions.isFulfilled, true)))
+    .where(eq(medicalRecords.visitId, visitId))
 
   for (const { prescription, drug } of prescriptionsList) {
-    const quantity = prescription.dispensedQuantity || prescription.quantity
+    // Use prescribed quantity for billing (not dispensed quantity)
+    // Billing reflects what doctor prescribed, fulfillment is separate
+    const quantity = prescription.quantity
     const description = `${prescription.dosage}, ${prescription.frequency}`
     addBillingItem(createDrugBillingItem(drug, quantity, description))
   }
@@ -265,6 +267,8 @@ export async function createBillingFromMedicalRecord(
   // Calculate billing items and totals
   const calculation = await calculateBillingForVisit(visitId)
   const subtotal = parseFloat(calculation.subtotal)
+
+  console.log({ calculation })
 
   // Create billing record
   const [billing] = await dbInstance
