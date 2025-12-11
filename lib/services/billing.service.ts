@@ -3,14 +3,120 @@
  * Handles billing operations, cost aggregation, and payment processing
  */
 
-import { db } from "@/db"
+import { eq, and, or, desc, sql, inArray } from "drizzle-orm"
+
+import { db, type DbTransaction } from "@/db"
 import { billings, billingItems, payments, services } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { medicalRecords, procedures } from "@/db/schema/medical-records"
 import { drugs, prescriptions } from "@/db/schema/pharmacy"
 import { patients } from "@/db/schema/patients"
-import { user } from "@/db/schema/auth"
-import { eq, and, or, desc, sql } from "drizzle-orm"
+
+/**
+ * Billing Item Type
+ */
+export type BillingItem = {
+  itemType: string
+  itemId: string | null
+  itemName: string
+  itemCode: string | null
+  quantity: number
+  unitPrice: string
+  subtotal: string
+  discount: string
+  totalPrice: string
+  description?: string
+}
+
+/**
+ * Billing Totals Type
+ */
+type BillingTotals = {
+  subtotal: number
+  discount: number
+  insuranceCoverage: number
+  totalAmount: number
+  patientPayable: number
+  paidAmount: number
+  remainingAmount: number
+}
+
+/**
+ * Helper: Create billing item from service
+ */
+function createServiceBillingItem(
+  service: { id: string; name: string; code: string | null; price: string },
+  description: string
+): BillingItem {
+  const price = parseFloat(service.price)
+  return {
+    itemType: "service",
+    itemId: service.id,
+    itemName: service.name,
+    itemCode: service.code,
+    quantity: 1,
+    unitPrice: service.price,
+    subtotal: price.toFixed(2),
+    discount: "0.00",
+    totalPrice: price.toFixed(2),
+    description,
+  }
+}
+
+/**
+ * Helper: Create billing item for drug
+ */
+function createDrugBillingItem(
+  drug: { id: string; name: string; price: string },
+  quantity: number,
+  description: string
+): BillingItem {
+  const unitPrice = parseFloat(drug.price)
+  const itemSubtotal = quantity * unitPrice
+  return {
+    itemType: "drug",
+    itemId: drug.id,
+    itemName: drug.name,
+    itemCode: null,
+    quantity,
+    unitPrice: drug.price,
+    subtotal: itemSubtotal.toFixed(2),
+    discount: "0.00",
+    totalPrice: itemSubtotal.toFixed(2),
+    description,
+  }
+}
+
+/**
+ * Helper: Calculate subtotal from billing items
+ */
+function calculateSubtotalFromItems(items: Array<{ totalPrice: string }>): number {
+  return items.reduce((total, item) => total + parseFloat(item.totalPrice), 0)
+}
+
+/**
+ * Helper: Calculate billing totals
+ */
+function calculateBillingTotals(
+  subtotal: number,
+  discount: number,
+  insuranceCoverage: number,
+  paidAmount: number
+): BillingTotals {
+  const totalAmount = subtotal - discount
+  const patientPayable = totalAmount - insuranceCoverage
+  const remainingAmount = patientPayable - paidAmount
+
+  return {
+    subtotal,
+    discount,
+    insuranceCoverage,
+    totalAmount,
+    patientPayable,
+    paidAmount,
+    remainingAmount,
+  }
+}
 
 /**
  * Get visits ready for billing (RME locked, not yet paid)
@@ -47,123 +153,79 @@ export async function getVisitsReadyForBilling() {
  * Aggregates costs from: admin fee, consultation, procedures, medications
  */
 export async function calculateBillingForVisit(visitId: string) {
-  // Get visit details
+  // Validate visit exists
   const visitResult = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1)
-
   if (visitResult.length === 0) {
     throw new Error("Visit not found")
   }
 
-  const visit = visitResult[0]
-
-  const items: Array<{
-    itemType: string
-    itemId: string | null
-    itemName: string
-    itemCode: string | null
-    quantity: number
-    unitPrice: string
-    subtotal: string
-    discount: string
-    totalPrice: string
-    description?: string
-  }> = []
-
+  const items: BillingItem[] = []
   let subtotal = 0
 
-  // 1. Administration Fee (Registration)
-  const adminServiceResult = await db
+  // Helper to add item and update subtotal
+  const addBillingItem = (item: BillingItem) => {
+    items.push(item)
+    subtotal += parseFloat(item.totalPrice)
+  }
+
+  // 1. Add Administration Fee
+  const adminService = await db
     .select()
     .from(services)
     .where(and(eq(services.serviceType, "administration"), eq(services.isActive, true)))
     .limit(1)
 
-  if (adminServiceResult.length > 0) {
-    const adminService = adminServiceResult[0]
-    const price = parseFloat(adminService.price)
-    items.push({
-      itemType: "service",
-      itemId: adminService.id,
-      itemName: adminService.name,
-      itemCode: adminService.code,
-      quantity: 1,
-      unitPrice: adminService.price,
-      subtotal: price.toFixed(2),
-      discount: "0.00",
-      totalPrice: price.toFixed(2),
-      description: "Biaya administrasi pendaftaran",
-    })
-    subtotal += price
+  if (adminService.length > 0) {
+    addBillingItem(createServiceBillingItem(adminService[0], "Biaya administrasi pendaftaran"))
   }
 
-  // 2. Doctor Consultation Fee
-  const consultationServiceResult = await db
+  // 2. Add Doctor Consultation Fee
+  const consultationService = await db
     .select()
     .from(services)
     .where(and(eq(services.serviceType, "consultation"), eq(services.isActive, true)))
     .limit(1)
 
-  if (consultationServiceResult.length > 0) {
-    const consultationService = consultationServiceResult[0]
-    const price = parseFloat(consultationService.price)
-    items.push({
-      itemType: "service",
-      itemId: consultationService.id,
-      itemName: consultationService.name,
-      itemCode: consultationService.code,
-      quantity: 1,
-      unitPrice: consultationService.price,
-      subtotal: price.toFixed(2),
-      discount: "0.00",
-      totalPrice: price.toFixed(2),
-      description: "Biaya konsultasi dokter",
-    })
-    subtotal += price
+  if (consultationService.length > 0) {
+    addBillingItem(createServiceBillingItem(consultationService[0], "Biaya konsultasi dokter"))
   }
 
-  // 3. Medical Procedures (from medical_records.procedures)
+  // 3. Add Medical Procedures - Fixed N+1 query problem
   const proceduresList = await db
-    .select({
-      procedure: procedures,
-    })
+    .select({ procedure: procedures })
     .from(procedures)
     .innerJoin(medicalRecords, eq(procedures.medicalRecordId, medicalRecords.id))
     .where(eq(medicalRecords.visitId, visitId))
 
-  for (const { procedure } of proceduresList) {
-    // Try to find service by ICD-9 code
-    const procedureServiceResult = await db
+  if (proceduresList.length > 0) {
+    // Collect unique ICD-9 codes
+    const icd9Codes = [...new Set(proceduresList.map((p) => p.procedure.icd9Code))]
+
+    // Fetch all procedure services in ONE query
+    const procedureServices = await db
       .select()
       .from(services)
       .where(
         and(
           eq(services.serviceType, "procedure"),
-          eq(services.code, procedure.icd9Code),
+          inArray(services.code, icd9Codes),
           eq(services.isActive, true)
         )
       )
-      .limit(1)
 
-    if (procedureServiceResult.length > 0) {
-      const procedureService = procedureServiceResult[0]
-      const price = parseFloat(procedureService.price)
-      items.push({
-        itemType: "service",
-        itemId: procedureService.id,
-        itemName: procedureService.name,
-        itemCode: procedureService.code,
-        quantity: 1,
-        unitPrice: procedureService.price,
-        subtotal: price.toFixed(2),
-        discount: "0.00",
-        totalPrice: price.toFixed(2),
-        description: procedure.description || undefined,
-      })
-      subtotal += price
+    // Create a Map for O(1) lookup
+    const servicesByCode = new Map(procedureServices.map((s) => [s.code, s]))
+
+    // Add billing items for procedures
+    for (const { procedure } of proceduresList) {
+      const service = servicesByCode.get(procedure.icd9Code)
+      if (service) {
+        addBillingItem(createServiceBillingItem(service, procedure.description || ""))
+      }
     }
   }
 
-  // 4. Medications (from prescriptions)
+  // 4. Add Medications (only fulfilled prescriptions)
   const prescriptionsList = await db
     .select({
       prescription: prescriptions,
@@ -172,31 +234,12 @@ export async function calculateBillingForVisit(visitId: string) {
     .from(prescriptions)
     .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
     .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
-    .where(
-      and(
-        eq(medicalRecords.visitId, visitId),
-        eq(prescriptions.isFulfilled, true) // Only fulfilled prescriptions
-      )
-    )
+    .where(and(eq(medicalRecords.visitId, visitId), eq(prescriptions.isFulfilled, true)))
 
   for (const { prescription, drug } of prescriptionsList) {
     const quantity = prescription.dispensedQuantity || prescription.quantity
-    const unitPrice = parseFloat(drug.price)
-    const itemSubtotal = quantity * unitPrice
-
-    items.push({
-      itemType: "drug",
-      itemId: drug.id,
-      itemName: drug.name,
-      itemCode: null,
-      quantity,
-      unitPrice: drug.price,
-      subtotal: itemSubtotal.toFixed(2),
-      discount: "0.00",
-      totalPrice: itemSubtotal.toFixed(2),
-      description: `${prescription.dosage}, ${prescription.frequency}`,
-    })
-    subtotal += itemSubtotal
+    const description = `${prescription.dosage}, ${prescription.frequency}`
+    addBillingItem(createDrugBillingItem(drug, quantity, description))
   }
 
   return {
@@ -205,6 +248,100 @@ export async function calculateBillingForVisit(visitId: string) {
     subtotal: subtotal.toFixed(2),
     totalAmount: subtotal.toFixed(2),
   }
+}
+
+/**
+ * Create billing record from medical record
+ * Simple function to create initial billing when medical record is locked
+ * @param visitId - The visit ID
+ * @param tx - Optional transaction object for atomic operations
+ */
+export async function createBillingFromMedicalRecord(
+  visitId: string,
+  tx?: DbTransaction
+): Promise<string> {
+  const dbInstance = tx || db
+
+  // Calculate billing items and totals
+  const calculation = await calculateBillingForVisit(visitId)
+  const subtotal = parseFloat(calculation.subtotal)
+
+  // Create billing record
+  const [billing] = await dbInstance
+    .insert(billings)
+    .values({
+      visitId,
+      subtotal: subtotal.toFixed(2),
+      discount: "0.00",
+      discountPercentage: null,
+      tax: "0.00",
+      insuranceCoverage: "0.00",
+      totalAmount: subtotal.toFixed(2),
+      patientPayable: subtotal.toFixed(2),
+      paidAmount: "0.00",
+      remainingAmount: subtotal.toFixed(2),
+      paymentStatus: "pending",
+    })
+    .returning()
+
+  // Insert billing items
+  if (calculation.items.length > 0) {
+    await dbInstance.insert(billingItems).values(
+      calculation.items.map((item) => ({
+        billingId: billing.id,
+        ...item,
+      }))
+    )
+  }
+
+  return billing.id
+}
+
+/**
+ * Recalculate and update existing billing record
+ * Used when billing items change (e.g., doctor adds adjustment)
+ * @param visitId - The visit ID
+ * @param tx - Optional transaction object for atomic operations
+ */
+export async function recalculateBilling(visitId: string, tx?: DbTransaction): Promise<void> {
+  const dbInstance = tx || db
+
+  // Get existing billing
+  const existingBilling = await dbInstance.query.billings.findFirst({
+    where: eq(billings.visitId, visitId),
+  })
+
+  if (!existingBilling) {
+    throw new Error("Billing not found for this visit")
+  }
+
+  // Get all current billing items
+  const items = await dbInstance
+    .select()
+    .from(billingItems)
+    .where(eq(billingItems.billingId, existingBilling.id))
+
+  // Calculate new subtotal from all billing items
+  const subtotal = calculateSubtotalFromItems(items)
+
+  // Calculate all billing totals
+  const totals = calculateBillingTotals(
+    subtotal,
+    parseFloat(existingBilling.discount),
+    parseFloat(existingBilling.insuranceCoverage || "0"),
+    parseFloat(existingBilling.paidAmount)
+  )
+
+  // Update billing record with new totals
+  await dbInstance
+    .update(billings)
+    .set({
+      subtotal: totals.subtotal.toFixed(2),
+      totalAmount: totals.totalAmount.toFixed(2),
+      patientPayable: totals.patientPayable.toFixed(2),
+      remainingAmount: totals.remainingAmount.toFixed(2),
+    })
+    .where(eq(billings.id, existingBilling.id))
 }
 
 /**

@@ -15,6 +15,7 @@ import {
 import {
   CreateDiagnosisFormData,
   CreateProcedureFormData,
+  LockMedicalRecordPayload,
   PrescriptionFormDataPayload,
   ProcedureFormData,
   UpdateDiagnosisFormData,
@@ -79,19 +80,12 @@ export async function updateMedicalRecordByVisit(
 /**
  * Lock a medical record with optional billing adjustment
  */
-export async function lockMedicalRecord(
-  id: string,
-  userId: string,
-  billingAdjustment?: number,
-  adjustmentNote?: string
-): Promise<MedicalRecord> {
-  const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/lock", {
-    id,
-    userId,
-    billingAdjustment,
-    adjustmentNote,
-  })
-  return response.data.data
+export async function lockMedicalRecord(data: LockMedicalRecordPayload) {
+  try {
+    await axios.post<ResponseApi>("/api/medical-records/lock", data)
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**

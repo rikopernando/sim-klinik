@@ -133,18 +133,21 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         setIsLocking(true)
         setError(null)
 
-        await lockMedicalRecord(
-          recordData.medicalRecord.id,
+        await lockMedicalRecord({
+          id: recordData.medicalRecord.id,
           userId,
           billingAdjustment,
-          adjustmentNote
-        )
+          adjustmentNote,
+        })
 
         // Reload to get updated data
         await reloadMedicalRecord()
+        // Show success toast
+        toast.success("Rekam medis berhasil dikunci!")
       } catch (err) {
         setError(getErrorMessage(err))
-        throw err
+        // Show error toast
+        toast.error(`Gagal mengunci rekam medis`)
       } finally {
         setIsLocking(false)
       }
