@@ -95,9 +95,22 @@ export function MedicalRecordActions({
   if (isLocked) {
     return (
       <>
-        <Button variant="outline" onClick={() => setUnlockDialogOpen(true)} disabled={isLocking}>
-          <Unlock className="mr-2 h-4 w-4" />
-          Buka Kunci Rekam Medis
+        <Button
+          variant="outline"
+          onClick={() => setUnlockDialogOpen(true)}
+          disabled={isSaving || isLocking}
+        >
+          {isLocking ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Membuka kunci...
+            </>
+          ) : (
+            <>
+              <Unlock className="mr-2 h-4 w-4" />
+              Buka Kunci Rekam Medis
+            </>
+          )}
         </Button>
 
         {/* Unlock Confirmation Dialog */}
