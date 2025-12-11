@@ -268,8 +268,6 @@ export async function createBillingFromMedicalRecord(
   const calculation = await calculateBillingForVisit(visitId)
   const subtotal = parseFloat(calculation.subtotal)
 
-  console.log({ calculation })
-
   // Create billing record
   const [billing] = await dbInstance
     .insert(billings)

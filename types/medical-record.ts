@@ -2,6 +2,9 @@
  * Medical Record Types
  */
 
+import { Drug } from "./pharmacy"
+import { Patient } from "./registration"
+
 export interface MedicalRecord {
   id: string
   visitId: string
@@ -112,6 +115,28 @@ export interface MedicalRecordFormData {
   laboratoryResults?: string
   radiologyResults?: string
   isDraft?: boolean
+}
+
+export interface MedicalRecordPrescription {
+  prescription: Prescription
+  drug: Drug | null
+}
+
+export interface MedicalRecordHistory {
+  medicalRecord: MedicalRecord
+  visit: Visit
+  diagnoses: Diagnosis[]
+  procedures: Procedure[]
+  prescriptions: MedicalRecordPrescription[]
+}
+
+/**
+ * Medical record history data structure
+ */
+export interface MedicalRecordHistoryData {
+  patient: Patient
+  history: MedicalRecordHistory[]
+  totalRecords: number
 }
 
 export const DIAGNOSIS_TYPES = [

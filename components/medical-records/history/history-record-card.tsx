@@ -3,58 +3,22 @@
  * Displays a single medical record with all its data in tabs
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Calendar } from "lucide-react"
 import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+
+import { MedicalRecordHistory } from "@/types/medical-record"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+
 import { HistorySOAPTab } from "./history-soap-tab"
 import { HistoryDiagnosisTab } from "./history-diagnosis-tab"
 import { HistoryProceduresTab } from "./history-procedures-tab"
 import { HistoryPrescriptionsTab } from "./history-prescriptions-tab"
 
-interface MedicalRecordData {
-  medicalRecord: {
-    id: string
-    isLocked: boolean
-    soapSubjective: string | null
-    soapObjective: string | null
-    soapAssessment: string | null
-    soapPlan: string | null
-    createdAt: Date
-  }
-  visit: {
-    visitNumber: string
-  }
-  diagnoses: Array<{
-    id: string
-    icd10Code: string
-    description: string
-    diagnosisType: string
-  }>
-  procedures: Array<{
-    id: string
-    icd9Code: string
-    description: string
-  }>
-  prescriptions: Array<{
-    prescription: {
-      id: string
-      dosage: string
-      frequency: string
-      duration: string | null
-      instructions: string | null
-      isFulfilled: boolean
-    }
-    drug: {
-      name: string
-    } | null
-  }>
-}
-
 interface HistoryRecordCardProps {
-  record: MedicalRecordData
+  record: MedicalRecordHistory
   visitNumber: number
 }
 

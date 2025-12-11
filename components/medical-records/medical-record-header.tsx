@@ -50,7 +50,6 @@ export function MedicalRecordHeader({ visit, isLocked, isDraft }: MedicalRecordH
           open={showHistory}
           onOpenChange={handleCloseHistory}
           patientId={visit.patientId}
-          // patientName={visit.patientName}
         />
       )}
     </div>

@@ -11,6 +11,7 @@ import {
   MedicalRecordFormData,
   MedicalRecord,
   Diagnosis,
+  MedicalRecordHistoryData,
 } from "@/types/medical-record"
 import {
   CreateDiagnosisFormData,
@@ -210,6 +211,30 @@ export async function updatePrescription(id: string, data: PrescriptionFormDataP
 export async function deletePrescription(id: string): Promise<void> {
   try {
     await axios.delete(`/api/medical-records/prescriptions/${id}`)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get medical record history for a patient
+ */
+export async function getMedicalRecordHistory(
+  patientId: string
+): Promise<MedicalRecordHistoryData> {
+  try {
+    const response = await axios.get<ResponseApi<MedicalRecordHistoryData>>(
+      `/api/medical-records/history`,
+      {
+        params: { patientId },
+      }
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing medical record history data")
+    }
+
+    return response.data.data
   } catch (error) {
     handleApiError(error)
   }
