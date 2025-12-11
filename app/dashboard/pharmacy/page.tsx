@@ -9,7 +9,6 @@ import { useState, useCallback } from "react"
 import axios from "axios"
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PharmacyNotificationPanel } from "@/components/notifications/pharmacy-notification-panel"
 import { PharmacyHeader } from "@/components/pharmacy/pharmacy-header"
 import { PharmacyStatsCards } from "@/components/pharmacy/pharmacy-stats-cards"
 import { PrescriptionQueueTable } from "@/components/pharmacy/prescription-queue-table"
@@ -129,9 +128,6 @@ export default function PharmacyDashboard() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       <PharmacyHeader lastRefresh={lastRefresh} onRefresh={refresh} />
-
-      {/* Real-time Notification Panel (H.1.1) */}
-      <PharmacyNotificationPanel />
 
       {/* Statistics Cards */}
       <PharmacyStatsCards queueCount={queue.length} expiringDrugs={expiringDrugs} />

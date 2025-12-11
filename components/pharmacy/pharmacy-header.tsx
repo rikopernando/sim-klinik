@@ -5,6 +5,7 @@
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Package } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { PharmacyNotificationPopover } from "@/components/notifications/pharmacy-notification-popover"
 
 interface PharmacyHeaderProps {
   lastRefresh?: Date | null
@@ -20,12 +21,13 @@ export function PharmacyHeader({ lastRefresh, onRefresh }: PharmacyHeaderProps) 
         <h1 className="text-3xl font-bold">Farmasi</h1>
         <p className="text-muted-foreground">Kelola resep dan stok obat</p>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {lastRefresh && (
           <p className="text-muted-foreground text-sm">
             Terakhir diperbarui: {lastRefresh.toLocaleTimeString("id-ID")}
           </p>
         )}
+        <PharmacyNotificationPopover />
         <Button onClick={() => router.push("/dashboard/pharmacy/inventory")} variant="default">
           <Package className="mr-2 h-4 w-4" />
           Kelola Stok
