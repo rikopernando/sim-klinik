@@ -91,9 +91,14 @@ export async function lockMedicalRecord(data: LockMedicalRecordPayload) {
 /**
  * Unlock a medical record
  */
-export async function unlockMedicalRecord(id: string): Promise<MedicalRecord> {
-  const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/unlock", { id })
-  return response.data.data
+export async function unlockMedicalRecord(id: string) {
+  try {
+    await axios.post<{ data: MedicalRecord }>("/api/medical-records/unlock", {
+      id,
+    })
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**

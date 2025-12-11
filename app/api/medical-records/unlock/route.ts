@@ -5,9 +5,11 @@ import { eq } from "drizzle-orm"
 import { z } from "zod"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { VisitStatus } from "@/types/visit-status"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 const unlockSchema = z.object({
-  id: z.number().int().positive(),
+  id: z.string(),
 })
 
 export const POST = withRBAC(
@@ -23,24 +25,37 @@ export const POST = withRBAC(
         .limit(1)
 
       if (existing.length === 0) {
-        return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Medical record not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       if (!existing[0].isLocked) {
-        return NextResponse.json({ error: "Medical record is not locked" }, { status: 400 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Medical record is not locked",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       const medicalRecord = existing[0]
 
       // Unlock the medical record
-      const [unlockedRecord] = await db
+      await db
         .update(medicalRecords)
         .set({
           isLocked: false,
           isDraft: true,
           lockedAt: null,
           lockedBy: null,
-          updatedAt: new Date(),
         })
         .where(eq(medicalRecords.id, validatedData.id))
         .returning()
@@ -48,37 +63,43 @@ export const POST = withRBAC(
       // Revert visit status back to in_examination
       // This allows the record to be locked again later
       const newStatus: VisitStatus = "in_examination"
-      const [updatedVisit] = await db
+      await db
         .update(visits)
         .set({
           status: newStatus,
-          updatedAt: new Date(),
         })
         .where(eq(visits.id, medicalRecord.visitId))
         .returning()
 
-      return NextResponse.json({
-        success: true,
+      const response: ResponseApi = {
         message: "Medical record unlocked successfully. Visit status reverted to in_examination.",
-        data: {
-          medicalRecord: unlockedRecord,
-          visit: {
-            id: updatedVisit.id,
-            visitNumber: updatedVisit.visitNumber,
-            newStatus: updatedVisit.status,
-          },
-        },
-      })
+        status: HTTP_STATUS_CODES.CREATED,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        })
       }
 
       console.error("Medical record unlock error:", error)
-      return NextResponse.json({ error: "Failed to unlock medical record" }, { status: 500 })
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to unlock medical record",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:lock"] }

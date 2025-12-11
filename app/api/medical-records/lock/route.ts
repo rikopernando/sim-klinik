@@ -150,14 +150,27 @@ export const POST = withRBAC(
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        })
       }
 
       console.error("Medical record lock error:", error)
-      return NextResponse.json({ error: "Failed to lock medical record" }, { status: 500 })
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to lock medical record",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:lock"] }
