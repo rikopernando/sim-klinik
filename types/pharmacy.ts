@@ -2,6 +2,7 @@
  * Pharmacy Module Type Definitions
  * Centralized types for the Pharmacy/Farmasi module
  */
+import { Prescription } from "@/types/medical-record"
 
 /**
  * Movement Types
@@ -89,29 +90,6 @@ export interface DrugInventoryWithDetails extends DrugInventory {
   drug: Drug
   expiryAlertLevel: ExpiryAlertLevel
   daysUntilExpiry: number
-}
-
-/**
- * Prescription Entity
- */
-export interface Prescription {
-  id: string
-  medicalRecordId: string
-  drugId: string
-  dosage: string
-  frequency: string
-  duration: string | null
-  quantity: number
-  instructions: string | null
-  route: string | null
-  isFulfilled: boolean
-  fulfilledBy: string | null
-  fulfilledAt: string | null
-  dispensedQuantity: number | null
-  inventoryId: string | null
-  notes: string | null
-  createdAt: string
-  updatedAt: string
 }
 
 /**
@@ -259,4 +237,28 @@ export interface ExpiringDrugsData {
   expired: DrugInventoryWithDetails[]
   expiringSoon: DrugInventoryWithDetails[]
   warning: DrugInventoryWithDetails[]
+}
+
+/**
+ * Prescription Queue Types
+ */
+export interface PrescriptionQueueItem {
+  visit: {
+    id: string
+    visitNumber: string
+  }
+  patient: {
+    id: string
+    name: string
+    mrNumber: string
+  }
+  doctor: {
+    id: string
+    name: string
+  } | null
+  medicalRecordId: string
+  prescriptions: Array<{
+    prescription: Prescription
+    drug: Drug
+  }>
 }

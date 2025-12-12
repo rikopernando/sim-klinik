@@ -17,7 +17,6 @@ interface UseExpiringDrugsReturn {
   expiringDrugs: ExpiringDrugsData
   isLoading: boolean
   error: string | null
-  lastRefresh: Date | null
   refresh: () => Promise<void>
 }
 
@@ -32,7 +31,6 @@ export function useExpiringDrugs(options: UseExpiringDrugsOptions = {}): UseExpi
   })
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
   // Use ref to track if component is mounted (prevent state updates after unmount)
   const isMountedRef = useRef(true)
@@ -49,7 +47,6 @@ export function useExpiringDrugs(options: UseExpiringDrugsOptions = {}): UseExpi
       if (!isMountedRef.current) return
 
       setExpiringDrugs(data)
-      setLastRefresh(new Date())
       setError(null)
     } catch (err) {
       if (!isMountedRef.current) return
@@ -92,7 +89,6 @@ export function useExpiringDrugs(options: UseExpiringDrugsOptions = {}): UseExpi
     expiringDrugs,
     isLoading,
     error,
-    lastRefresh,
     refresh: fetchExpiringDrugs,
   }
 }

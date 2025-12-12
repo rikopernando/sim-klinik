@@ -6,35 +6,11 @@
 import axios from "axios"
 import { ResponseApi } from "@/types/api"
 import { ApiServiceError, handleApiError } from "@/lib/services/api.service"
-import { ExpiringDrugsData, PrescriptionFulfillmentInput } from "@/types/pharmacy"
-
-export interface PrescriptionQueueItem {
-  prescription: {
-    id: string
-    dosage: string
-    frequency: string
-    quantity: number
-    duration: string | null
-    instructions: string | null
-    isFulfilled: boolean
-    createdAt: Date
-  }
-  drug: {
-    id: string
-    name: string
-    genericName: string | null
-    unit: string
-  }
-  patient: {
-    id: string
-    name: string
-    mrNumber: string
-  } | null
-  doctor: {
-    id: string
-    name: string
-  } | null
-}
+import {
+  ExpiringDrugsData,
+  PrescriptionFulfillmentInput,
+  PrescriptionQueueItem,
+} from "@/types/pharmacy"
 
 export interface BulkFulfillmentResponse {
   success: boolean

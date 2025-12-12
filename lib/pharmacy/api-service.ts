@@ -5,6 +5,10 @@
 
 import { db } from "@/db"
 import { drugs, drugInventory, prescriptions, stockMovements } from "@/db/schema"
+import { medicalRecords } from "@/db/schema/medical-records"
+import { visits } from "@/db/schema/visits"
+import { patients } from "@/db/schema/patients"
+import { user } from "@/db/schema/auth"
 import { eq, sql, and, lt, gte, desc, ilike, or } from "drizzle-orm"
 import type {
   DrugInput,
@@ -15,10 +19,12 @@ import type {
   DrugInventoryWithDetails,
   Drug,
   DrugInventory,
+  PrescriptionQueueItem,
 } from "@/types/pharmacy"
 import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } from "./stock-utils"
 import { DrugInventoryInput } from "./validation"
 import { getSession } from "../rbac"
+import { Prescription } from "@/types/medical-record"
 
 /**
  * Get all drugs with total stock calculation
@@ -305,15 +311,56 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
 }
 
 /**
+ * Helper: Group pending prescriptions by visit
+ * Consolidates prescriptions for the same visit into a single queue item
+ */
+function groupPrescriptionsByVisit(
+  pending: Array<{
+    prescription: Prescription
+    drug: Drug
+    patient: { id: string; name: string; mrNumber: string }
+    doctor: { id: string; name: string } | null
+    visit: { id: string; visitNumber: string }
+    medicalRecordId: string
+  }>
+): PrescriptionQueueItem[] {
+  const groupedByVisit = new Map<string, PrescriptionQueueItem>()
+
+  for (const item of pending) {
+    const visitId = item.visit.id
+
+    if (!groupedByVisit.has(visitId)) {
+      groupedByVisit.set(visitId, {
+        visit: item.visit,
+        patient: item.patient,
+        doctor: item.doctor,
+        medicalRecordId: item.medicalRecordId,
+        prescriptions: [],
+      })
+    }
+
+    const group = groupedByVisit.get(visitId)!
+    group.prescriptions.push({
+      prescription: item.prescription,
+      drug: item.drug,
+    })
+  }
+
+  // Convert to array and sort by most recent prescription
+  return Array.from(groupedByVisit.values()).sort((a, b) => {
+    const aLatest = Math.max(...a.prescriptions.map((p) => p.prescription.createdAt.getTime()))
+    const bLatest = Math.max(...b.prescriptions.map((p) => p.prescription.createdAt.getTime()))
+    return bLatest - aLatest
+  })
+}
+
+/**
  * Get pending prescriptions grouped by visit
  * Includes patient and doctor information via joins
+ * Returns prescriptions sorted by most recent first
  */
-export async function getPendingPrescriptions() {
-  const { medicalRecords } = await import("@/db/schema/medical-records")
-  const { visits } = await import("@/db/schema/visits")
-  const { patients } = await import("@/db/schema/patients")
-  const { user } = await import("@/db/schema/auth")
-
+export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]> {
+  // Fetch all pending prescriptions with related data in a single query
   const pending = await db
     .select({
       prescription: prescriptions,
@@ -337,7 +384,7 @@ export async function getPendingPrescriptions() {
         id: visits.id,
         visitNumber: visits.visitNumber,
       },
-      medicalRecordId: medicalRecords.id, // Include medical record ID for pharmacist prescription feature
+      medicalRecordId: medicalRecords.id,
     })
     .from(prescriptions)
     .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
@@ -348,55 +395,8 @@ export async function getPendingPrescriptions() {
     .where(eq(prescriptions.isFulfilled, false))
     .orderBy(desc(prescriptions.createdAt))
 
-  // Group prescriptions by visit
-  const groupedByVisit = pending.reduce(
-    (acc, item) => {
-      const visitId = item.visit.id
-
-      if (!acc[visitId]) {
-        acc[visitId] = {
-          visit: item.visit,
-          patient: item.patient,
-          doctor: item.doctor,
-          medicalRecordId: item.medicalRecordId, // Include medical record ID
-          prescriptions: [],
-        }
-      }
-
-      acc[visitId].prescriptions.push({
-        prescription: item.prescription,
-        drug: item.drug,
-      })
-
-      return acc
-    },
-    {} as Record<
-      number,
-      {
-        visit: { id: string; visitNumber: string }
-        patient: { id: string; name: string; mrNumber: string }
-        doctor: { id: string; name: string } | null
-        medicalRecordId: string // Added medical record ID
-        prescriptions: Array<{
-          prescription: typeof prescriptions.$inferSelect
-          drug: {
-            id: string
-            name: string
-            genericName: string | null
-            unit: string
-            price: string
-          }
-        }>
-      }
-    >
-  )
-
-  // Convert to array and sort by most recent prescription
-  return Object.values(groupedByVisit).sort((a, b) => {
-    const aLatest = Math.max(...a.prescriptions.map((p) => p.prescription.createdAt.getTime()))
-    const bLatest = Math.max(...b.prescriptions.map((p) => p.prescription.createdAt.getTime()))
-    return bLatest - aLatest
-  })
+  // Group prescriptions by visit for better UX
+  return groupPrescriptionsByVisit(pending)
 }
 
 /**
