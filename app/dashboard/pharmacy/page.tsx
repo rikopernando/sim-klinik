@@ -6,7 +6,6 @@
  */
 
 import { useState, useCallback } from "react"
-import axios from "axios"
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PharmacyHeader } from "@/components/pharmacy/pharmacy-header"
@@ -14,6 +13,11 @@ import { PharmacyStatsCards } from "@/components/pharmacy/pharmacy-stats-cards"
 import { PrescriptionQueueTable } from "@/components/pharmacy/prescription-queue-table"
 import { ExpiringDrugsList } from "@/components/pharmacy/expiring-drugs-list"
 import { BulkFulfillmentDialog } from "@/components/pharmacy/bulk-fulfillment-dialog"
+import {
+  bulkFulfillPrescriptions,
+  PrescriptionFulfillmentInput,
+} from "@/lib/services/pharmacy.service"
+import { getErrorMessage } from "@/lib/utils/error"
 import { toast } from "sonner"
 
 interface Drug {
@@ -72,38 +76,25 @@ export default function PharmacyDashboard() {
     refresh,
   } = usePharmacyDashboard()
 
+  console.log({ queue, queueLoading, queueError, expiringDrugs, expiringLoading, expiringError })
+
   const [selectedGroup, setSelectedGroup] = useState<GroupedQueueItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleBulkFulfill = useCallback(
-    async (
-      prescriptions: Array<{
-        prescriptionId: string
-        inventoryId: string
-        dispensedQuantity: number
-        fulfilledBy: string
-        notes?: string
-      }>
-    ) => {
+    async (prescriptions: PrescriptionFulfillmentInput[]) => {
       setIsSubmitting(true)
       try {
-        const response = await axios.post("/api/pharmacy/fulfillment/bulk", {
-          prescriptions,
-        })
+        // Use service layer instead of direct axios call
+        const result = await bulkFulfillPrescriptions(prescriptions)
 
-        if (response.data.success) {
-          toast.success(response.data.message || "Semua resep berhasil diproses")
-          setSelectedGroup(null)
-          refresh()
-        }
+        toast.success(result.message || "Semua resep berhasil diproses")
+        setSelectedGroup(null)
+        refresh()
       } catch (error) {
-        console.error("Bulk fulfillment error:", error)
-        if (axios.isAxiosError(error)) {
-          toast.error(error.response?.data?.error || "Gagal memproses resep")
-        } else {
-          toast.error("Terjadi kesalahan saat memproses resep")
-        }
+        const errorMessage = getErrorMessage(error)
+        toast.error(errorMessage || "Gagal memproses resep")
         throw error // Re-throw to let dialog handle it
       } finally {
         setIsSubmitting(false)

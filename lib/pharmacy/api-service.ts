@@ -11,7 +11,6 @@ import type {
   DrugUpdateInput,
   PrescriptionFulfillmentInput,
   StockAdjustmentInput,
-  StockMovementInput,
   DrugWithStock,
   DrugInventoryWithDetails,
   Drug,

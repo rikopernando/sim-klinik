@@ -226,18 +226,6 @@ export interface ExpiryAlert {
 }
 
 /**
- * API Response Types
- */
-export interface APIResponse<T = any> {
-  success: boolean
-  message?: string
-  data?: T
-  error?: string
-  details?: any
-  count?: number
-}
-
-/**
  * Prescription Filter Options
  */
 export type PrescriptionFilter = "all" | "pending" | "fulfilled"
@@ -246,3 +234,29 @@ export type PrescriptionFilter = "all" | "pending" | "fulfilled"
  * Stock Filter Options
  */
 export type StockFilter = "all" | "low" | "critical" | "expiring" | "expired"
+
+/**
+ * Expiring Drugs Types
+ */
+export interface DrugInventoryWithDetails {
+  id: string
+  drugId: string
+  batchNumber: string
+  expiryDate: Date
+  stockQuantity: number
+  purchasePrice: string | null
+  supplier: string | null
+  receivedDate: Date
+  createdAt: Date
+  updatedAt: Date
+  drug: Drug
+  expiryAlertLevel: "expired" | "expiring_soon" | "warning" | "safe"
+  daysUntilExpiry: number
+}
+
+export interface ExpiringDrugsData {
+  all: DrugInventoryWithDetails[]
+  expired: DrugInventoryWithDetails[]
+  expiringSoon: DrugInventoryWithDetails[]
+  warning: DrugInventoryWithDetails[]
+}
