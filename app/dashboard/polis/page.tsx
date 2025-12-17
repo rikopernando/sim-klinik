@@ -27,14 +27,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import {
-  IconAdjustmentsPlus,
-  IconBookmarkPlus,
-  IconBubblePlus,
-  IconCirclePlus2,
-  IconSearch,
-  IconUserPlus,
-} from "@tabler/icons-react"
+import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
 import { PolisTable } from "@/components/polis/polis-table"
 import { toast } from "sonner"
 import { usePoli } from "@/hooks/use-poli"
@@ -43,7 +36,6 @@ import { EditPolisDialog } from "@/components/polis/edit-polis-dialog"
 import { CreatePolisDialog } from "@/components/polis/create-polis-dialog"
 
 export default function UsersPage() {
-  // search is handled by the hook (debounced) via `searchQuery` and `setSearchQuery`
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)

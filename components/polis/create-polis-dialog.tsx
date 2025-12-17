@@ -22,7 +22,6 @@ interface CreatePolisDialogProps {
 
 export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -33,7 +32,6 @@ export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisD
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setError(null)
 
     try {
       await onSubmit(formData)
@@ -41,7 +39,6 @@ export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisD
       toast.success("Poli berhasil dibuat!")
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create poli"
-      setError(errorMessage)
       toast.error(`Gagal membuat poli: ${errorMessage}`)
     } finally {
       setIsSubmitting(false)
