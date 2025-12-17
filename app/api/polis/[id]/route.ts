@@ -1,0 +1,167 @@
+/**
+ * Polis API Route - Single Item Operations
+ * PATCH /api/polis/[id] - Update a poli
+ * DELETE /api/polis/[id] - Delete a poli
+ */
+
+import { NextResponse } from "next/server"
+import { eq } from "drizzle-orm"
+
+import { db } from "@/db"
+import { polis } from "@/db/schema/visits"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { Poli } from "@/types/poli"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+
+type Params = {
+  params: Promise<{
+    id: string
+  }>
+}
+
+/**
+ * Update a poli
+ */
+export async function PATCH(request: Request, { params }: Params) {
+  try {
+    const { id } = await params
+    const body = await request.json()
+
+    // Validate ID
+    if (!id) {
+      const response: ResponseError<null> = {
+        error: null,
+        message: "Poli ID is required",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      })
+    }
+
+    // Check if poli exists
+    const existingPoli = await db.select().from(polis).where(eq(polis.id, id)).limit(1)
+
+    if (existingPoli.length === 0) {
+      const response: ResponseError<null> = {
+        error: null,
+        message: "Poli not found",
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      })
+    }
+
+    // Check if code is being updated and already exists
+    if (body.code && body.code !== existingPoli[0].code) {
+      const codeExists = await db.select().from(polis).where(eq(polis.code, body.code)).limit(1)
+
+      if (codeExists.length > 0) {
+        const response: ResponseError<null> = {
+          error: null,
+          message: "Poli with this code already exists",
+          status: HTTP_STATUS_CODES.CONFLICT,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.CONFLICT,
+        })
+      }
+    }
+
+    // Prepare update data
+    const updateData: Partial<Poli> = {}
+    if (body.name !== undefined) updateData.name = body.name
+    if (body.code !== undefined) updateData.code = body.code
+    if (body.description !== undefined) updateData.description = body.description
+    if (body.isActive !== undefined) updateData.isActive = body.isActive
+
+    // Update poli
+    const updatedPoli = await db
+      .update(polis)
+      .set({
+        ...updateData,
+        // updatedAt: new Date(),
+      })
+      .where(eq(polis.id, id))
+      .returning()
+
+    const response: ResponseApi<Poli> = {
+      message: "Poli updated successfully",
+      data: updatedPoli[0],
+      status: HTTP_STATUS_CODES.OK,
+    }
+
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+  } catch (error) {
+    console.error("Error updating poli:", error)
+
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to update poli",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    }
+
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
+  }
+}
+
+/**
+ * Delete a poli (hard delete)
+ */
+export async function DELETE(request: Request, { params }: Params) {
+  try {
+    const { id } = await params
+
+    // Validate ID
+    if (!id) {
+      const response: ResponseError<null> = {
+        error: null,
+        message: "Poli ID is required",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      })
+    }
+
+    // Check if poli exists
+    const existingPoli = await db.select().from(polis).where(eq(polis.id, id)).limit(1)
+
+    if (existingPoli.length === 0) {
+      const response: ResponseError<null> = {
+        error: null,
+        message: "Poli not found",
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      })
+    }
+
+    // Hard delete: remove the record from the table
+    await db.delete(polis).where(eq(polis.id, id))
+
+    const response: ResponseApi<null> = {
+      message: "Poli deleted successfully",
+      data: null,
+      status: HTTP_STATUS_CODES.OK,
+    }
+
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+  } catch (error) {
+    console.error("Error deleting poli:", error)
+
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to delete poli",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    }
+
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
+  }
+}

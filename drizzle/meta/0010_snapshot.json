@@ -1,6 +1,6 @@
 {
-  "id": "33250791-9bea-4470-a46c-880e89d5905c",
-  "prevId": "a633f651-e0c6-42c3-a97d-49d424fb9606",
+  "id": "2564b812-eb43-4a3c-94b1-f1232af3993e",
+  "prevId": "ab1d7955-c3ca-4bd4-b3ab-44549f09a260",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -946,7 +946,7 @@
       "columns": {
         "id": {
           "name": "id",
-          "type": "serial",
+          "type": "text",
           "primaryKey": true,
           "notNull": true
         },
@@ -1282,7 +1282,74 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "patients_mr_number_idx": {
+          "name": "patients_mr_number_idx",
+          "columns": [
+            {
+              "expression": "mr_number",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patients_nik_idx": {
+          "name": "patients_nik_idx",
+          "columns": [
+            {
+              "expression": "nik",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patients_name_idx": {
+          "name": "patients_name_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "patients_name_created_at_idx": {
+          "name": "patients_name_created_at_idx",
+          "columns": [
+            {
+              "expression": "name",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
@@ -1342,6 +1409,13 @@
         },
         "created_at": {
           "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "update_at": {
+          "name": "update_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
