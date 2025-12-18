@@ -47,7 +47,7 @@ export const drugInventorySchema = z.object({
 })
 
 /**
- * Prescription Fulfillment Schema
+ * Prescription Fulfillment Schema (single)
  */
 export const prescriptionFulfillmentSchema = z.object({
   prescriptionId: z.string().min(1, "Prescription ID harus valid"),
@@ -55,6 +55,17 @@ export const prescriptionFulfillmentSchema = z.object({
   dispensedQuantity: z.number().int().positive("Jumlah yang diberikan harus positif"),
   fulfilledBy: z.string().min(1, "Fulfilled by is required"),
   notes: z.string().optional(),
+})
+
+/**
+ * Bulk Prescription Fulfillment Schema
+ * Validates an array of prescription fulfillment requests
+ */
+export const bulkPrescriptionFulfillmentSchema = z.object({
+  prescriptions: z
+    .array(prescriptionFulfillmentSchema)
+    .min(1, "Minimal satu resep harus diisi")
+    .max(50, "Maksimal 50 resep dapat diproses sekaligus"),
 })
 
 /**
@@ -91,5 +102,6 @@ export type DrugInput = z.infer<typeof drugSchema>
 export type DrugUpdateInput = z.infer<typeof drugUpdateSchema>
 export type DrugInventoryInput = z.infer<typeof drugInventorySchema>
 export type PrescriptionFulfillmentInput = z.infer<typeof prescriptionFulfillmentSchema>
+export type BulkPrescriptionFulfillmentInput = z.infer<typeof bulkPrescriptionFulfillmentSchema>
 export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>
 export type StockMovementInput = z.infer<typeof stockMovementSchema>

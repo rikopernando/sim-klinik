@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
+import { ZodError } from "zod"
+
 import { bulkFulfillPrescriptions } from "@/lib/pharmacy/api-service"
-import { getErrorMessage } from "@/lib/utils/error"
+import { bulkPrescriptionFulfillmentSchema } from "@/lib/pharmacy/validation"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * POST /api/pharmacy/fulfillment/bulk
@@ -11,43 +15,43 @@ export const POST = withRBAC(
   async (request: NextRequest) => {
     try {
       const body = await request.json()
-      const { prescriptions } = body
 
-      if (!Array.isArray(prescriptions) || prescriptions.length === 0) {
-        return NextResponse.json(
-          { error: "Prescriptions array is required and must not be empty" },
-          { status: 400 }
-        )
+      // Validate request body with Zod schema
+      const validatedData = bulkPrescriptionFulfillmentSchema.parse(body)
+
+      // Execute bulk fulfillment
+      await bulkFulfillPrescriptions(validatedData.prescriptions)
+
+      const response: ResponseApi = {
+        message: "Bulk prescription fulfillment successful",
+        status: HTTP_STATUS_CODES.OK,
       }
 
-      // Validate each prescription item
-      for (const item of prescriptions) {
-        if (
-          !item.prescriptionId ||
-          !item.inventoryId ||
-          !item.dispensedQuantity ||
-          !item.fulfilledBy
-        ) {
-          return NextResponse.json(
-            {
-              error:
-                "Each prescription must have prescriptionId, inventoryId, dispensedQuantity, and fulfilledBy",
-            },
-            { status: 400 }
-          )
-        }
-      }
-
-      const results = await bulkFulfillPrescriptions(prescriptions)
-
-      return NextResponse.json({
-        success: true,
-        message: `Successfully fulfilled ${results.length} prescriptions`,
-        data: results,
-      })
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
+      // Handle Zod validation errors with detailed feedback
+      if (error instanceof ZodError) {
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
+      }
+
+      // Handle business logic errors
       console.error("Bulk fulfillment error:", error)
-      return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 })
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to bulk fulfill prescriptions",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["prescriptions:fulfill"] }
