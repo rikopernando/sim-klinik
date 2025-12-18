@@ -52,8 +52,17 @@ export interface DuplicateBatchCheck {
  * Get all drug inventories with details
  */
 export async function getAllInventories(): Promise<DrugInventoryWithDetails[]> {
-  const response = await axios.get("/api/pharmacy/inventory")
-  return response.data.data || []
+  try {
+    const response =
+      await axios.get<ResponseApi<DrugInventoryWithDetails[]>>("/api/pharmacy/inventory")
+    if (!response.data.data) {
+      throw new Error("Invalid response: missing data")
+    }
+    return response.data.data || []
+  } catch (error) {
+    console.error("Error in getAllInventories service:", error)
+    handleApiError(error)
+  }
 }
 
 /**

@@ -6,35 +6,37 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { getAllDrugInventory, addDrugInventory } from "@/lib/pharmacy/api-service"
-import { APIResponse } from "@/types/pharmacy"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { DrugInventoryWithDetails } from "@/types/pharmacy"
 
 /**
  * GET /api/pharmacy/inventory
  * Get all drug inventories with details
  */
-export async function GET(
-  request: NextRequest,
-  context: { params: Record<string, string | string[]> }
-) {
+export async function GET() {
   try {
     const inventories = await getAllDrugInventory()
 
-    const response: APIResponse = {
-      success: true,
+    const response: ResponseApi<DrugInventoryWithDetails[]> = {
       data: inventories,
-      count: inventories.length,
+      message: "Inventory fetched successfully",
+      status: HTTP_STATUS_CODES.OK,
     }
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
     console.error("Inventory fetch error:", error)
 
-    const response: APIResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch inventory",
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to fetch inventory",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
-    return NextResponse.json(response, { status: 500 })
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }
 

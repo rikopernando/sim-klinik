@@ -191,6 +191,10 @@ export async function getAllDrugInventory(): Promise<DrugInventoryWithDetails[]>
 
       return {
         ...inventory,
+        expiryDate: inventory.expiryDate.toISOString(),
+        receivedDate: inventory.receivedDate.toISOString(),
+        createdAt: inventory.createdAt.toISOString(),
+        updatedAt: inventory.updatedAt.toISOString(),
         drug,
         daysUntilExpiry,
         expiryAlertLevel,

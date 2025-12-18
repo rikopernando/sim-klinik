@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/table"
 import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils"
 import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
+import { ExpiryAlertLevel } from "@/types/pharmacy"
 
 interface InventoryTableProps {
   inventories: DrugInventoryWithDetails[]
@@ -49,7 +50,7 @@ const getStockBadge = (quantity: number) => {
   return <Badge variant="outline">Tersedia</Badge>
 }
 
-const getExpiryBadge = (level: string) => {
+const getExpiryBadge = (level: ExpiryAlertLevel) => {
   const colors = getExpiryAlertColor(level)
   const labels = {
     expired: "Kadaluarsa",
@@ -74,7 +75,8 @@ export function InventoryTable({ inventories, isLoading, error }: InventoryTable
           </TableCell>
           <TableCell className="font-mono text-sm">{inventory.batchNumber}</TableCell>
           <TableCell>
-            <span className="font-semibold">{inventory.stockQuantity}</span> {inventory.drug.unit}
+            <span className="font-semibold">{inventory.stockQuantity.toLocaleString("id-ID")}</span>{" "}
+            {inventory.drug.unit}
           </TableCell>
           <TableCell>
             <span className={expiryColors.text}>
@@ -94,7 +96,7 @@ export function InventoryTable({ inventories, isLoading, error }: InventoryTable
   if (inventories.length === 0) return <EmptyState />
 
   return (
-    <Card>
+    <Card className="py-0">
       <CardContent className="p-4">
         <div className="w-full overflow-x-auto">
           <div className="rounded-md border">
