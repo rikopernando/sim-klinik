@@ -74,13 +74,13 @@ export interface DrugInventory {
   id: string
   drugId: string
   batchNumber: string
-  expiryDate: Date
+  expiryDate: string
   stockQuantity: number
   purchasePrice: string | null
   supplier: string | null
-  receivedDate: Date
-  createdAt: Date
-  updatedAt: Date
+  receivedDate: string
+  createdAt: string
+  updatedAt: string
 }
 
 /**
@@ -213,25 +213,6 @@ export type PrescriptionFilter = "all" | "pending" | "fulfilled"
  */
 export type StockFilter = "all" | "low" | "critical" | "expiring" | "expired"
 
-/**
- * Expiring Drugs Types
- */
-export interface DrugInventoryWithDetails {
-  id: string
-  drugId: string
-  batchNumber: string
-  expiryDate: Date
-  stockQuantity: number
-  purchasePrice: string | null
-  supplier: string | null
-  receivedDate: Date
-  createdAt: Date
-  updatedAt: Date
-  drug: Drug
-  expiryAlertLevel: "expired" | "expiring_soon" | "warning" | "safe"
-  daysUntilExpiry: number
-}
-
 export interface ExpiringDrugsData {
   all: DrugInventoryWithDetails[]
   expired: DrugInventoryWithDetails[]
@@ -257,8 +238,8 @@ export interface PrescriptionQueueItem {
     name: string
   } | null
   medicalRecordId: string
-  prescriptions: Array<{
+  prescriptions: {
     prescription: Prescription
     drug: Drug
-  }>
+  }[]
 }

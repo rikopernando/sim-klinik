@@ -16,7 +16,7 @@ export async function getDoctors(): Promise<Doctor[]> {
   try {
     const response = await axios.get<ResponseApi<Doctor[]>>("/api/doctors")
     if (!response.data.data) {
-      throw new ApiServiceError("Invalid response: missing polis data")
+      throw new ApiServiceError("Invalid response: missing doctors data")
     }
 
     return response.data.data

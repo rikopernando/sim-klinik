@@ -15,9 +15,8 @@ import { APIResponse } from "@/types/pharmacy"
 export async function GET(request: NextRequest, context: { params: Promise<{ drugId: string }> }) {
   try {
     const { drugId } = await context.params
-    const drugIdNum = parseInt(drugId)
 
-    if (isNaN(drugIdNum)) {
+    if (!drugId) {
       const response: APIResponse = {
         success: false,
         error: "Invalid drug ID",
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest, context: { params: Promise<{ dru
       return NextResponse.json(response, { status: 400 })
     }
 
-    const allInventories = await getDrugInventoryByDrugId(drugIdNum)
+    const allInventories = await getDrugInventoryByDrugId(drugId)
 
     // Filter: only non-expired batches with stock > 0
     const availableBatches = allInventories.filter(

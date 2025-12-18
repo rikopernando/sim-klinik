@@ -24,8 +24,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { AlertCircle, Loader2, Plus } from "lucide-react"
-import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.service"
+import { getPharmacists } from "@/lib/services/pharmacist.service"
 import axios from "axios"
+import { Pharmacist } from "@/types/user"
 
 interface Drug {
   id: string
@@ -233,6 +234,11 @@ export function AddPrescriptionDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>Fitur ini masih dalam proses development</AlertDescription>
+        </Alert>
+
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -372,7 +378,7 @@ export function AddPrescriptionDialog({
             <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Batal
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <Button onClick={handleSubmit} disabled>
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

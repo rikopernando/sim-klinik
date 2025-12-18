@@ -41,8 +41,6 @@ export function VisitRegistrationForm({
   const { doctors, isLoading: loadingDoctors, errorMessage: doctorsError } = useDoctor()
   const { polis, isLoading: loadingPolis, errorMessage: polisError } = usePoli()
 
-  console.log({ doctors, polis })
-
   // Form setup
   const {
     register,

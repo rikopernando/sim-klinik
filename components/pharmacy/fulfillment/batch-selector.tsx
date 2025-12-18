@@ -5,11 +5,12 @@
 
 import { memo } from "react"
 import Link from "next/link"
+import { AlertCircle, Package, PlusCircle } from "lucide-react"
+
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { AlertCircle, Package, PlusCircle } from "lucide-react"
 import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils"
 import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
 
@@ -18,7 +19,7 @@ interface BatchSelectorProps {
   batches: DrugInventoryWithDetails[]
   selectedBatch: DrugInventoryWithDetails | null
   onBatchSelect: (batch: DrugInventoryWithDetails) => void
-  drugId?: number
+  drugId?: string
   drugName?: string
 }
 
@@ -26,7 +27,7 @@ const LoadingState = () => (
   <div className="text-muted-foreground p-4 text-center">Loading batches...</div>
 )
 
-const EmptyState = ({ drugId, drugName }: { drugId?: number; drugName?: string }) => (
+const EmptyState = ({ drugId, drugName }: { drugId?: string; drugName?: string }) => (
   <div className="bg-destructive/10 border-destructive rounded-md border p-4">
     <div className="flex items-start gap-2">
       <AlertCircle className="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
@@ -63,15 +64,15 @@ const BatchCard = memo(function BatchCard({
 
   return (
     <Card
-      className={`cursor-pointer transition-colors ${
-        isSelected ? "border-primary ring-primary ring-2" : "hover:border-primary/50"
+      className={`cursor-pointer py-0 transition-colors ${
+        isSelected ? "border-primary ring-primary" : "hover:border-primary/50"
       }`}
       onClick={onClick}
     >
       <CardContent className="p-3">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <Package className="text-muted-foreground h-4 w-4" />
               <p className="font-mono text-sm font-medium">{batch.batchNumber}</p>
               {isSelected && (
@@ -84,7 +85,7 @@ const BatchCard = memo(function BatchCard({
               <span>
                 Stok:{" "}
                 <span className="text-foreground font-semibold">
-                  {batch.stockQuantity} {batch.drug.unit}
+                  {batch.stockQuantity.toLocaleString("id-ID")} {batch.drug.unit}
                 </span>
               </span>
               <span className={colors.text}>

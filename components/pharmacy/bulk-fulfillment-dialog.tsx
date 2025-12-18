@@ -3,90 +3,25 @@
  * Allows processing multiple prescriptions at once
  */
 
-import { useState, useEffect } from "react"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { useState, useCallback, useMemo } from "react"
 import { AlertCircle, Loader2, Plus } from "lucide-react"
-import {
-  getAvailableBatches,
-  type DrugInventoryWithDetails,
-} from "@/lib/services/inventory.service"
-import { BatchSelector } from "./fulfillment/batch-selector"
-import { getPharmacists, type Pharmacist } from "@/lib/services/pharmacist.service"
-import { Label } from "../ui/label"
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Separator } from "@/components/ui/separator"
+import { PrescriptionQueueItem } from "@/types/pharmacy"
+
+import { usePharmacists } from "./hooks/use-pharmacists"
+import { useBulkFulfillmentData } from "./hooks/use-bulk-fulfillment-data"
+import { BulkFulfillmentHeader } from "./bulk-fulfillment/header"
+import { PrescriptionItem } from "./bulk-fulfillment/prescription-item"
+import { FulfillmentFormFields } from "./bulk-fulfillment/form-fields"
 import { AddPrescriptionDialog } from "./add-prescription-dialog"
-
-interface Drug {
-  id: string
-  name: string
-  genericName?: string | null
-  unit: string
-  price: string
-}
-
-interface Prescription {
-  id: string
-  dosage: string
-  frequency: string
-  quantity: number
-  duration?: string | null
-  instructions?: string | null
-}
-
-interface PrescriptionItem {
-  prescription: Prescription
-  drug: Drug
-}
-
-interface Patient {
-  id: string
-  name: string
-  mrNumber: string
-}
-
-interface Visit {
-  id: string
-  visitNumber: string
-}
-
-interface GroupedQueueItem {
-  visit: Visit
-  patient: Patient
-  doctor: { id: string; name: string } | null
-  medicalRecordId: string
-  prescriptions: PrescriptionItem[]
-}
-
-interface FulfillmentFormData {
-  inventoryId: string
-  dispensedQuantity: number
-  availableBatches: DrugInventoryWithDetails[]
-  selectedBatch: DrugInventoryWithDetails | null
-  isLoading: boolean
-  error: string | null
-}
 
 interface BulkFulfillmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  selectedGroup: GroupedQueueItem | null
+  selectedGroup: PrescriptionQueueItem | null
   isSubmitting: boolean
   onSubmit: (
     data: {
@@ -98,7 +33,7 @@ interface BulkFulfillmentDialogProps {
     }[]
   ) => Promise<void>
   onPrescriptionAdded?: () => void // Callback when prescription is added
-  medicalRecordId?: number // Medical record ID for adding prescriptions
+  medicalRecordId?: string // Medical record ID for adding prescriptions
 }
 
 export function BulkFulfillmentDialog({
@@ -110,96 +45,28 @@ export function BulkFulfillmentDialog({
   onPrescriptionAdded,
   medicalRecordId,
 }: BulkFulfillmentDialogProps) {
-  const [fulfillmentData, setFulfillmentData] = useState<Record<number, FulfillmentFormData>>({})
+  // Form state
   const [fulfilledBy, setFulfilledBy] = useState("")
   const [notes, setNotes] = useState("")
   const [validationError, setValidationError] = useState<string | null>(null)
-  const [pharmacists, setPharmacists] = useState<Pharmacist[]>([])
-  const [isLoadingPharmacists, setIsLoadingPharmacists] = useState(false)
   const [addPrescriptionDialogOpen, setAddPrescriptionDialogOpen] = useState(false)
 
-  // Load pharmacists when dialog opens
-  useEffect(() => {
-    if (open) {
-      const loadPharmacists = async () => {
-        setIsLoadingPharmacists(true)
-        try {
-          const pharmacistsList = await getPharmacists()
-          setPharmacists(pharmacistsList)
-        } catch (error) {
-          console.error("Error fetching pharmacists:", error)
-        } finally {
-          setIsLoadingPharmacists(false)
-        }
-      }
+  // Custom hooks
+  const { pharmacists, isLoading: isLoadingPharmacists } = usePharmacists(open)
+  const {
+    fulfillmentData,
+    handleBatchSelect,
+    reset: resetFulfillmentData,
+  } = useBulkFulfillmentData(open, selectedGroup)
 
-      loadPharmacists()
-    }
-  }, [open])
+  // Memoized validation check
+  const isFormValid = useMemo(() => {
+    if (!fulfilledBy.trim()) return false
+    return !Object.values(fulfillmentData).some((d) => d.isLoading || !d.inventoryId)
+  }, [fulfilledBy, fulfillmentData])
 
-  // Load batches for all prescriptions when dialog opens
-  useEffect(() => {
-    if (open && selectedGroup) {
-      const loadBatches = async () => {
-        const newData: Record<number, FulfillmentFormData> = {}
-
-        for (const item of selectedGroup.prescriptions) {
-          newData[item.prescription.id] = {
-            inventoryId: 0,
-            dispensedQuantity: item.prescription.quantity,
-            availableBatches: [],
-            selectedBatch: null,
-            isLoading: true,
-            error: null,
-          }
-        }
-
-        setFulfillmentData(newData)
-
-        // Load batches for each drug
-        for (const item of selectedGroup.prescriptions) {
-          try {
-            const batches = await getAvailableBatches(item.drug.id)
-            const firstBatch = batches.length > 0 ? batches[0] : null
-            setFulfillmentData((prev) => ({
-              ...prev,
-              [item.prescription.id]: {
-                ...prev[item.prescription.id],
-                availableBatches: batches,
-                selectedBatch: firstBatch,
-                inventoryId: firstBatch ? firstBatch.id : 0,
-                isLoading: false,
-              },
-            }))
-          } catch {
-            setFulfillmentData((prev) => ({
-              ...prev,
-              [item.prescription.id]: {
-                ...prev[item.prescription.id],
-                isLoading: false,
-                error: "Gagal memuat batch",
-              },
-            }))
-          }
-        }
-      }
-
-      loadBatches()
-    }
-  }, [open, selectedGroup])
-
-  const handleBatchSelect = (prescriptionId: string, batch: DrugInventoryWithDetails) => {
-    setFulfillmentData((prev) => ({
-      ...prev,
-      [prescriptionId]: {
-        ...prev[prescriptionId],
-        selectedBatch: batch,
-        inventoryId: batch.id,
-      },
-    }))
-  }
-
-  const handleSubmit = async () => {
+  // Handlers
+  const handleSubmit = useCallback(async () => {
     setValidationError(null)
 
     // Validate all fields are filled
@@ -219,7 +86,7 @@ export function BulkFulfillmentDialog({
     for (const item of selectedGroup?.prescriptions || []) {
       const data = fulfillmentData[item.prescription.id]
 
-      if (!data || data.inventoryId === 0) {
+      if (!data || !data.inventoryId) {
         setValidationError(`Batch untuk ${item.drug.name} belum dipilih`)
         return
       }
@@ -239,58 +106,34 @@ export function BulkFulfillmentDialog({
     }
 
     await onSubmit(prescriptionData)
-  }
+  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     if (!isSubmitting) {
-      setFulfillmentData({})
+      resetFulfillmentData()
       setFulfilledBy("")
       setNotes("")
       setValidationError(null)
       onOpenChange(false)
     }
-  }
+  }, [isSubmitting, resetFulfillmentData, onOpenChange])
 
-  const handlePrescriptionAdded = () => {
-    // Reload prescriptions after adding
+  const handlePrescriptionAdded = useCallback(() => {
     if (onPrescriptionAdded) {
       onPrescriptionAdded()
     }
-  }
+  }, [onPrescriptionAdded])
+
+  const handleOpenAddPrescription = useCallback(() => {
+    setAddPrescriptionDialogOpen(true)
+  }, [])
 
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <DialogTitle>Proses Resep - Bulk</DialogTitle>
-                <DialogDescription>
-                  {selectedGroup && (
-                    <div>
-                      <p className="text-foreground font-medium">
-                        Pasien: {selectedGroup.patient.name} ({selectedGroup.patient.mrNumber})
-                      </p>
-                      <p className="text-sm">Kunjungan: {selectedGroup.visit.visitNumber}</p>
-                      <p className="text-sm">Total Resep: {selectedGroup.prescriptions.length}</p>
-                    </div>
-                  )}
-                </DialogDescription>
-              </div>
-              {/* Add Prescription Button */}
-              {medicalRecordId && selectedGroup?.doctor && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAddPrescriptionDialogOpen(true)}
-                  disabled={isSubmitting}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Tambah Resep
-                </Button>
-              )}
-            </div>
+            <BulkFulfillmentHeader selectedGroup={selectedGroup} />
           </DialogHeader>
 
           {validationError && (
@@ -302,121 +145,53 @@ export function BulkFulfillmentDialog({
 
           <div className="space-y-6">
             {/* Prescription Items */}
-            {selectedGroup?.prescriptions.map((item, idx) => {
-              const data = fulfillmentData[item.prescription.id]
-
-              return (
-                <div key={item.prescription.id} className="space-y-3">
-                  {idx > 0 && <Separator />}
-
-                  {/* Drug Header */}
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <Badge>{idx + 1}</Badge>
-                        <h4 className="font-semibold">{item.drug.name}</h4>
-                      </div>
-                      {item.drug.genericName && (
-                        <p className="text-muted-foreground ml-8 text-sm">
-                          {item.drug.genericName}
-                        </p>
-                      )}
-                      <div className="text-muted-foreground mt-1 ml-8 flex gap-4 text-sm">
-                        <span>Dosis: {item.prescription.dosage}</span>
-                        <span>Frekuensi: {item.prescription.frequency}</span>
-                        <span>
-                          Jumlah Resep: {item.prescription.quantity} {item.drug.unit}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Batch Selector */}
-                  <div className="ml-8">
-                    <BatchSelector
-                      isLoading={data?.isLoading || false}
-                      batches={data?.availableBatches || []}
-                      selectedBatch={data?.selectedBatch || null}
-                      onBatchSelect={(batch) => handleBatchSelect(item.prescription.id, batch)}
-                      drugId={item.drug.id}
-                      drugName={item.drug.name}
-                    />
-                  </div>
-
-                  {/* Display Prescription Quantity (Read-only) */}
-                  {!data?.isLoading && !data?.error && data?.selectedBatch && (
-                    <div className="ml-8">
-                      <p className="text-muted-foreground text-sm">
-                        Jumlah Diberikan:{" "}
-                        <span className="text-foreground font-medium">
-                          {item.prescription.quantity} {item.drug.unit}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+            {selectedGroup?.prescriptions.map((item, idx) => (
+              <PrescriptionItem
+                key={item.prescription.id}
+                index={idx}
+                drugId={item.drug.id}
+                drugName={item.drug.name}
+                genericName={item.drug.genericName}
+                frequency={item.prescription.frequency}
+                quantity={item.prescription.quantity}
+                unit={item.drug.unit}
+                fulfillmentData={fulfillmentData[item.prescription.id]}
+                onBatchSelect={(batch) => handleBatchSelect(item.prescription.id, batch)}
+                showSeparator={idx > 0}
+              />
+            ))}
 
             <Separator />
 
-            {/* Common Fields */}
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="fulfilledBy">
-                  Petugas Farmasi <span className="text-destructive">*</span>
-                </Label>
-                <Select
-                  value={fulfilledBy}
-                  onValueChange={(value) => setFulfilledBy(value)}
-                  disabled={isLoadingPharmacists}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        isLoadingPharmacists
-                          ? "Memuat farmasi..."
-                          : pharmacists.length === 0
-                            ? "Tidak ada farmasi tersedia"
-                            : "Pilih petugas farmasi"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {pharmacists.map((pharmacist) => (
-                      <SelectItem key={pharmacist.id} value={pharmacist.id}>
-                        {pharmacist.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Add Prescription Button */}
+            {medicalRecordId && selectedGroup?.doctor && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenAddPrescription}
+                disabled={isSubmitting}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Tambah Resep
+              </Button>
+            )}
 
-              <div className="space-y-2">
-                <Label htmlFor="notes">Catatan (Opsional)</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Catatan tambahan untuk semua resep..."
-                  rows={3}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </div>
-            </div>
+            {/* Common Fields */}
+            <FulfillmentFormFields
+              notes={notes}
+              fulfilledBy={fulfilledBy}
+              pharmacists={pharmacists}
+              isLoadingPharmacists={isLoadingPharmacists}
+              onFulfilledByChange={setFulfilledBy}
+              onNotesChange={setNotes}
+            />
 
             {/* Actions */}
             <div className="flex justify-end gap-2 pt-4">
               <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={
-                  isSubmitting ||
-                  !fulfilledBy.trim() ||
-                  Object.values(fulfillmentData).some((d) => d.isLoading || d.inventoryId === 0)
-                }
-              >
+              <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

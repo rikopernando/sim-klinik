@@ -32,6 +32,7 @@ New Feedback
 1. Farmasi
   - Pada Proses Resep - Bulk Dialog, Farmasi tidak bisa memproses obat sebelum rekam mediknya dikunci. Untku menghindari farmasi memproses resep yang belum selesai diinput. Jadi Button Proses Obat bisa disable dulu dan diberi keterangan
   - Pada Antrian Resep Urutkan berdasarkan yang datang lebih dulu
+  - Pilih Batch apakah bisa lebih dari 1? Misal, kebutuhan obat ada 20, pada batch 1 sisa 10, 10nya lagi ngambil dari batch lain. Ini akan berguna jika ingin menghabiskan dulu stock yang ada.
 2. Billing
   - [x] Pastikan flow billing pada rawat jalan sudah firm. Kapan billing diproses harus jelas
 3. [x] Setup prettier dan eslint

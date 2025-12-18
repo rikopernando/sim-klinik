@@ -12,13 +12,11 @@ import { user } from "@/db/schema/auth"
 import { eq, sql, and, lt, gte, desc, ilike, or } from "drizzle-orm"
 import type {
   DrugInput,
-  DrugUpdateInput,
   PrescriptionFulfillmentInput,
   StockAdjustmentInput,
   DrugWithStock,
   DrugInventoryWithDetails,
   Drug,
-  DrugInventory,
   PrescriptionQueueItem,
 } from "@/types/pharmacy"
 import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } from "./stock-utils"

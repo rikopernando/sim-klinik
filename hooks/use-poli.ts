@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 
-import { getPolis } from "@/lib/services/poli.service"
 import { Poli } from "@/types/poli"
+import { getPolis } from "@/lib/services/poli.service"
 import { getErrorMessage } from "@/lib/utils/error"
 
 export function usePoli() {
@@ -10,21 +10,32 @@ export function usePoli() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    let ignore = false
+
     const fetchPolis = async () => {
       setLoading(true)
       setErrorMessage(null)
       try {
         const polisList = await getPolis()
-        setPolis(polisList)
+        if (!ignore) {
+          setPolis(polisList)
+        }
       } catch (error) {
-        setErrorMessage(getErrorMessage(error))
+        if (!ignore) {
+          setErrorMessage(getErrorMessage(error))
+        }
         console.error("Error fetching polis:", error)
       } finally {
-        setLoading(false)
+        if (!ignore) {
+          setLoading(false)
+        }
       }
     }
 
     fetchPolis()
+    return () => {
+      ignore = true
+    }
   }, [])
 
   return { polis, isLoading, errorMessage }

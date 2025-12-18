@@ -51,7 +51,7 @@ export async function POST(
 
     // Validate input
     const schema = z.object({
-      drugId: z.number().int().positive(),
+      drugId: z.string(),
       batchNumber: z.string().min(1),
       expiryDate: z.string().datetime(),
       stockQuantity: z.number().int().positive(),

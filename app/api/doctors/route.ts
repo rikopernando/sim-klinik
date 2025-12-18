@@ -40,7 +40,7 @@ export async function GET() {
 
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
-    console.error("Error fetching polis:", error)
+    console.error("Error fetching doctors:", error)
 
     const response: ResponseError<unknown> = {
       error,

@@ -6,6 +6,8 @@
  */
 
 import { useState, useCallback } from "react"
+import { toast } from "sonner"
+
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PharmacyHeader } from "@/components/pharmacy/pharmacy-header"
@@ -13,56 +15,9 @@ import { PharmacyStatsCards } from "@/components/pharmacy/pharmacy-stats-cards"
 import { PrescriptionQueueTable } from "@/components/pharmacy/prescription-queue-table"
 import { ExpiringDrugsList } from "@/components/pharmacy/expiring-drugs-list"
 import { BulkFulfillmentDialog } from "@/components/pharmacy/bulk-fulfillment-dialog"
-import {
-  bulkFulfillPrescriptions,
-  PrescriptionFulfillmentInput,
-} from "@/lib/services/pharmacy.service"
+import { bulkFulfillPrescriptions } from "@/lib/services/pharmacy.service"
 import { getErrorMessage } from "@/lib/utils/error"
-import { toast } from "sonner"
-
-interface Drug {
-  id: string
-  name: string
-  genericName?: string | null
-  unit: string
-  price: string
-}
-
-interface Patient {
-  id: string
-  name: string
-  mrNumber: string
-}
-
-interface Doctor {
-  id: string
-  name: string
-}
-
-interface Visit {
-  id: string
-  visitNumber: string
-}
-
-interface Prescription {
-  id: string
-  dosage: string
-  frequency: string
-  quantity: number
-  duration?: string | null
-  instructions?: string | null
-}
-
-interface GroupedQueueItem {
-  visit: Visit
-  patient: Patient
-  doctor: Doctor | null
-  medicalRecordId: string
-  prescriptions: Array<{
-    prescription: Prescription
-    drug: Drug
-  }>
-}
+import { PrescriptionFulfillmentInput, PrescriptionQueueItem } from "@/types/pharmacy"
 
 export default function PharmacyDashboard() {
   const {
@@ -76,9 +31,7 @@ export default function PharmacyDashboard() {
     refresh,
   } = usePharmacyDashboard()
 
-  console.log({ queue, queueLoading, queueError, expiringDrugs, expiringLoading, expiringError })
-
-  const [selectedGroup, setSelectedGroup] = useState<GroupedQueueItem | null>(null)
+  const [selectedGroup, setSelectedGroup] = useState<PrescriptionQueueItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Memoize handlers to prevent unnecessary re-renders
@@ -103,7 +56,7 @@ export default function PharmacyDashboard() {
     [refresh]
   )
 
-  const handleProcessGroup = useCallback((group: GroupedQueueItem) => {
+  const handleProcessGroup = useCallback((group: PrescriptionQueueItem) => {
     setSelectedGroup(group)
   }, [])
 
