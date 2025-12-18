@@ -51,20 +51,11 @@ export async function fulfillPrescription(data: PrescriptionFulfillmentInput): P
 /**
  * Bulk fulfill multiple prescriptions in one transaction
  */
-export async function bulkFulfillPrescriptions(
-  prescriptions: PrescriptionFulfillmentInput[]
-): Promise<BulkFulfillmentResponse> {
+export async function bulkFulfillPrescriptions(prescriptions: PrescriptionFulfillmentInput[]) {
   try {
-    const response = await axios.post<ResponseApi<BulkFulfillmentResponse>>(
-      "/api/pharmacy/fulfillment/bulk",
-      { prescriptions }
-    )
-
-    if (!response.data.data) {
-      throw new ApiServiceError("Invalid response: missing bulk fulfillment data")
-    }
-
-    return response.data.data
+    await axios.post<ResponseApi<BulkFulfillmentResponse>>("/api/pharmacy/fulfillment/bulk", {
+      prescriptions,
+    })
   } catch (error) {
     handleApiError(error)
   }

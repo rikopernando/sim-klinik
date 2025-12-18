@@ -40,9 +40,9 @@ export default function PharmacyDashboard() {
       setIsSubmitting(true)
       try {
         // Use service layer instead of direct axios call
-        const result = await bulkFulfillPrescriptions(prescriptions)
+        await bulkFulfillPrescriptions(prescriptions)
 
-        toast.success(result.message || "Semua resep berhasil diproses")
+        toast.success("Semua resep berhasil diproses")
         setSelectedGroup(null)
         refresh()
       } catch (error) {
