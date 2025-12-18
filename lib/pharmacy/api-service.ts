@@ -273,13 +273,26 @@ export async function addDrugInventory(data: DrugInventoryInput) {
 }
 
 /**
- * Get expiring drugs (expiry date < 30 days)
+ * Get expiring drugs within the next 30 days
+ *
+ * Returns inventory batches that:
+ * - Expire within 30 days from today
+ * - Have stock quantity > 0 (excludes depleted batches)
+ *
+ * Enriches each batch with:
+ * - daysUntilExpiry: Calculated days remaining
+ * - expiryAlertLevel: Severity level (critical/warning/normal)
+ *
+ * @returns Array of inventory batches sorted by expiry date (soonest first)
  */
 export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
-  const thirtyDaysFromNow = new Date()
-  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30)
+  // Define expiry threshold (30 days from now)
+  const EXPIRY_THRESHOLD_DAYS = 30
+  const expiryThreshold = new Date()
+  expiryThreshold.setDate(expiryThreshold.getDate() + EXPIRY_THRESHOLD_DAYS)
 
-  const inventories = await db
+  // Query inventories expiring soon with available stock
+  const results = await db
     .select({
       inventory: drugInventory,
       drug: drugs,
@@ -287,25 +300,30 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
     .from(drugInventory)
     .innerJoin(drugs, eq(drugInventory.drugId, drugs.id))
     .where(
-      and(lt(drugInventory.expiryDate, thirtyDaysFromNow), gte(drugInventory.stockQuantity, 1))
+      and(
+        lt(drugInventory.expiryDate, expiryThreshold), // Expires within threshold
+        gte(drugInventory.stockQuantity, 1) // Has stock (no need to alert on empty batches)
+      )
     )
-    .orderBy(drugInventory.expiryDate)
+    .orderBy(drugInventory.expiryDate) // Sort by soonest expiry first
 
-  const inventoriesWithDetails: DrugInventoryWithDetails[] = inventories.map(
-    ({ inventory, drug }) => {
-      const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString())
-      const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry)
+  // Enrich with calculated expiry metadata and convert Date objects to ISO strings
+  return results.map(({ inventory, drug }) => {
+    const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString())
+    const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry)
 
-      return {
-        ...inventory,
-        drug,
-        daysUntilExpiry,
-        expiryAlertLevel,
-      }
+    return {
+      ...inventory,
+      // Convert Date fields to ISO strings to match DrugInventoryWithDetails type
+      expiryDate: inventory.expiryDate.toISOString(),
+      receivedDate: inventory.receivedDate.toISOString(),
+      createdAt: inventory.createdAt.toISOString(),
+      updatedAt: inventory.updatedAt.toISOString(),
+      drug,
+      daysUntilExpiry,
+      expiryAlertLevel,
     }
-  )
-
-  return inventoriesWithDetails
+  })
 }
 
 /**
