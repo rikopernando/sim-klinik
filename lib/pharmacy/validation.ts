@@ -50,8 +50,8 @@ export const drugInventorySchema = z.object({
  * Prescription Fulfillment Schema
  */
 export const prescriptionFulfillmentSchema = z.object({
-  prescriptionId: z.number().int().positive("Prescription ID harus valid"),
-  inventoryId: z.number().int().positive("Inventory ID harus valid"),
+  prescriptionId: z.string().min(1, "Prescription ID harus valid"),
+  inventoryId: z.string().min(1, "Inventory ID harus valid"),
   dispensedQuantity: z.number().int().positive("Jumlah yang diberikan harus positif"),
   fulfilledBy: z.string().min(1, "Fulfilled by is required"),
   notes: z.string().optional(),
@@ -76,7 +76,7 @@ export const stockAdjustmentSchema = z.object({
 export const stockMovementSchema = z.object({
   inventoryId: z.number().int().positive("Inventory ID harus valid"),
   movementType: z.enum(["in", "out", "adjustment", "expired"], {
-    required_error: "Tipe movement wajib dipilih",
+    message: "Tipe movement wajib dipilih",
   }),
   quantity: z.number().int(),
   reason: z.string().optional(),

@@ -59,48 +59,38 @@ export const POST = withRBAC(
       const validatedData = prescriptionFulfillmentSchema.parse(body)
 
       // Fulfill prescription
-      const fulfilledPrescription = await fulfillPrescription(validatedData)
+      await fulfillPrescription(validatedData)
 
-      const response: ResponseApi<typeof fulfilledPrescription> = {
+      const response: ResponseApi = {
         message: "Prescription fulfilled successfully",
-        data: fulfilledPrescription,
         status: HTTP_STATUS_CODES.OK,
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        const response: ResponseError<z.ZodIssue[]> = {
+        const response: ResponseError<unknown> = {
           error: error.issues,
           message: "Validation error",
           status: HTTP_STATUS_CODES.BAD_REQUEST,
         }
-        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       console.error("Prescription fulfillment error:", error)
 
-      // Determine status code based on error message
-      const errorMessage = error instanceof Error ? error.message : "Failed to fulfill prescription"
-      const isBadRequest =
-        error instanceof Error &&
-        (error.message === "Prescription not found" ||
-          error.message === "Prescription already fulfilled" ||
-          error.message === "Inventory not found" ||
-          error.message === "Insufficient stock")
-
-      const statusCode = isBadRequest
-        ? HTTP_STATUS_CODES.BAD_REQUEST
-        : HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR
-
       const response: ResponseError<unknown> = {
         error,
-        message: errorMessage,
-        status: statusCode,
+        message: "Failed to create patient",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
       }
 
-      return NextResponse.json(response, { status: statusCode })
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
-  { permissions: ["pharmacy:fulfill"] }
+  { permissions: ["prescriptions:fulfill"] }
 )

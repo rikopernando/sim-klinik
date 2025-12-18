@@ -488,74 +488,83 @@ export async function bulkFulfillPrescriptions(
 
 /**
  * Fulfill prescription (single)
+ * Uses transaction to ensure atomicity and parallel queries for better performance
  */
 export async function fulfillPrescription(data: PrescriptionFulfillmentInput) {
-  // Get prescription
-  const prescription = await db
-    .select()
-    .from(prescriptions)
-    .where(eq(prescriptions.id, data.prescriptionId))
-    .limit(1)
+  // Fetch prescription and inventory in parallel for better performance
+  const [prescription, inventory] = await Promise.all([
+    db
+      .select()
+      .from(prescriptions)
+      .where(eq(prescriptions.id, data.prescriptionId))
+      .limit(1)
+      .then((result) => result[0]),
+    db
+      .select()
+      .from(drugInventory)
+      .where(eq(drugInventory.id, data.inventoryId))
+      .limit(1)
+      .then((result) => result[0]),
+  ])
 
-  if (prescription.length === 0) {
-    throw new Error("Prescription not found")
+  // Validate prescription exists and is not fulfilled
+  if (!prescription) {
+    throw new Error(`Prescription with ID ${data.prescriptionId} not found`)
   }
 
-  if (prescription[0].isFulfilled) {
-    throw new Error("Prescription already fulfilled")
+  if (prescription.isFulfilled) {
+    throw new Error(`Prescription ${data.prescriptionId} has already been fulfilled`)
   }
 
-  // Get inventory
-  const inventory = await db
-    .select()
-    .from(drugInventory)
-    .where(eq(drugInventory.id, data.inventoryId))
-    .limit(1)
-
-  if (inventory.length === 0) {
-    throw new Error("Inventory not found")
+  // Validate inventory exists and has sufficient stock
+  if (!inventory) {
+    throw new Error(`Inventory with ID ${data.inventoryId} not found`)
   }
 
-  // Check stock availability
-  if (inventory[0].stockQuantity < data.dispensedQuantity) {
-    throw new Error("Insufficient stock")
+  if (inventory.stockQuantity < data.dispensedQuantity) {
+    throw new Error(
+      `Insufficient stock. Available: ${inventory.stockQuantity}, Requested: ${data.dispensedQuantity}`
+    )
   }
 
-  // Update prescription
-  const [updatedPrescription] = await db
-    .update(prescriptions)
-    .set({
-      isFulfilled: true,
-      fulfilledBy: data.fulfilledBy,
-      fulfilledAt: sql`CURRENT_TIMESTAMP`,
-      dispensedQuantity: data.dispensedQuantity,
+  // Execute all updates in a transaction to ensure data consistency
+  const result = await db.transaction(async (tx) => {
+    // Update prescription status
+    const [updatedPrescription] = await tx
+      .update(prescriptions)
+      .set({
+        isFulfilled: true,
+        fulfilledBy: data.fulfilledBy,
+        fulfilledAt: sql`CURRENT_TIMESTAMP`,
+        dispensedQuantity: data.dispensedQuantity,
+        inventoryId: data.inventoryId,
+        notes: data.notes || null,
+      })
+      .where(eq(prescriptions.id, data.prescriptionId))
+      .returning()
+
+    // Reduce inventory stock
+    await tx
+      .update(drugInventory)
+      .set({
+        stockQuantity: sql`${drugInventory.stockQuantity} - ${data.dispensedQuantity}`,
+      })
+      .where(eq(drugInventory.id, data.inventoryId))
+
+    // Record stock movement for audit trail
+    await tx.insert(stockMovements).values({
       inventoryId: data.inventoryId,
-      notes: data.notes || null,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
+      movementType: "out",
+      quantity: -data.dispensedQuantity,
+      reason: `Resep #${data.prescriptionId}`,
+      referenceId: data.prescriptionId,
+      performedBy: data.fulfilledBy,
     })
-    .where(eq(prescriptions.id, data.prescriptionId))
-    .returning()
 
-  // Reduce stock
-  await db
-    .update(drugInventory)
-    .set({
-      stockQuantity: sql`${drugInventory.stockQuantity} - ${data.dispensedQuantity}`,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(eq(drugInventory.id, data.inventoryId))
-
-  // Record stock movement
-  await db.insert(stockMovements).values({
-    inventoryId: data.inventoryId,
-    movementType: "out",
-    quantity: -data.dispensedQuantity,
-    reason: `Resep #${data.prescriptionId}`,
-    referenceId: data.prescriptionId,
-    performedBy: data.fulfilledBy,
+    return updatedPrescription
   })
 
-  return updatedPrescription
+  return result
 }
 
 /**
