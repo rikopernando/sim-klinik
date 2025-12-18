@@ -47,7 +47,7 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
       for (const item of selectedGroup.prescriptions) {
         try {
           const batches = await getAvailableBatches(item.drug.id)
-          const firstBatch = batches.length > 0 ? batches[0] : null
+          const [firstBatch] = batches || []
 
           if (!ignore) {
             setFulfillmentData((prev) => ({

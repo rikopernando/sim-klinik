@@ -6,6 +6,8 @@
 import axios from "axios"
 import { DrugInventoryInput } from "../pharmacy/validation"
 import { ExpiryAlertLevel } from "@/types/pharmacy"
+import { ResponseApi } from "@/types/api"
+import { ApiServiceError, handleApiError } from "./api.service"
 
 export interface DrugInventory {
   id: string
@@ -112,6 +114,16 @@ export async function addInventory(
  * Sorted by expiry date (FEFO - First Expired, First Out)
  */
 export async function getAvailableBatches(drugId: string): Promise<DrugInventoryWithDetails[]> {
-  const response = await axios.get(`/api/pharmacy/inventory/${drugId}/available`)
-  return response.data.data || []
+  try {
+    const response = await axios.get<ResponseApi<DrugInventoryWithDetails[]>>(
+      `/api/pharmacy/inventory/${drugId}/available`
+    )
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing batches data")
+    }
+    return response.data.data
+  } catch (error) {
+    console.error("Error in getAvailableBatches service:", error)
+    handleApiError(error)
+  }
 }

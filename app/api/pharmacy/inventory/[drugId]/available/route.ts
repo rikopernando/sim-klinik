@@ -5,22 +5,26 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getDrugInventoryByDrugId } from "@/lib/pharmacy/api-service"
-import { APIResponse } from "@/types/pharmacy"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { DrugInventoryWithDetails } from "@/types/pharmacy"
 
 /**
  * GET /api/pharmacy/inventory/[drugId]/available
  * Get available batches for a drug (for fulfillment)
  * Returns only non-expired batches with stock > 0, sorted by expiry date (FEFO)
  */
-export async function GET(request: NextRequest, context: { params: Promise<{ drugId: string }> }) {
+export async function GET(_request: NextRequest, context: { params: Promise<{ drugId: string }> }) {
   try {
     const { drugId } = await context.params
 
     if (!drugId) {
-      const response: APIResponse = {
-        success: false,
-        error: "Invalid drug ID",
+      const response: ResponseError<unknown> = {
+        error: {},
+        message: "Invalid drug ID",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
       }
+
       return NextResponse.json(response, { status: 400 })
     }
 
@@ -31,21 +35,22 @@ export async function GET(request: NextRequest, context: { params: Promise<{ dru
       (inv) => inv.stockQuantity > 0 && inv.expiryAlertLevel !== "expired"
     )
 
-    const response: APIResponse = {
-      success: true,
+    const response: ResponseApi<DrugInventoryWithDetails[]> = {
+      message: "Available batches fetched successfully",
       data: availableBatches,
-      count: availableBatches.length,
+      status: HTTP_STATUS_CODES.OK,
     }
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
-    console.error("Available batches fetch error:", error)
+    console.error("Pending prescriptions fetch error:", error)
 
-    const response: APIResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch available batches",
+    const response: ResponseError<unknown> = {
+      error,
+      message: "Failed to fetch available batches",
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
-    return NextResponse.json(response, { status: 500 })
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
   }
 }

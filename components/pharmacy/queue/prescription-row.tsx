@@ -41,7 +41,7 @@ export const PrescriptionRow = memo(function PrescriptionRow({
       </TableCell>
       <TableCell>
         <Button size="sm" onClick={() => onProcess(item)}>
-          Proses Semua
+          Proses
         </Button>
       </TableCell>
     </TableRow>

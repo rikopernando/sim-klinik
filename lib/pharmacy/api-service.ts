@@ -224,6 +224,10 @@ export async function getDrugInventoryByDrugId(
 
       return {
         ...inventory,
+        expiryDate: inventory.expiryDate.toISOString(),
+        receivedDate: inventory.receivedDate.toISOString(),
+        createdAt: inventory.createdAt.toISOString(),
+        updatedAt: inventory.updatedAt.toISOString(),
         drug,
         daysUntilExpiry,
         expiryAlertLevel,
