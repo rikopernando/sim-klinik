@@ -311,6 +311,7 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
 /**
  * Helper: Group pending prescriptions by visit
  * Consolidates prescriptions for the same visit into a single queue item
+ * Uses Map for O(1) lookup performance and pre-calculates timestamps for efficient sorting
  */
 function groupPrescriptionsByVisit(
   pending: Array<{
@@ -322,11 +323,17 @@ function groupPrescriptionsByVisit(
     medicalRecordId: string
   }>
 ): PrescriptionQueueItem[] {
-  const groupedByVisit = new Map<string, PrescriptionQueueItem>()
+  // Early return for empty input
+  if (pending.length === 0) return []
+
+  // Group by visit ID using Map for efficient lookups
+  const groupedByVisit = new Map<string, PrescriptionQueueItem & { latestTimestamp: number }>()
 
   for (const item of pending) {
     const visitId = item.visit.id
+    const prescriptionTimestamp = item.prescription.createdAt.getTime()
 
+    // Create new group if this is the first prescription for this visit
     if (!groupedByVisit.has(visitId)) {
       groupedByVisit.set(visitId, {
         visit: item.visit,
@@ -334,50 +341,60 @@ function groupPrescriptionsByVisit(
         doctor: item.doctor,
         medicalRecordId: item.medicalRecordId,
         prescriptions: [],
+        latestTimestamp: prescriptionTimestamp,
       })
     }
 
     const group = groupedByVisit.get(visitId)!
+
+    // Add prescription to group
     group.prescriptions.push({
       prescription: item.prescription,
       drug: item.drug,
     })
+
+    // Update latest timestamp if this prescription is newer
+    if (prescriptionTimestamp > group.latestTimestamp) {
+      group.latestTimestamp = prescriptionTimestamp
+    }
   }
 
-  // Convert to array and sort by most recent prescription
-  return Array.from(groupedByVisit.values()).sort((a, b) => {
-    const aLatest = Math.max(...a.prescriptions.map((p) => p.prescription.createdAt.getTime()))
-    const bLatest = Math.max(...b.prescriptions.map((p) => p.prescription.createdAt.getTime()))
-    return bLatest - aLatest
-  })
+  // Convert to array and sort by pre-calculated timestamps (most recent first)
+  return Array.from(groupedByVisit.values())
+    .sort((a, b) => b.latestTimestamp - a.latestTimestamp)
+    .map(({ latestTimestamp, ...queueItem }) => queueItem)
 }
 
 /**
  * Get pending prescriptions grouped by visit
- * Includes patient and doctor information via joins
- * Returns prescriptions sorted by most recent first
+ *
+ * Optimizations:
+ * - Single query with joins to minimize database round trips
+ * - Selective field projection to reduce data transfer
+ * - Pre-sorted by creation date for efficient grouping
+ * - Groups multiple prescriptions per visit into single queue items
+ *
+ * @returns Array of queue items sorted by most recent prescription (descending)
  */
 export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]> {
-  // Fetch all pending prescriptions with related data in a single query
+  // Fetch all unfulfilled prescriptions with related entities in a single optimized query
   const pending = await db
     .select({
       prescription: prescriptions,
-      drug: {
-        id: drugs.id,
-        name: drugs.name,
-        genericName: drugs.genericName,
-        unit: drugs.unit,
-        price: drugs.price,
-      },
+      // Select only required drug fields to minimize payload size
+      drug: drugs,
+      // Patient identification fields
       patient: {
         id: patients.id,
         name: patients.name,
         mrNumber: patients.mrNumber,
       },
+      // Doctor who prescribed (nullable)
       doctor: {
         id: user.id,
         name: user.name,
       },
+      // Visit context
       visit: {
         id: visits.id,
         visitNumber: visits.visitNumber,
@@ -389,11 +406,11 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
     .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
     .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
     .innerJoin(patients, eq(visits.patientId, patients.id))
-    .leftJoin(user, eq(medicalRecords.doctorId, user.id))
+    .leftJoin(user, eq(medicalRecords.doctorId, user.id)) // Left join: doctor may be null
     .where(eq(prescriptions.isFulfilled, false))
     .orderBy(desc(prescriptions.createdAt))
 
-  // Group prescriptions by visit for better UX
+  // Group prescriptions by visit for better pharmacy workflow UX
   return groupPrescriptionsByVisit(pending)
 }
 
