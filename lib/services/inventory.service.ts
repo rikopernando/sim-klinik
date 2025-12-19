@@ -94,27 +94,12 @@ export async function checkDuplicateBatch(
 /**
  * Add new inventory (stock incoming)
  */
-export async function addInventory(
-  data: DrugInventoryInput
-): Promise<{ success: boolean; message?: string; error?: string; data?: DrugInventory }> {
+export async function addInventory(data: DrugInventoryInput) {
   try {
-    const response = await axios.post("/api/pharmacy/inventory", data)
-    return {
-      success: true,
-      message: response.data.message,
-      data: response.data.data,
-    }
+    await axios.post<ResponseApi>("/api/pharmacy/inventory", data)
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message,
-      }
-    }
-    return {
-      success: false,
-      error: "An unexpected error occurred",
-    }
+    console.error("Error in addInventory service:", error)
+    handleApiError(error)
   }
 }
 

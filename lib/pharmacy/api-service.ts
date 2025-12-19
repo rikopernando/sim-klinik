@@ -244,40 +244,72 @@ export async function getDrugInventoryByDrugId(
 
 /**
  * Add new drug inventory (stock in)
+ *
+ * Performance optimizations:
+ * - Validates drug existence and fetches session in parallel
+ * - Uses database transaction for atomicity (inventory + stock movement)
+ * - Ensures data consistency with automatic rollback on error
+ *
+ * @param data - Drug inventory input data
+ * @returns Newly created inventory record
+ * @throws Error with detailed context if drug not found or session invalid
  */
 export async function addDrugInventory(data: DrugInventoryInput) {
-  // Verify drug exists
-  const drug = await db.select().from(drugs).where(eq(drugs.id, data.drugId)).limit(1)
+  // Fetch drug and session in parallel for better performance
+  const [drug, session] = await Promise.all([
+    db
+      .select()
+      .from(drugs)
+      .where(eq(drugs.id, data.drugId))
+      .limit(1)
+      .then((result) => result[0]),
+    getSession(),
+  ])
 
-  if (drug.length === 0) {
-    throw new Error("Drug not found")
+  // Validate drug exists
+  if (!drug) {
+    throw new Error(`Drug with ID ${data.drugId} not found`)
   }
 
-  const [newInventory] = await db
-    .insert(drugInventory)
-    .values({
-      drugId: data.drugId,
-      batchNumber: data.batchNumber,
-      expiryDate: new Date(data.expiryDate),
-      stockQuantity: data.stockQuantity,
-      purchasePrice: data.purchasePrice ? data.purchasePrice : null,
-      supplier: data.supplier || null,
-      receivedDate: data.receivedDate ? new Date(data.receivedDate) : new Date(),
+  // Validate drug is active
+  if (!drug.isActive) {
+    throw new Error(`Drug ${drug.name} is inactive and cannot accept new stock`)
+  }
+
+  // Validate session exists
+  if (!session?.user?.id) {
+    throw new Error("User session not found. Please login again.")
+  }
+
+  // Execute inventory creation and stock movement in a transaction for atomicity
+  const result = await db.transaction(async (tx) => {
+    // Insert new inventory record
+    const [newInventory] = await tx
+      .insert(drugInventory)
+      .values({
+        drugId: data.drugId,
+        batchNumber: data.batchNumber,
+        expiryDate: new Date(data.expiryDate),
+        stockQuantity: data.stockQuantity,
+        purchasePrice: data.purchasePrice || null,
+        supplier: data.supplier || null,
+        receivedDate: data.receivedDate ? new Date(data.receivedDate) : new Date(),
+      })
+      .returning()
+
+    // Record stock movement for audit trail
+    await tx.insert(stockMovements).values({
+      inventoryId: newInventory.id,
+      movementType: "in",
+      quantity: data.stockQuantity,
+      reason: "Stock masuk baru",
+      performedBy: session.user.id,
     })
-    .returning()
 
-  const session = await getSession()
-
-  // Record stock movement
-  await db.insert(stockMovements).values({
-    inventoryId: newInventory.id,
-    movementType: "in",
-    quantity: data.stockQuantity,
-    reason: "Stock masuk baru",
-    performedBy: session?.user.id,
+    return newInventory
   })
 
-  return newInventory
+  return result
 }
 
 /**

@@ -37,7 +37,7 @@ export const drugUpdateSchema = z.object({
  * Drug Inventory Schema
  */
 export const drugInventorySchema = z.object({
-  drugId: z.number().int().positive("Drug ID harus valid"),
+  drugId: z.string().min(1, "Drug ID harus valid"),
   batchNumber: z.string().min(1, "Nomor batch wajib diisi"),
   expiryDate: z.string().min(1, "Tanggal kadaluarsa wajib diisi"),
   receivedDate: z.string().optional(),
