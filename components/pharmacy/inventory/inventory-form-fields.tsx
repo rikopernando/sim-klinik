@@ -72,6 +72,7 @@ export function InventoryFormFields({
               name="expiryDate"
               render={({ field }) => (
                 <DatePickerField
+                  required
                   label="Tanggal Kadaluarsa"
                   value={field.value}
                   onChange={field.onChange}

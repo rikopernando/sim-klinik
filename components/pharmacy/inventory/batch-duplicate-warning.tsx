@@ -3,9 +3,9 @@
  * Displays warning when batch number already exists
  */
 
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertTriangle } from "lucide-react"
-import type { DuplicateBatchCheck } from "@/lib/services/inventory.service"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { DuplicateBatchCheck } from "@/types/inventory"
 
 interface BatchDuplicateWarningProps {
   duplicateCheck: DuplicateBatchCheck
@@ -21,12 +21,12 @@ export function BatchDuplicateWarning({ duplicateCheck }: BatchDuplicateWarningP
   return (
     <Alert variant="destructive">
       <AlertTriangle className="h-4 w-4" />
+      <AlertTitle>Batch sudah ada!</AlertTitle>
       <AlertDescription>
-        <p className="font-medium">Batch sudah ada!</p>
         <p className="mt-1 text-sm">
           Batch <strong>{batch.batchNumber}</strong> untuk obat ini sudah ada dengan stok{" "}
           <strong>
-            {batch.stockQuantity} {batch.drug.unit}
+            {batch.stockQuantity.toLocaleString("id-ID")} {batch.drug.unit}
           </strong>
           .
         </p>
