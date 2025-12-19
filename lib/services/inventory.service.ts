@@ -6,7 +6,7 @@
 import axios from "axios"
 import { DrugInventoryInput } from "../pharmacy/validation"
 import { ExpiryAlertLevel } from "@/types/pharmacy"
-import { ResponseApi } from "@/types/api"
+import { Pagination, ResponseApi } from "@/types/api"
 import { ApiServiceError, handleApiError } from "./api.service"
 import { DuplicateBatchCheck } from "@/types/inventory"
 
@@ -45,18 +45,52 @@ export interface InventoryByDrugItem {
 }
 
 /**
- * Get all drug inventories with details
+ * Get all drug inventories with details (without pagination)
  */
 export async function getAllInventories(): Promise<DrugInventoryWithDetails[]> {
   try {
-    const response =
-      await axios.get<ResponseApi<DrugInventoryWithDetails[]>>("/api/pharmacy/inventory")
+    const response = await axios.get<ResponseApi<DrugInventoryWithDetails[]>>(
+      "/api/pharmacy/inventory?limit=1000"
+    )
     if (!response.data.data) {
       throw new Error("Invalid response: missing data")
     }
     return response.data.data || []
   } catch (error) {
     console.error("Error in getAllInventories service:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get paginated drug inventories with search support
+ */
+export async function getPaginatedInventories(params: {
+  search?: string
+  page?: number
+  limit?: number
+}): Promise<{
+  data: DrugInventoryWithDetails[]
+  pagination: Pagination
+}> {
+  try {
+    const url = `/api/pharmacy/inventory`
+    const response = await axios.get<ResponseApi<DrugInventoryWithDetails[]>>(url, { params })
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    if (!response.data.pagination) {
+      throw new ApiServiceError("Invalid response: missing pagination")
+    }
+
+    return {
+      data: response.data.data,
+      pagination: response.data.pagination,
+    }
+  } catch (error) {
+    console.error("Error in getPaginatedInventories service:", error)
     handleApiError(error)
   }
 }

@@ -96,6 +96,16 @@ export const stockMovementSchema = z.object({
 })
 
 /**
+ * Inventory Query Schema (for GET /api/pharmacy/inventory)
+ * Supports search and pagination
+ */
+export const inventoryQuerySchema = z.object({
+  search: z.string().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+})
+
+/**
  * Type exports
  */
 export type DrugInput = z.infer<typeof drugSchema>
@@ -105,3 +115,4 @@ export type PrescriptionFulfillmentInput = z.infer<typeof prescriptionFulfillmen
 export type BulkPrescriptionFulfillmentInput = z.infer<typeof bulkPrescriptionFulfillmentSchema>
 export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>
 export type StockMovementInput = z.infer<typeof stockMovementSchema>
+export type InventoryQueryInput = z.infer<typeof inventoryQuerySchema>

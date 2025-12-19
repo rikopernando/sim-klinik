@@ -22,6 +22,7 @@ import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } fro
 import { DrugInventoryInput, DrugUpdateInput } from "./validation"
 import { getSession } from "../rbac"
 import { Prescription } from "@/types/medical-record"
+import { Pagination } from "@/types/api"
 
 /**
  * Get all drugs with total stock calculation
@@ -195,6 +196,91 @@ export async function getAllDrugInventory(): Promise<DrugInventoryWithDetails[]>
   )
 
   return inventoriesWithDetails
+}
+
+/**
+ * Get paginated drug inventory with search capability
+ *
+ * @param search - Optional search query to filter by drug name
+ * @param page - Page number (1-based)
+ * @param limit - Number of items per page
+ * @returns Paginated inventory data with metadata
+ */
+export async function getPaginatedDrugInventory(
+  search?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<{
+  data: DrugInventoryWithDetails[]
+  pagination: Pagination
+}> {
+  // Build base query
+  let baseQuery = db
+    .select({
+      inventory: drugInventory,
+      drug: drugs,
+    })
+    .from(drugInventory)
+    .innerJoin(drugs, eq(drugInventory.drugId, drugs.id))
+    .$dynamic()
+
+  // Apply search filter if provided
+  if (search && search.trim()) {
+    baseQuery = baseQuery.where(ilike(drugs.name, `%${search.trim()}%`))
+  }
+
+  // Get total count for pagination
+  const countQuery = db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(drugInventory)
+    .innerJoin(drugs, eq(drugInventory.drugId, drugs.id))
+    .$dynamic()
+
+  // Apply same search filter to count query
+  const finalCountQuery =
+    search && search.trim() ? countQuery.where(ilike(drugs.name, `%${search.trim()}%`)) : countQuery
+
+  const [countResult] = await finalCountQuery
+  const total = countResult?.count || 0
+
+  // Calculate pagination
+  const totalPages = Math.ceil(total / limit)
+  const offset = (page - 1) * limit
+
+  // Fetch paginated data
+  const inventories = await baseQuery
+    .orderBy(desc(drugInventory.createdAt))
+    .limit(limit)
+    .offset(offset)
+
+  // Transform data to include calculated fields
+  const inventoriesWithDetails: DrugInventoryWithDetails[] = inventories.map(
+    ({ inventory, drug }) => {
+      const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString())
+      const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry)
+
+      return {
+        ...inventory,
+        expiryDate: inventory.expiryDate.toISOString(),
+        receivedDate: inventory.receivedDate.toISOString(),
+        createdAt: inventory.createdAt.toISOString(),
+        updatedAt: inventory.updatedAt.toISOString(),
+        drug,
+        daysUntilExpiry,
+        expiryAlertLevel,
+      }
+    }
+  )
+
+  return {
+    data: inventoriesWithDetails,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages,
+    },
+  }
 }
 
 /**

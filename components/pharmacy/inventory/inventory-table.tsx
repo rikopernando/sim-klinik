@@ -3,9 +3,17 @@
  * Displays drug inventory in table format
  */
 
-import { useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { IconSearch } from "@tabler/icons-react"
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
 import {
   Table,
   TableBody,
@@ -17,11 +25,21 @@ import {
 import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils"
 import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
 import { ExpiryAlertLevel } from "@/types/pharmacy"
+import { InventoryPagination } from "./inventory-pagination"
 
 interface InventoryTableProps {
   inventories: DrugInventoryWithDetails[]
   isLoading: boolean
   error: string | null
+  searchQuery: string
+  onSearchChange: (query: string) => void
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+  onPageChange: (page: number) => void
 }
 
 const LoadingState = () => <div className="text-muted-foreground py-8 text-center">Loading...</div>
@@ -87,38 +105,69 @@ export function InventoryTableRow({ inventory }: { inventory: DrugInventoryWithD
   )
 }
 
-export function InventoryTable({ inventories, isLoading, error }: InventoryTableProps) {
+export function InventoryTable({
+  inventories,
+  isLoading,
+  error,
+  searchQuery,
+  onSearchChange,
+  pagination,
+  onPageChange,
+}: InventoryTableProps) {
   if (isLoading) return <LoadingState />
   if (error) return <ErrorState error={error} />
-  if (inventories.length === 0) return <EmptyState />
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Daftar Stok Obat</CardTitle>
+        {pagination.total > 0 && <CardDescription>Total: {pagination.total} batch</CardDescription>}
+        <CardAction>
+          <div className="relative flex-1">
+            <IconSearch
+              className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 transform"
+              size={20}
+            />
+            <Input
+              placeholder="Cari berdasarkan nama obat"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className="min-w-[304px] pl-10"
+            />
+          </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nama Obat</TableHead>
-                <TableHead>Nama Generik</TableHead>
-                <TableHead>Batch Number</TableHead>
-                <TableHead>Stok</TableHead>
-                <TableHead>Tanggal Kadaluarsa</TableHead>
-                <TableHead>Status Stok</TableHead>
-                <TableHead>Status Kadaluarsa</TableHead>
-                <TableHead>Supplier</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {inventories.map((inventory) => (
-                <InventoryTableRow key={inventory.id} inventory={inventory} />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        {inventories.length === 0 ? (
+          <EmptyState />
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nama Obat</TableHead>
+                    <TableHead>Nama Generik</TableHead>
+                    <TableHead>Batch Number</TableHead>
+                    <TableHead>Stok</TableHead>
+                    <TableHead>Tanggal Kadaluarsa</TableHead>
+                    <TableHead>Status Stok</TableHead>
+                    <TableHead>Status Kadaluarsa</TableHead>
+                    <TableHead>Supplier</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inventories.map((inventory) => (
+                    <InventoryTableRow key={inventory.id} inventory={inventory} />
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Pagination */}
+            <InventoryPagination pagination={pagination} onPageChange={onPageChange} />
+          </>
+        )}
       </CardContent>
     </Card>
   )
