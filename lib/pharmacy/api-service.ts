@@ -13,14 +13,13 @@ import { eq, sql, and, lt, gte, desc, ilike, or } from "drizzle-orm"
 import type {
   DrugInput,
   PrescriptionFulfillmentInput,
-  StockAdjustmentInput,
   DrugWithStock,
   DrugInventoryWithDetails,
   Drug,
   PrescriptionQueueItem,
 } from "@/types/pharmacy"
 import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } from "./stock-utils"
-import { DrugInventoryInput } from "./validation"
+import { DrugInventoryInput, DrugUpdateInput } from "./validation"
 import { getSession } from "../rbac"
 import { Prescription } from "@/types/medical-record"
 
@@ -135,14 +134,7 @@ export async function createDrug(data: DrugInput) {
  * Update drug
  */
 export async function updateDrug(drugId: string, data: Partial<DrugUpdateInput>) {
-  const [updatedDrug] = await db
-    .update(drugs)
-    .set({
-      ...data,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(eq(drugs.id, drugId))
-    .returning()
+  const [updatedDrug] = await db.update(drugs).set(data).where(eq(drugs.id, drugId)).returning()
 
   if (!updatedDrug) {
     throw new Error("Drug not found")
@@ -677,56 +669,56 @@ export async function fulfillPrescription(data: PrescriptionFulfillmentInput) {
 }
 
 /**
- * Adjust stock (manual adjustment)
+ * Check if batch number already exists for a drug
+ *
+ * Used for duplicate batch validation during inventory creation.
+ * Returns detailed batch information if duplicate is found.
+ *
+ * @param drugId - The drug ID to check
+ * @param batchNumber - The batch number to check for duplicates
+ * @returns Object with exists flag and optional batch details
  */
-export async function adjustStock(data: StockAdjustmentInput) {
-  // Get inventory
-  const inventory = await db
-    .select()
-    .from(drugInventory)
-    .where(eq(drugInventory.id, data.inventoryId))
-    .limit(1)
-
-  if (inventory.length === 0) {
-    throw new Error("Inventory not found")
-  }
-
-  // Update stock
-  const newStock = inventory[0].stockQuantity + data.quantity
-
-  if (newStock < 0) {
-    throw new Error("Stock cannot be negative")
-  }
-
-  await db
-    .update(drugInventory)
-    .set({
-      stockQuantity: newStock,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
+export async function checkDuplicateBatch(
+  drugId: string,
+  batchNumber: string
+): Promise<{
+  exists: boolean
+  batch?: DrugInventoryWithDetails
+}> {
+  // Query for existing batch with the same drug ID and batch number
+  const result = await db
+    .select({
+      inventory: drugInventory,
+      drug: drugs,
     })
-    .where(eq(drugInventory.id, data.inventoryId))
+    .from(drugInventory)
+    .innerJoin(drugs, eq(drugInventory.drugId, drugs.id))
+    .where(and(eq(drugInventory.drugId, drugId), eq(drugInventory.batchNumber, batchNumber)))
+    .limit(1)
+    .then((results) => results[0])
 
-  // Record stock movement
-  await db.insert(stockMovements).values({
-    inventoryId: data.inventoryId,
-    movementType: "adjustment",
-    quantity: data.quantity,
-    reason: data.reason,
-    performedBy: data.performedBy,
-  })
+  // No duplicate found
+  if (!result) {
+    return { exists: false }
+  }
 
-  return { success: true, newStock }
-}
+  // Duplicate found - return details with calculated fields
+  const { inventory, drug } = result
+  const daysUntilExpiry = calculateDaysUntilExpiry(inventory.expiryDate.toISOString())
+  const expiryAlertLevel = getExpiryAlertLevel(daysUntilExpiry)
 
-/**
- * Get stock movements by inventory ID
- */
-export async function getStockMovements(inventoryId: string) {
-  const movements = await db
-    .select()
-    .from(stockMovements)
-    .where(eq(stockMovements.inventoryId, inventoryId))
-    .orderBy(desc(stockMovements.createdAt))
-
-  return movements
+  return {
+    exists: true,
+    batch: {
+      ...inventory,
+      // Convert Date fields to ISO strings
+      expiryDate: inventory.expiryDate.toISOString(),
+      receivedDate: inventory.receivedDate.toISOString(),
+      createdAt: inventory.createdAt.toISOString(),
+      updatedAt: inventory.updatedAt.toISOString(),
+      drug,
+      daysUntilExpiry,
+      expiryAlertLevel,
+    },
+  }
 }

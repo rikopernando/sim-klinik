@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from "react"
-import { checkDuplicateBatch, type DuplicateBatchCheck } from "@/lib/services/inventory.service"
+import { checkDuplicateBatch } from "@/lib/services/inventory.service"
+import { DuplicateBatchCheck } from "@/types/inventory"
 
 interface UseBatchDuplicateCheckOptions {
   drugId: string

@@ -8,6 +8,7 @@ import { DrugInventoryInput } from "../pharmacy/validation"
 import { ExpiryAlertLevel } from "@/types/pharmacy"
 import { ResponseApi } from "@/types/api"
 import { ApiServiceError, handleApiError } from "./api.service"
+import { DuplicateBatchCheck } from "@/types/inventory"
 
 export interface DrugInventory {
   id: string
@@ -43,11 +44,6 @@ export interface InventoryByDrugItem {
   batches: DrugInventoryWithDetails[]
 }
 
-export interface DuplicateBatchCheck {
-  exists: boolean
-  batch?: DrugInventoryWithDetails
-}
-
 /**
  * Get all drug inventories with details
  */
@@ -81,13 +77,16 @@ export async function checkDuplicateBatch(
   batchNumber: string
 ): Promise<DuplicateBatchCheck> {
   try {
-    const response = await axios.get(
+    const response = await axios.get<ResponseApi<DuplicateBatchCheck>>(
       `/api/pharmacy/inventory/${drugId}/check-batch?batchNumber=${encodeURIComponent(batchNumber)}`
     )
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data duplicate batch check")
+    }
     return response.data.data
   } catch (error) {
-    console.error("Failed to check duplicate batch:", error)
-    return { exists: false }
+    console.error("Error in checkDuplicateBatch service:", error)
+    handleApiError(error)
   }
 }
 

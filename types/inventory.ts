@@ -1,4 +1,5 @@
 import { DrugInventoryInput } from "@/lib/pharmacy/validation"
+import { DrugInventoryWithDetails } from "./pharmacy"
 
 export type DrugInventoryInputValues = Omit<
   DrugInventoryInput,
@@ -9,4 +10,9 @@ export type DrugInventoryInputValues = Omit<
   drugName: string
   drugUnit: string
   stockQuantity: string
+}
+
+export interface DuplicateBatchCheck {
+  exists: boolean
+  batch?: DrugInventoryWithDetails
 }
