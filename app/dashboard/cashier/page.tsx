@@ -35,17 +35,18 @@ export default function CashierDashboard() {
   })
 
   // Billing details for selected visit
-  const {
-    billingDetails,
-    isLoading: detailsLoading,
-    refresh: refreshDetails,
-  } = useBillingDetails(selectedVisitId)
+  const { billingDetails, fetchBillingDetails, isLoading: detailsLoading } = useBillingDetails()
 
   // Payment processing
   const { processPayment, isSubmitting, success, resetPayment } = usePayment()
 
   // Billing calculation (for discount/insurance)
   const { calculateBilling, isSubmitting: isCalculating, success: calculateSuccess } = useBilling()
+
+  const handleSelectVisit = (visitId: string) => {
+    setSelectedVisitId(visitId)
+    fetchBillingDetails(visitId)
+  }
 
   // Calculate remaining amount and subtotal using useMemo for performance
   const remainingAmount = useMemo(() => {
@@ -78,21 +79,19 @@ export default function CashierDashboard() {
   // Refresh after successful payment
   useEffect(() => {
     if (success && selectedVisitId) {
-      refreshDetails()
       refreshQueue()
       setPaymentDialogOpen(false)
       resetPayment()
     }
-  }, [success, selectedVisitId, refreshDetails, refreshQueue, resetPayment])
+  }, [success, selectedVisitId, refreshQueue, resetPayment])
 
   // Refresh after successful discount calculation
   useEffect(() => {
     if (calculateSuccess && selectedVisitId) {
-      refreshDetails()
       refreshQueue()
       setDiscountDialogOpen(false)
     }
-  }, [calculateSuccess, selectedVisitId, refreshDetails, refreshQueue])
+  }, [calculateSuccess, selectedVisitId, refreshQueue])
 
   // Handle payment submission
   const handlePaymentSubmit = useCallback(
@@ -159,7 +158,7 @@ export default function CashierDashboard() {
           queue={queue}
           isLoading={queueLoading}
           selectedVisitId={selectedVisitId}
-          onSelectVisit={setSelectedVisitId}
+          onSelectVisit={handleSelectVisit}
           onRefresh={refreshQueue}
         />
 
@@ -168,7 +167,7 @@ export default function CashierDashboard() {
           selectedVisitId={selectedVisitId}
           billingDetails={billingDetails}
           isLoading={detailsLoading}
-          onRefresh={refreshDetails}
+          onRefresh={() => selectedVisitId && fetchBillingDetails(selectedVisitId)}
           onProcessPayment={() => setPaymentDialogOpen(true)}
           onApplyDiscount={() => setDiscountDialogOpen(true)}
           isSubmitting={isSubmitting}

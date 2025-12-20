@@ -3,56 +3,17 @@
  * Main panel displaying billing summary, payment history, and payment action
  */
 
+import { useMemo, useRef } from "react"
+import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent } from "@/components/ui/card"
-import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+import type { BillingDetails } from "@/types/billing"
+
 import { BillingSummaryCard } from "./billing-summary-card"
 import { PaymentHistoryCard } from "./payment-history-card"
 import { ReceiptPrint } from "./receipt-print"
-import type { PaymentStatus } from "@/types/billing"
-import { useMemo, useRef } from "react"
-
-interface BillingItem {
-  itemName: string
-  quantity: number
-  unitPrice: string
-  totalPrice: string
-}
-
-interface Payment {
-  id: string
-  amount: string
-  paymentMethod: string
-  paymentReference: string | null
-  changeGiven: string | null
-  receivedAt: Date | string
-}
-
-interface Billing {
-  subtotal: string
-  discount: string
-  insuranceCoverage: string
-  totalAmount: string
-  paidAmount: string
-  remainingAmount: string
-  patientPayable: string
-  paymentStatus: PaymentStatus
-}
-
-interface BillingDetails {
-  billing: Billing
-  items: BillingItem[]
-  payments: Payment[]
-  patient: {
-    name: string
-    mrNumber: string
-  }
-  visit: {
-    visitNumber: string
-    createdAt: Date | string
-  }
-}
 
 interface BillingDetailsPanelProps {
   selectedVisitId: string | null

@@ -4,9 +4,11 @@
  */
 
 import axios from "axios"
+
 import { ResponseApi } from "@/types/api"
+import type { BillingDetails, PaymentStatus } from "@/types/billing"
+
 import { ApiServiceError, handleApiError } from "./api.service"
-import type { PaymentStatus } from "@/types/billing"
 
 interface Patient {
   id: string
@@ -58,6 +60,25 @@ export async function getBillingQueue(): Promise<BillingQueueItem[]> {
     return response.data.data
   } catch (error) {
     console.error("Error in getBillingQueue service:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get billing details for a specific visit
+ * Fetches billing information, items, and payments
+ */
+export async function getBillingDetails(visitId: string): Promise<BillingDetails> {
+  try {
+    const response = await axios.get<ResponseApi<BillingDetails>>(`/api/billing/${visitId}`)
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    console.error("Error in getBillingDetails service:", error)
     handleApiError(error)
   }
 }

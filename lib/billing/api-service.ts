@@ -596,51 +596,57 @@ export async function getVisitsReadyForBilling() {
 
 /**
  * Get billing details with items, patient, and visit info
+ *
+ * Fetches comprehensive billing information including:
+ * - Billing record with totals and payment status
+ * - Billing items (services, procedures, medications)
+ * - Payment history
+ * - Patient and visit information
+ *
+ * @param visitId - The visit ID to get billing details for
+ * @returns Billing details with all related data, or null if not found
+ *
+ * Performance optimizations:
+ * - Parallel fetching of billing and visit data
+ * - Early return if billing not found
+ * - Efficient joins for related data
  */
 export async function getBillingDetails(visitId: string) {
-  // Get billing record
-  const billingResult = await db
-    .select()
-    .from(billings)
-    .where(eq(billings.visitId, visitId))
-    .limit(1)
+  // Fetch billing and visit info in parallel for better performance
+  const [billingResult, visitResult] = await Promise.all([
+    db.select().from(billings).where(eq(billings.visitId, visitId)).limit(1),
+    db
+      .select({
+        visit: visits,
+        patient: patients,
+      })
+      .from(visits)
+      .innerJoin(patients, eq(visits.patientId, patients.id))
+      .where(eq(visits.id, visitId))
+      .limit(1),
+  ])
 
-  if (billingResult.length === 0) {
+  // Early return if billing or visit not found
+  if (billingResult.length === 0 || visitResult.length === 0) {
     return null
   }
 
   const billing = billingResult[0]
-
-  // Get billing items
-  const items = await db
-    .select()
-    .from(billingItems)
-    .where(eq(billingItems.billingId, billing.id))
-    .orderBy(billingItems.id)
-
-  // Get payment history
-  const paymentHistory = await db
-    .select()
-    .from(payments)
-    .where(eq(payments.billingId, billing.id))
-    .orderBy(desc(payments.createdAt))
-
-  // Get visit and patient info
-  const visitResult = await db
-    .select({
-      visit: visits,
-      patient: patients,
-    })
-    .from(visits)
-    .innerJoin(patients, eq(visits.patientId, patients.id))
-    .where(eq(visits.id, visitId))
-    .limit(1)
-
-  if (visitResult.length === 0) {
-    return null
-  }
-
   const { visit, patient } = visitResult[0]
+
+  // Fetch billing items and payments in parallel
+  const [items, paymentHistory] = await Promise.all([
+    db
+      .select()
+      .from(billingItems)
+      .where(eq(billingItems.billingId, billing.id))
+      .orderBy(billingItems.id),
+    db
+      .select()
+      .from(payments)
+      .where(eq(payments.billingId, billing.id))
+      .orderBy(desc(payments.createdAt)),
+  ])
 
   return {
     billing,

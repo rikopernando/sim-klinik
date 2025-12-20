@@ -9,59 +9,10 @@ import {
   generateReceiptNumber,
   getPaymentMethodLabel,
 } from "@/lib/billing/billing-utils"
-import type { PaymentStatus } from "@/types/billing"
-
-interface BillingItem {
-  itemName: string
-  quantity: number
-  unitPrice: string
-  totalPrice: string
-  description?: string
-}
-
-interface Payment {
-  id: string
-  amount: string
-  paymentMethod: string
-  paymentReference: string | null
-  changeGiven: string | null
-  receivedAt: Date | string
-}
-
-interface Billing {
-  id: string
-  subtotal: string
-  discount: string
-  discountPercentage: string | null
-  insuranceCoverage: string
-  totalAmount: string
-  paidAmount: string
-  remainingAmount: string
-  patientPayable: string
-  paymentStatus: PaymentStatus
-  paymentMethod: string | null
-}
-
-interface Patient {
-  name: string
-  mrNumber: string
-}
-
-interface Visit {
-  visitNumber: string
-  createdAt: Date | string
-}
-
-interface ReceiptData {
-  billing: Billing
-  items: BillingItem[]
-  payments: Payment[]
-  patient: Patient
-  visit: Visit
-}
+import type { BillingDetails } from "@/types/billing"
 
 interface ReceiptPrintProps {
-  data: ReceiptData
+  data: BillingDetails
 }
 
 export function ReceiptPrint({ data }: ReceiptPrintProps) {
