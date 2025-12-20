@@ -9,6 +9,8 @@ import type { BillingDetails } from "@/types/billing"
 interface BillingCalculations {
   subtotal: number
   totalAmount: number
+  paidAmount: number
+  remainingAmount: number
   drugsSubtotal: number
   proceduresSubtotal: number
 }
@@ -17,7 +19,7 @@ interface BillingCalculations {
  * Calculate billing totals and item-specific subtotals
  *
  * @param billingDetails - The billing details object
- * @returns Calculated billing amounts
+ * @returns Calculated billing amounts including remaining amount for partial payments
  */
 export function useBillingCalculations(billingDetails: BillingDetails | null): BillingCalculations {
   // Calculate main subtotal
@@ -30,6 +32,20 @@ export function useBillingCalculations(billingDetails: BillingDetails | null): B
   const totalAmount = useMemo(() => {
     if (!billingDetails) return 0
     return parseFloat(billingDetails.billing.totalAmount)
+  }, [billingDetails])
+
+  // Calculate paid amount (for partial payments)
+  const paidAmount = useMemo(() => {
+    if (!billingDetails) return 0
+    return parseFloat(billingDetails.billing.paidAmount || "0")
+  }, [billingDetails])
+
+  // Calculate remaining amount (what's left to pay)
+  const remainingAmount = useMemo(() => {
+    if (!billingDetails) return 0
+    return parseFloat(
+      billingDetails.billing.remainingAmount || billingDetails.billing.patientPayable
+    )
   }, [billingDetails])
 
   // Calculate drugs subtotal
@@ -51,6 +67,8 @@ export function useBillingCalculations(billingDetails: BillingDetails | null): B
   return {
     subtotal,
     totalAmount,
+    paidAmount,
+    remainingAmount,
     drugsSubtotal,
     proceduresSubtotal,
   }

@@ -26,6 +26,8 @@ interface ProcessPaymentDialogProps {
   onOpenChange: (open: boolean) => void
   subtotal: number
   currentTotal: number
+  paidAmount: number
+  remainingAmount: number
   drugsSubtotal?: number
   proceduresSubtotal?: number
   onSubmit: (data: ProcessPaymentData) => void
@@ -37,6 +39,8 @@ export function ProcessPaymentDialog({
   onOpenChange,
   subtotal,
   currentTotal,
+  paidAmount,
+  remainingAmount,
   drugsSubtotal,
   proceduresSubtotal,
   onSubmit,
@@ -75,6 +79,8 @@ export function ProcessPaymentDialog({
     insuranceCoverage,
     subtotal,
     currentTotal,
+    paidAmount,
+    remainingAmount,
     drugsSubtotal,
     proceduresSubtotal,
     paymentMethod,
@@ -85,10 +91,20 @@ export function ProcessPaymentDialog({
   const handleSubmit = () => {
     if (!isValid) return
 
+    let finalDiscount = undefined
+
+    if (discountType === "fixed") {
+      finalDiscount = discount
+    } else if (discountType === "drugs_only") {
+      finalDiscount = drugsSubtotal?.toString()
+    } else if (discountType === "procedures_only") {
+      finalDiscount = proceduresSubtotal?.toString()
+    }
+
     onSubmit({
       discountType,
       discountPercentage: discountType === "percentage" ? discountPercentage : undefined,
-      discount: discountType === "fixed" ? discount : undefined,
+      discount: finalDiscount,
       insuranceCoverage: insurance > 0 ? insuranceCoverage : undefined,
       paymentMethod,
       amountReceived: paymentMethod === "cash" ? amountReceived : undefined,
@@ -114,13 +130,17 @@ export function ProcessPaymentDialog({
     }
   }
 
+  const hasPartialPayment = paidAmount > 0
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-h-165 max-w-4xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Proses Pembayaran</DialogTitle>
           <DialogDescription>
-            Proses pembayaran dengan atau tanpa diskon dalam satu langkah
+            {hasPartialPayment
+              ? "Lanjutkan pembayaran untuk sisa tagihan"
+              : "Proses pembayaran dengan atau tanpa diskon dalam satu langkah"}
           </DialogDescription>
         </DialogHeader>
 
@@ -128,27 +148,29 @@ export function ProcessPaymentDialog({
           <FieldGroup>
             <FieldSet>
               <FieldGroup className="gap-4">
-                {/* Discount Section (Collapsible) */}
-                <DiscountSection
-                  isOpen={isDiscountOpen}
-                  onOpenChange={setIsDiscountOpen}
-                  discountType={discountType}
-                  onDiscountTypeChange={setDiscountType}
-                  discount={discount}
-                  onDiscountChange={setDiscount}
-                  discountPercentage={discountPercentage}
-                  onDiscountPercentageChange={setDiscountPercentage}
-                  insuranceCoverage={insuranceCoverage}
-                  onInsuranceCoverageChange={setInsuranceCoverage}
-                  discountAmount={discountAmount}
-                  currentTotal={currentTotal}
-                  totalAfterDiscount={totalAfterDiscount}
-                  drugsSubtotal={drugsSubtotal}
-                  proceduresSubtotal={proceduresSubtotal}
-                  isValidDiscount={isValidDiscount}
-                  isValidInsurance={isValidInsurance}
-                  isSubmitting={isSubmitting}
-                />
+                {/* Discount Section (Only shown for new payments, not partial) */}
+                {!hasPartialPayment && (
+                  <DiscountSection
+                    isOpen={isDiscountOpen}
+                    onOpenChange={setIsDiscountOpen}
+                    discountType={discountType}
+                    onDiscountTypeChange={setDiscountType}
+                    discount={discount}
+                    onDiscountChange={setDiscount}
+                    discountPercentage={discountPercentage}
+                    onDiscountPercentageChange={setDiscountPercentage}
+                    insuranceCoverage={insuranceCoverage}
+                    onInsuranceCoverageChange={setInsuranceCoverage}
+                    discountAmount={discountAmount}
+                    currentTotal={currentTotal}
+                    totalAfterDiscount={totalAfterDiscount}
+                    drugsSubtotal={drugsSubtotal}
+                    proceduresSubtotal={proceduresSubtotal}
+                    isValidDiscount={isValidDiscount}
+                    isValidInsurance={isValidInsurance}
+                    isSubmitting={isSubmitting}
+                  />
+                )}
 
                 {/* Payment Method Section */}
                 <PaymentMethodSection
@@ -170,6 +192,7 @@ export function ProcessPaymentDialog({
                   discountType={discountType}
                   discountAmount={discountAmount}
                   insurance={insurance}
+                  paidAmount={paidAmount}
                   finalTotal={finalTotal}
                   isValidTotal={isValidTotal}
                 />

@@ -39,8 +39,8 @@ export default function CashierDashboard() {
   // Billing details for selected visit
   const { billingDetails, fetchBillingDetails, isLoading: detailsLoading } = useBillingDetails()
 
-  // Billing calculations (subtotals, totals)
-  const { subtotal, totalAmount, drugsSubtotal, proceduresSubtotal } =
+  // Billing calculations (subtotals, totals, remaining amount for partial payments)
+  const { subtotal, totalAmount, paidAmount, remainingAmount, drugsSubtotal, proceduresSubtotal } =
     useBillingCalculations(billingDetails)
 
   // Payment processing with merged workflow
@@ -129,6 +129,8 @@ export default function CashierDashboard() {
         onOpenChange={setProcessPaymentDialogOpen}
         subtotal={subtotal}
         currentTotal={totalAmount}
+        paidAmount={paidAmount}
+        remainingAmount={remainingAmount}
         drugsSubtotal={drugsSubtotal}
         proceduresSubtotal={proceduresSubtotal}
         onSubmit={handleProcessPaymentSubmit}

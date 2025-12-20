@@ -16,6 +16,8 @@ interface DiscountCalculationParams {
   insuranceCoverage: string
   subtotal: number
   currentTotal: number
+  paidAmount: number
+  remainingAmount: number
   drugsSubtotal?: number
   proceduresSubtotal?: number
   paymentMethod: PaymentMethod
@@ -51,14 +53,27 @@ export function useDiscountCalculation(
     insuranceCoverage,
     subtotal,
     currentTotal,
+    paidAmount,
+    remainingAmount,
     drugsSubtotal,
     proceduresSubtotal,
     paymentMethod,
     amountReceived,
   } = params
 
+  // For partial payments, base calculations on remainingAmount
+  // For new payments, base calculations on currentTotal
+  const hasPartialPayment = paidAmount > 0
+  const baseAmount = hasPartialPayment ? remainingAmount : currentTotal
+
   // Calculate discount amount based on type
   const discountAmount = useMemo(() => {
+    // If there's already a partial payment, don't allow new discounts
+    // (discount should have been applied when creating the billing)
+    if (hasPartialPayment) {
+      return 0
+    }
+
     if (discountType === "fixed" && discount) {
       return parseFloat(discount) || 0
     } else if (discountType === "percentage" && discountPercentage) {
@@ -70,17 +85,32 @@ export function useDiscountCalculation(
       return proceduresSubtotal
     }
     return 0
-  }, [discountType, discountPercentage, discount, subtotal, drugsSubtotal, proceduresSubtotal])
+  }, [
+    hasPartialPayment,
+    discountType,
+    discountPercentage,
+    discount,
+    subtotal,
+    drugsSubtotal,
+    proceduresSubtotal,
+  ])
 
   // Calculate total after discount
   const totalAfterDiscount = useMemo(() => {
-    return Math.max(0, currentTotal - discountAmount)
-  }, [currentTotal, discountAmount])
+    return Math.max(0, baseAmount - discountAmount)
+  }, [baseAmount, discountAmount])
 
   // Parse insurance coverage
-  const insurance = parseFloat(insuranceCoverage) || 0
+  const insurance = useMemo(() => {
+    // If there's already a partial payment, don't allow new insurance
+    if (hasPartialPayment) {
+      return 0
+    }
+    return parseFloat(insuranceCoverage) || 0
+  }, [hasPartialPayment, insuranceCoverage])
 
   // Calculate final total after insurance
+  // This is what the patient needs to pay NOW
   const finalTotal = useMemo(() => {
     return Math.max(0, totalAfterDiscount - insurance)
   }, [totalAfterDiscount, insurance])
@@ -94,15 +124,15 @@ export function useDiscountCalculation(
   }, [paymentMethod, amountReceived, finalTotal])
 
   // Validation
-  const isValidDiscount = discountAmount >= 0 && discountAmount <= currentTotal
+  const isValidDiscount = discountAmount >= 0 && discountAmount <= baseAmount
   const isValidInsurance = insurance >= 0 && insurance <= totalAfterDiscount
   const isValidTotal = finalTotal >= 0
   const isValidPayment = useMemo(() => {
     if (paymentMethod === "cash") {
-      return amountReceived && parseFloat(amountReceived) > 0 && parseFloat(changeAmount) >= 0
+      return parseFloat(amountReceived || "0") >= finalTotal && parseFloat(changeAmount) >= 0
     }
     return true
-  }, [paymentMethod, amountReceived, changeAmount])
+  }, [paymentMethod, amountReceived, finalTotal, changeAmount])
 
   const isValid = isValidDiscount && isValidInsurance && isValidTotal && isValidPayment
 
