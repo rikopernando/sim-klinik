@@ -6,36 +6,24 @@
  * Layout: Queue sidebar (left) + Patient details (right)
  */
 
-import { toast } from "sonner"
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback } from "react"
 import { Clock } from "lucide-react"
+import { toast } from "sonner"
 
 import { useBillingQueue } from "@/hooks/use-billing-queue"
 import { useBillingDetails } from "@/hooks/use-billing-details"
+import { useBillingCalculations } from "@/hooks/use-billing-calculations"
+import { useProcessPayment } from "@/hooks/use-process-payment"
 import { useSession } from "@/lib/auth-client"
 import { ProcessPaymentDialog } from "@/components/billing/process-payment-dialog"
 import { QueueSidebar } from "@/components/billing/queue-sidebar"
 import { BillingDetailsPanel } from "@/components/billing/billing-details-panel"
-import { processPaymentWithDiscount } from "@/lib/services/billing.service"
-import type { PaymentMethod } from "@/types/billing"
-
-type PaymentData = {
-  discountType: string
-  discountPercentage?: string
-  discount?: string
-  insuranceCoverage?: string
-  paymentMethod: PaymentMethod
-  amountReceived?: string
-  amount: string
-  paymentReference?: string
-  notes?: string
-}
+import type { ProcessPaymentData } from "@/types/billing"
 
 export default function CashierDashboard() {
   const { data: session } = useSession()
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
   const [processPaymentDialogOpen, setProcessPaymentDialogOpen] = useState(false)
-  const [isProcessingMerged, setIsProcessingMerged] = useState(false)
 
   // Billing queue with auto-refresh
   const {
@@ -51,75 +39,46 @@ export default function CashierDashboard() {
   // Billing details for selected visit
   const { billingDetails, fetchBillingDetails, isLoading: detailsLoading } = useBillingDetails()
 
-  const handleSelectVisit = (visitId: string) => {
-    setSelectedVisitId(visitId)
-    fetchBillingDetails(visitId)
-  }
+  // Billing calculations (subtotals, totals)
+  const { subtotal, totalAmount, drugsSubtotal, proceduresSubtotal } =
+    useBillingCalculations(billingDetails)
 
-  const currentSubtotal = useMemo(() => {
-    if (!billingDetails) return 0
-    return parseFloat(billingDetails.billing.subtotal)
-  }, [billingDetails])
+  // Payment processing with merged workflow
+  const { isProcessing, processPayment } = useProcessPayment({
+    onSuccess: () => {
+      setProcessPaymentDialogOpen(false)
+      refreshQueue()
+      if (selectedVisitId) {
+        fetchBillingDetails(selectedVisitId)
+      }
+    },
+  })
 
-  const currentTotal = useMemo(() => {
-    if (!billingDetails) return 0
-    return parseFloat(billingDetails.billing.totalAmount)
-  }, [billingDetails])
+  // Handlers
+  const handleSelectVisit = useCallback(
+    (visitId: string) => {
+      setSelectedVisitId(visitId)
+      fetchBillingDetails(visitId)
+    },
+    [fetchBillingDetails]
+  )
 
-  // Calculate drugs and procedures subtotals
-  const drugsSubtotal = useMemo(() => {
-    if (!billingDetails) return 0
-    return billingDetails.items
-      .filter((item) => item.itemType === "drug")
-      .reduce((sum, item) => sum + parseFloat(item.totalPrice), 0)
-  }, [billingDetails])
+  const handleRefreshBillingDetails = useCallback(() => {
+    if (selectedVisitId) {
+      fetchBillingDetails(selectedVisitId)
+    }
+  }, [selectedVisitId, fetchBillingDetails])
 
-  const proceduresSubtotal = useMemo(() => {
-    if (!billingDetails) return 0
-    return billingDetails.items
-      .filter((item) => item.itemType === "service")
-      .reduce((sum, item) => sum + parseFloat(item.totalPrice), 0)
-  }, [billingDetails])
-
-  // Handle merged payment submission (discount + payment in one step)
   const handleProcessPaymentSubmit = useCallback(
-    async (data: PaymentData) => {
-      if (!billingDetails || !selectedVisitId || !session?.user.id) {
+    async (data: ProcessPaymentData) => {
+      if (!billingDetails || !session?.user.id) {
         toast.error("Data kunjungan atau detail tagihan tidak valid")
         return
       }
 
-      setIsProcessingMerged(true)
-
-      try {
-        await processPaymentWithDiscount({
-          billingId: billingDetails.billing.id,
-          discount: data.discount,
-          discountPercentage: data.discountPercentage,
-          insuranceCoverage: data.insuranceCoverage,
-          amount: data.amount,
-          paymentMethod: data.paymentMethod,
-          amountReceived: data.amountReceived,
-          paymentReference: data.paymentReference,
-          receivedBy: session.user.id,
-          notes: data.notes,
-        })
-
-        toast.success("Pembayaran berhasil diproses")
-        setProcessPaymentDialogOpen(false)
-        refreshQueue()
-        if (selectedVisitId) {
-          fetchBillingDetails(selectedVisitId)
-        }
-      } catch (error) {
-        // Error already handled by service
-        console.error("Process payment error:", error)
-        toast.error("Terjadi kesalahan saat memproses pembayaran")
-      } finally {
-        setIsProcessingMerged(false)
-      }
+      await processPayment(data, billingDetails.billing.id, session.user.id)
     },
-    [billingDetails, selectedVisitId, session, refreshQueue, fetchBillingDetails]
+    [billingDetails, session, processPayment]
   )
 
   return (
@@ -158,9 +117,9 @@ export default function CashierDashboard() {
           selectedVisitId={selectedVisitId}
           billingDetails={billingDetails}
           isLoading={detailsLoading}
-          onRefresh={() => selectedVisitId && fetchBillingDetails(selectedVisitId)}
+          onRefresh={handleRefreshBillingDetails}
           onProcessPaymentWithDiscount={() => setProcessPaymentDialogOpen(true)}
-          isSubmitting={isProcessingMerged}
+          isSubmitting={isProcessing}
         />
       </div>
 
@@ -168,12 +127,12 @@ export default function CashierDashboard() {
       <ProcessPaymentDialog
         open={processPaymentDialogOpen}
         onOpenChange={setProcessPaymentDialogOpen}
-        subtotal={currentSubtotal}
-        currentTotal={currentTotal}
+        subtotal={subtotal}
+        currentTotal={totalAmount}
         drugsSubtotal={drugsSubtotal}
         proceduresSubtotal={proceduresSubtotal}
         onSubmit={handleProcessPaymentSubmit}
-        isSubmitting={isProcessingMerged}
+        isSubmitting={isProcessing}
       />
     </div>
   )

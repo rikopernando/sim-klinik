@@ -95,15 +95,12 @@ export function BillingDetailsPanel({
 
           {/* Action Buttons */}
           {!isPaid ? (
-            <Button
-              onClick={onProcessPaymentWithDiscount}
-              size="lg"
-              disabled={isSubmitting}
-              className="w-full"
-            >
-              <CreditCard className="mr-2 h-5 w-5" />
-              {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-            </Button>
+            <div className="flex justify-end">
+              <Button onClick={onProcessPaymentWithDiscount} size="lg" disabled={isSubmitting}>
+                <CreditCard className="mr-2 h-5 w-5" />
+                {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+              </Button>
+            </div>
           ) : (
             /* Print Receipt Button */
             <Card className="border-green-500 bg-green-50">

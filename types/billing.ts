@@ -229,6 +229,22 @@ export interface PaymentInput {
 }
 
 /**
+ * Process Payment Data (Merged Workflow)
+ * Used for the unified discount + payment dialog
+ */
+export interface ProcessPaymentData {
+  discountType: string
+  discountPercentage?: string
+  discount?: string
+  insuranceCoverage?: string
+  paymentMethod: PaymentMethod
+  amountReceived?: string
+  amount: string
+  paymentReference?: string
+  notes?: string
+}
+
+/**
  * Discharge Summary Input
  */
 export interface DischargeSummaryInput {

@@ -104,8 +104,12 @@ function QueueItemCard({ item, isSelected, onSelect }: QueueItemCardProps) {
             <p className="text-sm font-semibold">{item.patient.name}</p>
             <p className="text-muted-foreground text-xs">{item.patient.mrNumber}</p>
           </div>
-          <Badge variant="outline" className="text-xs">
-            {item.visit.visitType}
+          <Badge>
+            {item.visit.visitType === "outpatient"
+              ? "Rawat Jalan"
+              : item.visit.visitType === "inpatient"
+                ? "Rawat Inap"
+                : "UGD"}
           </Badge>
         </div>
 
