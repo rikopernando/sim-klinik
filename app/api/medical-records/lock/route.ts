@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
+import { eq } from "drizzle-orm"
+import { z } from "zod"
+
 import { db } from "@/db"
 import { medicalRecords, visits } from "@/db/schema"
 import { billingItems } from "@/db/schema/billing"
-import { eq } from "drizzle-orm"
-import { z } from "zod"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { isValidStatusTransition, VisitStatus } from "@/types/visit-status"
-import { createBillingFromMedicalRecord, recalculateBilling } from "@/lib/services/billing.service"
 import { lockSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { createBillingFromMedicalRecord, recalculateBilling } from "@/lib/billing/api-service"
 
 /**
  * POST /api/medical-records/lock

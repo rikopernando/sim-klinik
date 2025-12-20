@@ -19,7 +19,7 @@ import { BillingDetailsPanel } from "@/components/billing/billing-details-panel"
 import type { PaymentMethod } from "@/types/billing"
 
 export default function CashierDashboard() {
-  const [selectedVisitId, setSelectedVisitId] = useState<number | null>(null)
+  const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [discountDialogOpen, setDiscountDialogOpen] = useState(false)
 

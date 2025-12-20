@@ -3,6 +3,10 @@
  * Centralized types for Billing, Cashier, and Patient Discharge
  */
 
+import { MedicalRecord } from "./medical-record"
+import { Patient } from "./registration"
+import { Visit } from "./visit"
+
 /**
  * Payment Status Types
  */
@@ -285,14 +289,9 @@ export interface ReceiptData {
   printedAt: string
 }
 
-/**
- * API Response Types
- */
-export interface APIResponse<T = any> {
-  success: boolean
-  message?: string
-  data?: T
-  error?: string
-  details?: any
-  count?: number
+export interface BillingQueueItem {
+  visit: Visit
+  patient: Patient
+  billing: Billing | null
+  medicalRecord: MedicalRecord
 }

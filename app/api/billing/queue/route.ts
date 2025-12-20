@@ -5,24 +5,35 @@
  */
 
 import { NextResponse } from "next/server"
-import { getVisitsReadyForBilling } from "@/lib/services/billing.service"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { withRBAC } from "@/lib/rbac"
+import { getVisitsReadyForBilling } from "@/lib/billing/api-service"
 
-export async function GET() {
-  try {
-    const visits = await getVisitsReadyForBilling()
+export const GET = withRBAC(
+  async () => {
+    try {
+      const visits = await getVisitsReadyForBilling()
 
-    return NextResponse.json({
-      success: true,
-      data: visits,
-    })
-  } catch (error) {
-    console.error("Billing queue error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch billing queue",
-      },
-      { status: 500 }
-    )
-  }
-}
+      const response: ResponseApi<typeof visits> = {
+        data: visits,
+        message: "Billing queue fetched successfully",
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+    } catch (error) {
+      console.error("Billing queue error:", error)
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to fetch billing queue",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
+    }
+  },
+  { permissions: ["billing:read"] }
+)

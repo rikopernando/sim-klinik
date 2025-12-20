@@ -5,9 +5,9 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createOrUpdateBilling } from "@/lib/services/billing.service"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { createOrUpdateBilling } from "@/lib/billing/api-service"
 
 export async function POST(
   request: NextRequest,
