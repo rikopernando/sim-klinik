@@ -88,20 +88,9 @@ export async function getBillingDetails(visitId: string): Promise<BillingDetails
  * Process payment with optional discount
  * Handles discount application and payment in a single transaction
  */
-export async function processPaymentWithDiscount(
-  data: ProcessPaymentInput
-): Promise<ProcessPaymentResult> {
+export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
   try {
-    const response = await axios.post<ResponseApi<ProcessPaymentResult>>(
-      "/api/billing/process-payment",
-      data
-    )
-
-    if (!response.data.data) {
-      throw new ApiServiceError("Invalid response: missing data")
-    }
-
-    return response.data.data
+    await axios.post<ResponseApi<ProcessPaymentResult>>("/api/billing/process-payment", data)
   } catch (error) {
     console.error("Error in processPaymentWithDiscount service:", error)
     handleApiError(error)

@@ -23,6 +23,7 @@ interface BillingDetailsPanelProps {
   onRefresh: () => void
   onProcessPayment: () => void
   onApplyDiscount?: () => void
+  onProcessPaymentWithDiscount?: () => void
   isSubmitting?: boolean
 }
 
@@ -33,6 +34,7 @@ export function BillingDetailsPanel({
   onRefresh,
   onProcessPayment,
   onApplyDiscount,
+  onProcessPaymentWithDiscount,
   isSubmitting = false,
 }: BillingDetailsPanelProps) {
   const printRef = useRef<HTMLDivElement>(null)
@@ -98,16 +100,32 @@ export function BillingDetailsPanel({
           {/* Action Buttons */}
           {!isPaid ? (
             <>
-              {/* Payment Button */}
-              <div className="flex justify-end gap-3">
-                <Button onClick={onApplyDiscount} variant="outline" size="lg">
-                  <Percent className="mr-2 h-5 w-5" />
-                  Terapkan Diskon / Jaminan
-                </Button>
-                <Button onClick={onProcessPayment} size="lg" disabled={isSubmitting}>
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                </Button>
+              {/* Payment Buttons */}
+              <div className="space-y-3">
+                {/* Primary: Merged Workflow (Discount + Payment) */}
+                {onProcessPaymentWithDiscount && (
+                  <Button
+                    onClick={onProcessPaymentWithDiscount}
+                    size="lg"
+                    disabled={isSubmitting}
+                    className="w-full"
+                  >
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    {isSubmitting ? "Memproses..." : "Proses Pembayaran & Diskon"}
+                  </Button>
+                )}
+
+                {/* Secondary: Separate Workflow */}
+                <div className="flex gap-3">
+                  <Button onClick={onApplyDiscount} variant="outline" size="lg" className="flex-1">
+                    <Percent className="mr-2 h-5 w-5" />
+                    Terapkan Diskon
+                  </Button>
+                  <Button onClick={onProcessPayment} variant="outline" size="lg" className="flex-1" disabled={isSubmitting}>
+                    <CreditCard className="mr-2 h-5 w-5" />
+                    Bayar Langsung
+                  </Button>
+                </div>
               </div>
             </>
           ) : (

@@ -30,6 +30,7 @@ type PaymentData = {
   insuranceCoverage?: string
   paymentMethod: PaymentMethod
   amountReceived?: string
+  amount: string
   paymentReference?: string
   notes?: string
 }
@@ -171,7 +172,7 @@ export default function CashierDashboard() {
           discount: data.discount,
           discountPercentage: data.discountPercentage,
           insuranceCoverage: data.insuranceCoverage,
-          amount: remainingAmount.toString(),
+          amount: data.amount,
           paymentMethod: data.paymentMethod,
           amountReceived: data.amountReceived,
           paymentReference: data.paymentReference,
@@ -193,7 +194,7 @@ export default function CashierDashboard() {
         setIsProcessingMerged(false)
       }
     },
-    [billingDetails, selectedVisitId, session, remainingAmount, refreshQueue, fetchBillingDetails]
+    [billingDetails, selectedVisitId, session, refreshQueue, fetchBillingDetails]
   )
 
   return (

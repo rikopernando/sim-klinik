@@ -39,6 +39,7 @@ type PaymentData = {
   insuranceCoverage?: string
   paymentMethod: PaymentMethod
   amountReceived?: string
+  amount: string
   paymentReference?: string
   notes?: string
 }
@@ -138,6 +139,7 @@ export function ProcessPaymentDialog({
       amountReceived: paymentMethod === "cash" ? amountReceived : undefined,
       paymentReference: paymentMethod !== "cash" && paymentReference ? paymentReference : undefined,
       notes: notes || undefined,
+      amount: finalTotal.toString(),
     })
   }
 
