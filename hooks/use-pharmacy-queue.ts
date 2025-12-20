@@ -1,10 +1,12 @@
 /**
  * Pharmacy Queue Hook
- * Manages prescription queue with auto-refresh
+ * Manages prescription queue with auto-refresh using service layer
  */
 
-import { useState, useEffect, useCallback } from "react"
-import { getPharmacyQueue, type PrescriptionQueueItem } from "@/lib/services/pharmacy.service"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { getPharmacyQueue } from "@/lib/services/pharmacy.service"
+import { getErrorMessage } from "@/lib/utils/error"
+import { PrescriptionQueueItem } from "@/types/pharmacy"
 
 interface UsePharmacyQueueOptions {
   autoRefresh?: boolean
@@ -27,19 +29,33 @@ export function usePharmacyQueue(options: UsePharmacyQueueOptions = {}): UsePhar
   const [error, setError] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
-  const fetchQueue = useCallback(async () => {
-    try {
-      setIsLoading(true)
-      setError(null)
+  // Use ref to track if component is mounted (prevent state updates after unmount)
+  const isMountedRef = useRef(true)
 
+  const fetchQueue = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      // Use service layer
       const data = await getPharmacyQueue()
+
+      // Only update state if component is still mounted
+      if (!isMountedRef.current) return
+
       setQueue(data)
       setLastRefresh(new Date())
+      setError(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred")
-      console.error("Pharmacy queue fetch error:", err)
+      if (!isMountedRef.current) return
+
+      const errorMessage = getErrorMessage(err)
+      setError(errorMessage)
+      setQueue([])
     } finally {
-      setIsLoading(false)
+      if (isMountedRef.current) {
+        setIsLoading(false)
+      }
     }
   }, [])
 
@@ -58,6 +74,14 @@ export function usePharmacyQueue(options: UsePharmacyQueueOptions = {}): UsePhar
 
     return () => clearInterval(interval)
   }, [autoRefresh, refreshInterval, fetchQueue])
+
+  // Track component mount status (handles React 18 Strict Mode double mount)
+  useEffect(() => {
+    isMountedRef.current = true // Set to true on mount
+    return () => {
+      isMountedRef.current = false // Set to false on unmount
+    }
+  }, [])
 
   return {
     queue,

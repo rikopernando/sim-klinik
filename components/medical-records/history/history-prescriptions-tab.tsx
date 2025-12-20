@@ -5,26 +5,13 @@
 
 import { TabsContent } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-
-interface Prescription {
-  prescription: {
-    id: string
-    dosage: string
-    frequency: string
-    duration: string | null
-    instructions: string | null
-    isFulfilled: boolean
-  }
-  drug: {
-    name: string
-  } | null
-}
+import { MedicalRecordPrescription } from "@/types/medical-record"
 
 interface HistoryPrescriptionsTabProps {
-  prescriptions: Prescription[]
+  prescriptions: MedicalRecordPrescription[]
 }
 
-const PrescriptionItem = ({ item }: { item: Prescription }) => (
+const PrescriptionItem = ({ item }: { item: MedicalRecordPrescription }) => (
   <div className="bg-muted rounded-md p-2">
     <div className="flex items-start justify-between">
       <div>

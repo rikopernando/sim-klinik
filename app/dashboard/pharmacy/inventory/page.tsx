@@ -6,25 +6,34 @@
  */
 
 import { useState, useMemo, useCallback } from "react"
-import { useInventory } from "@/hooks/use-inventory"
+import { usePaginatedInventory } from "@/hooks/use-inventory"
 import { AddInventoryDialog } from "@/components/pharmacy/add-inventory-dialog"
 import { InventoryHeader } from "@/components/pharmacy/inventory/inventory-header"
 import { InventoryStats } from "@/components/pharmacy/inventory/inventory-stats"
 import { InventoryTable } from "@/components/pharmacy/inventory/inventory-table"
 
 export default function InventoryPage() {
-  const { inventories, isLoading, error, refresh } = useInventory()
+  const {
+    inventories,
+    isLoading,
+    error,
+    pagination,
+    searchQuery,
+    setSearchQuery,
+    setPage,
+    refresh,
+  } = usePaginatedInventory({ initialLimit: 10 })
   const [showAddDialog, setShowAddDialog] = useState(false)
 
-  // Calculate statistics with memoization
+  // Calculate statistics with memoization (based on current page results)
   const stats = useMemo(() => {
     return {
-      totalBatches: inventories.length,
+      totalBatches: pagination.total,
       expiredCount: inventories.filter((i) => i.expiryAlertLevel === "expired").length,
       expiringSoonCount: inventories.filter((i) => i.expiryAlertLevel === "expiring_soon").length,
       lowStockCount: inventories.filter((i) => i.stockQuantity < 10 && i.stockQuantity > 0).length,
     }
-  }, [inventories])
+  }, [inventories, pagination.total])
 
   // Handlers
   const handleAddSuccess = useCallback(() => {
@@ -34,6 +43,13 @@ export default function InventoryPage() {
   const handleAddStock = useCallback(() => {
     setShowAddDialog(true)
   }, [])
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setPage(newPage)
+    },
+    [setPage]
+  )
 
   return (
     <div className="container mx-auto space-y-6 p-6">
@@ -49,7 +65,15 @@ export default function InventoryPage() {
       />
 
       {/* Inventory Table */}
-      <InventoryTable inventories={inventories} isLoading={isLoading} error={error} />
+      <InventoryTable
+        inventories={inventories}
+        isLoading={isLoading}
+        error={error}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        pagination={pagination}
+        onPageChange={handlePageChange}
+      />
 
       {/* Add Inventory Dialog */}
       <AddInventoryDialog

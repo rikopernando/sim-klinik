@@ -7,28 +7,13 @@ import { memo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils"
-
-interface Drug {
-  name: string
-  unit: string
-}
-
-interface ExpiringDrug {
-  id: string
-  batchNumber: string
-  expiryDate: Date
-  stockQuantity: number
-  supplier?: string | null
-  expiryAlertLevel: "expired" | "expiring_soon" | "warning"
-  daysUntilExpiry: number
-  drug: Drug
-}
+import { DrugInventoryWithDetails, ExpiryAlertLevel } from "@/types/pharmacy"
 
 interface ExpiringDrugCardProps {
-  inventory: ExpiringDrug
+  inventory: DrugInventoryWithDetails
 }
 
-const ExpiryBadge = ({ level }: { level: string }) => {
+const ExpiryBadge = ({ level }: { level: ExpiryAlertLevel }) => {
   const labels = {
     expired: "Kadaluarsa",
     expiring_soon: "Segera Kadaluarsa",
@@ -63,7 +48,7 @@ export const ExpiringDrugCard = memo(function ExpiringDrugCard({
           <div>
             <p className="text-muted-foreground text-sm">Tanggal Kadaluarsa</p>
             <p className={`font-medium ${colors.text}`}>
-              {formatExpiryDate(inventory.expiryDate, inventory.daysUntilExpiry)}
+              {formatExpiryDate(inventory?.expiryDate, inventory.daysUntilExpiry)}
             </p>
           </div>
           <div>

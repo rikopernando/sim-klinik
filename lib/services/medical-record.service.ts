@@ -11,10 +11,12 @@ import {
   MedicalRecordFormData,
   MedicalRecord,
   Diagnosis,
+  MedicalRecordHistoryData,
 } from "@/types/medical-record"
 import {
   CreateDiagnosisFormData,
   CreateProcedureFormData,
+  LockMedicalRecordPayload,
   PrescriptionFormDataPayload,
   ProcedureFormData,
   UpdateDiagnosisFormData,
@@ -79,27 +81,25 @@ export async function updateMedicalRecordByVisit(
 /**
  * Lock a medical record with optional billing adjustment
  */
-export async function lockMedicalRecord(
-  id: string,
-  userId: string,
-  billingAdjustment?: number,
-  adjustmentNote?: string
-): Promise<MedicalRecord> {
-  const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/lock", {
-    id,
-    userId,
-    billingAdjustment,
-    adjustmentNote,
-  })
-  return response.data.data
+export async function lockMedicalRecord(data: LockMedicalRecordPayload) {
+  try {
+    await axios.post<ResponseApi>("/api/medical-records/lock", data)
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**
  * Unlock a medical record
  */
-export async function unlockMedicalRecord(id: string): Promise<MedicalRecord> {
-  const response = await axios.post<{ data: MedicalRecord }>("/api/medical-records/unlock", { id })
-  return response.data.data
+export async function unlockMedicalRecord(id: string) {
+  try {
+    await axios.post<{ data: MedicalRecord }>("/api/medical-records/unlock", {
+      id,
+    })
+  } catch (error) {
+    handleApiError(error)
+  }
 }
 
 /**
@@ -211,6 +211,30 @@ export async function updatePrescription(id: string, data: PrescriptionFormDataP
 export async function deletePrescription(id: string): Promise<void> {
   try {
     await axios.delete(`/api/medical-records/prescriptions/${id}`)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get medical record history for a patient
+ */
+export async function getMedicalRecordHistory(
+  patientId: string
+): Promise<MedicalRecordHistoryData> {
+  try {
+    const response = await axios.get<ResponseApi<MedicalRecordHistoryData>>(
+      `/api/medical-records/history`,
+      {
+        params: { patientId },
+      }
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing medical record history data")
+    }
+
+    return response.data.data
   } catch (error) {
     handleApiError(error)
   }

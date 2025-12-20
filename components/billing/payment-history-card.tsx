@@ -3,10 +3,11 @@
  * Displays a list of payment transactions with details
  */
 
+import { Calendar } from "lucide-react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency, getPaymentMethodLabel } from "@/lib/billing/billing-utils"
-import { Calendar } from "lucide-react"
 
 interface Payment {
   id: string

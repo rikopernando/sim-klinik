@@ -6,25 +6,10 @@
 import { useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { ExpiringDrugCard } from "./expiring/expiring-drug-card"
-
-interface Drug {
-  name: string
-  unit: string
-}
-
-interface ExpiringDrug {
-  id: string
-  batchNumber: string
-  expiryDate: Date
-  stockQuantity: number
-  supplier?: string | null
-  expiryAlertLevel: "expired" | "expiring_soon" | "warning"
-  daysUntilExpiry: number
-  drug: Drug
-}
+import { DrugInventoryWithDetails } from "@/types/pharmacy"
 
 interface ExpiringDrugsListProps {
-  drugs: ExpiringDrug[]
+  drugs: DrugInventoryWithDetails[]
   isLoading: boolean
   error: string | null
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
 
+// import { Poli } from "@/types/poli"
 import { getPolis } from "@/lib/services/poli.service"
 import { ResultPoli, PayloadPoli } from "@/types/poli"
 import { getErrorMessage } from "@/lib/utils/error"
@@ -69,10 +70,14 @@ export function usePoli(): UsePoliResult {
           setPolis([])
         }
       } catch (error) {
+        // if (!ignore) {
         setErrorMessage(getErrorMessage(error))
+        // }
         console.error("Error fetching polis:", error)
       } finally {
+        // if (!ignore) {
         setLoading(false)
+        // }
       }
     },
     [pagination.limit]

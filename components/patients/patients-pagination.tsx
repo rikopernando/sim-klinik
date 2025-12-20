@@ -1,15 +1,18 @@
 /**
  * Patients Pagination Component
- * Navigation controls for paginated patient list
+ * Navigation controls for paginated patient list using shadcn pagination
  */
 
-import { Button } from "@/components/ui/button"
 import {
-  IconChevronLeft,
-  IconChevronRight,
-  IconChevronsLeft,
-  IconChevronsRight,
-} from "@tabler/icons-react"
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { generatePageNumbers } from "@/lib/utils/pagination"
 
 interface PaginationInfo {
   page: number
@@ -30,54 +33,52 @@ export function PatientsPagination({ pagination, onPageChange }: PatientsPaginat
 
   const canGoPrevious = pagination.page > 1
   const canGoNext = pagination.page < pagination.totalPages
+  const pageNumbers = generatePageNumbers(pagination.page, pagination.totalPages)
 
   return (
     <div className="mt-4 flex items-center justify-between">
-      <div className="text-muted-foreground text-sm">
-        Halaman {pagination.page} dari {pagination.totalPages}
-      </div>
+      <Pagination>
+        <PaginationContent>
+          {/* Previous Button */}
+          <PaginationItem>
+            <PaginationPrevious
+              onClick={() => canGoPrevious && onPageChange(pagination.page - 1)}
+              className={canGoPrevious ? "cursor-pointer" : "pointer-events-none opacity-50"}
+            />
+          </PaginationItem>
 
-      <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(1)}
-          disabled={!canGoPrevious}
-          title="First page"
-        >
-          <IconChevronsLeft size={16} />
-        </Button>
+          {/* Page Numbers */}
+          {pageNumbers.map((pageNum, index) => {
+            if (pageNum === "ellipsis") {
+              return (
+                <PaginationItem key={`ellipsis-${index}`}>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )
+            }
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(pagination.page - 1)}
-          disabled={!canGoPrevious}
-          title="Previous page"
-        >
-          <IconChevronLeft size={16} />
-        </Button>
+            return (
+              <PaginationItem key={pageNum}>
+                <PaginationLink
+                  onClick={() => onPageChange(pageNum)}
+                  isActive={pageNum === pagination.page}
+                  className="cursor-pointer"
+                >
+                  {pageNum}
+                </PaginationLink>
+              </PaginationItem>
+            )
+          })}
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(pagination.page + 1)}
-          disabled={!canGoNext}
-          title="Next page"
-        >
-          <IconChevronRight size={16} />
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onPageChange(pagination.totalPages)}
-          disabled={!canGoNext}
-          title="Last page"
-        >
-          <IconChevronsRight size={16} />
-        </Button>
-      </div>
+          {/* Next Button */}
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => canGoNext && onPageChange(pagination.page + 1)}
+              className={canGoNext ? "cursor-pointer" : "pointer-events-none opacity-50"}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
     </div>
   )
 }

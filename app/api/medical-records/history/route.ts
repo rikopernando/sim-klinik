@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
+import { eq, desc, inArray } from "drizzle-orm"
+
 import { db } from "@/db"
 import {
   medicalRecords,
@@ -9,8 +11,32 @@ import {
   drugs,
   patients,
 } from "@/db/schema"
-import { eq, desc } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import {
+  Diagnosis,
+  MedicalRecord,
+  MedicalRecordHistory,
+  MedicalRecordHistoryData,
+  MedicalRecordPrescription,
+  Procedure,
+} from "@/types/medical-record"
+
+/**
+ * Helper: Group array items by a key
+ */
+function groupBy<T>(array: T[], getKey: (item: T) => string): Map<string, T[]> {
+  const map = new Map<string, T[]>()
+  for (const item of array) {
+    const key = getKey(item)
+    if (!map.has(key)) {
+      map.set(key, [])
+    }
+    map.get(key)!.push(item)
+  }
+  return map
+}
 
 /**
  * GET /api/medical-records/history?patientId=X
@@ -26,20 +52,24 @@ export const GET = withRBAC(
       const patientId = searchParams.get("patientId")
 
       if (!patientId) {
-        return NextResponse.json({ error: "patientId parameter is required" }, { status: 400 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "patientId parameter is required",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
 
-      const patientIdNum = parseInt(patientId, 10)
-
       // Get patient information
-      const [patient] = await db
-        .select()
-        .from(patients)
-        .where(eq(patients.id, patientIdNum))
-        .limit(1)
+      const [patient] = await db.select().from(patients).where(eq(patients.id, patientId)).limit(1)
 
       if (!patient) {
-        return NextResponse.json({ error: "Patient not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Patient not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
       }
 
       // Get all medical records for the patient with visit information
@@ -50,65 +80,100 @@ export const GET = withRBAC(
         })
         .from(medicalRecords)
         .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
-        .where(eq(visits.patientId, patientIdNum))
+        .where(eq(visits.patientId, patientId))
         .orderBy(desc(medicalRecords.createdAt))
 
-      // For each medical record, fetch related data
-      const historyWithDetails = await Promise.all(
-        medicalRecordsList.map(async (record) => {
-          const medicalRecordId = record.medicalRecord.id
+      // Return early if no medical records
+      if (medicalRecordsList.length === 0) {
+        const response: ResponseApi<MedicalRecordHistoryData> = {
+          message: "No medical records",
+          data: {
+            patient: {
+              ...patient,
+              createdAt: patient.createdAt?.toISOString() || "",
+              updatedAt: patient.updatedAt?.toISOString() || "",
+              dateOfBirth: patient.dateOfBirth?.toISOString() || "",
+            },
+            history: [],
+            totalRecords: 0,
+          },
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
 
-          // Get diagnoses
-          const diagnosisList = await db
-            .select()
-            .from(diagnoses)
-            .where(eq(diagnoses.medicalRecordId, medicalRecordId))
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+      }
 
-          // Get procedures
-          const proceduresList = await db
-            .select()
-            .from(procedures)
-            .where(eq(procedures.medicalRecordId, medicalRecordId))
+      // Extract all medical record IDs for batch fetching
+      const medicalRecordIds = medicalRecordsList.map((r) => r.medicalRecord.id)
 
-          // Get prescriptions with drug information
-          const prescriptionsList = await db
-            .select({
-              prescription: prescriptions,
-              drug: drugs,
-            })
-            .from(prescriptions)
-            .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
-            .where(eq(prescriptions.medicalRecordId, medicalRecordId))
+      // Batch fetch all related data (3 queries instead of N*3 queries)
+      const [allDiagnoses, allProcedures, allPrescriptionsWithDrugs] = await Promise.all([
+        // Fetch all diagnoses in one query
+        db.select().from(diagnoses).where(inArray(diagnoses.medicalRecordId, medicalRecordIds)),
 
-          return {
-            medicalRecord: record.medicalRecord,
-            visit: record.visit,
-            diagnoses: diagnosisList,
-            procedures: proceduresList,
-            prescriptions: prescriptionsList,
-          }
-        })
+        // Fetch all procedures in one query
+        db.select().from(procedures).where(inArray(procedures.medicalRecordId, medicalRecordIds)),
+
+        // Fetch all prescriptions with drugs in one query
+        db
+          .select({
+            prescription: prescriptions,
+            drug: drugs,
+          })
+          .from(prescriptions)
+          .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+          .where(inArray(prescriptions.medicalRecordId, medicalRecordIds)),
+      ])
+
+      // Group fetched data by medical record ID for O(1) lookup
+      const diagnosesMap = groupBy(allDiagnoses, (d) => d.medicalRecordId)
+      const proceduresMap = groupBy(allProcedures, (p) => p.medicalRecordId)
+      const prescriptionsMap = groupBy(
+        allPrescriptionsWithDrugs,
+        (p) => p.prescription.medicalRecordId
       )
 
-      return NextResponse.json({
-        success: true,
+      // Build history with details (no more database queries)
+      const historyWithDetails: MedicalRecordHistory[] = medicalRecordsList.map((record) => {
+        const medicalRecordId = record.medicalRecord.id
+        return {
+          medicalRecord: record.medicalRecord as MedicalRecord,
+          visit: record.visit,
+          diagnoses: (diagnosesMap.get(medicalRecordId) || []) as Diagnosis[],
+          procedures: (proceduresMap.get(medicalRecordId) || []) as Procedure[],
+          prescriptions: (prescriptionsMap.get(medicalRecordId) ||
+            []) as MedicalRecordPrescription[],
+        }
+      })
+
+      const response: ResponseApi<MedicalRecordHistoryData> = {
+        message: "Medical record history fetch successfully",
         data: {
           patient: {
-            id: patient.id,
-            mrNumber: patient.mrNumber,
-            name: patient.name,
-            nik: patient.nik,
-            dateOfBirth: patient.dateOfBirth,
-            gender: patient.gender,
-            allergies: patient.allergies,
+            ...patient,
+            createdAt: patient.createdAt?.toISOString() || "",
+            updatedAt: patient.updatedAt?.toISOString() || "",
+            dateOfBirth: patient.dateOfBirth?.toISOString() || "",
           },
           history: historyWithDetails,
           totalRecords: historyWithDetails.length,
         },
-      })
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Medical record history fetch error:", error)
-      return NextResponse.json({ error: "Failed to fetch medical record history" }, { status: 500 })
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to fetch medical record history",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:read"] }

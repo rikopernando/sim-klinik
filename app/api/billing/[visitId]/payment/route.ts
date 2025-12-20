@@ -4,10 +4,11 @@
  * Processes payment for a billing record
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { getBillingDetails, processPayment } from "@/lib/services/billing.service"
-import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
+import { NextRequest, NextResponse } from "next/server"
+
+import { auth } from "@/lib/auth"
+import { getBillingDetails, processPayment } from "@/lib/billing/api-service"
 
 export async function POST(
   request: NextRequest,

@@ -4,14 +4,9 @@
  */
 
 import { useMemo } from "react"
-import { StatCard } from "./stats/stat-card"
+import { ExpiringDrugsData } from "@/types/pharmacy"
 
-interface ExpiringDrugsData {
-  expired: unknown[]
-  expiringSoon: unknown[]
-  warning: unknown[]
-  all: unknown[]
-}
+import { StatCard } from "./stats/stat-card"
 
 interface PharmacyStatsCardsProps {
   queueCount: number

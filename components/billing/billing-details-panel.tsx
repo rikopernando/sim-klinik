@@ -3,56 +3,18 @@
  * Main panel displaying billing summary, payment history, and payment action
  */
 
+import { useRef } from "react"
+import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+
+import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Card, CardContent } from "@/components/ui/card"
-import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+import type { BillingDetails } from "@/types/billing"
+
 import { BillingSummaryCard } from "./billing-summary-card"
 import { PaymentHistoryCard } from "./payment-history-card"
 import { ReceiptPrint } from "./receipt-print"
-import type { PaymentStatus } from "@/types/billing"
-import { useMemo, useRef } from "react"
-
-interface BillingItem {
-  itemName: string
-  quantity: number
-  unitPrice: string
-  totalPrice: string
-}
-
-interface Payment {
-  id: string
-  amount: string
-  paymentMethod: string
-  paymentReference: string | null
-  changeGiven: string | null
-  receivedAt: Date | string
-}
-
-interface Billing {
-  subtotal: string
-  discount: string
-  insuranceCoverage: string
-  totalAmount: string
-  paidAmount: string
-  remainingAmount: string
-  patientPayable: string
-  paymentStatus: PaymentStatus
-}
-
-interface BillingDetails {
-  billing: Billing
-  items: BillingItem[]
-  payments: Payment[]
-  patient: {
-    name: string
-    mrNumber: string
-  }
-  visit: {
-    visitNumber: string
-    createdAt: Date | string
-  }
-}
 
 interface BillingDetailsPanelProps {
   selectedVisitId: string | null
@@ -74,15 +36,6 @@ export function BillingDetailsPanel({
   isSubmitting = false,
 }: BillingDetailsPanelProps) {
   const printRef = useRef<HTMLDivElement>(null)
-
-  // Calculate remaining amount
-  const remainingAmount = useMemo(() => {
-    if (!billingDetails) return 0
-    return parseFloat(
-      billingDetails.billing.remainingAmount || billingDetails.billing.patientPayable
-    )
-  }, [billingDetails])
-
   // Handle print receipt
   const handlePrint = () => {
     window.print()
@@ -140,43 +93,22 @@ export function BillingDetailsPanel({
           {/* Payment History */}
           <PaymentHistoryCard payments={billingDetails.payments} />
 
+          <Separator />
+
           {/* Action Buttons */}
           {!isPaid ? (
             <>
-              {/* Discount Button */}
-              {onApplyDiscount && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <Button
-                      onClick={onApplyDiscount}
-                      variant="outline"
-                      className="w-full"
-                      size="lg"
-                    >
-                      <Percent className="mr-2 h-5 w-5" />
-                      Terapkan Diskon / Jaminan
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-
               {/* Payment Button */}
-              <Card className="border-primary">
-                <CardContent className="pt-6">
-                  <Button
-                    onClick={onProcessPayment}
-                    className="w-full"
-                    size="lg"
-                    disabled={isSubmitting}
-                  >
-                    <CreditCard className="mr-2 h-5 w-5" />
-                    {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                    <span className="ml-2 font-bold">
-                      Rp {remainingAmount.toLocaleString("id-ID")}
-                    </span>
-                  </Button>
-                </CardContent>
-              </Card>
+              <div className="flex justify-end gap-3">
+                <Button onClick={onApplyDiscount} variant="outline" size="lg">
+                  <Percent className="mr-2 h-5 w-5" />
+                  Terapkan Diskon / Jaminan
+                </Button>
+                <Button onClick={onProcessPayment} size="lg" disabled={isSubmitting}>
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+                </Button>
+              </div>
             </>
           ) : (
             /* Print Receipt Button */

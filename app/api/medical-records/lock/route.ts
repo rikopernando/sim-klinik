@@ -1,22 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { medicalRecords, visits } from "@/db/schema"
-import { billingItems, billings } from "@/db/schema/billing"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
+
+import { db } from "@/db"
+import { medicalRecords, visits } from "@/db/schema"
+import { billingItems } from "@/db/schema/billing"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { isValidStatusTransition, VisitStatus } from "@/types/visit-status"
-import { calculateBillingForVisit } from "@/lib/services/billing.service"
-
-/**
- * Lock Medical Record Schema
- * Optional billing adjustments can be provided by doctor
- */
-const lockSchema = z.object({
-  id: z.number().int().positive(),
-  billingAdjustment: z.number().optional(), // Positive = surcharge, Negative = discount
-  adjustmentNote: z.string().optional(), // Note explaining the adjustment
-})
+import { lockSchema } from "@/lib/validations/medical-record"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { createBillingFromMedicalRecord, recalculateBilling } from "@/lib/billing/api-service"
 
 /**
  * POST /api/medical-records/lock
@@ -38,11 +32,25 @@ export const POST = withRBAC(
         .limit(1)
 
       if (existing.length === 0) {
-        return NextResponse.json({ error: "Medical record not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Medical record not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       if (existing[0].isLocked) {
-        return NextResponse.json({ error: "Medical record is already locked" }, { status: 400 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Medical record is already locked",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
       const medicalRecord = existing[0]
@@ -55,7 +63,14 @@ export const POST = withRBAC(
         .limit(1)
 
       if (!visit) {
-        return NextResponse.json({ error: "Associated visit not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Associated visit not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       // Validate visit status transition to ready_for_billing
@@ -64,58 +79,51 @@ export const POST = withRBAC(
 
       // Can transition from in_examination or examined directly to ready_for_billing
       if (!isValidStatusTransition(currentStatus, finalStatus)) {
-        return NextResponse.json(
-          {
-            error: "Cannot lock medical record",
-            message: `Visit status "${currentStatus}" cannot transition to "ready_for_billing". Visit must be in "in_examination" or "examined" status.`,
-            currentStatus,
-          },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: "Cannot lock medical record",
+          message: `Visit status "${currentStatus}" cannot transition to "ready_for_billing". Visit must be in "in_examination" or "examined" status.`,
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        })
       }
 
-      // Lock the medical record
-      const [lockedRecord] = await db
-        .update(medicalRecords)
-        .set({
-          isLocked: true,
-          isDraft: false,
-          lockedAt: new Date(),
-          lockedBy: user.id,
-          updatedAt: new Date(),
-        })
-        .where(eq(medicalRecords.id, validatedData.id))
-        .returning()
+      // Wrap all database operations in a transaction
+      // Ensures all-or-nothing execution (ACID compliance)
+      await db.transaction(async (tx) => {
+        // 1. Lock the medical record
+        await tx
+          .update(medicalRecords)
+          .set({
+            isLocked: true,
+            isDraft: false,
+            lockedAt: new Date(),
+            lockedBy: user.id,
+          })
+          .where(eq(medicalRecords.id, validatedData.id))
+          .returning()
 
-      // Update visit status to ready_for_billing (H.1.2 integration)
-      const [updatedVisit] = await db
-        .update(visits)
-        .set({
-          status: finalStatus,
-          updatedAt: new Date(),
-        })
-        .where(eq(visits.id, medicalRecord.visitId))
-        .returning()
+        // 2. Update visit status to ready_for_billing
+        await tx
+          .update(visits)
+          .set({
+            status: finalStatus,
+          })
+          .where(eq(visits.id, medicalRecord.visitId))
+          .returning()
 
-      // Apply doctor's billing adjustment if provided
-      if (validatedData.billingAdjustment && validatedData.billingAdjustment !== 0) {
-        // Calculate billing first to ensure billing record exists
-        await calculateBillingForVisit(medicalRecord.visitId)
+        // 3. Create billing record with all items (pass tx for transaction)
+        const billingId = await createBillingFromMedicalRecord(medicalRecord.visitId, tx)
 
-        // Get the billing ID
-        const [billing] = await db
-          .select()
-          .from(billings)
-          .where(eq(billings.visitId, medicalRecord.visitId))
-          .limit(1)
-
-        if (billing) {
+        // 4. Apply doctor's billing adjustment if provided
+        if (validatedData.billingAdjustment && validatedData.billingAdjustment !== 0) {
           const adjustmentAmount = validatedData.billingAdjustment
           const isDiscount = adjustmentAmount < 0
 
           // Add billing item for doctor's adjustment
-          await db.insert(billingItems).values({
-            billingId: billing.id,
+          await tx.insert(billingItems).values({
+            billingId,
             itemType: "adjustment",
             itemId: null,
             itemName: isDiscount ? "Diskon Dokter" : "Biaya Tambahan Dokter",
@@ -130,34 +138,40 @@ export const POST = withRBAC(
               (isDiscount ? "Diskon diberikan oleh dokter" : "Biaya tambahan dari dokter"),
           })
 
-          // Recalculate billing totals
-          await calculateBillingForVisit(medicalRecord.visitId)
+          // 5. Recalculate billing totals (pass tx for transaction)
+          await recalculateBilling(medicalRecord.visitId, tx)
         }
+      })
+
+      const response: ResponseApi = {
+        message: "Medical record locked successfully. Visit is now ready for billing.",
+        status: HTTP_STATUS_CODES.CREATED,
       }
 
-      return NextResponse.json({
-        success: true,
-        message: "Medical record locked successfully. Visit is now ready for billing.",
-        data: {
-          medicalRecord: lockedRecord,
-          visit: {
-            id: updatedVisit.id,
-            visitNumber: updatedVisit.visitNumber,
-            previousStatus: currentStatus,
-            newStatus: updatedVisit.status,
-          },
-        },
-      })
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return NextResponse.json(
-          { error: "Validation error", details: error.issues },
-          { status: 400 }
-        )
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        })
       }
 
       console.error("Medical record lock error:", error)
-      return NextResponse.json({ error: "Failed to lock medical record" }, { status: 500 })
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to lock medical record",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["medical_records:lock"] }

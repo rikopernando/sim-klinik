@@ -6,6 +6,9 @@
 import axios from "axios"
 import { DrugInventoryInput } from "../pharmacy/validation"
 import { ExpiryAlertLevel } from "@/types/pharmacy"
+import { Pagination, ResponseApi } from "@/types/api"
+import { ApiServiceError, handleApiError } from "./api.service"
+import { DuplicateBatchCheck } from "@/types/inventory"
 
 export interface DrugInventory {
   id: string
@@ -41,17 +44,55 @@ export interface InventoryByDrugItem {
   batches: DrugInventoryWithDetails[]
 }
 
-export interface DuplicateBatchCheck {
-  exists: boolean
-  batch?: DrugInventoryWithDetails
+/**
+ * Get all drug inventories with details (without pagination)
+ */
+export async function getAllInventories(): Promise<DrugInventoryWithDetails[]> {
+  try {
+    const response = await axios.get<ResponseApi<DrugInventoryWithDetails[]>>(
+      "/api/pharmacy/inventory?limit=1000"
+    )
+    if (!response.data.data) {
+      throw new Error("Invalid response: missing data")
+    }
+    return response.data.data || []
+  } catch (error) {
+    console.error("Error in getAllInventories service:", error)
+    handleApiError(error)
+  }
 }
 
 /**
- * Get all drug inventories with details
+ * Get paginated drug inventories with search support
  */
-export async function getAllInventories(): Promise<DrugInventoryWithDetails[]> {
-  const response = await axios.get("/api/pharmacy/inventory")
-  return response.data.data || []
+export async function getPaginatedInventories(params: {
+  search?: string
+  page?: number
+  limit?: number
+}): Promise<{
+  data: DrugInventoryWithDetails[]
+  pagination: Pagination
+}> {
+  try {
+    const url = `/api/pharmacy/inventory`
+    const response = await axios.get<ResponseApi<DrugInventoryWithDetails[]>>(url, { params })
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    if (!response.data.pagination) {
+      throw new ApiServiceError("Invalid response: missing pagination")
+    }
+
+    return {
+      data: response.data.data,
+      pagination: response.data.pagination,
+    }
+  } catch (error) {
+    console.error("Error in getPaginatedInventories service:", error)
+    handleApiError(error)
+  }
 }
 
 /**
@@ -70,40 +111,28 @@ export async function checkDuplicateBatch(
   batchNumber: string
 ): Promise<DuplicateBatchCheck> {
   try {
-    const response = await axios.get(
+    const response = await axios.get<ResponseApi<DuplicateBatchCheck>>(
       `/api/pharmacy/inventory/${drugId}/check-batch?batchNumber=${encodeURIComponent(batchNumber)}`
     )
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data duplicate batch check")
+    }
     return response.data.data
   } catch (error) {
-    console.error("Failed to check duplicate batch:", error)
-    return { exists: false }
+    console.error("Error in checkDuplicateBatch service:", error)
+    handleApiError(error)
   }
 }
 
 /**
  * Add new inventory (stock incoming)
  */
-export async function addInventory(
-  data: DrugInventoryInput
-): Promise<{ success: boolean; message?: string; error?: string; data?: DrugInventory }> {
+export async function addInventory(data: DrugInventoryInput) {
   try {
-    const response = await axios.post("/api/pharmacy/inventory", data)
-    return {
-      success: true,
-      message: response.data.message,
-      data: response.data.data,
-    }
+    await axios.post<ResponseApi>("/api/pharmacy/inventory", data)
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      return {
-        success: false,
-        error: error.response?.data?.error || error.message,
-      }
-    }
-    return {
-      success: false,
-      error: "An unexpected error occurred",
-    }
+    console.error("Error in addInventory service:", error)
+    handleApiError(error)
   }
 }
 
@@ -112,6 +141,16 @@ export async function addInventory(
  * Sorted by expiry date (FEFO - First Expired, First Out)
  */
 export async function getAvailableBatches(drugId: string): Promise<DrugInventoryWithDetails[]> {
-  const response = await axios.get(`/api/pharmacy/inventory/${drugId}/available`)
-  return response.data.data || []
+  try {
+    const response = await axios.get<ResponseApi<DrugInventoryWithDetails[]>>(
+      `/api/pharmacy/inventory/${drugId}/available`
+    )
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing batches data")
+    }
+    return response.data.data
+  } catch (error) {
+    console.error("Error in getAvailableBatches service:", error)
+    handleApiError(error)
+  }
 }

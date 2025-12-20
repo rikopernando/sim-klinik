@@ -5,15 +5,9 @@
 
 import axios from "axios"
 
-export interface Pharmacist {
-  id: string
-  name: string
-  email: string
-}
-
-interface GetPharmacistsResponse {
-  pharmacists: Pharmacist[]
-}
+import { ResponseApi } from "@/types/api"
+import { Pharmacist } from "@/types/user"
+import { ApiServiceError, handleApiError } from "./api.service"
 
 /**
  * Fetch all Pharmacists from the API
@@ -21,17 +15,14 @@ interface GetPharmacistsResponse {
  */
 export async function getPharmacists(): Promise<Pharmacist[]> {
   try {
-    const { data } = await axios.get<GetPharmacistsResponse>("/api/pharmacists")
-    console.log({ data })
-    return data.pharmacists || []
-  } catch (error) {
-    console.error("Error in getPharmacists service:", error)
-
-    // Re-throw with more context
-    if (axios.isAxiosError(error)) {
-      throw new Error(error.response?.data?.error || error.message || "Failed to fetch Pharmacists")
+    const response = await axios.get<ResponseApi<Pharmacist[]>>("/api/pharmacists")
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing pharmacists data")
     }
 
-    throw error
+    return response.data.data
+  } catch (error) {
+    console.error("Error in getPharmacists service:", error)
+    handleApiError(error)
   }
 }

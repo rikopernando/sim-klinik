@@ -20,7 +20,7 @@ export function InventoryStats({
 }: InventoryStatsProps) {
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-      <Card>
+      <Card className="py-0">
         <CardContent className="p-4">
           <div className="flex items-center gap-2">
             <Package className="text-muted-foreground h-8 w-8" />
@@ -32,7 +32,7 @@ export function InventoryStats({
         </CardContent>
       </Card>
 
-      <Card className="border-red-200 bg-red-50">
+      <Card className="border-red-200 bg-red-50 py-0">
         <CardContent className="p-4">
           <div>
             <p className="text-sm text-red-600">Kadaluarsa</p>
@@ -41,7 +41,7 @@ export function InventoryStats({
         </CardContent>
       </Card>
 
-      <Card className="border-orange-200 bg-orange-50">
+      <Card className="border-orange-200 bg-orange-50 py-0">
         <CardContent className="p-4">
           <div>
             <p className="text-sm text-orange-600">Segera Kadaluarsa</p>
@@ -50,7 +50,7 @@ export function InventoryStats({
         </CardContent>
       </Card>
 
-      <Card className="border-yellow-200 bg-yellow-50">
+      <Card className="border-yellow-200 bg-yellow-50 py-0">
         <CardContent className="p-4">
           <div>
             <p className="text-sm text-yellow-600">Stok Rendah</p>

@@ -23,7 +23,6 @@ interface MedicalRecordHistoryDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   patientId: string
-  patientName?: string
 }
 
 const LoadingState = () => (
@@ -51,7 +50,6 @@ export function MedicalRecordHistoryDialog({
   open,
   onOpenChange,
   patientId,
-  patientName,
 }: MedicalRecordHistoryDialogProps) {
   const { history, isLoading, error } = useMedicalRecordHistory({
     patientId,
@@ -67,7 +65,7 @@ export function MedicalRecordHistoryDialog({
             Riwayat Rekam Medis
           </DialogTitle>
           <DialogDescription>
-            {history?.patient?.name || patientName || "Pasien"}
+            {history?.patient?.name || "Pasien"}
             {history?.patient?.mrNumber && ` - MR: ${history.patient.mrNumber}`}
           </DialogDescription>
         </DialogHeader>

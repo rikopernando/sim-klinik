@@ -37,7 +37,7 @@ export const drugUpdateSchema = z.object({
  * Drug Inventory Schema
  */
 export const drugInventorySchema = z.object({
-  drugId: z.number().int().positive("Drug ID harus valid"),
+  drugId: z.string().min(1, "Drug ID harus valid"),
   batchNumber: z.string().min(1, "Nomor batch wajib diisi"),
   expiryDate: z.string().min(1, "Tanggal kadaluarsa wajib diisi"),
   receivedDate: z.string().optional(),
@@ -47,14 +47,25 @@ export const drugInventorySchema = z.object({
 })
 
 /**
- * Prescription Fulfillment Schema
+ * Prescription Fulfillment Schema (single)
  */
 export const prescriptionFulfillmentSchema = z.object({
-  prescriptionId: z.number().int().positive("Prescription ID harus valid"),
-  inventoryId: z.number().int().positive("Inventory ID harus valid"),
+  prescriptionId: z.string().min(1, "Prescription ID harus valid"),
+  inventoryId: z.string().min(1, "Inventory ID harus valid"),
   dispensedQuantity: z.number().int().positive("Jumlah yang diberikan harus positif"),
   fulfilledBy: z.string().min(1, "Fulfilled by is required"),
   notes: z.string().optional(),
+})
+
+/**
+ * Bulk Prescription Fulfillment Schema
+ * Validates an array of prescription fulfillment requests
+ */
+export const bulkPrescriptionFulfillmentSchema = z.object({
+  prescriptions: z
+    .array(prescriptionFulfillmentSchema)
+    .min(1, "Minimal satu resep harus diisi")
+    .max(50, "Maksimal 50 resep dapat diproses sekaligus"),
 })
 
 /**
@@ -76,12 +87,22 @@ export const stockAdjustmentSchema = z.object({
 export const stockMovementSchema = z.object({
   inventoryId: z.number().int().positive("Inventory ID harus valid"),
   movementType: z.enum(["in", "out", "adjustment", "expired"], {
-    required_error: "Tipe movement wajib dipilih",
+    message: "Tipe movement wajib dipilih",
   }),
   quantity: z.number().int(),
   reason: z.string().optional(),
   referenceId: z.number().int().optional(),
   performedBy: z.string().min(1, "Performed by is required"),
+})
+
+/**
+ * Inventory Query Schema (for GET /api/pharmacy/inventory)
+ * Supports search and pagination
+ */
+export const inventoryQuerySchema = z.object({
+  search: z.string().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
 })
 
 /**
@@ -91,5 +112,7 @@ export type DrugInput = z.infer<typeof drugSchema>
 export type DrugUpdateInput = z.infer<typeof drugUpdateSchema>
 export type DrugInventoryInput = z.infer<typeof drugInventorySchema>
 export type PrescriptionFulfillmentInput = z.infer<typeof prescriptionFulfillmentSchema>
+export type BulkPrescriptionFulfillmentInput = z.infer<typeof bulkPrescriptionFulfillmentSchema>
 export type StockAdjustmentInput = z.infer<typeof stockAdjustmentSchema>
 export type StockMovementInput = z.infer<typeof stockMovementSchema>
+export type InventoryQueryInput = z.infer<typeof inventoryQuerySchema>

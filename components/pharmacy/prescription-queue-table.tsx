@@ -4,58 +4,18 @@
  */
 
 import { useMemo } from "react"
+
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
+import { PrescriptionQueueItem } from "@/types/pharmacy"
+
 import { PrescriptionRow } from "./queue/prescription-row"
 
-interface Drug {
-  id: string
-  name: string
-  genericName?: string | null
-  unit: string
-  price: string
-}
-
-interface Patient {
-  id: string
-  name: string
-  mrNumber: string
-}
-
-interface Doctor {
-  id: string
-  name: string
-}
-
-interface Visit {
-  id: string
-  visitNumber: string
-}
-
-interface Prescription {
-  id: string
-  dosage: string
-  frequency: string
-  quantity: number
-  duration?: string | null
-  instructions?: string | null
-}
-
-interface GroupedQueueItem {
-  visit: Visit
-  patient: Patient
-  doctor: Doctor | null
-  prescriptions: Array<{
-    prescription: Prescription
-    drug: Drug
-  }>
-}
-
 interface PrescriptionQueueTableProps {
-  queue: GroupedQueueItem[]
+  queue: PrescriptionQueueItem[]
   isLoading: boolean
   error: string | null
-  onProcess: (item: GroupedQueueItem) => void
+  onProcess: (item: PrescriptionQueueItem) => void
 }
 
 const LoadingState = () => (
@@ -109,7 +69,7 @@ export function PrescriptionQueueTable({
                   <TableHead className="min-w-[180px]">Pasien / No. Kunjungan</TableHead>
                   <TableHead className="min-w-[200px]">Resep</TableHead>
                   <TableHead className="min-w-[150px]">Dokter</TableHead>
-                  <TableHead className="min-w-[120px] text-right">Aksi</TableHead>
+                  <TableHead className="min-w-[120px]">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>{tableRows}</TableBody>

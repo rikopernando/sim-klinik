@@ -4,13 +4,9 @@
  * Allows doctor to add billing adjustment when locking
  */
 
-import { useState, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { Loader2, Save, Lock, Unlock } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Separator } from "@/components/ui/separator"
 import {
   AlertDialog,
@@ -22,19 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-
-interface BillingPreview {
-  drugsSubtotal: number
-  proceduresSubtotal: number
-  consultationFee: number
-  subtotal: number
-}
+import { BillingPreview } from "@/lib/utils/billing"
+import { BillingPreviewSection } from "./billing-preview-section"
+import { BillingAdjustmentForm } from "./billing-adjustment-form"
 
 interface MedicalRecordActionsProps {
   isLocked: boolean
   isSaving: boolean
   isLocking: boolean
-  visitId: string
+  billingPreview: BillingPreview
   onSave: () => Promise<void>
   onLock: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   onUnlock?: () => Promise<void>
@@ -44,7 +36,7 @@ export function MedicalRecordActions({
   isLocked,
   isSaving,
   isLocking,
-  visitId,
+  billingPreview,
   onSave,
   onLock,
   onUnlock,
@@ -54,75 +46,71 @@ export function MedicalRecordActions({
   const [adjustmentType, setAdjustmentType] = useState<"none" | "discount" | "surcharge">("none")
   const [adjustmentAmount, setAdjustmentAmount] = useState("")
   const [adjustmentNote, setAdjustmentNote] = useState("")
-  const [billingPreview, setBillingPreview] = useState<BillingPreview | null>(null)
-  const [isLoadingBilling, setIsLoadingBilling] = useState(false)
 
-  // Fetch billing preview when dialog opens
-  useEffect(() => {
-    if (lockDialogOpen) {
-      setIsLoadingBilling(true)
-      fetch(`/api/billing/preview?visitId=${visitId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setBillingPreview(data.data)
-          }
-        })
-        .catch((err) => console.error("Failed to fetch billing preview:", err))
-        .finally(() => setIsLoadingBilling(false))
-    }
-  }, [lockDialogOpen, visitId])
-
-  const handleLockConfirm = async () => {
-    setLockDialogOpen(false)
-
-    let billingAdjustment: number | undefined
-    if (adjustmentType !== "none" && adjustmentAmount) {
-      const amount = parseFloat(adjustmentAmount)
-      if (!isNaN(amount) && amount > 0) {
-        billingAdjustment = adjustmentType === "discount" ? -amount : amount
-      }
-    }
-
-    await onLock(billingAdjustment, adjustmentNote || undefined)
-
-    // Reset form
+  // Reset adjustment form
+  const resetAdjustmentForm = useCallback(() => {
     setAdjustmentType("none")
     setAdjustmentAmount("")
     setAdjustmentNote("")
-  }
+  }, [])
 
-  const handleUnlockConfirm = async () => {
+  // Calculate billing adjustment value
+  const calculateBillingAdjustment = useCallback((): number | undefined => {
+    if (adjustmentType === "none" || !adjustmentAmount) return undefined
+
+    const amount = parseFloat(adjustmentAmount)
+    if (isNaN(amount) || amount <= 0) return undefined
+
+    return adjustmentType === "discount" ? -amount : amount
+  }, [adjustmentType, adjustmentAmount])
+
+  const handleLockConfirm = useCallback(async () => {
+    setLockDialogOpen(false)
+
+    const billingAdjustment = calculateBillingAdjustment()
+    await onLock(billingAdjustment, adjustmentNote || undefined)
+
+    resetAdjustmentForm()
+  }, [calculateBillingAdjustment, adjustmentNote, onLock, resetAdjustmentForm])
+
+  const handleUnlockConfirm = useCallback(async () => {
     setUnlockDialogOpen(false)
     if (onUnlock) {
       await onUnlock()
     }
-  }
+  }, [onUnlock])
 
-  // Calculate final total with adjustment
-  const calculateFinalTotal = () => {
-    if (!billingPreview) return 0
-    const adjustment =
-      adjustmentType !== "none" && adjustmentAmount
-        ? (adjustmentType === "discount" ? -1 : 1) * parseFloat(adjustmentAmount)
-        : 0
-    return billingPreview.subtotal + adjustment
-  }
+  const handleAdjustmentTypeChange = useCallback((type: "none" | "discount" | "surcharge") => {
+    setAdjustmentType(type)
+  }, [])
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount)
-  }
+  const handleAdjustmentAmountChange = useCallback((amount: string) => {
+    setAdjustmentAmount(amount)
+  }, [])
+
+  const handleAdjustmentNoteChange = useCallback((note: string) => {
+    setAdjustmentNote(note)
+  }, [])
 
   if (isLocked) {
     return (
       <>
-        <Button variant="outline" onClick={() => setUnlockDialogOpen(true)} disabled={isLocking}>
-          <Unlock className="mr-2 h-4 w-4" />
-          Buka Kunci Rekam Medis
+        <Button
+          variant="outline"
+          onClick={() => setUnlockDialogOpen(true)}
+          disabled={isSaving || isLocking}
+        >
+          {isLocking ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Membuka kunci...
+            </>
+          ) : (
+            <>
+              <Unlock className="mr-2 h-4 w-4" />
+              Buka Kunci Rekam Medis
+            </>
+          )}
         </Button>
 
         {/* Unlock Confirmation Dialog */}
@@ -193,129 +181,23 @@ export function MedicalRecordActions({
 
           <div className="my-4 space-y-4">
             {/* Billing Preview */}
-            {isLoadingBilling ? (
-              <div className="flex items-center justify-center p-4">
-                <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                <span className="text-muted-foreground ml-2 text-sm">Memuat data billing...</span>
-              </div>
-            ) : (
-              billingPreview && (
-                <div className="bg-muted/50 space-y-2 rounded-lg p-4">
-                  <h4 className="mb-3 text-sm font-semibold">Ringkasan Billing</h4>
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Biaya Konsultasi</span>
-                      <span>{formatCurrency(billingPreview.consultationFee)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal Obat</span>
-                      <span>{formatCurrency(billingPreview.drugsSubtotal)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subtotal Tindakan</span>
-                      <span>{formatCurrency(billingPreview.proceduresSubtotal)}</span>
-                    </div>
-                    <Separator className="my-2" />
-                    <div className="flex justify-between font-semibold">
-                      <span>Subtotal Awal</span>
-                      <span>{formatCurrency(billingPreview.subtotal)}</span>
-                    </div>
-                    {adjustmentType !== "none" &&
-                      adjustmentAmount &&
-                      parseFloat(adjustmentAmount) > 0 && (
-                        <>
-                          <div
-                            className="flex justify-between text-sm"
-                            style={{
-                              color:
-                                adjustmentType === "discount"
-                                  ? "rgb(220, 38, 38)"
-                                  : "rgb(22, 163, 74)",
-                            }}
-                          >
-                            <span>
-                              {adjustmentType === "discount" ? "Diskon Dokter" : "Biaya Tambahan"}
-                            </span>
-                            <span>
-                              {adjustmentType === "discount" ? "- " : "+ "}
-                              {formatCurrency(parseFloat(adjustmentAmount))}
-                            </span>
-                          </div>
-                          <Separator className="my-2" />
-                          <div className="text-primary flex justify-between text-base font-bold">
-                            <span>Total Akhir</span>
-                            <span>{formatCurrency(calculateFinalTotal())}</span>
-                          </div>
-                        </>
-                      )}
-                  </div>
-                </div>
-              )
-            )}
+            <BillingPreviewSection
+              billingPreview={billingPreview}
+              adjustmentType={adjustmentType}
+              adjustmentAmount={adjustmentAmount}
+            />
 
             <Separator />
-            {/* Adjustment Type */}
-            <div className="space-y-2">
-              <Label>Penyesuaian Billing (Opsional)</Label>
-              <RadioGroup
-                value={adjustmentType}
-                onValueChange={(value) =>
-                  setAdjustmentType(value as "none" | "discount" | "surcharge")
-                }
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="none" id="adj-none" />
-                  <Label htmlFor="adj-none" className="font-normal">
-                    Tanpa Penyesuaian
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="discount" id="adj-discount" />
-                  <Label htmlFor="adj-discount" className="font-normal">
-                    Berikan Diskon
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="surcharge" id="adj-surcharge" />
-                  <Label htmlFor="adj-surcharge" className="font-normal">
-                    Tambahkan Biaya
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
 
-            {/* Amount Input */}
-            {adjustmentType !== "none" && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="adjustment-amount">
-                    {adjustmentType === "discount"
-                      ? "Nominal Diskon (Rp)"
-                      : "Nominal Tambahan (Rp)"}
-                  </Label>
-                  <Input
-                    id="adjustment-amount"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={adjustmentAmount}
-                    onChange={(e) => setAdjustmentAmount(e.target.value)}
-                    placeholder="Masukkan nominal"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="adjustment-note">Keterangan (Opsional)</Label>
-                  <Textarea
-                    id="adjustment-note"
-                    value={adjustmentNote}
-                    onChange={(e) => setAdjustmentNote(e.target.value)}
-                    placeholder="Alasan penyesuaian billing..."
-                    rows={2}
-                  />
-                </div>
-              </>
-            )}
+            {/* Billing Adjustment Form */}
+            <BillingAdjustmentForm
+              adjustmentType={adjustmentType}
+              adjustmentAmount={adjustmentAmount}
+              adjustmentNote={adjustmentNote}
+              onAdjustmentTypeChange={handleAdjustmentTypeChange}
+              onAdjustmentAmountChange={handleAdjustmentAmountChange}
+              onAdjustmentNoteChange={handleAdjustmentNoteChange}
+            />
           </div>
 
           <AlertDialogFooter>

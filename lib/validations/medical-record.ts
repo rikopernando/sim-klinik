@@ -104,3 +104,16 @@ export const createProcedureFormSchema = z.object({
 export type CreateProcedureFormData = z.infer<typeof createProcedureFormSchema>
 export type ProcedureFormData = z.infer<typeof procedureItemSchema>
 export type ProcedureFormBulkData = z.infer<typeof procedureFormBulkSchema>
+
+/**
+ * Lock Medical Record Schema
+ * Optional billing adjustments can be provided by doctor
+ */
+export const lockSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  billingAdjustment: z.number().optional(), // Positive = surcharge, Negative = discount
+  adjustmentNote: z.string().optional(), // Note explaining the adjustment
+})
+
+export type LockMedicalRecordPayload = z.infer<typeof lockSchema>

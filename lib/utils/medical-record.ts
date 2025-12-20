@@ -39,10 +39,10 @@ export function getDiagnosisTypeBadgeVariant(
  * Currently always returns true since discharge flow is not yet fully implemented
  * TODO: Implement proper check against visit status when discharge module is complete
  */
-export function canEditMedicalRecord(_isLocked: boolean): boolean {
+export function canEditMedicalRecord(isLocked: boolean): boolean {
   // Allow editing even if locked, until discharge flow is implemented
   // Once discharge is implemented, check if visit.status === "completed"
-  return true
+  return !isLocked
 }
 
 /**

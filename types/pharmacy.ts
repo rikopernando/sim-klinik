@@ -2,6 +2,7 @@
  * Pharmacy Module Type Definitions
  * Centralized types for the Pharmacy/Farmasi module
  */
+import { Prescription } from "@/types/medical-record"
 
 /**
  * Movement Types
@@ -73,13 +74,13 @@ export interface DrugInventory {
   id: string
   drugId: string
   batchNumber: string
-  expiryDate: Date
+  expiryDate: string
   stockQuantity: number
   purchasePrice: string | null
   supplier: string | null
-  receivedDate: Date
-  createdAt: Date
-  updatedAt: Date
+  receivedDate: string
+  createdAt: string
+  updatedAt: string
 }
 
 /**
@@ -89,29 +90,6 @@ export interface DrugInventoryWithDetails extends DrugInventory {
   drug: Drug
   expiryAlertLevel: ExpiryAlertLevel
   daysUntilExpiry: number
-}
-
-/**
- * Prescription Entity
- */
-export interface Prescription {
-  id: string
-  medicalRecordId: string
-  drugId: string
-  dosage: string
-  frequency: string
-  duration: string | null
-  quantity: number
-  instructions: string | null
-  route: string | null
-  isFulfilled: boolean
-  fulfilledBy: string | null
-  fulfilledAt: string | null
-  dispensedQuantity: number | null
-  inventoryId: string | null
-  notes: string | null
-  createdAt: string
-  updatedAt: string
 }
 
 /**
@@ -226,18 +204,6 @@ export interface ExpiryAlert {
 }
 
 /**
- * API Response Types
- */
-export interface APIResponse<T = any> {
-  success: boolean
-  message?: string
-  data?: T
-  error?: string
-  details?: any
-  count?: number
-}
-
-/**
  * Prescription Filter Options
  */
 export type PrescriptionFilter = "all" | "pending" | "fulfilled"
@@ -246,3 +212,34 @@ export type PrescriptionFilter = "all" | "pending" | "fulfilled"
  * Stock Filter Options
  */
 export type StockFilter = "all" | "low" | "critical" | "expiring" | "expired"
+
+export interface ExpiringDrugsData {
+  all: DrugInventoryWithDetails[]
+  expired: DrugInventoryWithDetails[]
+  expiringSoon: DrugInventoryWithDetails[]
+  warning: DrugInventoryWithDetails[]
+}
+
+/**
+ * Prescription Queue Types
+ */
+export interface PrescriptionQueueItem {
+  visit: {
+    id: string
+    visitNumber: string
+  }
+  patient: {
+    id: string
+    name: string
+    mrNumber: string
+  }
+  doctor: {
+    id: string
+    name: string
+  } | null
+  medicalRecordId: string
+  prescriptions: {
+    prescription: Prescription
+    drug: Drug
+  }[]
+}

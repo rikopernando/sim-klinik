@@ -240,7 +240,7 @@ export function withRBAC<TParams = Record<string, string | string[]>>(
       return authCheck.response
     }
 
-    const userId = authCheck.user.id
+    const userId = authCheck?.user?.id ?? ""
     const userRole = await getUserRole(userId)
 
     // Check role if specified

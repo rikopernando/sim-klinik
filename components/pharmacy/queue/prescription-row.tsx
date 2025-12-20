@@ -3,58 +3,17 @@
  * Displays compact summary with process button
  */
 
+import { memo } from "react"
+
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TableCell, TableRow } from "@/components/ui/table"
-import { memo } from "react"
-
-interface Drug {
-  id: string
-  name: string
-  genericName?: string | null
-  unit: string
-  price: string
-}
-
-interface Patient {
-  id: string
-  name: string
-  mrNumber: string
-}
-
-interface Doctor {
-  id: string
-  name: string
-}
-
-interface Visit {
-  id: string
-  visitNumber: string
-}
-
-interface Prescription {
-  id: string
-  dosage: string
-  frequency: string
-  quantity: number
-  duration?: string | null
-  instructions?: string | null
-}
-
-interface GroupedQueueItem {
-  visit: Visit
-  patient: Patient
-  doctor: Doctor | null
-  prescriptions: Array<{
-    prescription: Prescription
-    drug: Drug
-  }>
-}
+import { PrescriptionQueueItem } from "@/types/pharmacy"
 
 interface PrescriptionRowProps {
-  item: GroupedQueueItem
+  item: PrescriptionQueueItem
   index: number
-  onProcess: (item: GroupedQueueItem) => void
+  onProcess: (item: PrescriptionQueueItem) => void
 }
 
 export const PrescriptionRow = memo(function PrescriptionRow({
@@ -80,9 +39,9 @@ export const PrescriptionRow = memo(function PrescriptionRow({
       <TableCell>
         <span className="whitespace-nowrap">{item.doctor?.name || "N/A"}</span>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell>
         <Button size="sm" onClick={() => onProcess(item)}>
-          Proses Semua
+          Proses
         </Button>
       </TableCell>
     </TableRow>

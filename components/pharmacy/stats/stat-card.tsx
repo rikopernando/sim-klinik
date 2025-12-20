@@ -4,6 +4,7 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 import { type ReactNode } from "react"
 
 interface StatCardProps {
@@ -41,8 +42,8 @@ export function StatCard({ title, value, description, variant = "default", icon 
   const styles = variantStyles[variant]
 
   return (
-    <Card className={styles.card}>
-      <CardHeader className="pb-3">
+    <Card className={cn("gap-0", styles.card)}>
+      <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           {icon}

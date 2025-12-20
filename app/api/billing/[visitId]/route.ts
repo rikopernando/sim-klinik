@@ -2,74 +2,55 @@
  * Billing Details API
  * GET /api/billing/[visitId]
  * Returns billing details for a specific visit
- * Auto-calculates billing if it doesn't exist
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getBillingDetails, createOrUpdateBilling } from "@/lib/services/billing.service"
-import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
 
-export async function GET(request: NextRequest, context: { params: Promise<{ visitId: string }> }) {
-  try {
-    const { visitId } = await context.params
-    const visitIdNum = parseInt(visitId)
+import { getBillingDetails } from "@/lib/billing/api-service"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { withRBAC } from "@/lib/rbac"
 
-    if (isNaN(visitIdNum)) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid visit ID",
-        },
-        { status: 400 }
-      )
-    }
+export const GET = withRBAC(
+  async (_request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+    try {
+      const { visitId } = await context.params
 
-    // Try to get existing billing
-    let billingDetails = await getBillingDetails(visitIdNum)
-
-    // If billing doesn't exist, auto-calculate it
-    if (!billingDetails) {
-      // Get authenticated user for audit trail
-      const session = await auth.api.getSession({
-        headers: await headers(),
-      })
-
-      const userId = session?.user?.id || "system"
-
-      // Auto-calculate billing with no discount/insurance by default
-      await createOrUpdateBilling(visitIdNum, userId, {
-        discount: 0,
-        discountPercentage: 0,
-        insuranceCoverage: 0,
-      })
-
-      // Fetch the newly created billing
-      billingDetails = await getBillingDetails(visitIdNum)
-
-      if (!billingDetails) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Failed to create billing for this visit",
-          },
-          { status: 500 }
-        )
+      if (!visitId) {
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Invalid visit ID",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
-    }
 
-    return NextResponse.json({
-      success: true,
-      data: billingDetails,
-    })
-  } catch (error) {
-    console.error("Billing details error:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        error: error instanceof Error ? error.message : "Failed to fetch billing details",
-      },
-      { status: 500 }
-    )
+      const billingDetails = await getBillingDetails(visitId)
+
+      const response: ResponseApi<typeof billingDetails> = {
+        data: billingDetails,
+        message: "Billing details fetched successfully",
+        status: HTTP_STATUS_CODES.CREATED,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+    } catch (error) {
+      console.error("Billing details error:", error)
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to fetch billing details",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
+    }
+  },
+  {
+    permissions: ["billing:read"],
   }
-}
+)

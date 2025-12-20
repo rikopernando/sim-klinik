@@ -9,12 +9,15 @@ export function useDoctor() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    let ignore = false
     const fetchDoctors = async () => {
       setLoading(true)
       setErrorMessage(null)
       try {
         const doctorsList = await getDoctors()
-        setDoctors(doctorsList)
+        if (!ignore) {
+          setDoctors(doctorsList)
+        }
       } catch (error) {
         console.error("Error fetching doctors:", error)
         setErrorMessage(getErrorMessage(error))
@@ -24,6 +27,10 @@ export function useDoctor() {
     }
 
     fetchDoctors()
+
+    return () => {
+      ignore = true
+    }
   }, [])
 
   return {
