@@ -13,7 +13,7 @@ import { ResultPoli, PayloadPoli } from "@/types/poli"
  * Fetch all active polis from the API
  * @returns Promise<Poli[]>
  */
-export async function getPolis(opts?: {
+export async function getPolisRequest(opts?: {
   page?: number
   limit?: number
   search?: string
@@ -38,7 +38,7 @@ export async function getPolis(opts?: {
   }
 }
 
-export async function createPoli(payload: PayloadPoli): Promise<ResultPoli> {
+export async function createPoliRequest(payload: PayloadPoli): Promise<ResultPoli> {
   try {
     const response = await axios.post<ResponseApi<ResultPoli>>("/api/polis", payload)
     if (!response.data.data) {
@@ -52,7 +52,10 @@ export async function createPoli(payload: PayloadPoli): Promise<ResultPoli> {
   }
 }
 
-export async function updatePoli(id: string, payload: Partial<PayloadPoli>): Promise<ResultPoli> {
+export async function updatePoliRequest(
+  id: string,
+  payload: Partial<PayloadPoli>
+): Promise<ResultPoli> {
   try {
     const response = await axios.patch<ResponseApi<ResultPoli>>(`/api/polis/${id}`, payload)
     if (!response.data.data) {
@@ -66,7 +69,7 @@ export async function updatePoli(id: string, payload: Partial<PayloadPoli>): Pro
   }
 }
 
-export async function deletePoli(id: string): Promise<void> {
+export async function deletePoliRequest(id: string): Promise<void> {
   try {
     await axios.delete<ResponseApi<null>>(`/api/polis/${id}`)
   } catch (error) {

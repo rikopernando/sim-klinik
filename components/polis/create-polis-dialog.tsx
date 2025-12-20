@@ -22,7 +22,7 @@ interface CreatePolisDialogProps {
 
 export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<PayloadPoli>({
     name: "",
     code: "",
     description: "",
@@ -34,9 +34,20 @@ export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisD
     setIsSubmitting(true)
 
     try {
-      await onSubmit(formData)
+      const response = await onSubmit(formData)
       onOpenChange(false)
+      // if (response) {
+      console.log(response)
       toast.success("Poli berhasil dibuat!")
+      onOpenChange(false)
+      // Reset form
+      setFormData({
+        name: "",
+        code: "",
+        description: "",
+        isActive: "active",
+      })
+      // }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create poli"
       toast.error(`Gagal membuat poli: ${errorMessage}`)

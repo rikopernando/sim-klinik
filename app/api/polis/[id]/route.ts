@@ -10,8 +10,9 @@ import { eq } from "drizzle-orm"
 import { db } from "@/db"
 import { polis } from "@/db/schema/visits"
 import { ResponseApi, ResponseError } from "@/types/api"
-import { Poli } from "@/types/poli"
+import { PayloadPoli } from "@/types/poli"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { updatePoliSchema } from "@/lib/validations/poli.validation"
 
 type Params = {
   params: Promise<{
@@ -27,17 +28,7 @@ export async function PATCH(request: Request, { params }: Params) {
     const { id } = await params
     const body = await request.json()
 
-    // Validate ID
-    if (!id) {
-      const response: ResponseError<null> = {
-        error: null,
-        message: "Poli ID is required",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-      }
-      return NextResponse.json(response, {
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-      })
-    }
+    const validate = updatePoliSchema.parse(body)
 
     // Check if poli exists
     const existingPoli = await db.select().from(polis).where(eq(polis.id, id)).limit(1)
@@ -54,8 +45,8 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     // Check if code is being updated and already exists
-    if (body.code && body.code !== existingPoli[0].code) {
-      const codeExists = await db.select().from(polis).where(eq(polis.code, body.code)).limit(1)
+    if (validate.code && validate.code !== existingPoli[0].code) {
+      const codeExists = await db.select().from(polis).where(eq(polis.code, validate.code)).limit(1)
 
       if (codeExists.length > 0) {
         const response: ResponseError<null> = {
@@ -70,23 +61,16 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     // Prepare update data
-    const updateData: Partial<Poli> = {}
+    const updateData: Partial<PayloadPoli> = {}
     if (body.name !== undefined) updateData.name = body.name
     if (body.code !== undefined) updateData.code = body.code
     if (body.description !== undefined) updateData.description = body.description
     if (body.isActive !== undefined) updateData.isActive = body.isActive
 
     // Update poli
-    const updatedPoli = await db
-      .update(polis)
-      .set({
-        ...updateData,
-        // updatedAt: new Date(),
-      })
-      .where(eq(polis.id, id))
-      .returning()
+    const updatedPoli = await db.update(polis).set(updateData).where(eq(polis.id, id)).returning()
 
-    const response: ResponseApi<Poli> = {
+    const response: ResponseApi<PayloadPoli> = {
       message: "Poli updated successfully",
       data: updatedPoli[0],
       status: HTTP_STATUS_CODES.OK,

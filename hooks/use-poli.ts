@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
-
-// import { Poli } from "@/types/poli"
-import { getPolis } from "@/lib/services/poli.service"
-import { ResultPoli, PayloadPoli } from "@/types/poli"
 import { getErrorMessage } from "@/lib/utils/error"
+import { getPolisRequest, createPoliRequest, updatePoliRequest } from "@/lib/services/poli.service"
+import { ResultPoli, PayloadPoli } from "@/types/poli"
+import { useCallback, useEffect, useState } from "react"
+
+import { deletePoliRequest } from "@/lib/services/poli.service"
 
 interface PaginationInfo {
   page: number
@@ -15,19 +15,19 @@ interface PaginationInfo {
 
 interface UsePoliResult {
   polis: ResultPoli[]
-  fetchPolis: (page?: number, search?: string, includeInactive?: boolean) => Promise<void>
   isLoading: boolean
-  errorMessage: string | null
-  createPoli: (payload: PayloadPoli) => Promise<ResultPoli | null>
-  updatePoli: (id: string, payload: Partial<PayloadPoli>) => Promise<ResultPoli | null>
-  deletePoli: (id: string) => Promise<boolean>
-  pagination: PaginationInfo
+  refetch: () => void
   searchQuery: string
-  setSearchQuery: (q: string) => void
   includeInactive: boolean
+  pagination: PaginationInfo
+  errorMessage: string | null
+  setSearchQuery: (q: string) => void
   setIncludeInactive: (v: boolean) => void
   handlePageChange: (page: number) => void
-  refetch: () => void
+  deletePoli: (id: string) => Promise<boolean>
+  createPoli: (payload: PayloadPoli) => Promise<ResultPoli | null>
+  updatePoli: (id: string, payload: Partial<PayloadPoli>) => Promise<ResultPoli | null>
+  fetchPolis: (page?: number, search?: string, includeInactive?: boolean) => Promise<void>
 }
 
 export function usePoli(): UsePoliResult {
@@ -50,24 +50,22 @@ export function usePoli(): UsePoliResult {
       setLoading(true)
       setErrorMessage(null)
       try {
-        const res = await getPolis({
+        const response = await getPolisRequest({
           page,
           limit: pagination.limit,
           search,
           includeInactive: includeInactiveFlag,
         })
-        if (res) {
-          setPolis(res.data || [])
-          if (res.meta) {
+        if (response) {
+          setPolis(response.data || [])
+          if (response.meta) {
             setPagination({
-              page: res.meta.page,
-              limit: res.meta.limit,
-              total: res.meta.total,
-              totalPages: Math.ceil(res.meta.total / res.meta.limit),
+              page: response.meta.page,
+              limit: response.meta.limit,
+              total: response.meta.total,
+              totalPages: Math.ceil(response.meta.total / response.meta.limit),
             })
           }
-        } else {
-          setPolis([])
         }
       } catch (error) {
         // if (!ignore) {
@@ -87,7 +85,6 @@ export function usePoli(): UsePoliResult {
     fetchPolis(1, debouncedSearch, includeInactive)
   }, [debouncedSearch, includeInactive, fetchPolis])
 
-  // Handle page change
   const handlePageChange = useCallback(
     (page: number) => {
       fetchPolis(page, debouncedSearch, includeInactive)
@@ -103,9 +100,9 @@ export function usePoli(): UsePoliResult {
     async (payload: PayloadPoli) => {
       try {
         setLoading(true)
-        const created = await (await import("@/lib/services/poli.service")).createPoli(payload)
-        // Refresh list (keep current page/search)
+        const created = await createPoliRequest(payload)
         await fetchPolis(pagination.page, debouncedSearch, includeInactive)
+        console.log(created)
         return created
       } catch (error) {
         setErrorMessage(getErrorMessage(error))
@@ -122,7 +119,7 @@ export function usePoli(): UsePoliResult {
     async (id: string, payload: Partial<PayloadPoli>) => {
       try {
         setLoading(true)
-        const updated = await (await import("@/lib/services/poli.service")).updatePoli(id, payload)
+        const updated = await updatePoliRequest(id, payload)
         await fetchPolis(pagination.page, debouncedSearch, includeInactive)
         return updated
       } catch (error) {
@@ -140,7 +137,7 @@ export function usePoli(): UsePoliResult {
     async (id: string) => {
       try {
         setLoading(true)
-        await (await import("@/lib/services/poli.service")).deletePoli(id)
+        await deletePoliRequest(id)
         await fetchPolis(pagination.page, debouncedSearch, includeInactive)
         return true
       } catch (error) {
@@ -156,18 +153,18 @@ export function usePoli(): UsePoliResult {
 
   return {
     polis,
-    fetchPolis,
+    refetch,
     isLoading,
-    errorMessage,
+    fetchPolis,
     createPoli,
     updatePoli,
     deletePoli,
     pagination,
     searchQuery,
+    errorMessage,
     setSearchQuery,
     includeInactive,
-    setIncludeInactive,
     handlePageChange,
-    refetch,
+    setIncludeInactive,
   }
 }

@@ -6,15 +6,16 @@
  * DELETE /api/polis/[id] - Delete a poli
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { count, and, or, ilike } from "drizzle-orm"
-import { eq } from "drizzle-orm"
-
 import { db } from "@/db"
-import { polis } from "@/db/schema/visits"
-import { ResponseApi, ResponseError } from "@/types/api"
+import { eq } from "drizzle-orm"
 import { ResultPoli } from "@/types/poli"
+import { polis } from "@/db/schema/visits"
+import { count, and, or, ilike } from "drizzle-orm"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { NextRequest, NextResponse } from "next/server"
+import { createPoliSchema } from "@/lib/validations/poli.validation"
+import z from "zod"
 
 /**
  * Get all active polis
@@ -99,23 +100,33 @@ export async function GET(request: NextRequest) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
+    //validate required fields
+    const validate = createPoliSchema.parse(body)
+    // Check if code already exists
+    const existingNamePoli = await db
+      .select()
+      .from(polis)
+      .where(ilike(polis.name, validate.name))
+      .limit(1)
 
-    // Validate required fields
-    if (!body.name || !body.code) {
+    if (existingNamePoli.length > 0) {
       const response: ResponseError<null> = {
         error: null,
-        message: "Name and code are required fields",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
+        message: "Poli with this name already exists",
+        status: HTTP_STATUS_CODES.CONFLICT,
       }
       return NextResponse.json(response, {
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
+        status: HTTP_STATUS_CODES.CONFLICT,
       })
     }
 
-    // Check if code already exists
-    const existingPoli = await db.select().from(polis).where(eq(polis.code, body.code)).limit(1)
+    const existingCodePoli = await db
+      .select()
+      .from(polis)
+      .where(ilike(polis.code, validate.code))
+      .limit(1)
 
-    if (existingPoli.length > 0) {
+    if (existingCodePoli.length > 0) {
       const response: ResponseError<null> = {
         error: null,
         message: "Poli with this code already exists",
@@ -147,7 +158,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
-    console.error("Error creating poli:", error)
+    if (error instanceof z.ZodError) {
+      const response: ResponseError<typeof error.issues> = {
+        error: error.issues,
+        message: "Validasi gagal",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      })
+    }
 
     const response: ResponseError<unknown> = {
       error,
