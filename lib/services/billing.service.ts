@@ -6,45 +6,10 @@
 import axios from "axios"
 
 import { ResponseApi } from "@/types/api"
-import type { BillingDetails, PaymentStatus, ProcessPaymentResult } from "@/types/billing"
+import type { BillingDetails, BillingQueueItem, ProcessPaymentResult } from "@/types/billing"
 
 import { ApiServiceError, handleApiError } from "./api.service"
-import { ProcessPaymentInput } from "../billing/validation"
-
-interface Patient {
-  id: string
-  mrNumber: string
-  name: string
-  nik?: string | null
-}
-
-interface Visit {
-  id: string
-  visitNumber: string
-  visitType: string
-  status: string
-  createdAt: Date | string
-}
-
-interface Billing {
-  id: string
-  totalAmount: string
-  paidAmount: string
-  remainingAmount: string
-  paymentStatus: PaymentStatus
-}
-
-interface MedicalRecord {
-  id: string
-  isLocked: boolean
-}
-
-export interface BillingQueueItem {
-  visit: Visit
-  patient: Patient
-  billing: Billing | null
-  medicalRecord: MedicalRecord
-}
+import { ProcessPaymentInput } from "@/lib/billing/validation"
 
 /**
  * Get billing queue

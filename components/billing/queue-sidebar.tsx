@@ -1,34 +1,21 @@
 /**
  * Queue Sidebar Component
- * Displays the billing queue with selectable patient items
+ * Displays the billing queue with selectable patient items and search functionality
  */
+
+import { RefreshCw, Search, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Input } from "@/components/ui/input"
 import { getPaymentStatusConfig } from "@/lib/billing/billing-utils"
-import type { PaymentStatus } from "@/types/billing"
-import { RefreshCw } from "lucide-react"
-
-interface QueueItem {
-  visit: {
-    id: string
-    visitNumber: string
-    visitType: string
-  }
-  patient: {
-    name: string
-    mrNumber: string
-  }
-  billing: {
-    totalAmount: string
-    paymentStatus: PaymentStatus
-  } | null
-}
+import { useQueueSearch } from "@/hooks/use-queue-search"
+import type { BillingQueueItem } from "@/types/billing"
 
 interface QueueSidebarProps {
-  queue: QueueItem[]
+  queue: BillingQueueItem[]
   isLoading: boolean
   selectedVisitId: string | null
   onSelectVisit: (visitId: string) => void
@@ -42,6 +29,9 @@ export function QueueSidebar({
   onSelectVisit,
   onRefresh,
 }: QueueSidebarProps) {
+  // Search functionality
+  const { searchQuery, setSearchQuery, filteredQueue, resultCount } = useQueueSearch(queue)
+
   return (
     <div className="bg-muted/30 flex w-96 flex-col border-r">
       {/* Header */}
@@ -52,20 +42,46 @@ export function QueueSidebar({
             <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">{queue.length} pasien menunggu pembayaran</p>
+        <p className="text-muted-foreground text-xs">
+          {searchQuery
+            ? `${resultCount} dari ${queue.length} pasien`
+            : `${queue.length} pasien menunggu pembayaran`}
+        </p>
+
+        {/* Search Input */}
+        <div className="relative mt-3">
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input
+            type="text"
+            placeholder="Cari nama, No. RM, No. kunjungan..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pr-9 pl-9"
+          />
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSearchQuery("")}
+              className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Queue List */}
       <ScrollArea className="flex-1">
         {isLoading && queue.length === 0 ? (
           <div className="text-muted-foreground p-8 text-center text-sm">Memuat antrian...</div>
-        ) : queue.length === 0 ? (
+        ) : filteredQueue.length === 0 ? (
           <div className="text-muted-foreground p-8 text-center text-sm">
-            Tidak ada pasien dalam antrian
+            {searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada pasien dalam antrian"}
           </div>
         ) : (
           <div className="space-y-2 p-4">
-            {queue.map((item) => (
+            {filteredQueue.map((item) => (
               <QueueItemCard
                 key={item.visit.id}
                 item={item}
@@ -81,7 +97,7 @@ export function QueueSidebar({
 }
 
 interface QueueItemCardProps {
-  item: QueueItem
+  item: BillingQueueItem
   isSelected: boolean
   onSelect: () => void
 }

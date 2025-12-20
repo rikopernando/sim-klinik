@@ -3,9 +3,11 @@
  * Fetches visits ready for billing with auto-refresh
  */
 
-import { useState, useEffect, useCallback } from "react"
-import { getBillingQueue, type BillingQueueItem } from "@/lib/services/billing.service"
 import { toast } from "sonner"
+import { useState, useEffect, useCallback } from "react"
+
+import { getBillingQueue } from "@/lib/services/billing.service"
+import { BillingQueueItem } from "@/types/billing"
 
 interface UseBillingQueueOptions {
   autoRefresh?: boolean
