@@ -6,9 +6,10 @@
 import axios from "axios"
 
 import { ResponseApi } from "@/types/api"
-import type { BillingDetails, PaymentStatus } from "@/types/billing"
+import type { BillingDetails, PaymentStatus, ProcessPaymentResult } from "@/types/billing"
 
 import { ApiServiceError, handleApiError } from "./api.service"
+import { ProcessPaymentInput } from "../billing/validation"
 
 interface Patient {
   id: string
@@ -79,6 +80,30 @@ export async function getBillingDetails(visitId: string): Promise<BillingDetails
     return response.data.data
   } catch (error) {
     console.error("Error in getBillingDetails service:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Process payment with optional discount
+ * Handles discount application and payment in a single transaction
+ */
+export async function processPaymentWithDiscount(
+  data: ProcessPaymentInput
+): Promise<ProcessPaymentResult> {
+  try {
+    const response = await axios.post<ResponseApi<ProcessPaymentResult>>(
+      "/api/billing/process-payment",
+      data
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    console.error("Error in processPaymentWithDiscount service:", error)
     handleApiError(error)
   }
 }

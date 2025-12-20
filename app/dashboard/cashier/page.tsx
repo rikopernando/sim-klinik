@@ -6,22 +6,41 @@
  * Layout: Queue sidebar (left) + Patient details (right)
  */
 
+import { toast } from "sonner"
 import { useState, useEffect, useCallback, useMemo } from "react"
+import { Clock } from "lucide-react"
+
 import { useBillingQueue } from "@/hooks/use-billing-queue"
 import { useBillingDetails } from "@/hooks/use-billing-details"
 import { usePayment, type PaymentInput } from "@/hooks/use-payment"
 import { useBilling } from "@/hooks/use-billing"
-import { Clock } from "lucide-react"
+import { useSession } from "@/lib/auth-client"
 import { PaymentDialog } from "@/components/billing/payment-dialog"
 import { DiscountDialog } from "@/components/billing/discount-dialog"
+import { ProcessPaymentDialog } from "@/components/billing/process-payment-dialog"
 import { QueueSidebar } from "@/components/billing/queue-sidebar"
 import { BillingDetailsPanel } from "@/components/billing/billing-details-panel"
+import { processPaymentWithDiscount } from "@/lib/services/billing.service"
 import type { PaymentMethod } from "@/types/billing"
 
+type PaymentData = {
+  discountType: string
+  discountPercentage?: string
+  discount?: string
+  insuranceCoverage?: string
+  paymentMethod: PaymentMethod
+  amountReceived?: string
+  paymentReference?: string
+  notes?: string
+}
+
 export default function CashierDashboard() {
+  const { data: session } = useSession()
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
   const [discountDialogOpen, setDiscountDialogOpen] = useState(false)
+  const [processPaymentDialogOpen, setProcessPaymentDialogOpen] = useState(false)
+  const [isProcessingMerged, setIsProcessingMerged] = useState(false)
 
   // Billing queue with auto-refresh
   const {
@@ -59,6 +78,11 @@ export default function CashierDashboard() {
   const currentSubtotal = useMemo(() => {
     if (!billingDetails) return 0
     return parseFloat(billingDetails.billing.subtotal)
+  }, [billingDetails])
+
+  const currentTotal = useMemo(() => {
+    if (!billingDetails) return 0
+    return parseFloat(billingDetails.billing.totalAmount)
   }, [billingDetails])
 
   // Calculate drugs and procedures subtotals
@@ -131,6 +155,47 @@ export default function CashierDashboard() {
     [selectedVisitId, calculateBilling]
   )
 
+  // Handle merged payment submission (discount + payment in one step)
+  const handleProcessPaymentSubmit = useCallback(
+    async (data: PaymentData) => {
+      if (!billingDetails || !selectedVisitId || !session?.user.id) {
+        toast.error("Data kunjungan atau detail tagihan tidak valid")
+        return
+      }
+
+      setIsProcessingMerged(true)
+
+      try {
+        await processPaymentWithDiscount({
+          billingId: billingDetails.billing.id,
+          discount: data.discount,
+          discountPercentage: data.discountPercentage,
+          insuranceCoverage: data.insuranceCoverage,
+          amount: remainingAmount.toString(),
+          paymentMethod: data.paymentMethod,
+          amountReceived: data.amountReceived,
+          paymentReference: data.paymentReference,
+          receivedBy: session.user.id,
+          notes: data.notes,
+        })
+
+        toast.success("Pembayaran berhasil diproses")
+        setProcessPaymentDialogOpen(false)
+        refreshQueue()
+        if (selectedVisitId) {
+          fetchBillingDetails(selectedVisitId)
+        }
+      } catch (error) {
+        // Error already handled by service
+        console.error("Process payment error:", error)
+        toast.error("Terjadi kesalahan saat memproses pembayaran")
+      } finally {
+        setIsProcessingMerged(false)
+      }
+    },
+    [billingDetails, selectedVisitId, session, remainingAmount, refreshQueue, fetchBillingDetails]
+  )
+
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
@@ -170,6 +235,7 @@ export default function CashierDashboard() {
           onRefresh={() => selectedVisitId && fetchBillingDetails(selectedVisitId)}
           onProcessPayment={() => setPaymentDialogOpen(true)}
           onApplyDiscount={() => setDiscountDialogOpen(true)}
+          onProcessPaymentWithDiscount={() => setProcessPaymentDialogOpen(true)}
           isSubmitting={isSubmitting}
         />
       </div>
@@ -201,6 +267,18 @@ export default function CashierDashboard() {
         remainingAmount={remainingAmount}
         onSubmit={handlePaymentSubmit}
         isSubmitting={isSubmitting}
+      />
+
+      {/* Process Payment Dialog (Merged Workflow) */}
+      <ProcessPaymentDialog
+        open={processPaymentDialogOpen}
+        onOpenChange={setProcessPaymentDialogOpen}
+        subtotal={currentSubtotal}
+        currentTotal={currentTotal}
+        drugsSubtotal={drugsSubtotal}
+        proceduresSubtotal={proceduresSubtotal}
+        onSubmit={handleProcessPaymentSubmit}
+        isSubmitting={isProcessingMerged}
       />
     </div>
   )

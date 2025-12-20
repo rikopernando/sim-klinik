@@ -329,3 +329,18 @@ export interface BillingDetails {
     createdAt: Date | string
   }
 }
+
+export interface ProcessPaymentResult {
+  payment: {
+    id: string
+    amount: string
+    paymentMethod: string
+    changeGiven: string | null
+  }
+  discountApplied: boolean
+  finalTotal: string
+  paidAmount: string
+  remainingAmount: string
+  paymentStatus: PaymentStatus
+  change: string | null
+}
