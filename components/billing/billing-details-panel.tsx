@@ -4,7 +4,7 @@
  */
 
 import { useRef } from "react"
-import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+import { User, RefreshCw, CreditCard, Printer } from "lucide-react"
 
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -21,9 +21,7 @@ interface BillingDetailsPanelProps {
   billingDetails: BillingDetails | null
   isLoading: boolean
   onRefresh: () => void
-  onProcessPayment: () => void
-  onApplyDiscount?: () => void
-  onProcessPaymentWithDiscount?: () => void
+  onProcessPaymentWithDiscount: () => void
   isSubmitting?: boolean
 }
 
@@ -32,8 +30,6 @@ export function BillingDetailsPanel({
   billingDetails,
   isLoading,
   onRefresh,
-  onProcessPayment,
-  onApplyDiscount,
   onProcessPaymentWithDiscount,
   isSubmitting = false,
 }: BillingDetailsPanelProps) {
@@ -99,39 +95,19 @@ export function BillingDetailsPanel({
 
           {/* Action Buttons */}
           {!isPaid ? (
-            <>
-              {/* Payment Buttons */}
-              <div className="space-y-3">
-                {/* Primary: Merged Workflow (Discount + Payment) */}
-                {onProcessPaymentWithDiscount && (
-                  <Button
-                    onClick={onProcessPaymentWithDiscount}
-                    size="lg"
-                    disabled={isSubmitting}
-                    className="w-full"
-                  >
-                    <CreditCard className="mr-2 h-5 w-5" />
-                    {isSubmitting ? "Memproses..." : "Proses Pembayaran & Diskon"}
-                  </Button>
-                )}
-
-                {/* Secondary: Separate Workflow */}
-                <div className="flex gap-3">
-                  <Button onClick={onApplyDiscount} variant="outline" size="lg" className="flex-1">
-                    <Percent className="mr-2 h-5 w-5" />
-                    Terapkan Diskon
-                  </Button>
-                  <Button onClick={onProcessPayment} variant="outline" size="lg" className="flex-1" disabled={isSubmitting}>
-                    <CreditCard className="mr-2 h-5 w-5" />
-                    Bayar Langsung
-                  </Button>
-                </div>
-              </div>
-            </>
+            <Button
+              onClick={onProcessPaymentWithDiscount}
+              size="lg"
+              disabled={isSubmitting}
+              className="w-full"
+            >
+              <CreditCard className="mr-2 h-5 w-5" />
+              {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+            </Button>
           ) : (
             /* Print Receipt Button */
             <Card className="border-green-500 bg-green-50">
-              <CardContent className="pt-6">
+              <CardContent className="pt-0">
                 <Button
                   onClick={handlePrint}
                   variant="outline"

@@ -15,7 +15,6 @@ import type {
   ServiceInput,
   ServiceUpdateInput,
   CreateBillingInput,
-  PaymentInput,
   DischargeSummaryInput,
   BillingWithDetails,
 } from "@/types/billing"
@@ -333,78 +332,10 @@ export async function createBillingForVisit(data: CreateBillingInput) {
 }
 
 /**
- * Process payment (legacy - kept for backward compatibility)
- */
-export async function processPayment(data: PaymentInput) {
-  // Get billing
-  const [billing] = await db.select().from(billings).where(eq(billings.id, data.billingId)).limit(1)
-
-  if (!billing) {
-    throw new Error("Billing not found")
-  }
-
-  // Validate payment amount
-  const paymentAmount = parseFloat(data.amount)
-  const remainingAmount = parseFloat(billing.remainingAmount || billing.patientPayable)
-
-  if (paymentAmount <= 0) {
-    throw new Error("Payment amount must be greater than 0")
-  }
-
-  if (paymentAmount > remainingAmount) {
-    throw new Error("Payment amount exceeds remaining balance")
-  }
-
-  // Calculate change for cash payments
-  let changeGiven = null
-  if (data.paymentMethod === "cash" && data.amountReceived) {
-    changeGiven = calculateChange(data.amountReceived, data.amount)
-  }
-
-  // Insert payment record
-  const [newPayment] = await db
-    .insert(payments)
-    .values({
-      billingId: data.billingId,
-      amount: data.amount,
-      paymentMethod: data.paymentMethod,
-      paymentReference: data.paymentReference || null,
-      amountReceived: data.amountReceived || null,
-      changeGiven,
-      receivedBy: data.receivedBy,
-      notes: data.notes || null,
-    })
-    .returning()
-
-  // Update billing record
-  const newPaidAmount = parseFloat(billing.paidAmount) + paymentAmount
-  const newRemainingAmount = calculateRemainingAmount(
-    billing.patientPayable,
-    newPaidAmount.toString()
-  )
-  const newPaymentStatus = determinePaymentStatus(billing.patientPayable, newPaidAmount.toString())
-
-  await db
-    .update(billings)
-    .set({
-      paidAmount: newPaidAmount.toFixed(2),
-      remainingAmount: newRemainingAmount,
-      paymentStatus: newPaymentStatus,
-      paymentMethod: data.paymentMethod,
-      paymentReference: data.paymentReference || null,
-      processedBy: data.receivedBy,
-      processedAt: sql`CURRENT_TIMESTAMP`,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(eq(billings.id, data.billingId))
-
-  return newPayment
-}
-
-/**
  * Process payment with discount (merged workflow)
  *
  * Handles discount application and payment processing in a single atomic transaction
+ * with optimized single UPDATE query for better performance
  *
  * @param data - Payment and discount data
  * @returns Payment record with change information
@@ -412,19 +343,26 @@ export async function processPayment(data: PaymentInput) {
  * Features:
  * - Optional discount (nominal or percentage)
  * - Optional insurance coverage
- * - Recalculates billing totals if discount or insurance applied
+ * - Calculates all totals in memory before database write
  * - Validates payment amount against final total
  * - Calculates change for cash payments
+ * - Single UPDATE query for optimal performance
  * - All operations in single database transaction
  *
  * Business Rules:
  * - Only one of discount or discountPercentage should be provided
  * - Payment amount must not exceed remaining balance
  * - For cash payments, amountReceived must be >= amount
+ *
+ * Performance:
+ * - 1 SELECT, 1 INSERT, 1 UPDATE (vs previous 1 SELECT, 1 INSERT, 2 UPDATEs)
+ * - All calculations done in memory
  */
 export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
   return await db.transaction(async (tx) => {
-    // 1. Get current billing record
+    // ========================================
+    // STEP 1: Fetch current billing record
+    // ========================================
     const [billing] = await tx
       .select()
       .from(billings)
@@ -435,69 +373,64 @@ export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
       throw new Error("Billing tidak ditemukan")
     }
 
-    let updatedBilling = billing
+    // ========================================
+    // STEP 2: Calculate discount/insurance totals IN MEMORY
+    // (No database write yet - all calculations happen here)
+    // ========================================
+    let discountAmount = billing.discount || "0"
+    let insuranceCoverage = billing.insuranceCoverage || "0"
+    let totalAmount = billing.totalAmount
+    let patientPayable = billing.patientPayable
+    let remainingAmount = billing.remainingAmount || billing.patientPayable
     let discountApplied = false
 
-    // 2. Apply discount and/or insurance if provided
+    // Apply discount/insurance if provided
     if (data.discount || data.discountPercentage || data.insuranceCoverage) {
-      let discountAmount = "0"
-
+      // Calculate discount
       if (data.discountPercentage) {
-        // Calculate discount from percentage
         discountAmount = calculateDiscountFromPercentage(billing.subtotal, data.discountPercentage)
       } else if (data.discount) {
         discountAmount = data.discount
       }
 
-      // Recalculate totals
+      // Calculate all totals
       const tax = billing.tax || "0"
-      const totalAmount = calculateTotalAmount(billing.subtotal, discountAmount, tax)
-      const insuranceCoverage = data.insuranceCoverage || billing.insuranceCoverage || "0"
-      const patientPayable = calculatePatientPayable(totalAmount, insuranceCoverage)
+      totalAmount = calculateTotalAmount(billing.subtotal, discountAmount, tax)
+      insuranceCoverage = data.insuranceCoverage || billing.insuranceCoverage || "0"
+      patientPayable = calculatePatientPayable(totalAmount, insuranceCoverage)
       const paidAmount = billing.paidAmount || "0"
-      const remainingAmount = calculateRemainingAmount(patientPayable, paidAmount)
+      remainingAmount = calculateRemainingAmount(patientPayable, paidAmount)
 
-      // Update billing with new discount/insurance and totals
-      const [updated] = await tx
-        .update(billings)
-        .set({
-          discount: discountAmount,
-          discountPercentage: data.discountPercentage || null,
-          insuranceCoverage,
-          totalAmount,
-          patientPayable,
-          remainingAmount,
-        })
-        .where(eq(billings.id, data.billingId))
-        .returning()
-
-      updatedBilling = updated
       discountApplied = true
     }
 
-    // 3. Validate payment amount
+    // ========================================
+    // STEP 3: Validate payment amount
+    // ========================================
     const paymentAmount = parseFloat(data.amount)
-    const remainingAmount = parseFloat(
-      updatedBilling.remainingAmount || updatedBilling.patientPayable
-    )
+    const remaining = parseFloat(remainingAmount)
 
     if (paymentAmount <= 0) {
       throw new Error("Jumlah pembayaran harus lebih besar dari 0")
     }
 
-    if (paymentAmount > remainingAmount) {
+    if (paymentAmount > remaining) {
       throw new Error(
-        `Jumlah pembayaran (Rp ${paymentAmount.toLocaleString("id-ID")}) melebihi sisa tagihan (Rp ${remainingAmount.toLocaleString("id-ID")})`
+        `Jumlah pembayaran (Rp ${paymentAmount.toLocaleString("id-ID")}) melebihi sisa tagihan (Rp ${remaining.toLocaleString("id-ID")})`
       )
     }
 
-    // 4. Calculate change for cash payments
+    // ========================================
+    // STEP 4: Calculate change for cash payments
+    // ========================================
     let changeGiven: string | null = null
     if (data.paymentMethod === "cash" && data.amountReceived) {
       changeGiven = calculateChange(data.amountReceived, data.amount)
     }
 
-    // 5. Insert payment record
+    // ========================================
+    // STEP 5: Insert payment record
+    // ========================================
     const [newPayment] = await tx
       .insert(payments)
       .values({
@@ -512,34 +445,47 @@ export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
       })
       .returning()
 
-    // 6. Update billing with payment info
-    const newPaidAmount = parseFloat(updatedBilling.paidAmount) + paymentAmount
-    const newRemainingAmount = calculateRemainingAmount(
-      updatedBilling.patientPayable,
-      newPaidAmount.toString()
-    )
-    const newPaymentStatus = determinePaymentStatus(
-      updatedBilling.patientPayable,
-      newPaidAmount.toString()
-    )
+    // ========================================
+    // STEP 6: Calculate final billing state
+    // ========================================
+    const newPaidAmount = parseFloat(billing.paidAmount) + paymentAmount
+    const newRemainingAmount = calculateRemainingAmount(patientPayable, newPaidAmount.toString())
+    const newPaymentStatus = determinePaymentStatus(patientPayable, newPaidAmount.toString())
 
+    // ========================================
+    // STEP 7: SINGLE UPDATE with all fields
+    // (Discount + Insurance + Payment in ONE query)
+    // ========================================
     await tx
       .update(billings)
       .set({
+        // Discount/insurance fields (only if discount/insurance was applied)
+        ...(discountApplied && {
+          discount: discountAmount,
+          discountPercentage: data.discountPercentage || null,
+          insuranceCoverage,
+          totalAmount,
+          patientPayable,
+        }),
+        // Payment fields (always updated)
         paidAmount: newPaidAmount.toFixed(2),
         remainingAmount: newRemainingAmount,
         paymentStatus: newPaymentStatus,
         paymentMethod: data.paymentMethod,
         paymentReference: data.paymentReference || null,
+        // Audit fields
         processedBy: data.receivedBy,
         processedAt: sql`CURRENT_TIMESTAMP`,
       })
       .where(eq(billings.id, data.billingId))
 
+    // ========================================
+    // STEP 8: Return result
+    // ========================================
     return {
       payment: newPayment,
       discountApplied,
-      finalTotal: updatedBilling.patientPayable,
+      finalTotal: patientPayable,
       paidAmount: newPaidAmount.toFixed(2),
       remainingAmount: newRemainingAmount,
       paymentStatus: newPaymentStatus,
