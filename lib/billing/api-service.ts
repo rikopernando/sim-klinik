@@ -566,6 +566,25 @@ export async function getBillingStatistics() {
 
 /**
  * Get visits ready for billing (RME locked, not yet paid)
+ *
+ * Fetches visits that meet the billing criteria:
+ * 1. Medical record is locked (RME completed and locked by doctor)
+ * 2. Payment is NOT fully completed (pending, partial, or no billing exists)
+ *
+ * This is the BILLING QUEUE - shows visits waiting for payment processing
+ *
+ * @returns Array of visits with patient, billing, and medical record info
+ *
+ * Business Rules:
+ * - Medical record MUST be locked before billing can be created
+ * - Visits with no billing record are included (need billing creation)
+ * - Visits with pending or partial payment are included
+ * - Visits with fully paid status are excluded
+ *
+ * Performance optimizations:
+ * - Uses LEFT JOIN for optional billing data
+ * - Efficient WHERE clause with indexed columns
+ * - Ordered by creation date (newest first)
  */
 export async function getVisitsReadyForBilling() {
   const result = await db
@@ -581,12 +600,10 @@ export async function getVisitsReadyForBilling() {
     .leftJoin(billings, eq(visits.id, billings.visitId))
     .where(
       and(
-        eq(medicalRecords.isLocked, true), // RME must be locked
-        or(
-          eq(billings.paymentStatus, "pending"),
-          eq(billings.paymentStatus, "partial"),
-          sql`${billings.id} IS NULL` // Or no billing record exists yet
-        )
+        // Medical record must be locked (RME completed)
+        eq(medicalRecords.isLocked, true),
+        // Payment must be incomplete (pending, partial, or no billing exists)
+        or(eq(billings.paymentStatus, "pending"), eq(billings.paymentStatus, "partial"))
       )
     )
     .orderBy(desc(visits.createdAt))

@@ -12,11 +12,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { formatCurrency } from "@/lib/billing/billing-utils"
+import { CurrencyInput } from "@/components/ui/currency-input"
 
 type DiscountType = "none" | "fixed" | "percentage" | "drugs_only" | "procedures_only"
 
@@ -50,6 +50,7 @@ export function DiscountDialog({
   onSubmit,
   isSubmitting = false,
 }: DiscountDialogProps) {
+  console.log({ proceduresSubtotal, drugsSubtotal })
   // Determine initial discount type
   const initialDiscountType: DiscountType =
     currentDiscountPercentage > 0 ? "percentage" : currentDiscount > 0 ? "fixed" : "none"
@@ -120,7 +121,7 @@ export function DiscountDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           {/* Current Subtotal */}
           <div className="bg-muted/50 rounded-lg p-4">
             <p className="text-muted-foreground text-sm">Subtotal Tagihan</p>
@@ -129,7 +130,7 @@ export function DiscountDialog({
 
           <FieldGroup>
             <FieldSet>
-              <FieldGroup>
+              <FieldGroup className="gap-4">
                 {/* Discount Section */}
                 <Field>
                   <FieldLabel>Tipe Diskon</FieldLabel>
@@ -150,22 +151,18 @@ export function DiscountDialog({
                       <RadioGroupItem value="percentage" id="discount-percentage" />
                       <Label htmlFor="discount-percentage">Diskon Persentase (%)</Label>
                     </div>
-                    {drugsSubtotal && drugsSubtotal > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="drugs_only" id="discount-drugs" />
-                        <Label htmlFor="discount-drugs">
-                          Diskon Seluruh Obat ({formatCurrency(drugsSubtotal)})
-                        </Label>
-                      </div>
-                    )}
-                    {proceduresSubtotal && proceduresSubtotal > 0 && (
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="procedures_only" id="discount-procedures" />
-                        <Label htmlFor="discount-procedures">
-                          Diskon Seluruh Tindakan ({formatCurrency(proceduresSubtotal)})
-                        </Label>
-                      </div>
-                    )}
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="drugs_only" id="discount-drugs" />
+                      <Label htmlFor="discount-drugs">
+                        Diskon Seluruh Obat ({formatCurrency(drugsSubtotal || 0)})
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="procedures_only" id="discount-procedures" />
+                      <Label htmlFor="discount-procedures">
+                        Diskon Seluruh Tindakan ({formatCurrency(proceduresSubtotal || 0)})
+                      </Label>
+                    </div>
                   </RadioGroup>
                 </Field>
 
@@ -173,11 +170,10 @@ export function DiscountDialog({
                 {discountType === "fixed" && (
                   <Field>
                     <FieldLabel htmlFor="discount-fixed-amount">Nominal Diskon (Rp)</FieldLabel>
-                    <Input
+                    <CurrencyInput
                       id="discount-fixed-amount"
-                      type="number"
                       value={discountFixed}
-                      onChange={(e) => setDiscountFixed(e.target.value)}
+                      onValueChange={(amount) => setDiscountFixed(amount)}
                       placeholder="0"
                       disabled={isSubmitting}
                       min="0"
@@ -197,11 +193,10 @@ export function DiscountDialog({
                     <FieldLabel htmlFor="discount-percentage-amount">
                       Persentase Diskon (%)
                     </FieldLabel>
-                    <Input
+                    <CurrencyInput
                       id="discount-percentage-amount"
-                      type="number"
                       value={discountPercentage}
-                      onChange={(e) => setDiscountPercentage(e.target.value)}
+                      onValueChange={(amount) => setDiscountPercentage(amount)}
                       placeholder="0"
                       disabled={isSubmitting}
                       min="0"
@@ -220,11 +215,10 @@ export function DiscountDialog({
                   <FieldLabel htmlFor="insurance-coverage">
                     Ditanggung Asuransi/Jaminan (Rp)
                   </FieldLabel>
-                  <Input
+                  <CurrencyInput
                     id="insurance-coverage"
-                    type="number"
                     value={insuranceCoverage}
-                    onChange={(e) => setInsuranceCoverage(e.target.value)}
+                    onValueChange={(amount) => setInsuranceCoverage(amount)}
                     placeholder="0"
                     disabled={isSubmitting}
                     min="0"

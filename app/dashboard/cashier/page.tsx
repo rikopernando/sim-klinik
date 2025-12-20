@@ -72,7 +72,7 @@ export default function CashierDashboard() {
   const proceduresSubtotal = useMemo(() => {
     if (!billingDetails) return 0
     return billingDetails.items
-      .filter((item) => item.itemType === "procedure")
+      .filter((item) => item.itemType === "service")
       .reduce((sum, item) => sum + parseFloat(item.totalPrice), 0)
   }, [billingDetails])
 
