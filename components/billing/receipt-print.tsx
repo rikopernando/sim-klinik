@@ -24,7 +24,7 @@ export function ReceiptPrint({ data }: ReceiptPrintProps) {
       <div className="mx-auto max-w-[210mm] bg-white p-8 text-black">
         {/* Header */}
         <div className="mb-6 border-b-2 border-black pb-4 text-center">
-          <h1 className="text-2xl font-bold">KLINIK SEHAT</h1>
+          <h1 className="text-2xl font-bold">KLINIK BUMI ANDALAS</h1>
           <p className="text-sm">Jl. Kesehatan No. 123, Jakarta</p>
           <p className="text-sm">Telp: (021) 1234-5678</p>
           <p className="mt-2 text-sm font-semibold">KUITANSI PEMBAYARAN</p>

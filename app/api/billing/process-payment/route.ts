@@ -10,6 +10,7 @@ import { processPaymentSchema } from "@/lib/billing/validation"
 import { processPaymentWithDiscount } from "@/lib/billing/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { withRBAC } from "@/lib/rbac"
 
 /**
  * POST /api/billing/process-payment
@@ -35,45 +36,48 @@ import HTTP_STATUS_CODES from "@/lib/constans/http"
  *   message: string,
  * }
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
+export const POST = withRBAC(
+  async (request: NextRequest) => {
+    try {
+      const body = await request.json()
 
-    // Validate input using Zod schema with custom refinements
-    const validatedData = processPaymentSchema.parse(body)
+      // Validate input using Zod schema with custom refinements
+      const validatedData = processPaymentSchema.parse(body)
 
-    // Process payment with discount (atomic transaction)
-    await processPaymentWithDiscount(validatedData)
+      // Process payment with discount (atomic transaction)
+      await processPaymentWithDiscount(validatedData)
 
-    const response: ResponseApi = {
-      message: "Payment processed successfully",
-      status: HTTP_STATUS_CODES.CREATED,
-    }
-
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
-  } catch (error) {
-    // Handle Zod validation errors
-    if (error instanceof ZodError) {
-      const response: ResponseError<unknown> = {
-        error: error.issues,
-        message: "Validation error",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      const response: ResponseApi = {
+        message: "Payment processed successfully",
+        status: HTTP_STATUS_CODES.CREATED,
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
+    } catch (error) {
+      // Handle Zod validation errors
+      if (error instanceof ZodError) {
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
+
+      console.error("Process payment error:", error)
+
+      // Handle business logic errors
+      const errorMessage = error instanceof Error ? error.message : "Gagal memproses pembayaran"
+      const response: ResponseError<unknown> = {
+        error: errorMessage,
+        message: errorMessage,
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
-
-    console.error("Process payment error:", error)
-
-    // Handle business logic errors
-    const errorMessage = error instanceof Error ? error.message : "Gagal memproses pembayaran"
-    const response: ResponseError<unknown> = {
-      error: errorMessage,
-      message: errorMessage,
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-    }
-
-    return NextResponse.json(response, {
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-    })
-  }
-}
+  },
+  { permissions: ["billing:write"] }
+)
