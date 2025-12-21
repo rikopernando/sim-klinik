@@ -16,6 +16,7 @@ import type {
   VitalSignsInput,
   CPPTInput,
   MaterialUsageInput,
+  RoomUpdateInput,
 } from "./validation"
 
 /**
@@ -81,23 +82,14 @@ export async function createRoom(data: RoomInput) {
       status: "available",
       description: data.description || null,
       isActive: "active",
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
     .returning()
 
   return newRoom
 }
 
-export async function updateRoom(id: string, updateData: any) {
-  const [updatedRoom] = await db
-    .update(rooms)
-    .set({
-      ...updateData,
-      updatedAt: new Date(),
-    })
-    .where(eq(rooms.id, id))
-    .returning()
+export async function updateRoom(id: string, updateData: RoomUpdateInput) {
+  const [updatedRoom] = await db.update(rooms).set(updateData).where(eq(rooms.id, id)).returning()
 
   if (!updatedRoom) {
     throw new Error("Room not found")

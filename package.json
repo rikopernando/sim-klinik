@@ -18,6 +18,7 @@
     "db:seed": "tsx scripts/seed.ts",
     "db:seed:services": "tsx lib/seeders/seed-services.ts",
     "db:seed:drugs": "tsx db/seeders/seed-drugs.ts",
+    "db:seed:rooms": "tsx scripts/seed-rooms.ts",
     "db:seed:billing": "tsx scripts/seed-billing-test-data.ts",
     "db:update-passwords": "tsx scripts/update-passwords.ts",
     "db:up": "docker compose up postgres -d",

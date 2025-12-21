@@ -23,8 +23,8 @@ export const roomSchema = z.object({
  * Bed Assignment Schema
  */
 export const bedAssignmentSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
-  roomId: z.number().int().positive("Room ID harus valid"),
+  visitId: z.string().min(1, "Visit ID harus valid"),
+  roomId: z.string().min(1, "Room ID harus valid"),
   bedNumber: z.string().min(1, "Nomor bed wajib diisi"),
   notes: z.string().optional(),
 })
@@ -33,7 +33,7 @@ export const bedAssignmentSchema = z.object({
  * Vital Signs Schema
  */
 export const vitalSignsSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
+  visitId: z.string().min(1, "Visit ID harus valid"),
   temperature: z.string().optional(),
   bloodPressureSystolic: z.number().int().optional(),
   bloodPressureDiastolic: z.number().int().optional(),
@@ -52,10 +52,10 @@ export const vitalSignsSchema = z.object({
  * CPPT Schema
  */
 export const cpptSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
+  visitId: z.string().min(1, "Visit ID harus valid"),
   authorId: z.string().min(1, "Author ID is required"),
   authorRole: z.enum(["doctor", "nurse"], {
-    required_error: "Author role is required",
+    message: "Author role is required",
   }),
   subjective: z.string().optional(),
   objective: z.string().optional(),
@@ -69,7 +69,7 @@ export const cpptSchema = z.object({
  * Material Usage Schema
  */
 export const materialUsageSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
+  visitId: z.string().min(1, "Visit ID harus valid"),
   materialName: z.string().min(1, "Nama material wajib diisi"),
   quantity: z.number().int().positive("Jumlah harus positif"),
   unit: z.string().min(1, "Satuan wajib diisi"),
@@ -82,7 +82,7 @@ export const materialUsageSchema = z.object({
  * Room Update Schema
  */
 export const roomUpdateSchema = z.object({
-  id: z.number().int().positive("Room ID harus valid"),
+  id: z.string().min(1, "Room ID harus diisi"),
   roomNumber: z.string().optional(),
   roomType: z.string().optional(),
   bedCount: z.number().int().positive().optional(),

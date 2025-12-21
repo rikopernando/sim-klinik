@@ -3,6 +3,9 @@
  * Centralized types for the Inpatient/Rawat Inap module
  */
 
+import { Patient } from "./registration"
+import { Visit } from "./visit"
+
 /**
  * Room Status Types
  */
@@ -79,8 +82,8 @@ export interface BedAssignment {
  */
 export interface BedAssignmentWithDetails {
   assignment: BedAssignment
-  visit: any // Visit type
-  patient: any // Patient type
+  visit: Visit
+  patient: Patient
 }
 
 /**
@@ -215,29 +218,6 @@ export interface RoomInput {
 }
 
 /**
- * Bed Assignment Input Data
- */
-export interface BedAssignmentInput {
-  visitId: string
-  roomId: string
-  bedNumber: string
-  notes?: string
-}
-
-/**
- * API Response Types
- */
-export interface APIResponse<T = any> {
-  success: boolean
-  message?: string
-  data?: T
-  error?: string
-  details?: any
-  count?: number
-  totalCost?: string
-}
-
-/**
  * Room Filter Options
  */
 export type RoomFilter = "all" | "available" | "occupied" | "full"
@@ -253,4 +233,14 @@ export interface RoomStatusConfig {
   borderColor: string
   textColor: string
   badgeColor: string
+}
+
+export interface PatientSearchResult {
+  id: string
+  mrNumber: string
+  name: string
+  visit: {
+    id: string
+    visitNumber: string
+  }
 }

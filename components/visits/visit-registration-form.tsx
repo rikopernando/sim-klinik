@@ -69,7 +69,6 @@ export function VisitRegistrationForm({
 
     try {
       const visit = await registerVisit(patient.id, data)
-      console.log({ visit })
       onSuccess?.(visit)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))

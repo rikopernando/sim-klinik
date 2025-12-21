@@ -7,7 +7,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { roomSchema, roomUpdateSchema } from "@/lib/inpatient/validation"
 import { getAllRoomsWithOccupancy, createRoom, updateRoom } from "@/lib/inpatient/api-service"
-import { APIResponse } from "@/types/inpatient"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
 
 /**
  * GET /api/rooms
@@ -21,22 +22,27 @@ export async function GET(request: NextRequest) {
 
     const roomsWithOccupancy = await getAllRoomsWithOccupancy(status, roomType)
 
-    const response: APIResponse = {
-      success: true,
+    const response: ResponseApi<typeof roomsWithOccupancy> = {
+      status: HTTP_STATUS_CODES.OK,
+      message: "Rooms fetched successfully",
       data: roomsWithOccupancy,
-      count: roomsWithOccupancy.length,
     }
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
-    console.error("Rooms fetch error:", error)
+    console.error("Error fetching rooms:", error)
 
-    const response: APIResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch rooms",
+    // Handle business logic errors
+    const errorMessage = error instanceof Error ? error.message : "Gagal memuat data rooms"
+    const response: ResponseError<unknown> = {
+      error: errorMessage,
+      message: errorMessage,
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
-    return NextResponse.json(response, { status: 500 })
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }
 
@@ -52,33 +58,37 @@ export async function POST(request: NextRequest) {
     const validatedData = roomSchema.parse(body)
 
     // Create room
-    const newRoom = await createRoom(validatedData)
+    await createRoom(validatedData)
 
-    const response: APIResponse = {
-      success: true,
+    const response: ResponseApi = {
+      status: HTTP_STATUS_CODES.CREATED,
       message: "Room created successfully",
-      data: newRoom,
     }
 
-    return NextResponse.json(response, { status: 201 })
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const response: APIResponse = {
-        success: false,
-        error: "Validation error",
-        details: error.issues,
+      const response: ResponseError<unknown> = {
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+        message: "Validation error",
+        error: error.issues,
       }
       return NextResponse.json(response, { status: 400 })
     }
 
     console.error("Room creation error:", error)
 
-    const response: APIResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to create room",
+    // Handle business logic errors
+    const errorMessage = error instanceof Error ? error.message : "Failed to create room"
+    const response: ResponseError<unknown> = {
+      error: errorMessage,
+      message: errorMessage,
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
-    return NextResponse.json(response, { status: 500 })
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+    })
   }
 }
 
@@ -94,34 +104,36 @@ export async function PATCH(request: NextRequest) {
     const validatedData = roomUpdateSchema.parse(body)
 
     // Update room
-    const updatedRoom = await updateRoom(validatedData.id, validatedData)
+    await updateRoom(validatedData.id, validatedData)
 
-    const response: APIResponse = {
-      success: true,
+    const response: ResponseApi = {
+      status: HTTP_STATUS_CODES.OK,
       message: "Room updated successfully",
-      data: updatedRoom,
     }
 
-    return NextResponse.json(response)
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const response: APIResponse = {
-        success: false,
-        error: "Validation error",
-        details: error.issues,
+      const response: ResponseError<unknown> = {
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+        message: "Validation error",
+        error: error.issues,
       }
       return NextResponse.json(response, { status: 400 })
     }
 
     console.error("Room update error:", error)
 
-    const response: APIResponse = {
-      success: false,
-      error: error instanceof Error ? error.message : "Failed to update room",
+    // Handle business logic errors
+    const errorMessage = error instanceof Error ? error.message : "Failed to update room"
+    const response: ResponseError<unknown> = {
+      error: errorMessage,
+      message: errorMessage,
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
     return NextResponse.json(response, {
-      status: error instanceof Error && error.message === "Room not found" ? 404 : 500,
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     })
   }
 }
