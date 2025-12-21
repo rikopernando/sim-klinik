@@ -102,7 +102,7 @@ export function usePoli(): UsePoliResult {
         setLoading(true)
         const created = await createPoliRequest(payload)
         await fetchPolis(pagination.page, debouncedSearch, includeInactive)
-        console.log(created)
+        console.log("ini", created)
         return created
       } catch (error) {
         setErrorMessage(getErrorMessage(error))

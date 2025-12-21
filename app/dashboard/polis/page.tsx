@@ -85,15 +85,14 @@ export default function UsersPage() {
 
   return (
     <div className="container mx-auto p-6">
-      {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Manajemen Polis</h1>
-          <p className="text-muted-foreground">Kelola Polis</p>
+          <h1 className="text-3xl font-bold">Manajemen Poli</h1>
+          <p className="text-muted-foreground">Kelola Poli</p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
           <IconCirclePlus2 size={20} className="mr-2" />
-          Tambah Polis
+          Tambah Poli
         </Button>
       </div>
 
@@ -134,10 +133,6 @@ export default function UsersPage() {
         </CardHeader>
 
         <CardContent>
-          {errorMessage && (
-            <div className="mb-4 rounded bg-red-50 p-4 text-sm text-red-600">{errorMessage}</div>
-          )}
-
           {isLoading && polis.length === 0 ? (
             <div className="text-muted-foreground py-12 text-center">Memuat data polis...</div>
           ) : (
@@ -158,6 +153,7 @@ export default function UsersPage() {
 
       {/* Create Polis Dialog */}
       <CreatePolisDialog
+        error={errorMessage}
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onSubmit={async (payload: PayloadPoli) => {

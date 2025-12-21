@@ -15,12 +15,13 @@ import { toast } from "sonner"
 import { PayloadPoli } from "@/types/poli"
 
 interface CreatePolisDialogProps {
+  error: string | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (payload: PayloadPoli) => Promise<void>
 }
 
-export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisDialogProps) {
+export function CreatePolisDialog({ error, open, onOpenChange, onSubmit }: CreatePolisDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState<PayloadPoli>({
     name: "",
@@ -34,20 +35,19 @@ export function CreatePolisDialog({ open, onOpenChange, onSubmit }: CreatePolisD
     setIsSubmitting(true)
 
     try {
-      const response = await onSubmit(formData)
-      onOpenChange(false)
-      // if (response) {
-      console.log(response)
-      toast.success("Poli berhasil dibuat!")
-      onOpenChange(false)
-      // Reset form
-      setFormData({
-        name: "",
-        code: "",
-        description: "",
-        isActive: "active",
-      })
-      // }
+      await onSubmit(formData)
+      if (!error) {
+        onOpenChange(false)
+        setFormData({
+          name: "",
+          code: "",
+          description: "",
+          isActive: "active",
+        })
+        toast.success("Poli berhasil dibuat!")
+      } else {
+        toast.error(error)
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to create poli"
       toast.error(`Gagal membuat poli: ${errorMessage}`)
