@@ -87,17 +87,6 @@ export const POST = withRBAC(
         })
       }
 
-      if (validatedData.visitType === "inpatient" && !validatedData.roomId) {
-        const response: ResponseError<unknown> = {
-          error: {},
-          message: "Room ID is required for inpatient visits",
-          status: HTTP_STATUS_CODES.BAD_REQUEST,
-        }
-        return NextResponse.json(response, {
-          status: HTTP_STATUS_CODES.BAD_REQUEST,
-        })
-      }
-
       // Get initial status based on visit type
       const initialStatus = getInitialVisitStatus(validatedData.visitType)
 

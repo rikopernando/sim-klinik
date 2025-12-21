@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
-import { getPolis, type Poli } from "@/lib/services/poli.service"
+import { getPolis } from "@/lib/services/poli.service"
+import { Poli } from "@/types/poli"
 
 export default function QueuePage() {
   const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined)
