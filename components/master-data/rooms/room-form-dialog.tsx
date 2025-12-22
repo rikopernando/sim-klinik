@@ -5,7 +5,9 @@
  * Dialog for creating and editing rooms
  */
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -23,11 +25,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import type { Room, RoomCreateInput } from "@/types/rooms"
 import { ROOM_TYPES } from "@/lib/constants/rooms"
 import { CurrencyInput } from "@/components/ui/currency-input"
+import { roomCreateSchema } from "@/lib/validations/rooms"
 
 interface RoomFormDialogProps {
   open: boolean
@@ -38,22 +48,24 @@ interface RoomFormDialogProps {
 }
 
 export function RoomFormDialog({ open, onOpenChange, onSubmit, room, mode }: RoomFormDialogProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [formData, setFormData] = useState<RoomCreateInput>({
-    roomNumber: "",
-    roomType: "",
-    bedCount: 1,
-    floor: "",
-    building: "",
-    dailyRate: "",
-    facilities: "",
-    description: "",
+  const form = useForm<RoomCreateInput>({
+    resolver: zodResolver(roomCreateSchema),
+    defaultValues: {
+      roomNumber: "",
+      roomType: "",
+      bedCount: 1,
+      floor: "",
+      building: "",
+      dailyRate: "",
+      facilities: "",
+      description: "",
+    },
   })
 
   // Reset form when dialog opens/closes or room changes
   useEffect(() => {
     if (open && room && mode === "edit") {
-      setFormData({
+      form.reset({
         roomNumber: room.roomNumber,
         roomType: room.roomType,
         bedCount: room.bedCount,
@@ -64,7 +76,7 @@ export function RoomFormDialog({ open, onOpenChange, onSubmit, room, mode }: Roo
         description: room.description || "",
       })
     } else if (open && mode === "create") {
-      setFormData({
+      form.reset({
         roomNumber: "",
         roomType: "",
         bedCount: 1,
@@ -75,20 +87,15 @@ export function RoomFormDialog({ open, onOpenChange, onSubmit, room, mode }: Roo
         description: "",
       })
     }
-  }, [open, room, mode])
+  }, [open, room, mode, form])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
+  const handleSubmit = async (data: RoomCreateInput) => {
     try {
-      await onSubmit(formData)
+      await onSubmit(data)
       onOpenChange(false)
     } catch (error) {
       // Error is handled by the hook
       console.error("Form submission error:", error)
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -104,142 +111,185 @@ export function RoomFormDialog({ open, onOpenChange, onSubmit, room, mode }: Roo
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <FieldGroup className="grid grid-cols-2 gap-4">
-            {/* Room Number */}
-            <Field>
-              <FieldLabel htmlFor="roomNumber">
-                Nomor Kamar <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Input
-                id="roomNumber"
-                value={formData.roomNumber}
-                onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
-                placeholder="101, 201A, dll"
-                required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              {/* Room Number */}
+              <FormField
+                control={form.control}
+                name="roomNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Nomor Kamar <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="101, 201A, dll" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </Field>
 
-            {/* Room Type */}
-            <Field>
-              <FieldLabel htmlFor="roomType">
-                Tipe Kamar <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Select
-                value={formData.roomType}
-                onValueChange={(value) => setFormData({ ...formData, roomType: value })}
-                required
+              {/* Room Type */}
+              <FormField
+                control={form.control}
+                name="roomType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Tipe Kamar <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih tipe kamar" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {ROOM_TYPES.map((type) => (
+                          <SelectItem key={type.value} value={type.value}>
+                            {type.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Bed Count */}
+              <FormField
+                control={form.control}
+                name="bedCount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Jumlah Bed <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min="1"
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Daily Rate */}
+              <FormField
+                control={form.control}
+                name="dailyRate"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Tarif Harian (Rp) <span className="text-destructive">*</span>
+                    </FormLabel>
+                    <FormControl>
+                      <CurrencyInput
+                        min="0"
+                        step="1000"
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        placeholder="100.000"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Floor */}
+              <FormField
+                control={form.control}
+                name="floor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lantai</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="1, 2, 3, dll" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Building */}
+              <FormField
+                control={form.control}
+                name="building"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Gedung</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="Gedung A, Gedung Utama, dll" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-4">
+              {/* Facilities */}
+              <FormField
+                control={form.control}
+                name="facilities"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fasilitas</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="AC, TV, Kamar Mandi Dalam, dll (pisahkan dengan koma)"
+                        rows={3}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Description */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Deskripsi</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} placeholder="Catatan tambahan tentang kamar" rows={3} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={form.formState.isSubmitting}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih tipe kamar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROOM_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {/* Bed Count */}
-            <Field>
-              <FieldLabel htmlFor="bedCount">
-                Jumlah Bed <span className="text-destructive">*</span>
-              </FieldLabel>
-              <Input
-                id="bedCount"
-                type="number"
-                min="1"
-                value={formData.bedCount}
-                onChange={(e) => setFormData({ ...formData, bedCount: parseInt(e.target.value) })}
-                required
-              />
-            </Field>
-
-            {/* Daily Rate */}
-            <Field>
-              <FieldLabel htmlFor="dailyRate">
-                Tarif Harian (Rp) <span className="text-destructive">*</span>
-              </FieldLabel>
-              <CurrencyInput
-                id="dailyRate"
-                min="0"
-                step="1000"
-                value={formData.dailyRate}
-                onValueChange={(value) => setFormData({ ...formData, dailyRate: value })}
-                placeholder="100.000"
-                required
-              />
-            </Field>
-
-            {/* Floor */}
-            <Field>
-              <FieldLabel htmlFor="floor">Lantai</FieldLabel>
-              <Input
-                id="floor"
-                value={formData.floor}
-                onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
-                placeholder="1, 2, 3, dll"
-              />
-            </Field>
-
-            {/* Building */}
-            <Field>
-              <FieldLabel htmlFor="building">Gedung</FieldLabel>
-              <Input
-                id="building"
-                value={formData.building}
-                onChange={(e) => setFormData({ ...formData, building: e.target.value })}
-                placeholder="Gedung A, Gedung Utama, dll"
-              />
-            </Field>
-          </FieldGroup>
-
-          <FieldGroup>
-            {/* Facilities */}
-            <Field>
-              <FieldLabel htmlFor="facilities">Fasilitas</FieldLabel>
-              <Textarea
-                id="facilities"
-                value={formData.facilities}
-                onChange={(e) => setFormData({ ...formData, facilities: e.target.value })}
-                placeholder="AC, TV, Kamar Mandi Dalam, dll (pisahkan dengan koma)"
-                rows={3}
-              />
-            </Field>
-
-            {/* Description */}
-            <Field>
-              <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Catatan tambahan tentang kamar"
-                rows={3}
-              />
-            </Field>
-          </FieldGroup>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isSubmitting}
-            >
-              Batal
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting
-                ? "Menyimpan..."
-                : mode === "create"
-                  ? "Tambah Kamar"
-                  : "Simpan Perubahan"}
-            </Button>
-          </DialogFooter>
-        </form>
+                Batal
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting
+                  ? "Menyimpan..."
+                  : mode === "create"
+                    ? "Tambah Kamar"
+                    : "Simpan Perubahan"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

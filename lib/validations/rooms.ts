@@ -14,8 +14,7 @@ const baseRoomSchema = {
   roomType: z.string().min(1, ROOM_VALIDATION_MESSAGES.roomType.required),
   bedCount: z
     .number({
-      required_error: ROOM_VALIDATION_MESSAGES.bedCount.required,
-      invalid_type_error: ROOM_VALIDATION_MESSAGES.bedCount.required,
+      message: ROOM_VALIDATION_MESSAGES.bedCount.required,
     })
     .int()
     .min(1, ROOM_VALIDATION_MESSAGES.bedCount.min),
