@@ -133,7 +133,6 @@ export async function POST(request: NextRequest) {
         .limit(1)
 
       if (occupiedBed) {
-        // throw new Error(`Bed ${validatedData.bedNumber} sudah ditempati`)
         const response: ResponseError<unknown> = {
           error: {},
           message: `Bed ${validatedData.bedNumber} already filled`,

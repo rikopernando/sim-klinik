@@ -51,6 +51,19 @@ export default function RegistrationPage() {
     setStep("search")
   }
 
+  const handleAssignBed = () => {
+    const paramsObj = {
+      mrNumber: registeredVisit?.patient?.mrNumber || "",
+      visitNumber: registeredVisit?.visit?.visitNumber || "",
+      assignBed: registeredVisit?.visit?.id || "",
+      patientName: registeredVisit?.patient?.name || "",
+    }
+
+    const queryString = new URLSearchParams(paramsObj).toString()
+
+    router.push(`/dashboard/inpatient/rooms?${queryString}`)
+  }
+
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-6">
       {/* Header */}
@@ -188,16 +201,7 @@ export default function RegistrationPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               {/* Bed Assignment Button (Inpatient only) */}
               {registeredVisit.visit?.visitType === "inpatient" && (
-                <Button
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/inpatient/rooms?assignBed=${registeredVisit.visit.id}&patientName=${encodeURIComponent(registeredVisit.patient?.name || "")}`
-                    )
-                  }
-                  size="lg"
-                  variant="secondary"
-                  className="gap-2"
-                >
+                <Button onClick={handleAssignBed} size="lg" variant="secondary" className="gap-2">
                   <UserPlus className="h-4 w-4" />
                   Alokasi Bed Sekarang
                 </Button>

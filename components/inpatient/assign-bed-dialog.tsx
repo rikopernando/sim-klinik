@@ -5,6 +5,7 @@
 
 import { toast } from "sonner"
 import { useState, useMemo, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 
 import {
   Dialog,
@@ -32,9 +33,7 @@ import { searchUnassignedPatients } from "@/lib/services/inpatient.service"
 interface AssignBedDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  preselectedVisitId?: string
-  preselectedPatientName?: string
-  preselectedRoomId?: string
+  preSelectedRoomId?: string
   onSuccess?: () => void
 }
 
@@ -51,47 +50,58 @@ interface PatientSearchResult {
 export function AssignBedDialog({
   open,
   onOpenChange,
-  preselectedVisitId,
-  preselectedPatientName,
-  preselectedRoomId,
+  preSelectedRoomId,
   onSuccess,
 }: AssignBedDialogProps) {
+  const searchParams = useSearchParams()
+  const preSelectedVisitId = searchParams.get("assignBed")
+  const preSelectedVisitNumber = searchParams.get("visitNumber")
+  const preSelectedPatientName = searchParams.get("patientName")
+  const preSelectedMrNumber = searchParams.get("mrNumber")
+
   // State
   const [patientSearch, setPatientSearch] = useState("")
   const [searchResults, setSearchResults] = useState<PatientSearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [selectedVisit, setSelectedVisit] = useState<PatientSearchResult | null>(null)
-  const [selectedRoomId, setSelectedRoomId] = useState(preselectedRoomId || "")
+  const [selectedRoomId, setSelectedRoomId] = useState(preSelectedRoomId || "")
   const [bedNumber, setBedNumber] = useState("")
   const [notes, setNotes] = useState("")
 
   // Auto-select preselected visit when dialog opens
   useEffect(() => {
-    if (open && preselectedVisitId && preselectedPatientName) {
+    if (open && preSelectedVisitId) {
       // Create a mock visit object from the preselected data
       setSelectedVisit({
         id: "temp", // This will be replaced by actual data
-        mrNumber: "",
-        name: preselectedPatientName,
+        mrNumber: preSelectedMrNumber || "",
+        name: preSelectedPatientName || "",
         visit: {
-          id: preselectedVisitId,
-          visitNumber: "",
+          id: preSelectedVisitId,
+          visitNumber: preSelectedVisitNumber || "",
         },
       })
-    } else if (!open) {
-      // Reset when dialog closes
-      if (!preselectedVisitId) {
-        setSelectedVisit(null)
-      }
     }
-  }, [open, preselectedVisitId, preselectedPatientName])
+  }, [
+    open,
+    preSelectedVisitId,
+    preSelectedPatientName,
+    preSelectedMrNumber,
+    preSelectedVisitNumber,
+  ])
+
+  useEffect(() => {
+    if (open && preSelectedRoomId) {
+      setSelectedRoomId(preSelectedRoomId)
+    }
+  }, [open, preSelectedRoomId])
 
   // Hooks
   const { rooms, isLoading: roomsLoading } = useAvailableRooms()
   const { isAssigning, assignBed } = useBedAssignment({
     onSuccess: () => {
       handleClose()
-      if (onSuccess) onSuccess()
+      onSuccess?.()
     },
   })
 
@@ -149,7 +159,7 @@ export function AssignBedDialog({
       setPatientSearch("")
       setSearchResults([])
       setSelectedVisit(null)
-      setSelectedRoomId(preselectedRoomId || "")
+      setSelectedRoomId("")
       setBedNumber("")
       setNotes("")
       onOpenChange(false)
@@ -163,7 +173,7 @@ export function AssignBedDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-h-165 max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Alokasi Bed Pasien</DialogTitle>
           <DialogDescription>
@@ -181,7 +191,7 @@ export function AssignBedDialog({
                 {!selectedVisit && (
                   <Field>
                     <FieldLabel>
-                      Cari Pasien <span className="text-red-600">*</span>
+                      Cari Pasien <span className="text-destructive">*</span>
                     </FieldLabel>
                     <div className="flex gap-2">
                       <Input
@@ -227,7 +237,7 @@ export function AssignBedDialog({
                     {isSearching && (
                       <p className="text-muted-foreground text-xs">Mencari pasien...</p>
                     )}
-                    {patientSearch && searchResults.length === 0 && !isSearching && (
+                    {searchResults.length === 0 && !isSearching && (
                       <p className="text-muted-foreground text-xs">Tidak ada hasil pencarian</p>
                     )}
                   </Field>
@@ -261,7 +271,7 @@ export function AssignBedDialog({
                 {/* Room Selection */}
                 <Field>
                   <FieldLabel>
-                    Kamar <span className="text-red-600">*</span>
+                    Kamar <span className="text-destructive">*</span>
                   </FieldLabel>
                   <Select
                     value={selectedRoomId}
@@ -302,7 +312,7 @@ export function AssignBedDialog({
                 {/* Bed Number Input */}
                 <Field>
                   <FieldLabel>
-                    Nomor Bed <span className="text-red-600">*</span>
+                    Nomor Bed <span className="text-destructive">*</span>
                   </FieldLabel>
                   <Input
                     type="number"
@@ -316,7 +326,7 @@ export function AssignBedDialog({
                     max={selectedRoom?.bedCount || 1}
                   />
                   {bedNumber && !isValidBedNumber && selectedRoom && (
-                    <p className="text-xs text-red-600">
+                    <p className="text-destructive text-xs">
                       Nomor bed harus antara 1 dan {selectedRoom.bedCount}
                     </p>
                   )}

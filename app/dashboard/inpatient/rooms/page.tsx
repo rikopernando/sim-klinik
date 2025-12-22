@@ -103,9 +103,7 @@ export default function RoomDashboardPage() {
         <AssignBedDialog
           open={assignBedDialogOpen}
           onOpenChange={setAssignBedDialogOpen}
-          preselectedVisitId={searchParams.get("assignBed") || undefined}
-          preselectedPatientName={searchParams.get("patientName") || undefined}
-          preselectedRoomId={selectedRoom?.id}
+          preSelectedRoomId={selectedRoom?.id}
           onSuccess={handleAssignSuccess}
         />
       )}

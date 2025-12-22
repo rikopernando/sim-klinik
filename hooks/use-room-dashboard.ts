@@ -3,7 +3,7 @@
  * Fetches room data with occupancy information and auto-refresh
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import type { RoomWithOccupancy } from "@/types/inpatient"
 import { fetchAllRoomsWithOccupancy } from "@/lib/services/room.service"
 import { toast } from "sonner"
@@ -28,17 +28,42 @@ export function useRoomDashboard(options: UseRoomDashboardOptions = {}): UseRoom
   const [isLoading, setIsLoading] = useState(true)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
+  // Use ref to track the current abort controller
+  const abortControllerRef = useRef<AbortController | null>(null)
+
   const fetchRooms = useCallback(async () => {
+    // Abort any previous in-flight request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
+
+    // Create new abort controller for this request
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
+    // Check if already aborted before starting
+    if (abortController.signal.aborted) return
+
     try {
       setIsLoading(true)
       const response = await fetchAllRoomsWithOccupancy()
-      setRooms(response)
-      setLastRefresh(new Date())
+
+      // Only update state if request wasn't aborted
+      if (!abortController.signal.aborted) {
+        setRooms(response)
+        setLastRefresh(new Date())
+      }
     } catch (err) {
-      console.error("Error fetching rooms:", err)
-      toast.error(getErrorMessage(err))
+      // Only handle error if request wasn't aborted
+      if (!abortController.signal.aborted) {
+        console.error("Error fetching rooms:", err)
+        toast.error(getErrorMessage(err))
+      }
     } finally {
-      setIsLoading(false)
+      // Only update loading state if request wasn't aborted
+      if (!abortController.signal.aborted) {
+        setIsLoading(false)
+      }
     }
   }, [])
 
