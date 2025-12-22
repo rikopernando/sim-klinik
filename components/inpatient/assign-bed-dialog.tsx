@@ -4,7 +4,7 @@
  */
 
 import { toast } from "sonner"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, Fragment } from "react"
 import { useSearchParams } from "next/navigation"
 
 import {
@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldSet, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
 import {
   Select,
   SelectContent,
@@ -29,6 +30,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { useAvailableRooms } from "@/hooks/use-available-rooms"
 import { useBedAssignment } from "@/hooks/use-bed-assignment"
 import { searchUnassignedPatients } from "@/lib/services/inpatient.service"
+import { clearQueryString } from "@/lib/utils/url"
 
 interface AssignBedDialogProps {
   open: boolean
@@ -117,8 +119,8 @@ export function AssignBedDialog({
       return
     }
 
-    setIsSearching(true)
     try {
+      setIsSearching(true)
       const response = await searchUnassignedPatients({ query: encodeURIComponent(patientSearch) })
       setSearchResults(response || [])
     } catch (error) {
@@ -145,6 +147,10 @@ export function AssignBedDialog({
   // Handlers
   const handleSubmit = async () => {
     if (!isValid || !selectedVisit) return
+
+    if (preSelectedVisitId) {
+      clearQueryString()
+    }
 
     await assignBed({
       visitId: selectedVisit.visit.id,
@@ -215,22 +221,24 @@ export function AssignBedDialog({
                     </div>
                     {searchResults.length > 0 && (
                       <div className="bg-muted/50 mt-2 max-h-40 space-y-1 overflow-y-auto rounded-lg border p-2">
-                        {searchResults.map((patient) => (
-                          <button
-                            key={patient.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedVisit(patient)
-                              setSearchResults([])
-                              setPatientSearch("")
-                            }}
-                            className="hover:bg-muted w-full rounded p-2 text-left text-sm transition-colors"
-                          >
-                            <p className="font-medium">{patient.name}</p>
-                            <p className="text-muted-foreground text-xs">
-                              MR: {patient.mrNumber} • Kunjungan: {patient.visit.visitNumber}
-                            </p>
-                          </button>
+                        {searchResults.map((patient, index) => (
+                          <Fragment key={patient.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedVisit(patient)
+                                setSearchResults([])
+                                setPatientSearch("")
+                              }}
+                              className="hover:bg-muted w-full rounded p-2 text-left text-sm transition-colors"
+                            >
+                              <p className="font-medium">{patient.name}</p>
+                              <p className="text-muted-foreground text-xs">
+                                MR: {patient.mrNumber} • Kunjungan: {patient.visit.visitNumber}
+                              </p>
+                            </button>
+                            {searchResults.length - 1 !== index && <Separator />}
+                          </Fragment>
                         ))}
                       </div>
                     )}

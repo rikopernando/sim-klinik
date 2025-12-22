@@ -9,7 +9,6 @@ import type { BedAssignmentWithDetails } from "@/types/inpatient"
 
 interface BedAssignmentCardProps {
   assignments: BedAssignmentWithDetails[]
-  roomBedCount: number
 }
 
 export function BedAssignmentCard({ assignments }: BedAssignmentCardProps) {

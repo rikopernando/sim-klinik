@@ -3,12 +3,17 @@
  * Individual room display card with bed assignments
  */
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+"use client"
+
+import { useState } from "react"
+import { BedDouble, Building2, UserPlus } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BedDouble, Building2, UserPlus } from "lucide-react"
-import { BedAssignmentCard } from "./bed-assignment-card"
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import type { RoomWithOccupancy } from "@/types/inpatient"
+
+import { BedAssigmentDialog } from "./bed-assignment-dialog"
 
 interface RoomCardProps {
   room: RoomWithOccupancy
@@ -16,6 +21,8 @@ interface RoomCardProps {
 }
 
 export function RoomCard({ room, onAssignBed }: RoomCardProps) {
+  const [isOpenBedAssigment, setOpenBedAssigment] = useState(false)
+
   // Status styling
   const getStatusColor = () => {
     if (room.occupiedBeds === 0) {
@@ -44,7 +51,7 @@ export function RoomCard({ room, onAssignBed }: RoomCardProps) {
   }
 
   return (
-    <Card className={`border-l-4 ${getStatusColor()}`}>
+    <Card className={`gap-4 border-l-4 ${getStatusColor()}`}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
@@ -54,7 +61,7 @@ export function RoomCard({ room, onAssignBed }: RoomCardProps) {
           {getStatusBadge()}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="flex-1 space-y-3">
         {/* Bed Info */}
         <div className="flex items-center gap-2">
           <BedDouble className="text-muted-foreground h-4 w-4" />
@@ -95,13 +102,26 @@ export function RoomCard({ room, onAssignBed }: RoomCardProps) {
             Rp {parseFloat(room.dailyRate).toLocaleString("id-ID")}
           </p>
         </div>
+      </CardContent>
 
+      <CardFooter className="flex-col gap-2">
         {/* Bed Assignments */}
         {room.assignments && room.assignments.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-xs font-medium">Pasien di Kamar Ini</p>
-            <BedAssignmentCard assignments={room.assignments} roomBedCount={room.bedCount} />
-          </div>
+          <>
+            <BedAssigmentDialog
+              open={isOpenBedAssigment}
+              assignments={room.assignments}
+              onOpenChange={setOpenBedAssigment}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setOpenBedAssigment(true)}
+            >
+              Pasien di Kamar Ini
+            </Button>
+          </>
         )}
 
         {/* Action Button */}
@@ -114,7 +134,7 @@ export function RoomCard({ room, onAssignBed }: RoomCardProps) {
           <UserPlus className="mr-2 h-4 w-4" />
           Alokasi Bed
         </Button>
-      </CardContent>
+      </CardFooter>
     </Card>
   )
 }
