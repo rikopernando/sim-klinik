@@ -141,12 +141,10 @@ export async function POST(request: Request) {
     const newPoli = await db
       .insert(polis)
       .values({
-        name: body.name,
-        code: body.code,
-        description: body.description || null,
-        isActive: body.isActive || "active",
-        createdAt: new Date(),
-        // updatedAt: new Date(),
+        name: validate.name,
+        code: validate.code,
+        description: validate.description || "",
+        isActive: validate.isActive,
       })
       .returning()
 

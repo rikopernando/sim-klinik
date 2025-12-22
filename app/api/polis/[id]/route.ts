@@ -60,15 +60,17 @@ export async function PATCH(request: Request, { params }: Params) {
       }
     }
 
-    // Prepare update data
-    const updateData: Partial<PayloadPoli> = {}
-    if (body.name !== undefined) updateData.name = body.name
-    if (body.code !== undefined) updateData.code = body.code
-    if (body.description !== undefined) updateData.description = body.description
-    if (body.isActive !== undefined) updateData.isActive = body.isActive
-
     // Update poli
-    const updatedPoli = await db.update(polis).set(updateData).where(eq(polis.id, id)).returning()
+    const updatedPoli = await db
+      .update(polis)
+      .set({
+        name: validate.name,
+        code: validate.code,
+        description: validate.description,
+        isActive: validate.isActive,
+      })
+      .where(eq(polis.id, id))
+      .returning()
 
     const response: ResponseApi<PayloadPoli> = {
       message: "Poli updated successfully",

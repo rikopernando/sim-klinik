@@ -31,7 +31,12 @@ export function EditPolisDialog({
 }: EditPolisDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [formData, setFormData] = useState({ name: "", code: "", description: "", isActive: "" })
+  const [formData, setFormData] = useState<PayloadPoli>({
+    name: "",
+    code: "",
+    description: "",
+    isActive: "",
+  })
 
   useEffect(() => {
     if (polis) {

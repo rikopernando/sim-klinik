@@ -1,7 +1,7 @@
 export interface PayloadPoli {
   name: string
   code: string
-  description: string
+  description?: string
   isActive: string
 }
 

@@ -1,10 +1,9 @@
 import { useDebounce } from "@/hooks/use-debounce"
 import { getErrorMessage } from "@/lib/utils/error"
-import { getPolisRequest, createPoliRequest, updatePoliRequest } from "@/lib/services/poli.service"
 import { ResultPoli, PayloadPoli } from "@/types/poli"
 import { useCallback, useEffect, useState } from "react"
-
 import { deletePoliRequest } from "@/lib/services/poli.service"
+import { getPolisRequest, createPoliRequest, updatePoliRequest } from "@/lib/services/poli.service"
 
 interface PaginationInfo {
   page: number
@@ -68,14 +67,10 @@ export function usePoli(): UsePoliResult {
           }
         }
       } catch (error) {
-        // if (!ignore) {
         setErrorMessage(getErrorMessage(error))
-        // }
         console.error("Error fetching polis:", error)
       } finally {
-        // if (!ignore) {
         setLoading(false)
-        // }
       }
     },
     [pagination.limit]
@@ -102,7 +97,6 @@ export function usePoli(): UsePoliResult {
         setLoading(true)
         const created = await createPoliRequest(payload)
         await fetchPolis(pagination.page, debouncedSearch, includeInactive)
-        console.log("ini", created)
         return created
       } catch (error) {
         setErrorMessage(getErrorMessage(error))

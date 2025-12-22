@@ -16,8 +16,7 @@ export const createPoliSchema = z.object({
     .trim()
     .toUpperCase(),
 
-  description: z.string().max(500, "Deskripsi maksimal 500 karakter").optional().nullable(),
-
+  description: z.string().max(500, "Deskripsi maksimal 500 karakter").optional(),
   isActive: z
     .enum(["active", "inactive"], {
       message: "Status harus 'active' atau 'inactive'",
@@ -41,7 +40,7 @@ export const updatePoliSchema = z.object({
     .toUpperCase()
     .optional(),
 
-  description: z.string().max(500, "Deskripsi maksimal 500 karakter").optional().nullable(),
+  description: z.string().max(500, "Deskripsi maksimal 500 karakter").optional(),
 
   isActive: z
     .enum(["active", "inactive"], {
