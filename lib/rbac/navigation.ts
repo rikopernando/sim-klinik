@@ -19,6 +19,7 @@ import {
   IconUsers,
   IconSettings,
   IconUser,
+  IconDatabase,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -113,6 +114,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
+      label: "Master Data",
+      items: [
+        {
+          title: "Data Kamar",
+          url: "/dashboard/master-data/rooms",
+          icon: IconDatabase,
+        },
+      ],
+    },
+    {
       label: "Administrasi",
       items: [
         {
@@ -197,6 +208,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+      ],
+    },
+    {
+      label: "Master Data",
+      items: [
+        {
+          title: "Data Kamar",
+          url: "/dashboard/master-data/rooms",
+          icon: IconDatabase,
         },
       ],
     },

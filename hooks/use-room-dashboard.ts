@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react"
 import type { RoomWithOccupancy } from "@/types/inpatient"
-import { fetchAllRoomsWithOccupancy } from "@/lib/services/room.service"
+import { fetchAllRoomsWithOccupancy } from "@/lib/services/rooms.service"
 import { toast } from "sonner"
 import { getErrorMessage } from "@/lib/utils/error"
 
