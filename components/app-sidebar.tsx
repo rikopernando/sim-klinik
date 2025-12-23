@@ -4,27 +4,10 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession } from "@/lib/auth-client"
-import {
-  IconCamera,
-  IconDashboard,
-  IconDatabase,
-  IconFileAi,
-  IconFileDescription,
-  IconFileWord,
-  IconHelp,
-  IconReport,
-  IconSearch,
-  IconSettings,
-  IconUserPlus,
-  IconClipboardList,
-  IconStethoscope,
-  IconPill,
-  IconCash,
-} from "@tabler/icons-react"
+import { ROLE_NAVIGATION_GROUPS } from "@/lib/rbac/navigation"
+import type { UserRole } from "@/types/rbac"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -35,147 +18,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-
-const staticData = {
-  navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Pendaftaran",
-      url: "/dashboard/registration",
-      icon: IconUserPlus,
-    },
-    {
-      title: "Antrian",
-      url: "/dashboard/queue",
-      icon: IconClipboardList,
-    },
-    {
-      title: "Rekam Medis",
-      url: "#",
-      icon: IconStethoscope,
-      items: [
-        {
-          title: "Rawat Jalan",
-          url: "#",
-        },
-        {
-          title: "Rawat Inap",
-          url: "#",
-        },
-        {
-          title: "UGD",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Farmasi",
-      url: "#",
-      icon: IconPill,
-      items: [
-        {
-          title: "Resep Digital",
-          url: "#",
-        },
-        {
-          title: "Stok Obat",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Kasir & Billing",
-      url: "#",
-      icon: IconCash,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-  ],
-  navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
-  ],
-  documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
-  ],
-}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
@@ -192,6 +34,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: "/bumi-andalas-logo.jpg",
       }
 
+  // Get user role from session, default to 'admin' if not found
+  const userRole = (session?.user?.role as UserRole) || "admin"
+
+  // Get navigation groups for this role
+  const navigationGroups = ROLE_NAVIGATION_GROUPS[userRole] || ROLE_NAVIGATION_GROUPS.admin
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
@@ -201,21 +49,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <Link href="/">
                 <Image
                   src="/bumi-andalas-logo.jpg"
-                  alt="CodeGuide"
+                  alt="Sim Klinik"
                   width={32}
                   height={32}
                   className="rounded-lg"
                 />
-                <span className="font-parkinsans text-base font-semibold">CodeGuide</span>
+                <span className="font-parkinsans text-base font-semibold">Sim Klinik</span>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={staticData.navMain} />
-        <NavDocuments items={staticData.documents} />
-        <NavSecondary items={staticData.navSecondary} className="mt-auto" />
+        <NavMain groups={navigationGroups} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />

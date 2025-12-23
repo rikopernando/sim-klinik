@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
-import { IconCirclePlusFilled, IconMail, type Icon } from "@tabler/icons-react"
+import { IconCirclePlusFilled, IconMail, IconChevronRight, type Icon } from "@tabler/icons-react"
 import type { NavGroup } from "@/lib/rbac/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from "@/components/ui/sidebar"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 
 // Support both flat items (legacy) and grouped structure (new)
 type NavMainProps =
@@ -75,6 +83,9 @@ export function NavMain(props: NavMainProps) {
           <SidebarGroupContent>
             <SidebarMenu>
               {group.items.map((item) => {
+                // Check if item has subitems
+                const hasSubitems = item.items && item.items.length > 0
+
                 // Special handling for dashboard: only active when exactly on /dashboard
                 // For other routes: active when pathname matches or starts with the route
                 const isActive =
@@ -82,6 +93,59 @@ export function NavMain(props: NavMainProps) {
                     ? pathname === "/dashboard"
                     : pathname === item.url || pathname.startsWith(item.url + "/")
 
+                // For items with subitems, check if any subitem is active
+                const hasActiveSubitem = hasSubitems
+                  ? item.items!.some(
+                      (subitem) =>
+                        pathname === subitem.url || pathname.startsWith(subitem.url + "/")
+                    )
+                  : false
+
+                if (hasSubitems) {
+                  // Render collapsible menu for items with subitems
+                  return (
+                    <Collapsible
+                      key={item.title}
+                      asChild
+                      defaultOpen={hasActiveSubitem}
+                      className="group/collapsible"
+                    >
+                      <SidebarMenuItem>
+                        <CollapsibleTrigger asChild>
+                          <SidebarMenuButton tooltip={item.title} isActive={hasActiveSubitem}>
+                            {item.icon && <item.icon />}
+                            <span>{item.title}</span>
+                            <IconChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                          </SidebarMenuButton>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent>
+                          <SidebarMenuSub>
+                            {item.items!.map((subitem) => {
+                              const isSubitemActive =
+                                pathname === subitem.url || pathname.startsWith(subitem.url + "/")
+
+                              return (
+                                <SidebarMenuSubItem key={subitem.title}>
+                                  <SidebarMenuSubButton
+                                    asChild
+                                    isActive={isSubitemActive}
+                                    className="cursor-pointer"
+                                  >
+                                    <a onClick={() => router.push(subitem.url)}>
+                                      <span>{subitem.title}</span>
+                                    </a>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              )
+                            })}
+                          </SidebarMenuSub>
+                        </CollapsibleContent>
+                      </SidebarMenuItem>
+                    </Collapsible>
+                  )
+                }
+
+                // Render regular menu item for items without subitems
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton

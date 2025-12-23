@@ -1,5 +1,5 @@
 import axios from "axios"
-import { PatientSearchResult, Room } from "@/types/inpatient"
+import { PatientSearchResult, Room, InpatientPatient, InpatientFilters } from "@/types/inpatient"
 import { ResponseApi } from "@/types/api"
 import { BedAssignmentInput } from "@/lib/inpatient/validation"
 
@@ -43,6 +43,28 @@ export async function searchUnassignedPatients(params: {
     return response.data.data
   } catch (error) {
     console.error("Error fetching unassigned patients:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch all active inpatient patients with filters
+ */
+export async function fetchInpatientPatients(
+  params?: InpatientFilters
+): Promise<InpatientPatient[]> {
+  try {
+    const response = await axios.get<ResponseApi<InpatientPatient[]>>("/api/inpatient/patients", {
+      params,
+    })
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    console.error("Error fetching inpatient patients:", error)
     handleApiError(error)
   }
 }

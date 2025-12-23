@@ -95,6 +95,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
           icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+            {
+              title: "Manajemen Kamar",
+              url: "/dashboard/inpatient/rooms",
+            },
+          ],
         },
       ],
     },
@@ -193,6 +203,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
           icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+            {
+              title: "Manajemen Kamar",
+              url: "/dashboard/inpatient/rooms",
+            },
+          ],
         },
       ],
     },
@@ -324,6 +344,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
           icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+            {
+              title: "Manajemen Kamar",
+              url: "/dashboard/inpatient/rooms",
+            },
+          ],
         },
         {
           title: "UGD",

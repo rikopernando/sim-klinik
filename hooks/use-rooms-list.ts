@@ -73,6 +73,13 @@ export function useRoomsList(filters?: RoomFilters) {
   // Load rooms when filters change (reset to page 1)
   useEffect(() => {
     loadRooms(1)
+
+    // Cleanup function to abort request on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
   }, [loadRooms])
 
   // Handle page change

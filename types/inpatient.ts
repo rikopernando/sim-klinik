@@ -244,3 +244,34 @@ export interface PatientSearchResult {
     visitNumber: string
   }
 }
+
+/**
+ * Inpatient Patient List Item
+ */
+export interface InpatientPatient {
+  visitId: string
+  visitNumber: string
+  patientId: string
+  mrNumber: string
+  patientName: string
+  admissionDate: string
+  daysInHospital: number
+  roomId: string
+  roomNumber: string
+  roomType: string
+  bedNumber: string
+  assignmentId: string
+  latestVitals: VitalSigns | null
+}
+
+/**
+ * Inpatient List Filters
+ */
+export interface InpatientFilters {
+  search?: string
+  roomType?: string | "all"
+  admissionDateFrom?: string
+  admissionDateTo?: string
+  sortBy?: "admissionDate" | "roomNumber" | "patientName"
+  sortOrder?: "asc" | "desc"
+}

@@ -59,6 +59,13 @@ export function useAvailableRooms(): UseAvailableRoomsReturn {
 
   useEffect(() => {
     fetchRooms()
+
+    // Cleanup function to abort request on unmount
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+      }
+    }
   }, [fetchRooms])
 
   return {
