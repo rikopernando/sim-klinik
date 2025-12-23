@@ -8,7 +8,7 @@ import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema
 import { cppt } from "@/db/schema/medical-records"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
-import { eq, and, isNull, desc } from "drizzle-orm"
+import { eq, and, isNull, desc, or, gte, lte, inArray, ilike, sql, SQL } from "drizzle-orm"
 import { calculateBMI } from "./vitals-utils"
 import type {
   RoomInput,
@@ -18,6 +18,125 @@ import type {
   MaterialUsageInput,
   RoomUpdateInput,
 } from "./validation"
+import type { InpatientFilters, VitalSigns } from "@/types/inpatient"
+
+/**
+ * Build WHERE conditions for inpatient list query
+ */
+export function buildInpatientWhereConditions(filters: InpatientFilters): SQL[] {
+  const conditions: SQL[] = [
+    eq(visits.visitType, "inpatient"),
+    isNull(visits.dischargeDate),
+    isNull(bedAssignments.dischargedAt),
+  ]
+
+  // Search filter (patient name, MR number, room number)
+  if (filters.search) {
+    conditions.push(
+      or(
+        ilike(patients.name, `%${filters.search}%`),
+        ilike(patients.mrNumber, `%${filters.search}%`),
+        ilike(rooms.roomNumber, `%${filters.search}%`)
+      )!
+    )
+  }
+
+  // Room type filter
+  if (filters.roomType && filters.roomType !== "all") {
+    conditions.push(eq(rooms.roomType, filters.roomType))
+  }
+
+  // Admission date range filters
+  if (filters.admissionDateFrom) {
+    conditions.push(gte(visits.admissionDate, new Date(filters.admissionDateFrom)))
+  }
+
+  if (filters.admissionDateTo) {
+    conditions.push(lte(visits.admissionDate, new Date(filters.admissionDateTo)))
+  }
+
+  return conditions
+}
+
+/**
+ * Calculate days in hospital from admission date
+ */
+export function calculateDaysInHospital(admissionDate: Date): number {
+  const today = new Date()
+  return Math.floor((today.getTime() - admissionDate.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+/**
+ * Fetch latest vitals for multiple visits efficiently
+ * Uses window function to avoid N+1 queries
+ */
+export async function fetchLatestVitalsForVisits(
+  visitIds: string[]
+): Promise<Map<string, VitalSigns>> {
+  if (visitIds.length === 0) {
+    return new Map()
+  }
+
+  // Use row_number() window function to get latest vitals per visit
+  const latestVitalsSubquery = db
+    .select({
+      visitId: vitalsHistory.visitId,
+      id: vitalsHistory.id,
+      temperature: vitalsHistory.temperature,
+      bloodPressureSystolic: vitalsHistory.bloodPressureSystolic,
+      bloodPressureDiastolic: vitalsHistory.bloodPressureDiastolic,
+      pulse: vitalsHistory.pulse,
+      respiratoryRate: vitalsHistory.respiratoryRate,
+      oxygenSaturation: vitalsHistory.oxygenSaturation,
+      weight: vitalsHistory.weight,
+      height: vitalsHistory.height,
+      bmi: vitalsHistory.bmi,
+      painScale: vitalsHistory.painScale,
+      consciousness: vitalsHistory.consciousness,
+      recordedBy: vitalsHistory.recordedBy,
+      recordedAt: vitalsHistory.recordedAt,
+      notes: vitalsHistory.notes,
+      createdAt: vitalsHistory.createdAt,
+      rowNumber:
+        sql<number>`row_number() over (partition by ${vitalsHistory.visitId} order by ${vitalsHistory.recordedAt} desc)`.as(
+          "row_number"
+        ),
+    })
+    .from(vitalsHistory)
+    .where(inArray(vitalsHistory.visitId, visitIds))
+    .as("ranked_vitals")
+
+  const latestVitalsList = await db
+    .select()
+    .from(latestVitalsSubquery)
+    .where(eq(latestVitalsSubquery.rowNumber, 1))
+
+  // Convert to Map for O(1) lookup
+  return new Map(
+    latestVitalsList.map((v) => [
+      v.visitId,
+      {
+        id: v.id,
+        visitId: v.visitId,
+        temperature: v.temperature,
+        bloodPressureSystolic: v.bloodPressureSystolic,
+        bloodPressureDiastolic: v.bloodPressureDiastolic,
+        pulse: v.pulse,
+        respiratoryRate: v.respiratoryRate,
+        oxygenSaturation: v.oxygenSaturation,
+        weight: v.weight,
+        height: v.height,
+        bmi: v.bmi,
+        painScale: v.painScale,
+        consciousness: v.consciousness,
+        recordedBy: v.recordedBy,
+        recordedAt: v.recordedAt.toISOString(),
+        notes: v.notes,
+        createdAt: v.createdAt.toISOString(),
+      },
+    ])
+  )
+}
 
 /**
  * Room Management Service

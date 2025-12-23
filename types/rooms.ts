@@ -29,9 +29,9 @@ export interface Room {
 export type RoomStatus = "available" | "occupied" | "maintenance" | "reserved"
 
 /**
- * Room type enum
+ * Room Types
  */
-export type RoomType = "VIP" | "Class I" | "Class II" | "Class III" | "ICU" | "NICU" | "Isolation"
+export type RoomType = "VIP" | "Class 1" | "Class 2" | "Class 3" | "ICU" | "NICU" | "Isolation"
 
 /**
  * Form data for creating a room

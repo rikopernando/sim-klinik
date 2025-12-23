@@ -1,6 +1,6 @@
 import axios from "axios"
 import { PatientSearchResult, Room, InpatientPatient, InpatientFilters } from "@/types/inpatient"
-import { ResponseApi } from "@/types/api"
+import { Pagination, ResponseApi } from "@/types/api"
 import { BedAssignmentInput } from "@/lib/inpatient/validation"
 
 import { ApiServiceError, handleApiError } from "./api.service"
@@ -48,21 +48,30 @@ export async function searchUnassignedPatients(params: {
 }
 
 /**
- * Fetch all active inpatient patients with filters
+ * Fetch all active inpatient patients with filters and pagination
  */
-export async function fetchInpatientPatients(
-  params?: InpatientFilters
-): Promise<InpatientPatient[]> {
+export async function fetchInpatientPatients(params?: {
+  filters?: InpatientFilters
+  page?: number
+  limit?: number
+}): Promise<{ patients: InpatientPatient[]; pagination: Pagination }> {
   try {
     const response = await axios.get<ResponseApi<InpatientPatient[]>>("/api/inpatient/patients", {
-      params,
+      params: {
+        ...params?.filters,
+        page: params?.page,
+        limit: params?.limit,
+      },
     })
 
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing data")
     }
 
-    return response.data.data
+    return {
+      patients: response.data.data,
+      pagination: response.data.pagination as Pagination,
+    }
   } catch (error) {
     console.error("Error fetching inpatient patients:", error)
     handleApiError(error)

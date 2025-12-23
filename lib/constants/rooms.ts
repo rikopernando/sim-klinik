@@ -10,9 +10,9 @@ import type { RoomType, RoomStatus } from "@/types/rooms"
  */
 export const ROOM_TYPES: ReadonlyArray<{ value: RoomType; label: string }> = [
   { value: "VIP", label: "VIP" },
-  { value: "Class I", label: "Kelas I" },
-  { value: "Class II", label: "Kelas II" },
-  { value: "Class III", label: "Kelas III" },
+  { value: "Class 1", label: "Kelas 1" },
+  { value: "Class 2", label: "Kelas 2" },
+  { value: "Class 3", label: "Kelas 3" },
   { value: "ICU", label: "ICU" },
   { value: "NICU", label: "NICU" },
   { value: "Isolation", label: "Isolasi" },
