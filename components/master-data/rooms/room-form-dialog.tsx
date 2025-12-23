@@ -6,7 +6,7 @@
  */
 
 import { useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,14 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form"
+import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field"
 import { Textarea } from "@/components/ui/textarea"
 import type { Room, RoomCreateInput } from "@/types/rooms"
 import { ROOM_TYPES } from "@/lib/constants/rooms"
@@ -111,185 +104,173 @@ export function RoomFormDialog({ open, onOpenChange, onSubmit, room, mode }: Roo
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              {/* Room Number */}
-              <FormField
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FieldGroup className="grid grid-cols-2 gap-4">
+            {/* Room Number */}
+            <Field>
+              <FieldLabel htmlFor="roomNumber">
+                Nomor Kamar <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Controller
                 control={form.control}
                 name="roomNumber"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Nomor Kamar <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="101, 201A, dll" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <Input id="roomNumber" {...field} placeholder="101, 201A, dll" />
                 )}
               />
+              <FieldError errors={[form.formState.errors.roomNumber]} />
+            </Field>
 
-              {/* Room Type */}
-              <FormField
+            {/* Room Type */}
+            <Field>
+              <FieldLabel htmlFor="roomType">
+                Tipe Kamar <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Controller
                 control={form.control}
                 name="roomType"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Tipe Kamar <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Pilih tipe kamar" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ROOM_TYPES.map((type) => (
-                          <SelectItem key={type.value} value={type.value}>
-                            {type.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger id="roomType">
+                      <SelectValue placeholder="Pilih tipe kamar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROOM_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 )}
               />
+              <FieldError errors={[form.formState.errors.roomType]} />
+            </Field>
 
-              {/* Bed Count */}
-              <FormField
+            {/* Bed Count */}
+            <Field>
+              <FieldLabel htmlFor="bedCount">
+                Jumlah Bed <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Controller
                 control={form.control}
                 name="bedCount"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Jumlah Bed <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="1"
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <Input
+                    id="bedCount"
+                    type="number"
+                    min="1"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                  />
                 )}
               />
+              <FieldError errors={[form.formState.errors.bedCount]} />
+            </Field>
 
-              {/* Daily Rate */}
-              <FormField
+            {/* Daily Rate */}
+            <Field>
+              <FieldLabel htmlFor="dailyRate">
+                Tarif Harian (Rp) <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Controller
                 control={form.control}
                 name="dailyRate"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Tarif Harian (Rp) <span className="text-destructive">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <CurrencyInput
-                        min="0"
-                        step="1000"
-                        value={field.value}
-                        onValueChange={field.onChange}
-                        placeholder="100.000"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <CurrencyInput
+                    id="dailyRate"
+                    min="0"
+                    step="1000"
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    placeholder="100.000"
+                  />
                 )}
               />
+              <FieldError errors={[form.formState.errors.dailyRate]} />
+            </Field>
 
-              {/* Floor */}
-              <FormField
+            {/* Floor */}
+            <Field>
+              <FieldLabel htmlFor="floor">Lantai</FieldLabel>
+              <Controller
                 control={form.control}
                 name="floor"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lantai</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="1, 2, 3, dll" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => <Input id="floor" {...field} placeholder="1, 2, 3, dll" />}
               />
+              <FieldError errors={[form.formState.errors.floor]} />
+            </Field>
 
-              {/* Building */}
-              <FormField
+            {/* Building */}
+            <Field>
+              <FieldLabel htmlFor="building">Gedung</FieldLabel>
+              <Controller
                 control={form.control}
                 name="building"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Gedung</FormLabel>
-                    <FormControl>
-                      <Input {...field} placeholder="Gedung A, Gedung Utama, dll" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <Input id="building" {...field} placeholder="Gedung A, Gedung Utama, dll" />
                 )}
               />
-            </div>
+              <FieldError errors={[form.formState.errors.building]} />
+            </Field>
+          </FieldGroup>
 
-            <div className="space-y-4">
-              {/* Facilities */}
-              <FormField
+          <FieldGroup>
+            {/* Facilities */}
+            <Field>
+              <FieldLabel htmlFor="facilities">Fasilitas</FieldLabel>
+              <Controller
                 control={form.control}
                 name="facilities"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fasilitas</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        placeholder="AC, TV, Kamar Mandi Dalam, dll (pisahkan dengan koma)"
-                        rows={3}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <Textarea
+                    id="facilities"
+                    {...field}
+                    placeholder="AC, TV, Kamar Mandi Dalam, dll (pisahkan dengan koma)"
+                    rows={3}
+                  />
                 )}
               />
+              <FieldError errors={[form.formState.errors.facilities]} />
+            </Field>
 
-              {/* Description */}
-              <FormField
+            {/* Description */}
+            <Field>
+              <FieldLabel htmlFor="description">Deskripsi</FieldLabel>
+              <Controller
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Deskripsi</FormLabel>
-                    <FormControl>
-                      <Textarea {...field} placeholder="Catatan tambahan tentang kamar" rows={3} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                  <Textarea
+                    id="description"
+                    {...field}
+                    placeholder="Catatan tambahan tentang kamar"
+                    rows={3}
+                  />
                 )}
               />
-            </div>
+              <FieldError errors={[form.formState.errors.description]} />
+            </Field>
+          </FieldGroup>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={form.formState.isSubmitting}
-              >
-                Batal
-              </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting
-                  ? "Menyimpan..."
-                  : mode === "create"
-                    ? "Tambah Kamar"
-                    : "Simpan Perubahan"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={form.formState.isSubmitting}
+            >
+              Batal
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting
+                ? "Menyimpan..."
+                : mode === "create"
+                  ? "Tambah Kamar"
+                  : "Simpan Perubahan"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
