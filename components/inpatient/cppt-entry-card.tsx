@@ -138,7 +138,7 @@ export function CPPTEntryCard({ entry, onRefresh }: CPPTEntryCardProps) {
       </CardHeader>
       <CardContent className="space-y-3">
         {/* SOAP Format for Doctors (Expandable) */}
-        {isDoctor && hasSOAP && expanded && (
+        {hasSOAP && expanded && (
           <div className="space-y-3 border-t pt-3">
             {entry.subjective && (
               <div>

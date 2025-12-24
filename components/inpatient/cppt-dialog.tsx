@@ -23,10 +23,17 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { AutocompleteTextarea } from "@/components/ui/autocomplete-textarea"
 import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field"
 import { cpptSchema } from "@/lib/inpatient/validation"
 import { createCPPTEntry } from "@/lib/services/inpatient.service"
 import { useSession } from "@/lib/auth-client"
+import {
+  SUBJECTIVE_SUGGESTIONS,
+  OBJECTIVE_SUGGESTIONS,
+  ASSESSMENT_SUGGESTIONS,
+  PLAN_SUGGESTIONS,
+} from "@/lib/medical/soap-suggestions"
 
 const cpptFormSchema = cpptSchema.omit({ visitId: true, authorId: true, authorRole: true })
 
@@ -107,11 +114,13 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   control={form.control}
                   name="subjective"
                   render={({ field }) => (
-                    <Textarea
+                    <AutocompleteTextarea
                       id="subjective"
-                      {...field}
-                      placeholder="Contoh: Pasien mengeluh nyeri dada..."
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="Ketik untuk melihat saran keluhan umum pasien..."
                       rows={3}
+                      suggestions={SUBJECTIVE_SUGGESTIONS}
                     />
                   )}
                 />
@@ -128,11 +137,13 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   control={form.control}
                   name="objective"
                   render={({ field }) => (
-                    <Textarea
+                    <AutocompleteTextarea
                       id="objective"
-                      {...field}
-                      placeholder="Contoh: TD 120/80, Nadi 80x/menit, Suhu 36.5°C..."
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="Ketik untuk melihat saran hasil pemeriksaan fisik..."
                       rows={3}
+                      suggestions={OBJECTIVE_SUGGESTIONS}
                     />
                   )}
                 />
@@ -149,11 +160,13 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   control={form.control}
                   name="assessment"
                   render={({ field }) => (
-                    <Textarea
+                    <AutocompleteTextarea
                       id="assessment"
-                      {...field}
-                      placeholder="Contoh: Diagnosis: Gastritis akut..."
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="Ketik untuk melihat saran diagnosis umum..."
                       rows={3}
+                      suggestions={ASSESSMENT_SUGGESTIONS}
                     />
                   )}
                 />
@@ -170,11 +183,13 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   control={form.control}
                   name="plan"
                   render={({ field }) => (
-                    <Textarea
+                    <AutocompleteTextarea
                       id="plan"
-                      {...field}
-                      placeholder="Contoh: Berikan Omeprazole 1x20mg, Observasi keluhan..."
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      placeholder="Ketik untuk melihat saran rencana terapi..."
                       rows={3}
+                      suggestions={PLAN_SUGGESTIONS}
                     />
                   )}
                 />
