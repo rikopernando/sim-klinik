@@ -275,3 +275,42 @@ export interface InpatientFilters {
   sortBy?: "admissionDate" | "roomNumber" | "patientName"
   sortOrder?: "asc" | "desc"
 }
+
+/**
+ * Patient Detail Data
+ */
+export interface PatientDetail {
+  patient: {
+    visitId: string
+    visitNumber: string
+    visitType: string
+    admissionDate: string | null
+    dischargeDate: string | null
+    patientId: string
+    mrNumber: string
+    patientName: string
+    nik: string | null
+    dateOfBirth: string | null
+    gender: string | null
+    address: string | null
+    phone: string | null
+    insurance: string | null
+  }
+  bedAssignment: {
+    assignmentId: string
+    roomId: string
+    roomNumber: string
+    roomType: string
+    bedNumber: string
+    assignedAt: string
+    dischargedAt: string | null
+    notes: string | null
+    dailyRate: string
+  } | null
+  daysInHospital: number
+  totalRoomCost: string
+  vitals: VitalSigns[]
+  cpptEntries: CPPT[]
+  materials: MaterialUsage[]
+  totalMaterialCost: string
+}
