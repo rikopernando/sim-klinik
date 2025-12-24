@@ -54,7 +54,8 @@ export const polis = pgTable("polis", {
     .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 100 }).notNull(), // e.g., "Poli Umum", "Poli Gigi", "Poli Anak"
   code: varchar("code", { length: 20 }).notNull().unique(),
-  description: text("description"),
+  description: text("description").notNull(),
   isActive: varchar("is_active", { length: 10 }).notNull().default("active"), // active, inactive
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // updatedAt: timestamp("update_at").defaultNow().notNull(),
 })
