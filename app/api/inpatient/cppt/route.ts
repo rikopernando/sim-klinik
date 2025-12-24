@@ -1,59 +1,59 @@
 /**
- * Inpatient Vital Signs API Endpoint
- * POST /api/inpatient/vitals - Record vital signs
- * GET /api/inpatient/vitals?visitId={id} - Get vitals history
+ * Inpatient CPPT API Endpoint
+ * POST /api/inpatient/cppt - Create CPPT entry
+ * GET /api/inpatient/cppt?visitId={id} - Get CPPT history
  */
 
 import { NextRequest, NextResponse } from "next/server"
 import HTTP_STATUS_CODES from "@/lib/constans/http"
 import { ResponseApi, ResponseError } from "@/types/api"
-import { vitalSignsSchema } from "@/lib/inpatient/validation"
-import {
-  recordVitalSigns as recordVitalSignsService,
-  getVitalSignsHistory,
-} from "@/lib/inpatient/api-service"
+import { cpptSchema } from "@/lib/inpatient/validation"
+import { createCPPTEntry, getCPPTEntries } from "@/lib/inpatient/api-service"
 import { getSession } from "@/lib/rbac"
 
 export async function POST(request: NextRequest) {
   try {
-    // Get session to retrieve user ID
+    // Get session to retrieve user ID and role
     const session = await getSession()
 
     if (!session?.user) {
       const response: ResponseError<unknown> = {
         error: "Unauthorized",
         status: HTTP_STATUS_CODES.UNAUTHORIZED,
-        message: "You must be logged in to record vital signs",
+        message: "You must be logged in to create CPPT entries",
       }
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.UNAUTHORIZED })
     }
 
     const body = await request.json()
 
-    // Validate request body and override recordedBy with session user ID
-    const validatedData = vitalSignsSchema.parse({
+    // Determine author role from session
+    const authorRole = session.user.role === "doctor" ? "doctor" : "nurse"
+
+    // Validate request body and set authorId and authorRole from session
+    const validatedData = cpptSchema.parse({
       ...body,
-      recordedBy: session.user.id,
+      authorId: session.user.id,
+      authorRole: authorRole,
     })
 
-    // Record vital signs
-    const newVitals = await recordVitalSignsService(validatedData)
+    // Create CPPT entry
+    await createCPPTEntry(validatedData)
 
-    const response: ResponseApi<typeof newVitals> = {
+    const response: ResponseApi = {
       status: HTTP_STATUS_CODES.CREATED,
-      message: "Vital signs recorded successfully",
-      data: newVitals,
+      message: "CPPT entry created successfully",
     }
 
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
-    console.error("Error recording vital signs:", error)
+    console.error("Error creating CPPT entry:", error)
 
     if (error instanceof Error && error.name === "ZodError") {
       const response: ResponseError<unknown> = {
         error: "Validation failed",
         status: HTTP_STATUS_CODES.BAD_REQUEST,
-        message: "Invalid vital signs data",
+        message: "Invalid CPPT data",
       }
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
     }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     const response: ResponseError<unknown> = {
       error: error instanceof Error ? error.message : "Unknown error",
       status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      message: "Failed to record vital signs",
+      message: "Failed to create CPPT entry",
     }
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
   }
@@ -81,23 +81,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
     }
 
-    // Get vitals history
-    const vitals = await getVitalSignsHistory(visitId)
+    // Get CPPT entries
+    const entries = await getCPPTEntries(visitId)
 
-    const response: ResponseApi<typeof vitals> = {
+    const response: ResponseApi<typeof entries> = {
       status: HTTP_STATUS_CODES.OK,
-      message: "Vitals history fetched successfully",
-      data: vitals,
+      message: "CPPT entries fetched successfully",
+      data: entries,
     }
 
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
-    console.error("Error fetching vitals history:", error)
+    console.error("Error fetching CPPT entries:", error)
 
     const response: ResponseError<unknown> = {
       error: error instanceof Error ? error.message : "Unknown error",
       status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      message: "Failed to fetch vitals history",
+      message: "Failed to fetch CPPT entries",
     }
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
   }

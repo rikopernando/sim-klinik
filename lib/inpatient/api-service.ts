@@ -418,7 +418,6 @@ export async function createCPPTEntry(data: CPPTInput) {
       plan: data.plan || null,
       progressNote: data.progressNote,
       instructions: data.instructions || null,
-      createdAt: new Date(),
     })
     .returning()
 
@@ -426,7 +425,25 @@ export async function createCPPTEntry(data: CPPTInput) {
 }
 
 export async function getCPPTEntries(visitId: string) {
-  return await db.select().from(cppt).where(eq(cppt.visitId, visitId)).orderBy(desc(cppt.createdAt))
+  const results = await db
+    .select({
+      cpptEntry: cppt,
+      author: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    })
+    .from(cppt)
+    .leftJoin(user, eq(cppt.authorId, user.id))
+    .where(eq(cppt.visitId, visitId))
+    .orderBy(desc(cppt.createdAt))
+
+  // Transform results to include author name
+  return results.map((result) => ({
+    ...result.cpptEntry,
+    authorName: result.author?.name || result.author?.email || "Unknown User",
+  }))
 }
 
 /**
@@ -540,12 +557,8 @@ export async function getPatientDetailData(visitId: string) {
   // Get vital signs history (with user names)
   const vitals = await getVitalSignsHistory(visitId)
 
-  // Get CPPT entries
-  const cpptEntries = await db
-    .select()
-    .from(cppt)
-    .where(eq(cppt.visitId, visitId))
-    .orderBy(desc(cppt.createdAt))
+  // Get CPPT entries (with author names)
+  const cpptEntries = await getCPPTEntries(visitId)
 
   // Get material usage
   const materials = await db

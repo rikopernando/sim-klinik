@@ -5,9 +5,10 @@ import {
   InpatientPatient,
   InpatientFilters,
   PatientDetail,
+  CPPT,
 } from "@/types/inpatient"
 import { Pagination, ResponseApi } from "@/types/api"
-import { BedAssignmentInput, VitalSignsInput } from "@/lib/inpatient/validation"
+import { BedAssignmentInput, CPPTInput, VitalSignsInput } from "@/lib/inpatient/validation"
 
 import { ApiServiceError, handleApiError } from "./api.service"
 
@@ -140,6 +141,70 @@ export async function deleteVitalSigns(vitalId: string): Promise<void> {
     await axios.delete(`/api/inpatient/vitals/${vitalId}`)
   } catch (error) {
     console.error("Error deleting vital signs:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Create a CPPT entry
+ */
+export async function createCPPTEntry(
+  data: Omit<CPPTInput, "authorId" | "authorRole">
+): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/cppt", data)
+  } catch (error) {
+    console.error("Error creating CPPT entry:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch CPPT entries for a visit
+ */
+export async function fetchCPPTEntries(visitId: string): Promise<CPPT[]> {
+  try {
+    const response = await axios.get<ResponseApi<CPPT[]>>(`/api/inpatient/cppt?visitId=${visitId}`)
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+    return response.data.data
+  } catch (error) {
+    console.error("Error fetching CPPT entries:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Update a CPPT entry (within 2 hours)
+ */
+export async function updateCPPTEntry(
+  cpptId: string,
+  data: {
+    subjective?: string
+    objective?: string
+    assessment?: string
+    plan?: string
+    progressNote: string
+    instructions?: string
+  }
+): Promise<void> {
+  try {
+    await axios.put(`/api/inpatient/cppt/${cpptId}`, data)
+  } catch (error) {
+    console.error("Error updating CPPT entry:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Delete a CPPT entry (within 1 hour)
+ */
+export async function deleteCPPTEntry(cpptId: string): Promise<void> {
+  try {
+    await axios.delete(`/api/inpatient/cppt/${cpptId}`)
+  } catch (error) {
+    console.error("Error deleting CPPT entry:", error)
     handleApiError(error)
   }
 }

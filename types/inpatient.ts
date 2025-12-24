@@ -117,6 +117,7 @@ export interface CPPT {
   visitId: string
   authorId: string
   authorRole: AuthorRole
+  authorName?: string
   subjective: string | null
   objective: string | null
   assessment: string | null

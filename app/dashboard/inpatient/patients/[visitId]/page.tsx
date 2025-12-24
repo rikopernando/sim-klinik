@@ -16,6 +16,7 @@ import { PatientInfoCard } from "@/components/inpatient/patient-info-card"
 import { VitalsHistoryTable } from "@/components/inpatient/vitals-history-table"
 import { RecordVitalsDialog } from "@/components/inpatient/record-vitals-dialog"
 import { CPPTHistoryCard } from "@/components/inpatient/cppt-history-card"
+import { CPPTDialog } from "@/components/inpatient/cppt-dialog"
 import { MaterialUsageCard } from "@/components/inpatient/material-usage-card"
 
 export default function PatientDetailPage() {
@@ -109,15 +110,24 @@ export default function PatientDetailPage() {
         {/* CPPT History */}
         <Card>
           <CardHeader>
-            <CardTitle>CPPT (Catatan Perkembangan Pasien Terintegrasi)</CardTitle>
-            <CardDescription>
-              {patientDetail.cpptEntries.length > 0
-                ? `${patientDetail.cpptEntries.length} catatan CPPT`
-                : "Belum ada catatan CPPT"}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>CPPT (Catatan Perkembangan Pasien Terintegrasi)</CardTitle>
+                <CardDescription>
+                  {patientDetail.cpptEntries.length > 0
+                    ? `${patientDetail.cpptEntries.length} catatan CPPT`
+                    : "Belum ada catatan CPPT"}
+                </CardDescription>
+              </div>
+              <CPPTDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            <CPPTHistoryCard entries={patientDetail.cpptEntries} />
+            <CPPTHistoryCard entries={patientDetail.cpptEntries} onRefresh={refresh} />
           </CardContent>
         </Card>
 
