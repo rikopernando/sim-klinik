@@ -8,6 +8,7 @@ import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema
 import { cppt } from "@/db/schema/medical-records"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
+import { user } from "@/db/schema/auth"
 import { eq, and, isNull, desc, or, gte, lte, inArray, ilike, sql, SQL } from "drizzle-orm"
 import { calculateBMI } from "./vitals-utils"
 import type {
@@ -365,7 +366,6 @@ export async function recordVitalSigns(data: VitalSignsInput) {
       recordedBy: data.recordedBy,
       recordedAt: new Date(),
       notes: data.notes || null,
-      createdAt: new Date(),
     })
     .returning()
 
@@ -373,11 +373,25 @@ export async function recordVitalSigns(data: VitalSignsInput) {
 }
 
 export async function getVitalSignsHistory(visitId: string) {
-  return await db
-    .select()
+  const results = await db
+    .select({
+      vitals: vitalsHistory,
+      recordedByUser: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+      },
+    })
     .from(vitalsHistory)
+    .leftJoin(user, eq(vitalsHistory.recordedBy, user.id))
     .where(eq(vitalsHistory.visitId, visitId))
     .orderBy(desc(vitalsHistory.recordedAt))
+
+  // Transform results to include user name in recordedBy field
+  return results.map((result) => ({
+    ...result.vitals,
+    recordedBy: result.recordedByUser?.name || result.recordedByUser?.email || "Unknown User",
+  }))
 }
 
 /**
@@ -523,12 +537,8 @@ export async function getPatientDetailData(visitId: string) {
 
   const currentBedAssignment = bedAssignmentResult.length > 0 ? bedAssignmentResult[0] : null
 
-  // Get vital signs history
-  const vitals = await db
-    .select()
-    .from(vitalsHistory)
-    .where(eq(vitalsHistory.visitId, visitId))
-    .orderBy(desc(vitalsHistory.recordedAt))
+  // Get vital signs history (with user names)
+  const vitals = await getVitalSignsHistory(visitId)
 
   // Get CPPT entries
   const cpptEntries = await db

@@ -14,6 +14,7 @@ import { usePatientDetail } from "@/hooks/use-patient-detail"
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
 import { PatientInfoCard } from "@/components/inpatient/patient-info-card"
 import { VitalsHistoryTable } from "@/components/inpatient/vitals-history-table"
+import { RecordVitalsDialog } from "@/components/inpatient/record-vitals-dialog"
 import { CPPTHistoryCard } from "@/components/inpatient/cppt-history-card"
 import { MaterialUsageCard } from "@/components/inpatient/material-usage-card"
 
@@ -84,15 +85,24 @@ export default function PatientDetailPage() {
         {/* Vital Signs History */}
         <Card>
           <CardHeader>
-            <CardTitle>Riwayat Tanda Vital</CardTitle>
-            <CardDescription>
-              {patientDetail.vitals.length > 0
-                ? `${patientDetail.vitals.length} rekaman tanda vital`
-                : "Belum ada rekaman tanda vital"}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Riwayat Tanda Vital</CardTitle>
+                <CardDescription>
+                  {patientDetail.vitals.length > 0
+                    ? `${patientDetail.vitals.length} rekaman tanda vital`
+                    : "Belum ada rekaman tanda vital"}
+                </CardDescription>
+              </div>
+              <RecordVitalsDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            <VitalsHistoryTable vitals={patientDetail.vitals} />
+            <VitalsHistoryTable vitals={patientDetail.vitals} onRefresh={refresh} />
           </CardContent>
         </Card>
 

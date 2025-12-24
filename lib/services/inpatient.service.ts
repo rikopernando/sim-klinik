@@ -7,7 +7,7 @@ import {
   PatientDetail,
 } from "@/types/inpatient"
 import { Pagination, ResponseApi } from "@/types/api"
-import { BedAssignmentInput } from "@/lib/inpatient/validation"
+import { BedAssignmentInput, VitalSignsInput } from "@/lib/inpatient/validation"
 
 import { ApiServiceError, handleApiError } from "./api.service"
 
@@ -100,6 +100,46 @@ export async function fetchPatientDetail(visitId: string): Promise<PatientDetail
     return response.data.data
   } catch (error) {
     console.error("Error fetching patient detail:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Record vital signs for a patient
+ */
+export async function recordVitalSigns(data: VitalSignsInput): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/vitals", data)
+  } catch (error) {
+    console.error("Error recording vital signs:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch vital signs history for a visit
+ */
+export async function fetchVitalSignsHistory(visitId: string) {
+  try {
+    const response = await axios.get(`/api/inpatient/vitals?visitId=${visitId}`)
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+    return response.data.data
+  } catch (error) {
+    console.error("Error fetching vital signs history:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Delete a vital signs record (within 1 hour)
+ */
+export async function deleteVitalSigns(vitalId: string): Promise<void> {
+  try {
+    await axios.delete(`/api/inpatient/vitals/${vitalId}`)
+  } catch (error) {
+    console.error("Error deleting vital signs:", error)
     handleApiError(error)
   }
 }
