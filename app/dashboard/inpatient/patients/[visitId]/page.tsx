@@ -18,6 +18,8 @@ import { RecordVitalsDialog } from "@/components/inpatient/record-vitals-dialog"
 import { CPPTHistoryCard } from "@/components/inpatient/cppt-history-card"
 import { CPPTDialog } from "@/components/inpatient/cppt-dialog"
 import { MaterialUsageCard } from "@/components/inpatient/material-usage-card"
+import { VitalsTrendChart } from "@/components/inpatient/vitals-trend-chart"
+import { CPPTTimeline } from "@/components/inpatient/cppt-timeline"
 
 export default function PatientDetailPage() {
   const { visitId } = useParams<{ visitId: string }>()
@@ -130,6 +132,26 @@ export default function PatientDetailPage() {
             <CPPTHistoryCard entries={patientDetail.cpptEntries} onRefresh={refresh} />
           </CardContent>
         </Card>
+
+        <Separator />
+
+        {/* Charts & Trends Section */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight">Grafik & Analisis</h2>
+            <p className="text-muted-foreground text-sm">
+              Visualisasi tren vital signs dan timeline CPPT untuk analisis klinis
+            </p>
+          </div>
+
+          {/* Vitals Trend Chart */}
+          <VitalsTrendChart vitals={patientDetail.vitals} />
+
+          {/* CPPT Timeline */}
+          <CPPTTimeline entries={patientDetail.cpptEntries} />
+        </div>
+
+        <Separator />
 
         {/* Material Usage */}
         <Card>

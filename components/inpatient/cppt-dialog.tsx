@@ -101,102 +101,99 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          {isDoctor && (
-            // SOAP Format for Doctors
-            <FieldGroup>
-              {/* Subjective */}
-              <Field>
-                <FieldLabel htmlFor="subjective">S - Subjective (Keluhan Pasien)</FieldLabel>
-                <FieldDescription>
-                  Keluhan yang disampaikan pasien atau keluarga pasien
-                </FieldDescription>
-                <Controller
-                  control={form.control}
-                  name="subjective"
-                  render={({ field }) => (
-                    <AutocompleteTextarea
-                      id="subjective"
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      placeholder="Ketik untuk melihat saran keluhan umum pasien..."
-                      rows={3}
-                      suggestions={SUBJECTIVE_SUGGESTIONS}
-                    />
-                  )}
-                />
-                <FieldError errors={[form.formState.errors.subjective]} />
-              </Field>
+          <FieldGroup>
+            {/* Subjective */}
+            <Field>
+              <FieldLabel htmlFor="subjective">S - Subjective (Keluhan Pasien)</FieldLabel>
+              <FieldDescription>
+                Keluhan yang disampaikan pasien atau keluarga pasien
+              </FieldDescription>
+              <Controller
+                control={form.control}
+                name="subjective"
+                render={({ field }) => (
+                  <AutocompleteTextarea
+                    id="subjective"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="Ketik untuk melihat saran keluhan umum pasien..."
+                    rows={3}
+                    suggestions={SUBJECTIVE_SUGGESTIONS}
+                  />
+                )}
+              />
+              <FieldError errors={[form.formState.errors.subjective]} />
+            </Field>
 
-              {/* Objective */}
-              <Field>
-                <FieldLabel htmlFor="objective">O - Objective (Pemeriksaan Objektif)</FieldLabel>
-                <FieldDescription>
-                  Hasil pemeriksaan fisik, tanda vital, dan hasil laboratorium
-                </FieldDescription>
-                <Controller
-                  control={form.control}
-                  name="objective"
-                  render={({ field }) => (
-                    <AutocompleteTextarea
-                      id="objective"
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      placeholder="Ketik untuk melihat saran hasil pemeriksaan fisik..."
-                      rows={3}
-                      suggestions={OBJECTIVE_SUGGESTIONS}
-                    />
-                  )}
-                />
-                <FieldError errors={[form.formState.errors.objective]} />
-              </Field>
+            {/* Objective */}
+            <Field>
+              <FieldLabel htmlFor="objective">O - Objective (Pemeriksaan Objektif)</FieldLabel>
+              <FieldDescription>
+                Hasil pemeriksaan fisik, tanda vital, dan hasil laboratorium
+              </FieldDescription>
+              <Controller
+                control={form.control}
+                name="objective"
+                render={({ field }) => (
+                  <AutocompleteTextarea
+                    id="objective"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="Ketik untuk melihat saran hasil pemeriksaan fisik..."
+                    rows={3}
+                    suggestions={OBJECTIVE_SUGGESTIONS}
+                  />
+                )}
+              />
+              <FieldError errors={[form.formState.errors.objective]} />
+            </Field>
 
-              {/* Assessment */}
-              <Field>
-                <FieldLabel htmlFor="assessment">A - Assessment (Penilaian/Diagnosis)</FieldLabel>
-                <FieldDescription>
-                  Diagnosis kerja, diagnosis banding, atau penilaian kondisi pasien
-                </FieldDescription>
-                <Controller
-                  control={form.control}
-                  name="assessment"
-                  render={({ field }) => (
-                    <AutocompleteTextarea
-                      id="assessment"
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      placeholder="Ketik untuk melihat saran diagnosis umum..."
-                      rows={3}
-                      suggestions={ASSESSMENT_SUGGESTIONS}
-                    />
-                  )}
-                />
-                <FieldError errors={[form.formState.errors.assessment]} />
-              </Field>
+            {/* Assessment */}
+            <Field>
+              <FieldLabel htmlFor="assessment">A - Assessment (Penilaian/Diagnosis)</FieldLabel>
+              <FieldDescription>
+                Diagnosis kerja, diagnosis banding, atau penilaian kondisi pasien
+              </FieldDescription>
+              <Controller
+                control={form.control}
+                name="assessment"
+                render={({ field }) => (
+                  <AutocompleteTextarea
+                    id="assessment"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="Ketik untuk melihat saran diagnosis umum..."
+                    rows={3}
+                    suggestions={ASSESSMENT_SUGGESTIONS}
+                  />
+                )}
+              />
+              <FieldError errors={[form.formState.errors.assessment]} />
+            </Field>
 
-              {/* Plan */}
-              <Field>
-                <FieldLabel htmlFor="plan">P - Plan (Rencana Tindakan)</FieldLabel>
-                <FieldDescription>
-                  Rencana pemeriksaan, pengobatan, dan tindakan selanjutnya
-                </FieldDescription>
-                <Controller
-                  control={form.control}
-                  name="plan"
-                  render={({ field }) => (
-                    <AutocompleteTextarea
-                      id="plan"
-                      value={field.value || ""}
-                      onChange={field.onChange}
-                      placeholder="Ketik untuk melihat saran rencana terapi..."
-                      rows={3}
-                      suggestions={PLAN_SUGGESTIONS}
-                    />
-                  )}
-                />
-                <FieldError errors={[form.formState.errors.plan]} />
-              </Field>
-            </FieldGroup>
-          )}
+            {/* Plan */}
+            <Field>
+              <FieldLabel htmlFor="plan">P - Plan (Rencana Tindakan)</FieldLabel>
+              <FieldDescription>
+                Rencana pemeriksaan, pengobatan, dan tindakan selanjutnya
+              </FieldDescription>
+              <Controller
+                control={form.control}
+                name="plan"
+                render={({ field }) => (
+                  <AutocompleteTextarea
+                    id="plan"
+                    value={field.value || ""}
+                    onChange={field.onChange}
+                    placeholder="Ketik untuk melihat saran rencana terapi..."
+                    rows={3}
+                    suggestions={PLAN_SUGGESTIONS}
+                  />
+                )}
+              />
+              <FieldError errors={[form.formState.errors.plan]} />
+            </Field>
+          </FieldGroup>
 
           {/* Progress Note (for both doctor and nurse) */}
           <FieldGroup>
