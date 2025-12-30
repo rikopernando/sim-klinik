@@ -457,6 +457,7 @@ export async function recordMaterialUsage(data: MaterialUsageInput) {
   const session = await getSession()
 
   // Create material usage record
+  // Let database handle usedAt and createdAt with .defaultNow() for timezone consistency
   await db
     .insert(materialUsage)
     .values({
@@ -468,7 +469,6 @@ export async function recordMaterialUsage(data: MaterialUsageInput) {
       totalPrice,
       usedBy: session?.user.id || null,
       notes: data.notes || null,
-      usedAt: new Date(),
     })
     .returning()
 }

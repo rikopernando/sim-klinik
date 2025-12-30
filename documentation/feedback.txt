@@ -43,3 +43,7 @@ New Feedback
   - [] User bisa input lebih dari 1
 8. Biiling 
   -  billing.service harusnya bukan tempat query
+9. Rawat inap
+  - Management Stok alat Kesehatan
+  - 
+10. Database timezone, contoh ada pada table material usage

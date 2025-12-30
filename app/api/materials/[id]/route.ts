@@ -53,9 +53,9 @@ export async function DELETE(
     }
 
     // Check if the record is within 1 hour of creation
-    const createdAt = new Date(materialRecord[0].createdAt)
+    const usedAt = new Date(materialRecord[0].usedAt)
     const now = new Date()
-    const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60)
+    const hoursSinceCreation = (now.getTime() - usedAt.getTime()) / (1000 * 60 * 60)
 
     if (hoursSinceCreation > 1) {
       const response: ResponseError<unknown> = {

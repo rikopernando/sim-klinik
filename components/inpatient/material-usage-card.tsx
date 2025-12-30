@@ -115,7 +115,7 @@ export const MaterialUsageCard = memo(function MaterialUsageCard({
             <MaterialRow
               key={material.id}
               material={material}
-              canDelete={canDelete(material.createdAt)}
+              canDelete={canDelete(material.usedAt)}
               onDeleteClick={handleDeleteClick}
             />
           ))}

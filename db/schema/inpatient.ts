@@ -22,8 +22,8 @@ export const rooms = pgTable("rooms", {
   status: varchar("status", { length: 20 }).notNull().default("available"), // available, occupied, maintenance, reserved
   description: text("description"),
   isActive: varchar("is_active", { length: 10 }).notNull().default("active"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -57,10 +57,10 @@ export const vitalsHistory = pgTable("vitals_history", {
   recordedBy: text("recorded_by")
     .notNull()
     .references(() => user.id), // Nurse or doctor
-  recordedAt: timestamp("recorded_at").defaultNow().notNull(),
+  recordedAt: timestamp("recorded_at", { withTimezone: true }).defaultNow().notNull(),
   notes: text("notes"),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -78,11 +78,11 @@ export const bedAssignments = pgTable("bed_assignments", {
     .notNull()
     .references(() => rooms.id),
   bedNumber: varchar("bed_number", { length: 10 }).notNull(), // Bed identifier within room
-  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
-  dischargedAt: timestamp("discharged_at"),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow().notNull(),
+  dischargedAt: timestamp("discharged_at", { withTimezone: true }),
   assignedBy: text("assigned_by").references(() => user.id),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -109,7 +109,7 @@ export const materialUsage = pgTable("material_usage", {
   quantity: integer("quantity").notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
   usedBy: text("used_by").references(() => user.id), // Staff who used the material
-  usedAt: timestamp("used_at").defaultNow().notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }).defaultNow().notNull(),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
