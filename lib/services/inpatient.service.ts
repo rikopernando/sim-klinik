@@ -6,9 +6,15 @@ import {
   InpatientFilters,
   PatientDetail,
   CPPT,
+  MaterialUsage,
 } from "@/types/inpatient"
 import { Pagination, ResponseApi } from "@/types/api"
-import { BedAssignmentInput, CPPTInput, VitalSignsInput } from "@/lib/inpatient/validation"
+import {
+  BedAssignmentInput,
+  CPPTInput,
+  VitalSignsInput,
+  MaterialUsageInput,
+} from "@/lib/inpatient/validation"
 
 import { ApiServiceError, handleApiError } from "./api.service"
 
@@ -205,6 +211,55 @@ export async function deleteCPPTEntry(cpptId: string): Promise<void> {
     await axios.delete(`/api/inpatient/cppt/${cpptId}`)
   } catch (error) {
     console.error("Error deleting CPPT entry:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Record material usage
+ */
+export async function recordMaterialUsage(data: MaterialUsageInput): Promise<void> {
+  try {
+    await axios.post("/api/materials", data)
+  } catch (error) {
+    console.error("Error recording material usage:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch material usage for a visit
+ */
+export async function fetchMaterialUsage(
+  visitId: string
+): Promise<{ materials: MaterialUsage[]; totalCost: string }> {
+  try {
+    const response = await axios.get<
+      ResponseApi<MaterialUsage[]> & { totalCost: string; count: number }
+    >(`/api/materials?visitId=${visitId}`)
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return {
+      materials: response.data.data,
+      totalCost: response.data.totalCost || "0",
+    }
+  } catch (error) {
+    console.error("Error fetching material usage:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Delete material usage (within 1 hour)
+ */
+export async function deleteMaterialUsage(materialId: string): Promise<void> {
+  try {
+    await axios.delete(`/api/materials/${materialId}`)
+  } catch (error) {
+    console.error("Error deleting material usage:", error)
     handleApiError(error)
   }
 }

@@ -1,6 +1,7 @@
 import { pgTable, varchar, text, timestamp, decimal, integer } from "drizzle-orm/pg-core"
 import { visits } from "./visits"
 import { user } from "./auth"
+import { services } from "./billing"
 
 /**
  * Rooms Table
@@ -95,10 +96,17 @@ export const materialUsage = pgTable("material_usage", {
   visitId: text("visit_id")
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
-  materialName: varchar("material_name", { length: 255 }).notNull(),
+
+  // Service reference (NEW - preferred approach)
+  serviceId: text("service_id").references(() => services.id),
+
+  // Legacy fields (kept for backward compatibility, will be deprecated)
+  materialName: varchar("material_name", { length: 255 }),
+  unit: varchar("unit", { length: 50 }), // pcs, box, unit, etc.
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
+
+  // Core fields
   quantity: integer("quantity").notNull(),
-  unit: varchar("unit", { length: 50 }).notNull(), // pcs, box, unit, etc.
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
   usedBy: text("used_by").references(() => user.id), // Staff who used the material
   usedAt: timestamp("used_at").defaultNow().notNull(),

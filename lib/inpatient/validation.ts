@@ -67,16 +67,29 @@ export const cpptSchema = z.object({
 
 /**
  * Material Usage Schema
+ * Supports both new serviceId approach and legacy materialName approach
  */
-export const materialUsageSchema = z.object({
-  visitId: z.string().min(1, "Visit ID harus valid"),
-  materialName: z.string().min(1, "Nama material wajib diisi"),
-  quantity: z.number().int().positive("Jumlah harus positif"),
-  unit: z.string().min(1, "Satuan wajib diisi"),
-  unitPrice: z.string().min(1, "Harga satuan wajib diisi"),
-  usedBy: z.string().optional(),
-  notes: z.string().optional(),
-})
+export const materialUsageSchema = z
+  .object({
+    visitId: z.string().min(1, "Visit ID harus valid"),
+
+    // NEW: Service-based approach (preferred)
+    serviceId: z.string().min(1, "Service ID harus diisi"),
+
+    // LEGACY: Direct material input (for backward compatibility)
+    materialName: z.string().optional(),
+    unit: z.string().optional(),
+    unitPrice: z.string().optional(),
+
+    // Core fields
+    quantity: z.string().min(1, "Jumlah harus diisi"),
+    usedBy: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .refine((data) => data.serviceId || data.materialName, {
+    message: "Service ID atau Nama Material harus diisi",
+    path: ["serviceId"],
+  })
 
 /**
  * Room Update Schema

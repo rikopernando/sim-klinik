@@ -18,6 +18,7 @@ import { RecordVitalsDialog } from "@/components/inpatient/record-vitals-dialog"
 import { CPPTHistoryCard } from "@/components/inpatient/cppt-history-card"
 import { CPPTDialog } from "@/components/inpatient/cppt-dialog"
 import { MaterialUsageCard } from "@/components/inpatient/material-usage-card"
+import { RecordMaterialDialog } from "@/components/inpatient/record-material-dialog"
 import { VitalsTrendChart } from "@/components/inpatient/vitals-trend-chart"
 import { CPPTTimeline } from "@/components/inpatient/cppt-timeline"
 
@@ -156,17 +157,27 @@ export default function PatientDetailPage() {
         {/* Material Usage */}
         <Card>
           <CardHeader>
-            <CardTitle>Penggunaan Material</CardTitle>
-            <CardDescription>
-              {patientDetail.materials.length > 0
-                ? `${patientDetail.materials.length} item material • Total: Rp ${new Intl.NumberFormat("id-ID").format(parseFloat(patientDetail.totalMaterialCost))}`
-                : "Belum ada penggunaan material"}
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Penggunaan Alat Kesehatan</CardTitle>
+                <CardDescription>
+                  {patientDetail.materials.length > 0
+                    ? `${patientDetail.materials.length} item alat kesehatan• Total: Rp ${new Intl.NumberFormat("id-ID").format(parseFloat(patientDetail.totalMaterialCost))}`
+                    : "Belum ada penggunaan lat kesehatan"}
+                </CardDescription>
+              </div>
+              <RecordMaterialDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            </div>
           </CardHeader>
           <CardContent>
             <MaterialUsageCard
               materials={patientDetail.materials}
               totalCost={patientDetail.totalMaterialCost}
+              onRefresh={refresh}
             />
           </CardContent>
         </Card>

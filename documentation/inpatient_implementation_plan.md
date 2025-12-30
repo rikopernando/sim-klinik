@@ -5,6 +5,7 @@
 This document outlines the comprehensive implementation plan for the **Inpatient (Rawat Inap)** module of Sim-Klinik. The plan is divided into 4 phases, following the user journey documented in `/documentation/user_journey.md` and user stories in `/documentation/app_flow_document.md` (Modul 3).
 
 **Current Status:**
+
 - ✅ Database schema complete (rooms, bed_assignments, vitals_history, material_usage, cppt tables exist)
 - ✅ Room dashboard exists (`/app/dashboard/inpatient/rooms/page.tsx`)
 - ✅ Room API endpoints exist (`/api/rooms`, `/api/rooms/assign`)
@@ -17,41 +18,49 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ### Existing Tables (Already Implemented)
 
 #### 1. **rooms** (`db/schema/inpatient.ts:9-26`)
+
 - Room management with bed tracking
 - Fields: roomNumber, roomType, bedCount, availableBeds, floor, building, dailyRate, facilities, status
 - Ready to use ✅
 
 #### 2. **bed_assignments** (`db/schema/inpatient.ts:69-85`)
+
 - Track patient bed assignments
 - Fields: visitId, roomId, bedNumber, assignedAt, dischargedAt, assignedBy, notes
 - Ready to use ✅
 
 #### 3. **vitals_history** (`db/schema/inpatient.ts:32-63`)
+
 - Comprehensive vital signs tracking
 - Fields: temperature, bloodPressure, pulse, respiratoryRate, oxygenSaturation, weight, height, bmi, painScale, consciousness
 - Ready to use ✅
 
 #### 4. **material_usage** (`db/schema/inpatient.ts:91-107`)
+
 - Track medical materials/supplies used
 - Fields: materialName, quantity, unit, unitPrice, totalPrice, usedBy, usedAt
 - Ready to use ✅
 
 #### 5. **cppt** (`db/schema/medical-records.ts:85-107`)
+
 - Integrated Progress Notes (Catatan Perkembangan Pasien Terintegrasi)
 - Fields: authorId, authorRole, subjective, objective, assessment, plan, progressNote, instructions
 - Ready to use ✅
 
 #### 6. **visits** (`db/schema/visits.ts:9-45`)
+
 - Visit tracking with inpatient fields
 - Relevant fields: visitType, roomId, admissionDate, dischargeDate, disposition
 - Ready to use ✅
 
 #### 7. **billing_items** (`db/schema/billing.ts:70-93`)
+
 - Supports itemType: 'room', 'material', 'service', 'drug'
 - Used for daily room charges and material billing
 - Ready to use ✅
 
 #### 8. **discharge_summaries** (`db/schema/billing.ts:130-161`)
+
 - Complete medical summary for discharge
 - Fields: admissionDiagnosis, dischargeDiagnosis, clinicalSummary, proceduresPerformed, medicationsOnDischarge, dischargeInstructions, followUpDate
 - Ready to use ✅
@@ -65,12 +74,15 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ## Implementation Phases
 
 ### **Phase 1: Core Inpatient Management** (CURRENT PHASE)
+
 **Goal:** Enable basic inpatient admission, bed assignment, and patient list management
 
 #### Phase 1.1: Bed Assignment/Allocation
+
 **User Story:** "Perawat/Admin melihat Dashboard Kamar → Memilih/mengalokasikan Kamar/Bed"
 
 **Tasks:**
+
 1. **Create bed assignment dialog component**
    - Location: `/components/inpatient/assign-bed-dialog.tsx`
    - Features:
@@ -105,15 +117,18 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - `/hooks/use-available-rooms.ts` - Fetches rooms with available beds
 
 **API Endpoints:**
+
 - `POST /api/inpatient/assign-bed` - Assign patient to bed
 - `GET /api/inpatient/available-rooms` - Get rooms with available beds
 - `GET /api/inpatient/bed-assignments?roomId={id}` - Get assignments for specific room
 
 **Components:**
+
 - `/components/inpatient/assign-bed-dialog.tsx`
 - `/components/inpatient/bed-assignment-card.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Perawat can allocate bed from room dashboard
 - [ ] System validates room availability before assignment
 - [ ] availableBeds count updates automatically
@@ -123,9 +138,11 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 #### Phase 1.2: Inpatient Patient List
+
 **User Story:** "Perawat melihat daftar pasien rawat inap aktif dengan informasi ringkas"
 
 **Tasks:**
+
 1. **Create inpatient patient list page**
    - Location: `/app/dashboard/inpatient/patients/page.tsx`
    - Features:
@@ -152,14 +169,17 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - `/hooks/use-patient-search.ts` - Reusable patient search logic
 
 **API Endpoints:**
+
 - `GET /api/inpatient/patients` - Get all active inpatient patients with filters
 
 **Components:**
+
 - `/components/inpatient/patient-list-table.tsx`
 - `/components/inpatient/patient-list-row.tsx`
 - `/components/inpatient/patient-list-filters.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Show all active inpatient patients (admissionDate exists, dischargeDate is null)
 - [ ] Search works across patient name, MR number, room number
 - [ ] Filters work correctly (room type, floor, date range)
@@ -170,9 +190,11 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 #### Phase 1.3: Patient Detail Dashboard
+
 **User Story:** "Perawat/Dokter mengakses dashboard detail pasien rawat inap untuk melihat ringkasan dan melakukan tindakan"
 
 **Tasks:**
+
 1. **Create patient detail dashboard page**
    - Location: `/app/dashboard/inpatient/patients/[visitId]/page.tsx`
    - Layout: Tabs or cards for different sections
@@ -204,15 +226,18 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - `/hooks/use-inpatient-details.ts` - Fetch patient detail data
 
 **API Endpoints:**
+
 - `GET /api/inpatient/patients/[visitId]` - Get complete patient dashboard data
 
 **Components:**
+
 - `/components/inpatient/patient-info-card.tsx`
 - `/components/inpatient/admission-info-card.tsx`
 - `/components/inpatient/latest-vitals-card.tsx`
 - `/components/inpatient/quick-actions-panel.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Dashboard displays complete patient information
 - [ ] Latest vitals shown with timestamp and recorded by
 - [ ] Quick actions navigate to respective forms/dialogs
@@ -223,12 +248,15 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 ### **Phase 2: Clinical Documentation** (NEXT PHASE)
+
 **Goal:** Enable comprehensive clinical documentation for inpatient care
 
 #### Phase 2.1: Vital Signs Recording
+
 **User Story:** "Perawat mencatat Tanda-Tanda Vital secara berkala (misal: per 8 jam)"
 
 **Tasks:**
+
 1. **Create vitals recording dialog**
    - Location: `/components/inpatient/record-vitals-dialog.tsx`
    - Fields: All fields from vitals_history table
@@ -252,16 +280,19 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - Export to PDF for medical records
 
 **API Endpoints:**
+
 - `POST /api/inpatient/vitals` - Create vitals record
 - `GET /api/inpatient/vitals?visitId={id}` - Get vitals history
 - `DELETE /api/inpatient/vitals/[id]` - Delete vitals record (within 1 hour)
 
 **Components:**
+
 - `/components/inpatient/record-vitals-dialog.tsx`
 - `/components/inpatient/vitals-history-table.tsx`
 - `/components/inpatient/vitals-chart.tsx` (line chart for trends)
 
 **Acceptance Criteria:**
+
 - [ ] Perawat can quickly record common vitals
 - [ ] BMI auto-calculated when height and weight entered
 - [ ] Abnormal values highlighted (configurable thresholds)
@@ -271,9 +302,11 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 #### Phase 2.2: CPPT (Integrated Progress Notes)
+
 **User Story:** "Perawat/Dokter mencatat Catatan Perkembangan Pasien Terintegrasi (CPPT)"
 
 **Tasks:**
+
 1. **Create CPPT recording dialog**
    - Location: `/components/inpatient/cppt-dialog.tsx`
    - Fields: subjective, objective, assessment, plan, progressNote, instructions
@@ -295,17 +328,20 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - Filter by author role, date range
 
 **API Endpoints:**
+
 - `POST /api/inpatient/cppt` - Create CPPT entry
 - `GET /api/inpatient/cppt?visitId={id}` - Get CPPT history
 - `PUT /api/inpatient/cppt/[id]` - Edit CPPT (within 2 hours)
 - `DELETE /api/inpatient/cppt/[id]` - Delete CPPT (within 1 hour)
 
 **Components:**
+
 - `/components/inpatient/cppt-dialog.tsx`
 - `/components/inpatient/cppt-history.tsx`
 - `/components/inpatient/cppt-entry-card.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Both doctors and nurses can create CPPT entries
 - [ ] Entries clearly show author name, role, and timestamp
 - [ ] Timeline view shows chronological progression
@@ -315,9 +351,11 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 #### Phase 2.3: Vitals & CPPT Charts/Trends
+
 **User Story:** "Dokter melihat grafik tren vital signs dan riwayat CPPT untuk analisis klinis"
 
 **Tasks:**
+
 1. **Create vitals trend chart component**
    - Location: `/components/inpatient/vitals-trend-chart.tsx`
    - Use recharts or similar library
@@ -337,10 +375,12 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - Side-by-side: Vitals chart (left), CPPT timeline (right)
 
 **Components:**
+
 - `/components/inpatient/vitals-trend-chart.tsx`
 - `/components/inpatient/cppt-timeline.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Charts render with smooth animations
 - [ ] Date range filtering works correctly
 - [ ] Normal ranges clearly visible
@@ -350,9 +390,10 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 ### **Phase 3: Billing Integration** (FUTURE PHASE)
+
 **Goal:** Seamless integration with billing system for room charges and materials
 
-#### Phase 3.1: Daily Room Charges
+<!-- #### Phase 3.1: Daily Room Charges
 **User Story:** "Sistem otomatis menghitung biaya kamar harian dan menambahkan ke billing"
 
 **Tasks:**
@@ -388,14 +429,16 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 - [ ] Room charges added to billing automatically
 - [ ] Manual charges require admin/cashier authorization
 - [ ] Room rate changes handled correctly (use rate at admission)
-- [ ] Partial day charges on discharge date
+- [ ] Partial day charges on discharge date -->
 
 ---
 
-#### Phase 3.2: Material Usage Recording
+#### Phase 3.1: Material Usage Recording
+
 **User Story:** "Perawat/Dokter mencatat pemakaian alat/material medis yang dikenakan biaya"
 
 **Tasks:**
+
 1. **Create material usage dialog**
    - Location: `/components/inpatient/record-material-dialog.tsx`
    - Features:
@@ -404,15 +447,13 @@ This document outlines the comprehensive implementation plan for the **Inpatient
      - Unit price (auto-filled, can override)
      - Auto-calculate total price
      - Usage notes
-   - Save to material_usage table AND create billing_items
+   - Save to material_usage table
 
 2. **Create material usage API endpoint**
    - Location: `/app/api/inpatient/materials/route.ts`
    - Method: POST
    - Transaction:
      - Insert into material_usage
-     - Insert into billing_items (itemType: 'material')
-     - Update billing subtotal and totalAmount
 
 3. **Create material usage history component**
    - Location: `/components/inpatient/material-usage-history.tsx`
@@ -421,16 +462,18 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - Show total material cost
 
 **API Endpoints:**
+
 - `POST /api/inpatient/materials` - Record material usage
 - `GET /api/inpatient/materials?visitId={id}` - Get material usage history
 - `DELETE /api/inpatient/materials/[id]` - Delete material record (within 1 hour)
 
 **Components:**
+
 - `/components/inpatient/record-material-dialog.tsx`
 - `/components/inpatient/material-usage-history.tsx`
 
 **Acceptance Criteria:**
-- [ ] Material charges immediately appear in billing
+
 - [ ] Unit price auto-filled from master data
 - [ ] Can override price with notes
 - [ ] Material usage history shows who recorded
@@ -439,12 +482,15 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 ### **Phase 4: Discharge Process** (FUTURE PHASE)
+
 **Goal:** Complete discharge workflow with medical summary and billing verification
 
 #### Phase 4.1: Discharge Summary (Resume Medis)
+
 **User Story:** "Dokter mengisi Ringkasan Medis Pulang dan instruksi kontrol"
 
 **Tasks:**
+
 1. **Create discharge summary form**
    - Location: `/components/inpatient/discharge-summary-form.tsx`
    - Fields from discharge_summaries table:
@@ -474,16 +520,19 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - Hospital letterhead template
 
 **API Endpoints:**
+
 - `POST /api/inpatient/discharge-summary` - Create discharge summary
 - `PUT /api/inpatient/discharge-summary/[id]` - Update discharge summary
 - `GET /api/inpatient/discharge-summary?visitId={id}` - Get discharge summary
 - `POST /api/inpatient/discharge-summary/[id]/finalize` - Finalize summary
 
 **Components:**
+
 - `/components/inpatient/discharge-summary-form.tsx`
 - `/components/inpatient/discharge-summary-view.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Only doctors can create/finalize discharge summary
 - [ ] Can save as draft and edit later
 - [ ] Once finalized, cannot edit (create addendum instead)
@@ -493,9 +542,11 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ---
 
 #### Phase 4.2: Discharge Workflow
+
 **User Story:** "Pasien pulang setelah billing lunas dan bed dirilis"
 
 **Tasks:**
+
 1. **Create discharge patient dialog**
    - Location: `/components/inpatient/discharge-patient-dialog.tsx`
    - Pre-checks:
@@ -520,14 +571,17 @@ This document outlines the comprehensive implementation plan for the **Inpatient
    - Block discharge if any pre-check fails
 
 **API Endpoints:**
+
 - `POST /api/inpatient/discharge` - Discharge patient
 - `GET /api/inpatient/discharge/pre-check?visitId={id}` - Check discharge eligibility
 
 **Components:**
+
 - `/components/inpatient/discharge-patient-dialog.tsx`
 - `/components/inpatient/discharge-pre-check.tsx`
 
 **Acceptance Criteria:**
+
 - [ ] Cannot discharge if billing not paid
 - [ ] Cannot discharge without finalized discharge summary
 - [ ] Bed released automatically on discharge
@@ -539,6 +593,7 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ## Technical Architecture
 
 ### Directory Structure
+
 ```
 app/
 ├── dashboard/
@@ -623,22 +678,26 @@ types/
 ### Key Patterns
 
 **Custom Hooks Pattern:**
+
 - All data fetching in custom hooks
 - Hooks handle loading states, errors, and mutations
 - Components remain presentational
 
 **Modular Components:**
+
 - Break down complex forms into sub-components
 - Reusable dialog components
 - Separate view and edit modes
 
 **API Design:**
+
 - RESTful endpoints
 - Consistent error handling
 - Transaction support for multi-table operations
 - Validation at API level
 
 **Type Safety:**
+
 - TypeScript interfaces for all data structures
 - Drizzle ORM for type-safe database queries
 - Zod validation schemas
@@ -649,18 +708,19 @@ types/
 
 ### Role-Based Permissions
 
-| Feature | Admin | Doctor | Nurse | Cashier |
-|---------|-------|--------|-------|---------|
-| Assign bed | ✅ | ✅ | ✅ | ❌ |
-| Record vitals | ✅ | ✅ | ✅ | ❌ |
-| Create CPPT (doctor) | ✅ | ✅ | ❌ | ❌ |
-| Create CPPT (nurse) | ✅ | ❌ | ✅ | ❌ |
-| Record materials | ✅ | ✅ | ✅ | ❌ |
-| Create discharge summary | ✅ | ✅ | ❌ | ❌ |
-| Discharge patient | ✅ | ✅ | ❌ | ❌ |
-| View billing | ✅ | ✅ | ✅ | ✅ |
+| Feature                  | Admin | Doctor | Nurse | Cashier |
+| ------------------------ | ----- | ------ | ----- | ------- |
+| Assign bed               | ✅    | ✅     | ✅    | ❌      |
+| Record vitals            | ✅    | ✅     | ✅    | ❌      |
+| Create CPPT (doctor)     | ✅    | ✅     | ❌    | ❌      |
+| Create CPPT (nurse)      | ✅    | ❌     | ✅    | ❌      |
+| Record materials         | ✅    | ✅     | ✅    | ❌      |
+| Create discharge summary | ✅    | ✅     | ❌    | ❌      |
+| Discharge patient        | ✅    | ✅     | ❌    | ❌      |
+| View billing             | ✅    | ✅     | ✅    | ✅      |
 
 **Implementation:**
+
 - Use Better Auth session to get user role
 - Middleware checks on API routes
 - UI elements hidden based on role
@@ -671,16 +731,19 @@ types/
 ## Testing Strategy
 
 ### Unit Tests
+
 - Test custom hooks (use-inpatient-list, use-bed-assignment, etc.)
 - Test utility functions (BMI calculation, days calculation)
 - Test validation schemas
 
 ### Integration Tests
+
 - Test API endpoints with mock data
 - Test bed assignment workflow (assign → update counts)
 - Test discharge workflow (all pre-checks)
 
 ### E2E Tests
+
 - Complete inpatient journey: Admission → Vitals → CPPT → Materials → Discharge
 - Bed assignment and release
 - Billing integration (room charges, materials)
@@ -690,17 +753,20 @@ types/
 ## Performance Considerations
 
 ### Database Optimization
+
 - Index on visits.visitType, visits.status for patient list queries
 - Index on bed_assignments.visitId, bed_assignments.roomId
 - Index on vitals_history.visitId, vitals_history.recordedAt for chronological queries
 - Compound index on cppt (visitId, createdAt) for timeline queries
 
 ### Caching Strategy
+
 - Room dashboard: Cache room occupancy for 30 seconds (high read frequency)
 - Patient list: Polling every 30 seconds (real-time feel without WebSocket overhead)
 - Vitals history: Cache per visit for 5 minutes
 
 ### Query Optimization
+
 - Use Drizzle's `with` for eager loading (patient + visit + room + bed_assignments in one query)
 - Paginate patient list (20 per page)
 - Limit vitals history to last 100 entries, with "Load More" option
@@ -710,6 +776,7 @@ types/
 ## Migration Plan
 
 ### Phase 1 Rollout
+
 1. Deploy database schema (already done ✅)
 2. Deploy room dashboard (already done ✅)
 3. Deploy bed assignment feature
@@ -719,6 +786,7 @@ types/
 7. Monitor for bugs and performance issues
 
 ### Phase 2 Rollout
+
 1. Deploy vitals recording
 2. Deploy CPPT
 3. Deploy charts/trends
@@ -727,6 +795,7 @@ types/
 6. Full cutover
 
 ### Phase 3 & 4 Rollout
+
 - Similar phased approach
 - Intensive testing before production
 
@@ -735,21 +804,25 @@ types/
 ## Success Metrics
 
 ### Phase 1
+
 - [ ] 100% of inpatient admissions use bed assignment feature
 - [ ] Average time to assign bed: < 2 minutes
 - [ ] Zero bed count discrepancies
 
 ### Phase 2
+
 - [ ] Vitals recorded every 8 hours for all inpatient patients
 - [ ] CPPT entries: Minimum 1 per day per patient
 - [ ] Doctor satisfaction score: ≥ 4/5 with charts feature
 
 ### Phase 3
+
 - [ ] 100% room charges automated
 - [ ] Material usage recording: < 5 minutes per entry
 - [ ] Billing discrepancies: < 1% of cases
 
 ### Phase 4
+
 - [ ] Discharge summary completion time: < 15 minutes
 - [ ] Discharge process time: < 30 minutes (from decision to bed release)
 - [ ] Patient satisfaction with discharge instructions: ≥ 4.5/5
@@ -759,17 +832,20 @@ types/
 ## Appendix
 
 ### Related Documentation
+
 - `/documentation/user_journey.md` - User journey for Rawat Inap (10 steps)
 - `/documentation/app_flow_document.md` - Modul 3 user stories
 - `/documentation/backend_structure_document.md` - Database schema details
 - `/documentation/frontend_guidelines_document.md` - UI/UX patterns
 
 ### Database Schema Reference
+
 - `/db/schema/inpatient.ts` - rooms, bed_assignments, vitals_history, material_usage
 - `/db/schema/medical-records.ts` - cppt
 - `/db/schema/billing.ts` - discharge_summaries, billing_items
 
 ### External Resources
+
 - ICD-10 codes: https://www.icd10data.com/
 - Vital signs normal ranges: WHO guidelines
 - Drizzle ORM docs: https://orm.drizzle.team/

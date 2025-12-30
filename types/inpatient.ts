@@ -133,10 +133,17 @@ export interface CPPT {
 export interface MaterialUsage {
   id: string
   visitId: string
-  materialName: string
+
+  // NEW: Service reference (preferred)
+  serviceId: string | null
+
+  // LEGACY: Direct material fields (deprecated, for backward compatibility)
+  materialName: string | null
+  unit: string | null
+  unitPrice: string | null
+
+  // Core fields
   quantity: number
-  unit: string
-  unitPrice: string
   totalPrice: string
   usedBy: string | null
   usedAt: string
@@ -189,19 +196,6 @@ export interface CPPTInput {
   plan?: string
   progressNote: string
   instructions?: string
-}
-
-/**
- * Material Usage Input Data
- */
-export interface MaterialUsageInput {
-  visitId: string
-  materialName: string
-  quantity: number
-  unit: string
-  unitPrice: string
-  usedBy?: string
-  notes?: string
 }
 
 /**

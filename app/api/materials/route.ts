@@ -4,28 +4,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { materialUsage } from "@/db/schema/inpatient"
-import { visits } from "@/db/schema/visits"
-import { eq, desc } from "drizzle-orm"
 import { z } from "zod"
+import { eq } from "drizzle-orm"
 
-/**
- * Material Usage Schema
- */
-const materialUsageSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
-  materialName: z.string().min(1, "Nama material wajib diisi"),
-  quantity: z.number().int().positive("Jumlah harus positif"),
-  unit: z.string().min(1, "Satuan wajib diisi"),
-  unitPrice: z.string().min(1, "Harga satuan wajib diisi"),
-  usedBy: z.string().optional(),
-  notes: z.string().optional(),
-})
+import { db } from "@/db"
+import { visits } from "@/db/schema/visits"
+import { materialUsageSchema } from "@/lib/inpatient/validation"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constans/http"
+import { recordMaterialUsage } from "@/lib/inpatient/api-service"
 
 /**
  * POST /api/materials
  * Record material usage
+ * Supports both serviceId (preferred) and legacy materialName approach
  */
 export async function POST(request: NextRequest) {
   try {
@@ -42,84 +34,46 @@ export async function POST(request: NextRequest) {
       .limit(1)
 
     if (visit.length === 0) {
-      return NextResponse.json({ error: "Visit not found" }, { status: 404 })
+      const response: ResponseError<unknown> = {
+        error: {},
+        message: "Associated visit not found",
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      }
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.NOT_FOUND,
+      })
     }
 
-    // Calculate total price
-    const unitPrice = parseFloat(validatedData.unitPrice)
-    const totalPrice = (unitPrice * validatedData.quantity).toFixed(2)
+    await recordMaterialUsage(validatedData)
 
-    // Create material usage record
-    const newMaterialUsage = await db
-      .insert(materialUsage)
-      .values({
-        visitId: validatedData.visitId,
-        materialName: validatedData.materialName,
-        quantity: validatedData.quantity,
-        unit: validatedData.unit,
-        unitPrice: validatedData.unitPrice,
-        totalPrice,
-        usedBy: validatedData.usedBy || null,
-        usedAt: new Date(),
-        notes: validatedData.notes || null,
-        createdAt: new Date(),
-      })
-      .returning()
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Material usage recorded successfully",
-        data: newMaterialUsage[0],
-      },
-      { status: 201 }
-    )
+    const response: ResponseApi = {
+      message: "Material usage recorded successfully",
+      status: HTTP_STATUS_CODES.CREATED,
+    }
+    return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      )
+      const response: ResponseError<unknown> = {
+        error: error.issues,
+        message: "Validation error",
+        status: HTTP_STATUS_CODES.BAD_REQUEST,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
 
-    console.error("Material usage creation error:", error)
-    return NextResponse.json({ error: "Failed to record material usage" }, { status: 500 })
-  }
-}
-
-/**
- * GET /api/materials?visitId=X
- * Get material usage for a visit
- */
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams
-    const visitId = searchParams.get("visitId")
-
-    if (!visitId) {
-      return NextResponse.json({ error: "Visit ID is required" }, { status: 400 })
+    // Handle business logic errors
+    const errorMessage = error instanceof Error ? error.message : "Failed to record material usage"
+    const response: ResponseError<unknown> = {
+      error: errorMessage,
+      message: errorMessage,
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
-    // Get material usage records
-    const materials = await db
-      .select()
-      .from(materialUsage)
-      .where(eq(materialUsage.visitId, parseInt(visitId, 10)))
-      .orderBy(desc(materialUsage.usedAt))
-
-    // Calculate total cost
-    const totalCost = materials.reduce((sum, item) => {
-      return sum + parseFloat(item.totalPrice || "0")
-    }, 0)
-
-    return NextResponse.json({
-      success: true,
-      data: materials,
-      count: materials.length,
-      totalCost: totalCost.toFixed(2),
+    return NextResponse.json(response, {
+      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     })
-  } catch (error) {
-    console.error("Material usage fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch material usage" }, { status: 500 })
   }
 }

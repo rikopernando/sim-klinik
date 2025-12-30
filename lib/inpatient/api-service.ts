@@ -20,6 +20,7 @@ import type {
   RoomUpdateInput,
 } from "./validation"
 import type { InpatientFilters, VitalSigns } from "@/types/inpatient"
+import { getSession } from "../rbac"
 
 /**
  * Build WHERE conditions for inpatient list query
@@ -450,35 +451,26 @@ export async function getCPPTEntries(visitId: string) {
  * Material Usage Service
  */
 export async function recordMaterialUsage(data: MaterialUsageInput) {
-  // Check if visit exists
-  const [visit] = await db.select().from(visits).where(eq(visits.id, data.visitId)).limit(1)
-
-  if (!visit) {
-    throw new Error("Visit not found")
-  }
-
   // Calculate total price
-  const unitPrice = parseFloat(data.unitPrice)
-  const totalPrice = (unitPrice * data.quantity).toFixed(2)
+  const unitPrice = parseFloat(data.unitPrice || "0")
+  const totalPrice = (unitPrice * parseFloat(data.quantity)).toFixed(2)
+  const session = await getSession()
 
   // Create material usage record
-  const [newMaterialUsage] = await db
+  await db
     .insert(materialUsage)
     .values({
       visitId: data.visitId,
+      serviceId: data.serviceId,
       materialName: data.materialName,
-      quantity: data.quantity,
-      unit: data.unit,
+      quantity: parseFloat(data.quantity),
       unitPrice: data.unitPrice,
       totalPrice,
-      usedBy: data.usedBy || null,
-      usedAt: new Date(),
+      usedBy: session?.user.id || null,
       notes: data.notes || null,
-      createdAt: new Date(),
+      usedAt: new Date(),
     })
     .returning()
-
-  return newMaterialUsage
 }
 
 export async function getMaterialUsage(visitId: string) {
@@ -562,14 +554,18 @@ export async function getPatientDetailData(visitId: string) {
 
   // Get material usage
   const materials = await db
-    .select()
+    .select({
+      materialUsage,
+      usedByUser: user.name,
+    })
     .from(materialUsage)
+    .leftJoin(user, eq(materialUsage.usedBy, user.id))
     .where(eq(materialUsage.visitId, visitId))
     .orderBy(desc(materialUsage.usedAt))
 
   // Calculate total material cost
   const totalMaterialCost = materials.reduce((sum, item) => {
-    return sum + parseFloat(item.totalPrice || "0")
+    return sum + parseFloat(item.materialUsage.totalPrice || "0")
   }, 0)
 
   // Calculate days in hospital
@@ -589,7 +585,10 @@ export async function getPatientDetailData(visitId: string) {
     totalRoomCost: totalRoomCost.toFixed(2),
     vitals,
     cpptEntries,
-    materials,
     totalMaterialCost: totalMaterialCost.toFixed(2),
+    materials: materials.map((material) => ({
+      ...material.materialUsage,
+      usedBy: material.usedByUser,
+    })),
   }
 }
