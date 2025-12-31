@@ -7,6 +7,7 @@ import {
   PatientDetail,
   CPPT,
   MaterialUsage,
+  AdministerPrescriptionInput,
 } from "@/types/inpatient"
 import { Pagination, ResponseApi } from "@/types/api"
 import {
@@ -14,6 +15,7 @@ import {
   CPPTInput,
   VitalSignsInput,
   MaterialUsageInput,
+  InpatientPrescriptionInput,
 } from "@/lib/inpatient/validation"
 
 import { ApiServiceError, handleApiError } from "./api.service"
@@ -260,6 +262,106 @@ export async function deleteMaterialUsage(materialId: string): Promise<void> {
     await axios.delete(`/api/materials/${materialId}`)
   } catch (error) {
     console.error("Error deleting material usage:", error)
+    handleApiError(error)
+  }
+}
+
+// ============================================================================
+// PRESCRIPTIONS (Inpatient)
+// ============================================================================
+
+/**
+ * Create inpatient prescription order
+ */
+export async function createInpatientPrescription(data: InpatientPrescriptionInput): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/prescriptions", data)
+  } catch (error) {
+    console.error("Error creating prescription:", error)
+    handleApiError(error)
+  }
+}
+/**
+ * Mark prescription as administered (for nurses)
+ */
+export async function administerPrescription(data: AdministerPrescriptionInput): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/prescriptions/administer", data)
+  } catch (error) {
+    console.error("Error administering prescription:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Delete prescription order
+ */
+export async function deleteInpatientPrescription(prescriptionId: string): Promise<void> {
+  try {
+    await axios.delete(`/api/inpatient/prescriptions/${prescriptionId}`)
+  } catch (error) {
+    console.error("Error deleting prescription:", error)
+    handleApiError(error)
+  }
+}
+
+// ============================================================================
+// PROCEDURES (Inpatient)
+// ============================================================================
+
+/**
+ * Create inpatient procedure order
+ */
+export async function createInpatientProcedure(
+  data: import("@/types/inpatient").InpatientProcedureInput
+): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/procedures", data)
+  } catch (error) {
+    console.error("Error creating procedure:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch procedures for a visit
+ */
+export async function fetchInpatientProcedures(
+  visitId: string
+): Promise<import("@/types/inpatient").InpatientProcedure[]> {
+  try {
+    const response = await axios.get<ResponseApi<import("@/types/inpatient").InpatientProcedure[]>>(
+      `/api/inpatient/procedures?visitId=${visitId}`
+    )
+    return response.data.data || []
+  } catch (error) {
+    console.error("Error fetching procedures:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Update procedure status
+ */
+export async function updateProcedureStatus(
+  data: import("@/types/inpatient").UpdateProcedureStatusInput
+): Promise<void> {
+  try {
+    await axios.patch("/api/inpatient/procedures/status", data)
+  } catch (error) {
+    console.error("Error updating procedure status:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Delete procedure order
+ */
+export async function deleteInpatientProcedure(procedureId: string): Promise<void> {
+  try {
+    await axios.delete(`/api/inpatient/procedures/${procedureId}`)
+  } catch (error) {
+    console.error("Error deleting procedure:", error)
     handleApiError(error)
   }
 }

@@ -1,5 +1,6 @@
 import { pgTable, varchar, text, timestamp, decimal, boolean, integer } from "drizzle-orm/pg-core"
-import { medicalRecords } from "./medical-records"
+import { medicalRecords, cppt } from "./medical-records"
+import { visits } from "./visits"
 import { user } from "./auth"
 
 /**
@@ -46,47 +47,66 @@ export const drugInventory = pgTable("drug_inventory", {
 /**
  * Prescriptions Table
  * Digital prescriptions from doctors
+ * Supports both OUTPATIENT (one-time) and INPATIENT (recurring) prescriptions
  */
 export const prescriptions = pgTable("prescriptions", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  medicalRecordId: text("medical_record_id")
-    .notNull()
-    .references(() => medicalRecords.id, { onDelete: "cascade" }),
+
+  // OUTPATIENT reference (one-time prescription)
+  medicalRecordId: text("medical_record_id").references(() => medicalRecords.id, {
+    onDelete: "cascade",
+  }),
+
+  // INPATIENT references (daily/recurring medications)
+  visitId: text("visit_id").references(() => visits.id, { onDelete: "cascade" }),
+  cpptId: text("cppt_id").references(() => cppt.id), // Optional - which CPPT entry ordered it
+
   drugId: text("drug_id")
     .notNull()
     .references(() => drugs.id),
 
   // Prescription details
-  dosage: varchar("dosage", { length: 100 }), // e.g., "500mg" - Optional per feedback 4.5 (often in drug name)
+  dosage: varchar("dosage", { length: 100 }), // e.g., "500mg"
   frequency: varchar("frequency", { length: 100 }).notNull(), // e.g., "3x daily", "After meals"
-  duration: varchar("duration", { length: 100 }), // e.g., "7 days", "Until finished" - Removed per feedback 4.7
+  duration: varchar("duration", { length: 100 }), // e.g., "7 days", "Until finished"
   quantity: integer("quantity").notNull(), // Total quantity to dispense
 
   // Instructions
   instructions: text("instructions"), // Additional instructions for patient
   route: varchar("route", { length: 50 }), // oral, topical, injection, etc.
 
-  // Fulfillment tracking
+  // INPATIENT specific fields
+  isRecurring: boolean("is_recurring").notNull().default(false), // Daily medication for inpatient
+  startDate: timestamp("start_date", { withTimezone: true }), // When to start (inpatient)
+  endDate: timestamp("end_date", { withTimezone: true }), // When to stop (inpatient)
+  administrationSchedule: text("administration_schedule"), // "08:00,14:00,20:00" for 3x daily
+
+  // Administration tracking (for nurses - inpatient)
+  isAdministered: boolean("is_administered").notNull().default(false),
+  administeredBy: text("administered_by").references(() => user.id), // Nurse who gave medication
+  administeredAt: timestamp("administered_at", { withTimezone: true }),
+
+  // Fulfillment tracking (pharmacy)
   isFulfilled: boolean("is_fulfilled").notNull().default(false),
   fulfilledBy: text("fulfilled_by").references(() => user.id), // Pharmacist who fulfilled
-  fulfilledAt: timestamp("fulfilled_at"),
+  fulfilledAt: timestamp("fulfilled_at", { withTimezone: true }),
   dispensedQuantity: integer("dispensed_quantity"), // Actual quantity dispensed
 
   // Stock tracking
   inventoryId: text("inventory_id").references(() => drugInventory.id), // Which batch was used
 
   // Pharmacist-added prescriptions (for urgent cases)
-  addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false), // Flag for pharmacist-added prescriptions
-  addedByPharmacistId: text("added_by_pharmacist_id").references(() => user.id), // Which pharmacist added it
-  approvedBy: text("approved_by").references(() => user.id), // Doctor who approved
-  approvedAt: timestamp("approved_at"), // When approved
-  pharmacistNote: text("pharmacist_note"), // Reason for adding prescription
+  addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false),
+  addedByPharmacistId: text("added_by_pharmacist_id").references(() => user.id),
+  approvedBy: text("approved_by").references(() => user.id),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  pharmacistNote: text("pharmacist_note"),
 
   notes: text("notes"), // Pharmacist notes
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**

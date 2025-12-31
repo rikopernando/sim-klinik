@@ -108,6 +108,75 @@ export const roomUpdateSchema = z.object({
 })
 
 /**
+ * Inpatient Prescription Schema
+ * For ordering medications during inpatient stay
+ */
+export const inpatientPrescriptionSchema = z.object({
+  visitId: z.string().min(1, "Visit ID harus valid"),
+  cpptId: z.string().optional(), // Optional - which CPPT entry ordered it
+  drugId: z.string().min(1, "Obat harus dipilih"),
+
+  // Prescription details
+  dosage: z.string().optional(),
+  frequency: z.string().min(1, "Frekuensi harus diisi"),
+  route: z.string().optional(),
+  duration: z.string().optional(),
+  quantity: z.number().int().positive("Jumlah harus positif"),
+
+  // Instructions
+  instructions: z.string().optional(),
+
+  // Inpatient specific
+  isRecurring: z.boolean().default(false),
+  startDate: z.string().optional(), // ISO date string
+  endDate: z.string().optional(), // ISO date string
+  administrationSchedule: z.string().optional(), // "08:00,14:00,20:00" for 3x daily
+
+  notes: z.string().optional(),
+})
+
+/**
+ * Inpatient Procedure Schema
+ * For ordering procedures/tindakan during inpatient stay
+ */
+export const inpatientProcedureSchema = z.object({
+  visitId: z.string().min(1, "Visit ID harus valid"),
+  cpptId: z.string().optional(), // Optional - which CPPT entry ordered it
+
+  // Service reference (preferred) or manual entry
+  serviceId: z.string().optional(),
+  description: z.string().min(1, "Deskripsi tindakan harus diisi"),
+  icd9Code: z.string().optional(),
+
+  // Scheduling
+  scheduledAt: z.string().optional(), // ISO date string
+
+  notes: z.string().optional(),
+})
+
+/**
+ * Mark Prescription as Administered Schema
+ * For nurses to record medication administration
+ */
+export const administerPrescriptionSchema = z.object({
+  prescriptionId: z.string().min(1, "Prescription ID is required"),
+  administeredBy: z.string().min(1, "Administrator ID is required"),
+})
+
+/**
+ * Update Procedure Status Schema
+ * For tracking procedure progress
+ */
+export const updateProcedureStatusSchema = z.object({
+  procedureId: z.string().min(1, "Procedure ID is required"),
+  status: z.enum(["ordered", "in_progress", "completed", "cancelled"], {
+    message: "Status harus valid",
+  }),
+  performedBy: z.string().optional(), // Required for completed status
+  notes: z.string().optional(),
+})
+
+/**
  * Type exports
  */
 export type RoomInput = z.infer<typeof roomSchema>
@@ -116,3 +185,7 @@ export type VitalSignsInput = z.infer<typeof vitalSignsSchema>
 export type CPPTInput = z.infer<typeof cpptSchema>
 export type MaterialUsageInput = z.infer<typeof materialUsageSchema>
 export type RoomUpdateInput = z.infer<typeof roomUpdateSchema>
+export type InpatientPrescriptionInput = z.infer<typeof inpatientPrescriptionSchema>
+export type InpatientProcedureInput = z.infer<typeof inpatientProcedureSchema>
+export type AdministerPrescriptionInput = z.infer<typeof administerPrescriptionSchema>
+export type UpdateProcedureStatusInput = z.infer<typeof updateProcedureStatusSchema>

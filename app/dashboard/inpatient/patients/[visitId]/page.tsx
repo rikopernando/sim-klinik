@@ -21,6 +21,10 @@ import { MaterialUsageCard } from "@/components/inpatient/material-usage-card"
 import { RecordMaterialDialog } from "@/components/inpatient/record-material-dialog"
 import { VitalsTrendChart } from "@/components/inpatient/vitals-trend-chart"
 import { CPPTTimeline } from "@/components/inpatient/cppt-timeline"
+import { CreatePrescriptionDialog } from "@/components/inpatient/create-prescription-dialog"
+import { CreateProcedureDialog } from "@/components/inpatient/create-procedure-dialog"
+import { PrescriptionsList } from "@/components/inpatient/prescriptions-list"
+import { ProceduresList } from "@/components/inpatient/procedures-list"
 
 export default function PatientDetailPage() {
   const { visitId } = useParams<{ visitId: string }>()
@@ -179,6 +183,56 @@ export default function PatientDetailPage() {
               totalCost={patientDetail.totalMaterialCost}
               onRefresh={refresh}
             />
+          </CardContent>
+        </Card>
+
+        <Separator />
+
+        {/* Prescriptions Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Resep Obat</CardTitle>
+                <CardDescription>
+                  {patientDetail.prescriptions.length > 0
+                    ? `${patientDetail.prescriptions.length} resep obat`
+                    : "Belum ada resep obat"}
+                </CardDescription>
+              </div>
+              <CreatePrescriptionDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <PrescriptionsList prescriptions={patientDetail.prescriptions} onRefresh={refresh} />
+          </CardContent>
+        </Card>
+
+        {/* Procedures Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Tindakan Medis</CardTitle>
+                <CardDescription>
+                  {patientDetail.procedures.length > 0
+                    ? `${patientDetail.procedures.length} tindakan medis`
+                    : "Belum ada tindakan medis"}
+                </CardDescription>
+              </div>
+              <CreateProcedureDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ProceduresList procedures={patientDetail.procedures} onRefresh={refresh} />
           </CardContent>
         </Card>
       </div>

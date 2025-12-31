@@ -230,6 +230,149 @@ export interface RoomStatusConfig {
   badgeColor: string
 }
 
+/**
+ * Procedure Status Types
+ */
+export type ProcedureStatus = "ordered" | "in_progress" | "completed" | "cancelled"
+
+export const PROCEDURE_STATUS = {
+  ORDERED: "ordered" as ProcedureStatus,
+  IN_PROGRESS: "in_progress" as ProcedureStatus,
+  COMPLETED: "completed" as ProcedureStatus,
+  CANCELLED: "cancelled" as ProcedureStatus,
+} as const
+
+/**
+ * Inpatient Prescription Entity
+ * For daily/recurring medications during inpatient stay
+ */
+export interface InpatientPrescription {
+  id: string
+  visitId: string
+  cpptId: string | null
+  drugId: string
+  drugName?: string
+  drugPrice?: string
+
+  // Prescription details
+  dosage: string | null
+  frequency: string
+  route: string | null
+  duration: string | null
+  quantity: number
+  instructions: string | null
+
+  // Inpatient specific - recurring medication
+  isRecurring: boolean
+  startDate: string | null
+  endDate: string | null
+  administrationSchedule: string | null // "08:00,14:00,20:00" for 3x daily
+
+  // Administration tracking (for nurses)
+  isAdministered: boolean
+  administeredBy: string | null
+  administeredByName?: string
+  administeredAt: string | null
+
+  // Fulfillment tracking (pharmacy)
+  isFulfilled: boolean
+  fulfilledBy: string | null
+  fulfilledByName?: string
+  fulfilledAt: string | null
+  dispensedQuantity: number | null
+  inventoryId: string | null
+
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Inpatient Procedure Entity
+ * For ordered procedures/tindakan during inpatient stay
+ */
+export interface InpatientProcedure {
+  id: string
+  visitId: string
+  cpptId: string | null
+
+  // Service reference
+  serviceId: string | null
+  serviceName?: string
+  servicePrice?: string
+
+  // Procedure details
+  icd9Code: string | null
+  description: string
+
+  // Ordering workflow
+  orderedBy: string | null
+  orderedByName?: string
+  orderedAt: string | null
+  scheduledAt: string | null
+  status: ProcedureStatus
+
+  // Execution tracking
+  performedBy: string | null
+  performedByName?: string
+  performedAt: string | null
+
+  notes: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Inpatient Prescription Input Data
+ */
+export interface InpatientPrescriptionInput {
+  visitId: string
+  cpptId?: string
+  drugId: string
+  dosage: string
+  frequency: string
+  route?: string
+  duration?: string
+  quantity: number
+  instructions?: string
+  isRecurring?: boolean
+  startDate?: string
+  endDate?: string
+  administrationSchedule?: string
+  notes?: string
+}
+
+/**
+ * Inpatient Procedure Input Data
+ */
+export interface InpatientProcedureInput {
+  visitId: string
+  cpptId?: string
+  serviceId?: string
+  description: string
+  icd9Code?: string
+  scheduledAt?: string
+  notes?: string
+}
+
+/**
+ * Administer Prescription Input
+ */
+export interface AdministerPrescriptionInput {
+  prescriptionId: string
+  administeredBy: string
+}
+
+/**
+ * Update Procedure Status Input
+ */
+export interface UpdateProcedureStatusInput {
+  procedureId: string
+  status: ProcedureStatus
+  performedBy?: string
+  notes?: string
+}
+
 export interface PatientSearchResult {
   id: string
   mrNumber: string
@@ -308,4 +451,6 @@ export interface PatientDetail {
   cpptEntries: CPPT[]
   materials: MaterialUsage[]
   totalMaterialCost: string
+  prescriptions: InpatientPrescription[]
+  procedures: InpatientProcedure[]
 }

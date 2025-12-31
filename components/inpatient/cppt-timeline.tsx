@@ -116,13 +116,13 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
 
       <CardContent>
         {filteredEntries.length === 0 ? (
-          <div className="text-center text-muted-foreground py-8">
+          <div className="text-muted-foreground py-8 text-center">
             Tidak ada data CPPT dalam rentang waktu ini
           </div>
         ) : (
           <div className="relative">
             {/* Timeline vertical line */}
-            <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border" />
+            <div className="bg-border absolute top-0 bottom-0 left-6 w-0.5" />
 
             <div className="space-y-6">
               {filteredEntries.map((entry, index) => {
@@ -135,7 +135,7 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
                   <div key={entry.id} className="relative pl-14">
                     {/* Timeline dot */}
                     <div
-                      className={`absolute left-4 top-2 w-5 h-5 rounded-full border-4 border-background ${
+                      className={`border-background absolute top-2 left-4 h-5 w-5 rounded-full border-4 ${
                         isDoctor ? "bg-blue-500" : "bg-green-500"
                       }`}
                     />
@@ -148,7 +148,7 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
                       }`}
                     >
                       {/* Header */}
-                      <div className="flex items-start justify-between mb-3">
+                      <div className="mb-3 flex items-start justify-between">
                         <div className="flex items-center gap-2">
                           {isDoctor ? (
                             <IconStethoscope className="h-5 w-5 text-blue-600" />
@@ -157,14 +157,17 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
                           )}
                           <div>
                             <div className="flex items-center gap-2">
-                              <p className="font-semibold text-sm">
+                              <p className="text-sm font-semibold">
                                 {entry.authorName || "Unknown User"}
                               </p>
-                              <Badge variant={isDoctor ? "default" : "secondary"} className="text-xs">
+                              <Badge
+                                variant={isDoctor ? "default" : "secondary"}
+                                className="text-xs"
+                              >
                                 {isDoctor ? "Dokter" : "Perawat"}
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <div className="text-muted-foreground flex items-center gap-2 text-xs">
                               <IconClock className="h-3 w-3" />
                               <span>
                                 {format(new Date(entry.createdAt), "dd MMM yyyy, HH:mm", {
@@ -199,29 +202,29 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
 
                       {/* SOAP (expandable) */}
                       {hasSOAP && isExpanded && (
-                        <div className="space-y-2 mb-3 pb-3 border-b">
+                        <div className="mb-3 space-y-2 border-b pb-3">
                           {entry.subjective && (
                             <div>
                               <p className="text-xs font-semibold text-blue-700">S - Subjective</p>
-                              <p className="text-xs text-muted-foreground">{entry.subjective}</p>
+                              <p className="text-muted-foreground text-xs">{entry.subjective}</p>
                             </div>
                           )}
                           {entry.objective && (
                             <div>
                               <p className="text-xs font-semibold text-blue-700">O - Objective</p>
-                              <p className="text-xs text-muted-foreground">{entry.objective}</p>
+                              <p className="text-muted-foreground text-xs">{entry.objective}</p>
                             </div>
                           )}
                           {entry.assessment && (
                             <div>
                               <p className="text-xs font-semibold text-blue-700">A - Assessment</p>
-                              <p className="text-xs text-muted-foreground">{entry.assessment}</p>
+                              <p className="text-muted-foreground text-xs">{entry.assessment}</p>
                             </div>
                           )}
                           {entry.plan && (
                             <div>
                               <p className="text-xs font-semibold text-blue-700">P - Plan</p>
-                              <p className="text-xs text-muted-foreground">{entry.plan}</p>
+                              <p className="text-muted-foreground text-xs">{entry.plan}</p>
                             </div>
                           )}
                         </div>
@@ -229,17 +232,17 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
 
                       {/* Progress Note */}
                       <div>
-                        <p className="text-xs font-semibold mb-1">Catatan Perkembangan</p>
-                        <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        <p className="mb-1 text-xs font-semibold">Catatan Perkembangan</p>
+                        <p className="text-muted-foreground text-xs whitespace-pre-wrap">
                           {entry.progressNote}
                         </p>
                       </div>
 
                       {/* Instructions */}
                       {entry.instructions && (
-                        <div className="mt-3 pt-3 border-t">
-                          <p className="text-xs font-semibold mb-1">Instruksi Khusus</p>
-                          <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+                        <div className="mt-3 border-t pt-3">
+                          <p className="mb-1 text-xs font-semibold">Instruksi Khusus</p>
+                          <p className="text-muted-foreground text-xs whitespace-pre-wrap">
                             {entry.instructions}
                           </p>
                         </div>

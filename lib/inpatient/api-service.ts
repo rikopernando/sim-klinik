@@ -5,12 +5,22 @@
 
 import { db } from "@/db"
 import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema/inpatient"
-import { cppt } from "@/db/schema/medical-records"
+import { cppt, procedures } from "@/db/schema/medical-records"
+import { prescriptions } from "@/db/schema/pharmacy"
+import { drugs } from "@/db/schema/pharmacy"
+import { services } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
 import { user } from "@/db/schema/auth"
 import { eq, and, isNull, desc, or, gte, lte, inArray, ilike, sql, SQL } from "drizzle-orm"
+import { alias as aliasedTable } from "drizzle-orm/pg-core"
 import { calculateBMI } from "./vitals-utils"
+
+// Create aliases for user table to avoid conflicts in multi-join queries
+const administeredByUser = aliasedTable(user, "administeredByUser")
+const fulfilledByUser = aliasedTable(user, "fulfilledByUser")
+const orderedByUser = aliasedTable(user, "orderedByUser")
+const performedByUser = aliasedTable(user, "performedByUser")
 import type {
   RoomInput,
   BedAssignmentInput,
@@ -18,6 +28,10 @@ import type {
   CPPTInput,
   MaterialUsageInput,
   RoomUpdateInput,
+  InpatientPrescriptionInput,
+  InpatientProcedureInput,
+  AdministerPrescriptionInput,
+  UpdateProcedureStatusInput,
 } from "./validation"
 import type { InpatientFilters, VitalSigns } from "@/types/inpatient"
 import { getSession } from "../rbac"
@@ -578,6 +592,12 @@ export async function getPatientDetailData(visitId: string) {
     ? parseFloat(currentBedAssignment.dailyRate) * daysInHospital
     : 0
 
+  // Fetch prescriptions
+  const prescriptions = await getInpatientPrescriptions(visitId)
+
+  // Fetch procedures
+  const procedures = await getInpatientProcedures(visitId)
+
   return {
     patient: visitData,
     bedAssignment: currentBedAssignment,
@@ -590,5 +610,155 @@ export async function getPatientDetailData(visitId: string) {
       ...material.materialUsage,
       usedBy: material.usedByUser,
     })),
+    prescriptions,
+    procedures,
   }
+}
+
+// ============================================================================
+// INPATIENT PRESCRIPTIONS
+// ============================================================================
+
+/**
+ * Create inpatient prescription order
+ */
+export async function createInpatientPrescription(data: InpatientPrescriptionInput) {
+  await db.insert(prescriptions).values({
+    visitId: data.visitId,
+    cpptId: data.cpptId || null,
+    drugId: data.drugId,
+    dosage: data.dosage,
+    frequency: data.frequency,
+    route: data.route || null,
+    duration: data.duration || null,
+    quantity: data.quantity,
+    instructions: data.instructions || null,
+    isRecurring: data.isRecurring || false,
+    startDate: data.startDate ? new Date(data.startDate) : null,
+    endDate: data.endDate ? new Date(data.endDate) : null,
+    administrationSchedule: data.administrationSchedule || null,
+    notes: data.notes || null,
+    isFulfilled: false,
+    isAdministered: false,
+  })
+
+  return { success: true }
+}
+
+/**
+ * Mark prescription as administered (for nurses)
+ */
+export async function administerPrescription(data: AdministerPrescriptionInput) {
+  await db
+    .update(prescriptions)
+    .set({
+      isAdministered: true,
+      administeredBy: data.administeredBy,
+      administeredAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(prescriptions.id, data.prescriptionId))
+
+  return { success: true }
+}
+
+/**
+ * Delete inpatient prescription
+ */
+export async function deleteInpatientPrescription(prescriptionId: string) {
+  await db.delete(prescriptions).where(eq(prescriptions.id, prescriptionId))
+  return { success: true }
+}
+
+// ============================================================================
+// INPATIENT PROCEDURES
+// ============================================================================
+
+/**
+ * Create inpatient procedure order
+ */
+export async function createInpatientProcedure(data: InpatientProcedureInput) {
+  const session = await getSession()
+
+  // If serviceId provided, fetch service details
+  let serviceData = null
+  if (data.serviceId) {
+    const serviceResult = await db
+      .select()
+      .from(services)
+      .where(eq(services.id, data.serviceId))
+      .limit(1)
+    serviceData = serviceResult[0]
+  }
+
+  await db.insert(procedures).values({
+    visitId: data.visitId,
+    cpptId: data.cpptId || null,
+    serviceId: data.serviceId || null,
+    description: data.description,
+    icd9Code: data.icd9Code || null,
+    orderedBy: session?.user.id || null,
+    orderedAt: new Date(),
+    scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
+    status: "ordered",
+    notes: data.notes || null,
+  })
+
+  return { success: true }
+}
+
+/**
+ * Get inpatient procedures for a visit
+ */
+export async function getInpatientProcedures(visitId: string) {
+  const results = await db
+    .select({
+      procedure: procedures,
+      service: services,
+      orderedBy: orderedByUser,
+      performedBy: performedByUser,
+    })
+    .from(procedures)
+    .leftJoin(services, eq(procedures.serviceId, services.id))
+    .leftJoin(orderedByUser, eq(procedures.orderedBy, orderedByUser.id))
+    .leftJoin(performedByUser, eq(procedures.performedBy, performedByUser.id))
+    .where(eq(procedures.visitId, visitId))
+    .orderBy(desc(procedures.createdAt))
+
+  return results.map((row) => ({
+    ...row.procedure,
+    serviceName: row.service?.name,
+    servicePrice: row.service?.price,
+    orderedByName: row.orderedBy?.name,
+    performedByName: row.performedBy?.name,
+  }))
+}
+
+/**
+ * Update procedure status
+ */
+export async function updateProcedureStatus(data: UpdateProcedureStatusInput) {
+  const updateData: any = {
+    status: data.status,
+    notes: data.notes || null,
+    updatedAt: new Date(),
+  }
+
+  // If status is completed, set performedBy and performedAt
+  if (data.status === "completed" && data.performedBy) {
+    updateData.performedBy = data.performedBy
+    updateData.performedAt = new Date()
+  }
+
+  await db.update(procedures).set(updateData).where(eq(procedures.id, data.procedureId))
+
+  return { success: true }
+}
+
+/**
+ * Delete inpatient procedure
+ */
+export async function deleteInpatientProcedure(procedureId: string) {
+  await db.delete(procedures).where(eq(procedures.id, procedureId))
+  return { success: true }
 }
