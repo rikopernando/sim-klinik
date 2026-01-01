@@ -6,7 +6,8 @@
 import { Pool } from "pg"
 import "dotenv/config"
 
-const DATABASE_URL = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres"
+const DATABASE_URL =
+  process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/postgres"
 
 async function resetDatabase() {
   console.log("🔄 Resetting database with UUID schema...")
