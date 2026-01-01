@@ -3,6 +3,7 @@
 import {
   usePharmacyNotifications,
   PrescriptionNotification,
+  Notification,
 } from "@/lib/notifications/use-pharmacy-notifications"
 import { useEffect } from "react"
 import { Bell, BellRing, CheckCircle, X, AlertCircle } from "lucide-react"
@@ -67,7 +68,7 @@ export function PharmacyNotificationPanel() {
     }
   }
 
-  const renderNotificationContent = (notification: any) => {
+  const renderNotificationContent = (notification: Notification) => {
     if (notification.type === "new_prescription") {
       const data = notification.data as PrescriptionNotification
       return (
@@ -138,7 +139,7 @@ export function PharmacyNotificationPanel() {
             <Bell className="mb-3 h-12 w-12 text-gray-300" />
             <p className="text-muted-foreground text-sm">No new notifications</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              You'll see new prescriptions here in real-time
+              You&apos;ll see new prescriptions here in real-time
             </p>
           </div>
         ) : (

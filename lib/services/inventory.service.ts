@@ -96,14 +96,6 @@ export async function getPaginatedInventories(params: {
 }
 
 /**
- * Get inventories for a specific drug
- */
-export async function getInventoriesByDrug(drugId: string): Promise<DrugInventoryWithDetails[]> {
-  const response = await axios.get(`/api/pharmacy/inventory/${drugId}`)
-  return response.data.data || []
-}
-
-/**
  * Check if batch number already exists for a drug
  */
 export async function checkDuplicateBatch(

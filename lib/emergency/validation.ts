@@ -12,7 +12,7 @@ export const quickERRegistrationSchema = z.object({
   name: z.string().min(1, "Nama pasien wajib diisi"),
   chiefComplaint: z.string().min(1, "Keluhan utama wajib diisi"),
   triageStatus: z.enum(["red", "yellow", "green"], {
-    required_error: "Status triage wajib dipilih",
+    message: "Status triage wajib dipilih",
   }),
   nik: z.string().length(16, "NIK harus 16 digit").optional().or(z.literal("")),
   phone: z.string().optional(),
@@ -25,16 +25,16 @@ export const quickERRegistrationSchema = z.object({
  * Complete Patient Registration Schema
  */
 export const completeRegistrationSchema = z.object({
-  patientId: z.number().int().positive("Patient ID harus valid"),
+  patientId: z.string().min(1, "Patient ID harus valid"),
   nik: z.string().length(16, "NIK harus 16 digit"),
   address: z.string().min(1, "Alamat wajib diisi"),
   birthDate: z.string().min(1, "Tanggal lahir wajib diisi"),
   gender: z.enum(["male", "female"], {
-    required_error: "Jenis kelamin wajib dipilih",
+    message: "Jenis kelamin wajib dipilih",
   }),
   phone: z.string().optional(),
   insuranceType: z.enum(["bpjs", "insurance", "general"], {
-    required_error: "Jenis jaminan wajib dipilih",
+    message: "Jenis jaminan wajib dipilih",
   }),
   insuranceNumber: z.string().optional(),
 })
@@ -43,12 +43,12 @@ export const completeRegistrationSchema = z.object({
  * Handover Schema
  */
 export const handoverSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
+  visitId: z.string().min(1, "Visit ID harus valid"),
   newVisitType: z.enum(["outpatient", "inpatient"], {
-    required_error: "Jenis kunjungan baru wajib dipilih",
+    message: "Jenis kunjungan baru wajib dipilih",
   }),
-  poliId: z.number().int().positive().optional(),
-  roomId: z.number().int().positive().optional(),
+  poliId: z.string().optional(),
+  roomId: z.string().optional(),
   doctorId: z.string().optional(),
   notes: z.string().optional(),
 })
@@ -69,7 +69,7 @@ export const erMedicalRecordSchema = z.object({
   emergencyActions: z.string().min(1, "Tindakan darurat wajib diisi"),
   workingDiagnosis: z.string().min(1, "Diagnosis kerja wajib diisi"),
   disposition: z.enum(["discharged", "admitted", "referred", "observation"], {
-    required_error: "Disposisi wajib dipilih",
+    message: "Disposisi wajib dipilih",
   }),
   instructions: z.string().optional(),
   notes: z.string().optional(),

@@ -52,13 +52,20 @@ export const POST = withRBAC(
         })
       }
 
+      // Fetch the complete user data from database to get all fields including username
+      const [createdUser] = await db.select().from(user).where(eq(user.id, result.user.id)).limit(1)
+
+      if (!createdUser) {
+        throw new Error("Failed to fetch created user")
+      }
+
       return NextResponse.json(
         {
           user: {
-            id: result.user.id,
-            name: result.user.name,
-            email: result.user.email,
-            username: result.user.username,
+            id: createdUser.id,
+            name: createdUser.name,
+            email: createdUser.email,
+            username: createdUser.username,
           },
         },
         { status: 201 }

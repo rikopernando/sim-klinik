@@ -24,9 +24,9 @@ import z from "zod"
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
-  async (_request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (_request: NextRequest, context: { params: { visitId: string } }) => {
     try {
-      const { visitId } = await context.params
+      const { visitId } = context.params
 
       if (!visitId) {
         const response: ResponseError<unknown> = {
@@ -179,9 +179,9 @@ const medicalRecordSchema = z.object({
  * Requires: medical_records:write permission
  */
 export const PATCH = withRBAC(
-  async (request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (request: NextRequest, context: { params: { visitId: string } }) => {
     try {
-      const { visitId } = await context.params
+      const { visitId } = context.params
       const body = await request.json()
       const validatedData = medicalRecordSchema.parse(body)
 

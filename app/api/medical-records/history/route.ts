@@ -127,10 +127,10 @@ export const GET = withRBAC(
 
       // Group fetched data by medical record ID for O(1) lookup
       const diagnosesMap = groupBy(allDiagnoses, (d) => d.medicalRecordId)
-      const proceduresMap = groupBy(allProcedures, (p) => p.medicalRecordId)
+      const proceduresMap = groupBy(allProcedures, (p) => p.medicalRecordId as string)
       const prescriptionsMap = groupBy(
         allPrescriptionsWithDrugs,
-        (p) => p.prescription.medicalRecordId
+        (p) => p.prescription.medicalRecordId as string
       )
 
       // Build history with details (no more database queries)
@@ -140,7 +140,7 @@ export const GET = withRBAC(
           medicalRecord: record.medicalRecord as MedicalRecord,
           visit: record.visit,
           diagnoses: (diagnosesMap.get(medicalRecordId) || []) as Diagnosis[],
-          procedures: (proceduresMap.get(medicalRecordId) || []) as Procedure[],
+          procedures: (proceduresMap.get(medicalRecordId) || []) as unknown as Procedure[],
           prescriptions: (prescriptionsMap.get(medicalRecordId) ||
             []) as MedicalRecordPrescription[],
         }

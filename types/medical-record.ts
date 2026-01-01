@@ -35,15 +35,15 @@ export interface Diagnosis {
 
 export interface Procedure {
   id: string
-  medicalRecordId: string
+  medicalRecordId?: string | null
   serviceId: string | null
   serviceName: string | null
   servicePrice: string | null
-  icd9Code: string
+  icd9Code: string | null
   description: string
   performedBy: string | null
   performedByName: string | null
-  performedAt: Date
+  performedAt: Date | null
   notes: string | null
   createdAt: Date
 }

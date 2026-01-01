@@ -47,7 +47,7 @@ const erMedicalRecordSchema = z.object({
 
   // Disposition (where patient goes next)
   disposition: z.enum(["discharged", "admitted", "referred", "observation"], {
-    required_error: "Disposisi wajib dipilih",
+    message: "Disposisi wajib dipilih",
   }),
 
   // Follow-up instructions
@@ -81,13 +81,10 @@ export function ERMedicalRecordForm({
     register,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<ERMedicalRecordData>({
     resolver: zodResolver(erMedicalRecordSchema),
   })
-
-  const disposition = watch("disposition")
 
   const getTriageBadgeColor = (status: string) => {
     switch (status) {

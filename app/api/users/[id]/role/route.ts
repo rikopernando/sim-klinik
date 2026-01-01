@@ -4,10 +4,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
+import { eq } from "drizzle-orm"
+
 import { db } from "@/db"
 import { user } from "@/db/schema/auth"
 import { userRoles, roles } from "@/db/schema/roles"
-import { eq, and } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
 
 /**
@@ -87,8 +88,8 @@ export const PUT = withRBAC(
  * Remove user role
  */
 export const DELETE = withRBAC(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const userId = params.id
+  async (_req: NextRequest, { params }: { params: { id: string } }) => {
+    const { id: userId } = params
 
     // Delete role assignment
     const result = await db.delete(userRoles).where(eq(userRoles.userId, userId)).returning()

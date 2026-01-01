@@ -36,7 +36,7 @@ export const serviceUpdateSchema = z.object({
  */
 export const billingItemSchema = z.object({
   itemType: z.enum(["service", "drug", "material", "room"], {
-    required_error: "Tipe item wajib dipilih",
+    message: "Tipe item wajib dipilih",
   }),
   itemId: z.number().int().optional(),
   itemName: z.string().min(1, "Nama item wajib diisi"),

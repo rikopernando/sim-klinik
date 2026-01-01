@@ -5,16 +5,16 @@ import { Save, Loader2 } from "lucide-react"
 
 import { AutocompleteTextarea } from "@/components/ui/autocomplete-textarea"
 import { Button } from "@/components/ui/button"
-
 import { type MedicalRecord } from "@/types/medical-record"
 import { canEditMedicalRecord } from "@/lib/utils/medical-record"
-import { SectionCard } from "./section-card"
 import {
   SUBJECTIVE_SUGGESTIONS,
   OBJECTIVE_SUGGESTIONS,
   ASSESSMENT_SUGGESTIONS,
   PLAN_SUGGESTIONS,
 } from "@/lib/medical/soap-suggestions"
+
+import { SectionCard } from "./section-card"
 
 interface SoapFormProps {
   medicalRecord: MedicalRecord
@@ -100,6 +100,7 @@ export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapForm
     try {
       setIsSaving(true)
       await onSave(localData)
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       // Error handling is done in parent
     } finally {

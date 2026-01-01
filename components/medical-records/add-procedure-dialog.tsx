@@ -78,7 +78,7 @@ export function AddProcedureDialog({
               serviceId: procedure.serviceId || "",
               serviceName: procedure.serviceName || procedure.description,
               servicePrice: procedure.servicePrice || "",
-              icd9Code: procedure.icd9Code,
+              icd9Code: procedure.icd9Code || "",
               description: procedure.description,
               performedBy: procedure.performedBy || "",
               notes: procedure.notes || "",

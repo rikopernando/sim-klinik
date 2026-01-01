@@ -15,8 +15,8 @@ import { withRBAC } from "@/lib/rbac/middleware"
  * Get single user with role
  */
 export const GET = withRBAC(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const userId = params.id
+  async (_req: NextRequest, { params }: { params: { id: string } }) => {
+    const { id: userId } = params
 
     const [userWithRole] = await db
       .select({
@@ -59,7 +59,7 @@ export const GET = withRBAC(
  */
 export const PUT = withRBAC(
   async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const userId = params.id
+    const { id: userId } = params
     const body = await req.json()
 
     const { name, email, username } = body
@@ -106,8 +106,8 @@ export const PUT = withRBAC(
  * Delete user
  */
 export const DELETE = withRBAC(
-  async (req: NextRequest, { params }: { params: { id: string } }) => {
-    const userId = params.id
+  async (_req: NextRequest, { params }: { params: { id: string } }) => {
+    const { id: userId } = params
 
     // Check if user exists
     const [existingUser] = await db.select().from(user).where(eq(user.id, userId)).limit(1)

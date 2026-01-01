@@ -10,15 +10,12 @@ import { Bell, BellRing, CheckCircle, X, AlertCircle } from "lucide-react"
 import {
   usePharmacyNotifications,
   PrescriptionNotification,
+  Notification,
 } from "@/lib/notifications/use-pharmacy-notifications"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 
 export function PharmacyNotificationPopover() {
   const {
@@ -76,7 +73,7 @@ export function PharmacyNotificationPopover() {
     }
   }
 
-  const renderNotificationContent = (notification: any) => {
+  const renderNotificationContent = (notification: Notification) => {
     if (notification.type === "new_prescription") {
       const data = notification.data as PrescriptionNotification
       return (
@@ -108,7 +105,7 @@ export function PharmacyNotificationPopover() {
           {notifications.length > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs"
+              className="absolute -top-1 -right-1 h-5 min-w-5 rounded-full px-1 text-xs"
             >
               {notifications.length > 9 ? "9+" : notifications.length}
             </Badge>
@@ -158,7 +155,7 @@ export function PharmacyNotificationPopover() {
             <Bell className="mb-2 h-10 w-10 text-gray-300" />
             <p className="text-muted-foreground text-sm">No new notifications</p>
             <p className="text-muted-foreground mt-1 text-xs">
-              You'll see new prescriptions here
+              You&apos;ll see new prescriptions here
             </p>
           </div>
         ) : (

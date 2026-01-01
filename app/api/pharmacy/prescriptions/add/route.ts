@@ -14,8 +14,8 @@ import { withRBAC } from "@/lib/rbac/middleware"
  * Pharmacist Prescription Schema
  */
 const pharmacistPrescriptionSchema = z.object({
-  medicalRecordId: z.number().int().positive(),
-  drugId: z.number().int().positive(),
+  medicalRecordId: z.string().min(1, "Medical record ID is required"),
+  drugId: z.string().min(1, "Drug ID is required"),
   dosage: z.string().optional().nullable(),
   frequency: z.string().min(1),
   quantity: z.number().int().positive(),
@@ -99,8 +99,6 @@ export const POST = withRBAC(
           approvedBy: validatedData.approvedBy,
           approvedAt: new Date(),
           pharmacistNote: validatedData.pharmacistNote,
-          createdAt: new Date(),
-          updatedAt: new Date(),
         })
         .returning()
 

@@ -16,9 +16,9 @@ import { eq, and, isNull } from "drizzle-orm"
  * GET /api/master-data/rooms/[id]
  * Get a single room by ID
  */
-export async function GET(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const [room] = await db.select().from(rooms).where(eq(rooms.id, id)).limit(1)
 
@@ -58,9 +58,9 @@ export async function GET(_request: NextRequest, { params }: { params: { id: str
  * PUT /api/master-data/rooms/[id]
  * Update a room
  */
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
 
     // Check if room exists
@@ -161,9 +161,12 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
  * DELETE /api/master-data/rooms/[id]
  * Delete a room (soft delete by setting isActive to 'inactive')
  */
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
-    const { id } = params
+    const { id } = await params
 
     // Check if room exists
     const [existingRoom] = await db.select().from(rooms).where(eq(rooms.id, id)).limit(1)

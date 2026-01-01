@@ -5,9 +5,9 @@
 
 import { db } from "@/db"
 import { visits, patients } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import { generateMRNumber, generateVisitNumber, generateQueueNumber } from "@/lib/generators"
-import { getInitialVisitStatus, isValidStatusTransition, VisitStatus } from "@/types/visit-status"
+import { getInitialVisitStatus, VisitStatus } from "@/types/visit-status"
 import { QuickERRegistrationInput, CompleteRegistrationInput, HandoverInput } from "./validation"
 
 /**
@@ -27,13 +27,10 @@ export async function createQuickERRegistration(data: QuickERRegistrationInput) 
       nik: data.nik || null,
       phone: data.phone || null,
       gender: data.gender || null,
-      birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      dateOfBirth: data.birthDate ? new Date(data.birthDate) : null,
       address: null,
       insuranceType: "general",
       insuranceNumber: null,
-      isActive: "active",
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
     .returning()
 
@@ -88,7 +85,7 @@ export async function completePatientRegistration(data: CompleteRegistrationInpu
     .set({
       nik: data.nik,
       address: data.address,
-      birthDate: new Date(data.birthDate),
+      dateOfBirth: new Date(data.birthDate),
       gender: data.gender,
       phone: data.phone || null,
       insuranceType: data.insuranceType,
@@ -130,6 +127,7 @@ export async function performHandover(data: HandoverInput) {
   )
 
   // Prepare update data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const updateData: any = {
     visitType: data.newVisitType,
     status: newStatus, // Reset status to initial status for new visit type
@@ -200,8 +198,7 @@ export async function getERQueue() {
     })
     .from(visits)
     .leftJoin(patients, eq(visits.patientId, patients.id))
-    .where(eq(visits.visitType, "emergency"))
-    .where(eq(visits.status, "pending"))
+    .where(and(eq(visits.visitType, "emergency"), eq(visits.status, "pending")))
 
   return queue
 }

@@ -12,9 +12,9 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 
 export const GET = withRBAC(
-  async (_request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (_request: NextRequest, context: { params: { visitId: string } }) => {
     try {
-      const { visitId } = await context.params
+      const { visitId } = context.params
 
       if (!visitId) {
         const response: ResponseError<unknown> = {

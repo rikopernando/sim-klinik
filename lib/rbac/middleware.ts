@@ -238,7 +238,7 @@ export function withRBAC<TParams = Record<string, string | string[]>>(
     requireAll?: boolean // For permissions, require all or any (default: any)
   } = {}
 ) {
-  return async (req: NextRequest, context: { params: TParams }) => {
+  return async (req: NextRequest, context: { params: Promise<TParams> }) => {
     // Check authentication
     const authCheck = await requireAuth()
     if (!authCheck.authorized) {
@@ -267,11 +267,14 @@ export function withRBAC<TParams = Record<string, string | string[]>>(
       }
     }
 
+    // Await params (Next.js 15+ always passes params as Promise)
+    const params = await context.params
+
     // Call the actual handler with user context
     // Ensure authCheck.user is not undefined before passing it
     if (!authCheck.user) {
       return NextResponse.json(RBAC_ERRORS.UNAUTHORIZED, { status: 401 })
     }
-    return handler(req, { params: context.params, user: authCheck.user, role: userRole })
+    return handler(req, { params, user: authCheck.user, role: userRole })
   }
 }

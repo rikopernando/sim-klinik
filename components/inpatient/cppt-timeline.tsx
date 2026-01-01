@@ -125,7 +125,7 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
             <div className="bg-border absolute top-0 bottom-0 left-6 w-0.5" />
 
             <div className="space-y-6">
-              {filteredEntries.map((entry, index) => {
+              {filteredEntries.map((entry) => {
                 const isDoctor = entry.authorRole === "doctor"
                 const hasSOAP =
                   entry.subjective || entry.objective || entry.assessment || entry.plan

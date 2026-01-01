@@ -64,7 +64,7 @@ export default function ExampleDashboard() {
     {
       header: "Status",
       accessorKey: "status",
-      cell: (row: any) => (
+      cell: (row: { status: string }) => (
         <Badge
           variant={
             row.status === "Completed"

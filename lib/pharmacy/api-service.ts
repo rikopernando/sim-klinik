@@ -458,7 +458,7 @@ function groupPrescriptionsByVisit(
     drug: Drug
     patient: { id: string; name: string; mrNumber: string }
     doctor: { id: string; name: string } | null
-    visit: { id: string; visitNumber: string; visitType: string }
+    visit: { id: string; visitNumber: string; visitType: "outpatient" | "inpatient" | "emergency" }
     medicalRecordId: string | null
     room: { id: string; roomNumber: string; roomType: string } | null
     bedAssignment: { bedNumber: string } | null
@@ -505,7 +505,7 @@ function groupPrescriptionsByVisit(
   // Convert to array and sort by pre-calculated timestamps (most recent first)
   return Array.from(groupedByVisit.values())
     .sort((a, b) => b.latestTimestamp - a.latestTimestamp)
-    .map(({ latestTimestamp, ...queueItem }) => queueItem)
+    .map(({ ...queueItem }) => queueItem)
 }
 
 /**
@@ -580,8 +580,16 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
     .where(eq(prescriptions.isFulfilled, false))
     .orderBy(desc(prescriptions.createdAt))
 
-  // Group prescriptions by visit for better pharmacy workflow UX
-  return groupPrescriptionsByVisit(pending)
+  // Cast visitType to the correct union type and group prescriptions by visit
+  const typedPending = pending.map((item) => ({
+    ...item,
+    visit: {
+      ...item.visit,
+      visitType: item.visit.visitType as "outpatient" | "inpatient" | "emergency",
+    },
+  }))
+
+  return groupPrescriptionsByVisit(typedPending)
 }
 
 /**

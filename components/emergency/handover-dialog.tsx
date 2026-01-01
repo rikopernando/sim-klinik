@@ -36,7 +36,7 @@ import { useHandover } from "@/hooks/use-handover"
  */
 const formSchema = z.object({
   newVisitType: z.enum(["outpatient", "inpatient"], {
-    required_error: "Jenis kunjungan baru wajib dipilih",
+    message: "Jenis kunjungan baru wajib dipilih",
   }),
   poliId: z.string().optional(),
   roomId: z.string().optional(),

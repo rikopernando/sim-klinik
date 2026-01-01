@@ -8,6 +8,8 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
+import { AlertCircle, CheckCircle2 } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -20,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle2 } from "lucide-react"
 
 // Hooks & Utils
 import { useQuickRegistration } from "@/hooks/use-quick-registration"
@@ -34,7 +35,7 @@ const formSchema = z.object({
   name: z.string().min(1, "Nama pasien wajib diisi"),
   chiefComplaint: z.string().min(1, "Keluhan utama wajib diisi"),
   triageStatus: z.enum(["red", "yellow", "green"], {
-    required_error: "Status triage wajib dipilih",
+    message: "Status triage wajib dipilih",
   }),
   nik: z.string().optional(),
   phone: z.string().optional(),
@@ -45,7 +46,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 interface QuickRegistrationFormProps {
-  onSuccess?: (data: any) => void
+  onSuccess?: () => void
   onCancel?: () => void
 }
 
@@ -151,7 +152,7 @@ export function QuickRegistrationForm({ onSuccess, onCancel }: QuickRegistration
 
           <div className="space-y-2">
             <Label htmlFor="gender">Jenis Kelamin (Opsional)</Label>
-            <Select onValueChange={(value) => setValue("gender", value as any)}>
+            <Select onValueChange={(value) => setValue("gender", value as "male" | "female")}>
               <SelectTrigger>
                 <SelectValue placeholder="Pilih jenis kelamin" />
               </SelectTrigger>

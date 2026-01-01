@@ -24,6 +24,7 @@ export type NotificationType =
 
 export interface Notification {
   type: NotificationType
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: PrescriptionNotification | any
   timestamp: string
   id: string
@@ -57,6 +58,7 @@ export function usePharmacyNotifications() {
         const notification: Notification = JSON.parse(event.data)
 
         // Ignore connection establishment messages
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (notification.type === ("connection_established" as any)) {
           return
         }

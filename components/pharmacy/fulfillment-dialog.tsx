@@ -74,6 +74,43 @@ export function FulfillmentDialog({
   const [isLoadingBatches, setIsLoadingBatches] = useState(false)
   const [selectedBatch, setSelectedBatch] = useState<DrugInventoryWithDetails | null>(null)
 
+  const handleBatchSelect = useCallback(
+    (batch: DrugInventoryWithDetails) => {
+      setSelectedBatch(batch)
+      setFormData((prev) => ({
+        ...prev,
+        inventoryId: batch.id.toString(),
+        dispensedQuantity:
+          prev.dispensedQuantity || selectedPrescription?.prescription.quantity.toString() || "",
+      }))
+    },
+
+    [selectedPrescription?.prescription.quantity]
+  )
+
+  const handleSubmit = useCallback(() => {
+    onSubmit({
+      inventoryId: formData.inventoryId,
+      dispensedQuantity: parseInt(formData.dispensedQuantity),
+      fulfilledBy: formData.fulfilledBy,
+      notes: formData.notes || undefined,
+    })
+  }, [formData, onSubmit])
+
+  const handleClose = useCallback(() => {
+    if (!isSubmitting) {
+      setFormData({
+        inventoryId: "",
+        dispensedQuantity: "",
+        fulfilledBy: "",
+        notes: "",
+      })
+      setSelectedBatch(null)
+      setAvailableBatches([])
+      onOpenChange(false)
+    }
+  }, [isSubmitting, onOpenChange])
+
   // Fetch available batches when prescription is selected or changed
   useEffect(() => {
     if (open && selectedPrescription?.drug.id) {
@@ -104,44 +141,12 @@ export function FulfillmentDialog({
           setIsLoadingBatches(false)
         })
     }
-  }, [open, selectedPrescription?.drug.id, selectedPrescription?.prescription.id])
-
-  const handleBatchSelect = useCallback(
-    (batch: DrugInventoryWithDetails) => {
-      setSelectedBatch(batch)
-      setFormData((prev) => ({
-        ...prev,
-        inventoryId: batch.id.toString(),
-        dispensedQuantity:
-          prev.dispensedQuantity || selectedPrescription?.prescription.quantity.toString() || "",
-      }))
-    },
-
-    [selectedPrescription?.prescription.quantity]
-  )
-
-  const handleSubmit = useCallback(() => {
-    onSubmit({
-      inventoryId: parseInt(formData.inventoryId),
-      dispensedQuantity: parseInt(formData.dispensedQuantity),
-      fulfilledBy: formData.fulfilledBy,
-      notes: formData.notes || undefined,
-    })
-  }, [formData, onSubmit])
-
-  const handleClose = useCallback(() => {
-    if (!isSubmitting) {
-      setFormData({
-        inventoryId: "",
-        dispensedQuantity: "",
-        fulfilledBy: "",
-        notes: "",
-      })
-      setSelectedBatch(null)
-      setAvailableBatches([])
-      onOpenChange(false)
-    }
-  }, [isSubmitting, onOpenChange])
+  }, [
+    handleBatchSelect,
+    open,
+    selectedPrescription?.drug.id,
+    selectedPrescription?.prescription.id,
+  ])
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

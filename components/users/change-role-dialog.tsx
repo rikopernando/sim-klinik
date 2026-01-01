@@ -70,7 +70,7 @@ export function ChangeRoleDialog({
     setError(null)
 
     try {
-      await userService.assignRole(user.id, parseInt(selectedRole))
+      await userService.assignRole(user.id, selectedRole)
       onOpenChange(false)
       toast.success("Role berhasil diubah!")
       onSuccess()
