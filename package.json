@@ -20,6 +20,7 @@
     "db:seed:drugs": "tsx db/seeders/seed-drugs.ts",
     "db:seed:rooms": "tsx scripts/seed-rooms.ts",
     "db:seed:billing": "tsx scripts/seed-billing-test-data.ts",
+    "db:seed:material": "tsx scripts/seed-materials.ts",
     "db:update-passwords": "tsx scripts/update-passwords.ts",
     "db:up": "docker compose up postgres -d",
     "db:down": "docker compose down postgres",

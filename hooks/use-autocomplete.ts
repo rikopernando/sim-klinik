@@ -45,20 +45,23 @@ export function useAutocomplete({
   }, [suggestions, currentSearchTerm])
 
   // Update suggestions based on current input
-  const updateSuggestions = useCallback((value: string, cursorPos: number) => {
-    setCursorPosition(cursorPos)
+  const updateSuggestions = useCallback(
+    (value: string, cursorPos: number) => {
+      setCursorPosition(cursorPos)
 
-    const currentLine = getCurrentLine(value, cursorPos)
-    setCurrentSearchTerm(currentLine)
+      const currentLine = getCurrentLine(value, cursorPos)
+      setCurrentSearchTerm(currentLine)
 
-    if (currentLine.trim().length > 0) {
-      const filtered = filterSuggestions(suggestions, currentLine)
-      setShowSuggestions(filtered.length > 0)
-      setSelectedIndex(0)
-    } else {
-      setShowSuggestions(false)
-    }
-  }, [suggestions])
+      if (currentLine.trim().length > 0) {
+        const filtered = filterSuggestions(suggestions, currentLine)
+        setShowSuggestions(filtered.length > 0)
+        setSelectedIndex(0)
+      } else {
+        setShowSuggestions(false)
+      }
+    },
+    [suggestions]
+  )
 
   // Select a suggestion
   const selectSuggestion = useCallback(

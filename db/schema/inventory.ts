@@ -4,36 +4,57 @@ import { visits } from "./visits"
 import { user } from "./auth"
 
 /**
- * Drugs Master Table
- * Master data for all medications
+ * Unified Inventory Items Table (table name: "drugs")
+ * Master data for both drugs and materials
+ *
+ * Note: Table is still called "drugs" for backward compatibility,
+ * but now contains both drugs and materials (distinguished by item_type)
  */
-export const drugs = pgTable("drugs", {
+export const inventoryItems = pgTable("drugs", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   name: varchar("name", { length: 255 }).notNull(),
-  genericName: varchar("generic_name", { length: 255 }),
-  category: varchar("category", { length: 100 }), // Antibiotics, Analgesics, etc.
-  unit: varchar("unit", { length: 50 }).notNull(), // tablet, capsule, ml, mg, etc.
+  genericName: varchar("generic_name", { length: 255 }), // For drugs only, NULL for materials
+
+  // NEW: Item type classification
+  itemType: varchar("item_type", { length: 50 }).notNull().default("drug"), // "drug" | "material"
+
+  category: varchar("category", { length: 100 }),
+  // Drugs: "Antibiotics", "Analgesics", "Antipyretics", etc.
+  // Materials: "Consumables", "Dressings", "Medical Devices", etc.
+
+  unit: varchar("unit", { length: 50 }).notNull(), // tablet, capsule, ml, pcs, box, roll, etc.
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   minimumStock: integer("minimum_stock").notNull().default(10), // Alert threshold
   description: text("description"),
+
+  // NEW: Workflow flag
+  requiresPrescription: boolean("requires_prescription").notNull().default(true),
+  // TRUE for drugs (pharmacy workflow), FALSE for materials (nurse recording)
+
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
+// Alias for backward compatibility in code
+export const drugs = inventoryItems
+
 /**
- * Drug Inventory Table
- * Tracks drug stock with batch numbers and expiry dates
+ * Unified Inventory Batches Table (table name: "drug_inventory")
+ * Tracks stock batches for all inventory items (drugs and materials)
+ *
+ * Note: Table is still called "drug_inventory" for backward compatibility,
+ * but now contains batches for both drugs and materials
  */
-export const drugInventory = pgTable("drug_inventory", {
+export const inventoryBatches = pgTable("drug_inventory", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  drugId: text("drug_id")
+  drugId: text("drug_id") // Keep original column name for compatibility
     .notNull()
-    .references(() => drugs.id, { onDelete: "cascade" }),
+    .references(() => inventoryItems.id, { onDelete: "cascade" }),
   batchNumber: varchar("batch_number", { length: 100 }).notNull(),
   expiryDate: timestamp("expiry_date").notNull(),
   stockQuantity: integer("stock_quantity").notNull().default(0),
@@ -44,10 +65,15 @@ export const drugInventory = pgTable("drug_inventory", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 })
 
+// Alias for backward compatibility in code
+export const drugInventory = inventoryBatches
+
 /**
  * Prescriptions Table
  * Digital prescriptions from doctors
  * Supports both OUTPATIENT (one-time) and INPATIENT (recurring) prescriptions
+ *
+ * References inventoryItems (drugs table) which now includes materials
  */
 export const prescriptions = pgTable("prescriptions", {
   id: text("id")
@@ -63,9 +89,9 @@ export const prescriptions = pgTable("prescriptions", {
   visitId: text("visit_id").references(() => visits.id, { onDelete: "cascade" }),
   cpptId: text("cppt_id").references(() => cppt.id), // Optional - which CPPT entry ordered it
 
-  drugId: text("drug_id")
+  drugId: text("drug_id") // Keep original column name for compatibility
     .notNull()
-    .references(() => drugs.id),
+    .references(() => inventoryItems.id),
 
   // Prescription details
   dosage: varchar("dosage", { length: 100 }), // e.g., "500mg"
@@ -95,7 +121,7 @@ export const prescriptions = pgTable("prescriptions", {
   dispensedQuantity: integer("dispensed_quantity"), // Actual quantity dispensed
 
   // Stock tracking
-  inventoryId: text("inventory_id").references(() => drugInventory.id), // Which batch was used
+  inventoryId: text("inventory_id").references(() => inventoryBatches.id), // Which batch was used
 
   // Pharmacist-added prescriptions (for urgent cases)
   addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false),
@@ -111,7 +137,7 @@ export const prescriptions = pgTable("prescriptions", {
 
 /**
  * Stock Movements Table
- * Track all inventory movements (in/out)
+ * Track all inventory movements (in/out) for both drugs and materials
  */
 export const stockMovements = pgTable("stock_movements", {
   id: text("id")
@@ -119,11 +145,11 @@ export const stockMovements = pgTable("stock_movements", {
     .$defaultFn(() => crypto.randomUUID()),
   inventoryId: text("inventory_id")
     .notNull()
-    .references(() => drugInventory.id, { onDelete: "cascade" }),
+    .references(() => inventoryBatches.id, { onDelete: "cascade" }),
   movementType: varchar("movement_type", { length: 20 }).notNull(), // in, out, adjustment, expired
   quantity: integer("quantity").notNull(), // Positive for in, negative for out
   reason: text("reason"), // Reason for movement
-  referenceId: text("reference_id"), // Reference to prescription if type is "out"
+  referenceId: text("reference_id"), // Reference to prescription/visit if type is "out"
   performedBy: text("performed_by").references(() => user.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 })
