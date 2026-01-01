@@ -50,10 +50,10 @@ export interface Procedure {
 
 export interface Prescription {
   id: string
-  medicalRecordId: string
+  medicalRecordId?: string | null
   drugId: string
-  drugName: string
-  drugPrice: string
+  drugName?: string
+  drugPrice?: string
   dosage: string | null
   frequency: string
   duration: string | null
@@ -69,7 +69,7 @@ export interface Prescription {
   // Pharmacist-added prescription fields
   addedByPharmacist: boolean
   addedByPharmacistId: string | null
-  addedByPharmacistName: string | null
+  addedByPharmacistName?: string | null
   approvedBy: string | null
   approvedAt: Date | null
   pharmacistNote: string | null

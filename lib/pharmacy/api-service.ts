@@ -3,13 +3,15 @@
  * Database operations for pharmacy management
  */
 
+import { eq, sql, and, lt, gte, desc, ilike, or, isNull } from "drizzle-orm"
+
 import { db } from "@/db"
 import { drugs, drugInventory, prescriptions, stockMovements } from "@/db/schema"
 import { medicalRecords } from "@/db/schema/medical-records"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
 import { user } from "@/db/schema/auth"
-import { eq, sql, and, lt, gte, desc, ilike, or } from "drizzle-orm"
+import { rooms, bedAssignments } from "@/db/schema/inpatient"
 import type {
   DrugInput,
   PrescriptionFulfillmentInput,
@@ -18,11 +20,12 @@ import type {
   Drug,
   PrescriptionQueueItem,
 } from "@/types/pharmacy"
-import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } from "./stock-utils"
-import { DrugInventoryInput, DrugUpdateInput } from "./validation"
-import { getSession } from "../rbac"
+import { getSession } from "@/lib/rbac"
 import { Prescription } from "@/types/medical-record"
 import { Pagination } from "@/types/api"
+
+import { DrugInventoryInput, DrugUpdateInput } from "./validation"
+import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } from "./stock-utils"
 
 /**
  * Get all drugs with total stock calculation
@@ -455,8 +458,10 @@ function groupPrescriptionsByVisit(
     drug: Drug
     patient: { id: string; name: string; mrNumber: string }
     doctor: { id: string; name: string } | null
-    visit: { id: string; visitNumber: string }
-    medicalRecordId: string
+    visit: { id: string; visitNumber: string; visitType: string }
+    medicalRecordId: string | null
+    room: { id: string; roomNumber: string; roomType: string } | null
+    bedAssignment: { bedNumber: string } | null
   }>
 ): PrescriptionQueueItem[] {
   // Early return for empty input
@@ -476,6 +481,8 @@ function groupPrescriptionsByVisit(
         patient: item.patient,
         doctor: item.doctor,
         medicalRecordId: item.medicalRecordId,
+        room: item.room,
+        bedAssignment: item.bedAssignment,
         prescriptions: [],
         latestTimestamp: prescriptionTimestamp,
       })
@@ -513,36 +520,63 @@ function groupPrescriptionsByVisit(
  * @returns Array of queue items sorted by most recent prescription (descending)
  */
 export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]> {
-  // Fetch all unfulfilled prescriptions with related entities in a single optimized query
+  // Fetch all unfulfilled prescriptions (both outpatient and inpatient) with related entities
+  // Uses LEFT JOIN for medicalRecords to support both:
+  // - Outpatient: prescription → medicalRecord → visit → patient
+  // - Inpatient: prescription → visit → patient (direct, no medicalRecord)
+
   const pending = await db
     .select({
       prescription: prescriptions,
-      // Select only required drug fields to minimize payload size
       drug: drugs,
-      // Patient identification fields
       patient: {
         id: patients.id,
         name: patients.name,
         mrNumber: patients.mrNumber,
       },
-      // Doctor who prescribed (nullable)
       doctor: {
         id: user.id,
         name: user.name,
       },
-      // Visit context
       visit: {
         id: visits.id,
         visitNumber: visits.visitNumber,
+        visitType: visits.visitType,
       },
       medicalRecordId: medicalRecords.id,
+      // Inpatient-specific: room and bed info
+      room: {
+        id: rooms.id,
+        roomNumber: rooms.roomNumber,
+        roomType: rooms.roomType,
+      },
+      bedAssignment: {
+        bedNumber: bedAssignments.bedNumber,
+      },
     })
     .from(prescriptions)
     .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-    .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
-    .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
+    // LEFT JOIN medicalRecords: NULL for inpatient prescriptions
+    .leftJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+    // Join visits: Either from medicalRecord (outpatient) or direct (inpatient)
+    .innerJoin(
+      visits,
+      or(
+        eq(medicalRecords.visitId, visits.id), // Outpatient path
+        eq(prescriptions.visitId, visits.id) // Inpatient path
+      )
+    )
     .innerJoin(patients, eq(visits.patientId, patients.id))
-    .leftJoin(user, eq(medicalRecords.doctorId, user.id)) // Left join: doctor may be null
+    .leftJoin(user, eq(medicalRecords.doctorId, user.id))
+    // LEFT JOIN room/bed info for inpatient visits
+    .leftJoin(rooms, eq(visits.roomId, rooms.id))
+    .leftJoin(
+      bedAssignments,
+      and(
+        eq(bedAssignments.visitId, visits.id),
+        isNull(bedAssignments.dischargedAt) // Only active bed assignments
+      )
+    )
     .where(eq(prescriptions.isFulfilled, false))
     .orderBy(desc(prescriptions.createdAt))
 

@@ -684,7 +684,6 @@ export async function administerPrescription(data: AdministerPrescriptionInput) 
       isAdministered: true,
       administeredBy: data.administeredBy,
       administeredAt: new Date(),
-      updatedAt: new Date(),
     })
     .where(eq(prescriptions.id, data.prescriptionId))
 
