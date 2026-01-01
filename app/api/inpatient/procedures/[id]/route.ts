@@ -1,38 +1,39 @@
 /**
- * Inpatient Prescription [id] API Route
- * DELETE /api/inpatient/prescriptions/[id]
+ * Inpatient Procedure [id] API Route
+ * DELETE /api/inpatient/procedures/[id]
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { deleteInpatientPrescription } from "@/lib/inpatient/api-service"
-import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { deleteInpatientProcedure } from "@/lib/inpatient/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
-export async function DELETE(_request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { id } = params
 
     if (!id) {
       const response: ResponseError<unknown> = {
-        error: "Prescription ID is required",
-        message: "Prescription ID is required",
+        error: "Procedure ID is required",
+        message: "Procedure ID is required",
         status: HTTP_STATUS_CODES.BAD_REQUEST,
       }
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
     }
 
-    await deleteInpatientPrescription(id)
+    await deleteInpatientProcedure(id)
 
     const response: ResponseApi = {
-      message: "Prescription deleted successfully",
+      message: "Procedure deleted successfully",
       status: HTTP_STATUS_CODES.OK,
     }
 
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
   } catch (error) {
-    console.error("Error deleting prescription:", error)
+    console.error("Error deleting procedure:", error)
+
     // Handle business logic errors
-    const errorMessage = error instanceof Error ? error.message : "Failed to deleting prescription"
+    const errorMessage = error instanceof Error ? error.message : "Failed to deleting procedure"
     const response: ResponseError<unknown> = {
       error: errorMessage,
       message: errorMessage,

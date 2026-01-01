@@ -8,6 +8,9 @@ import {
   CPPT,
   MaterialUsage,
   AdministerPrescriptionInput,
+  InpatientProcedureInput,
+  InpatientProcedure,
+  UpdateProcedureStatusInput,
 } from "@/types/inpatient"
 import { Pagination, ResponseApi } from "@/types/api"
 import {
@@ -312,9 +315,7 @@ export async function deleteInpatientPrescription(prescriptionId: string): Promi
 /**
  * Create inpatient procedure order
  */
-export async function createInpatientProcedure(
-  data: import("@/types/inpatient").InpatientProcedureInput
-): Promise<void> {
+export async function createInpatientProcedure(data: InpatientProcedureInput): Promise<void> {
   try {
     await axios.post("/api/inpatient/procedures", data)
   } catch (error) {
@@ -326,11 +327,9 @@ export async function createInpatientProcedure(
 /**
  * Fetch procedures for a visit
  */
-export async function fetchInpatientProcedures(
-  visitId: string
-): Promise<import("@/types/inpatient").InpatientProcedure[]> {
+export async function fetchInpatientProcedures(visitId: string): Promise<InpatientProcedure[]> {
   try {
-    const response = await axios.get<ResponseApi<import("@/types/inpatient").InpatientProcedure[]>>(
+    const response = await axios.get<ResponseApi<InpatientProcedure[]>>(
       `/api/inpatient/procedures?visitId=${visitId}`
     )
     return response.data.data || []
@@ -343,9 +342,7 @@ export async function fetchInpatientProcedures(
 /**
  * Update procedure status
  */
-export async function updateProcedureStatus(
-  data: import("@/types/inpatient").UpdateProcedureStatusInput
-): Promise<void> {
+export async function updateProcedureStatus(data: UpdateProcedureStatusInput): Promise<void> {
   try {
     await axios.patch("/api/inpatient/procedures/status", data)
   } catch (error) {

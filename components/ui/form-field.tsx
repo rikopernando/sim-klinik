@@ -2,7 +2,7 @@ import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 
 interface FormFieldProps {
-  label: string
+  label?: string
   required?: boolean
   error?: string
   htmlFor?: string
@@ -20,10 +20,12 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div className={cn("space-y-2", className)}>
-      <Label htmlFor={htmlFor}>
-        {label}
-        {required && <span className="text-destructive"> *</span>}
-      </Label>
+      {label && (
+        <Label htmlFor={htmlFor}>
+          {label}
+          {required && <span className="text-destructive"> *</span>}
+        </Label>
+      )}
       {children}
       {error && <p className="text-destructive text-sm">{error}</p>}
     </div>

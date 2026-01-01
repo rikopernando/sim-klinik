@@ -3,6 +3,9 @@
  * Handles database operations for Inpatient module
  */
 
+import { eq, and, isNull, desc, or, gte, lte, inArray, ilike, sql, SQL } from "drizzle-orm"
+import { alias as aliasedTable, PgUpdateSetSource } from "drizzle-orm/pg-core"
+
 import { db } from "@/db"
 import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema/inpatient"
 import { cppt, procedures } from "@/db/schema/medical-records"
@@ -12,15 +15,10 @@ import { services } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
 import { user } from "@/db/schema/auth"
-import { eq, and, isNull, desc, or, gte, lte, inArray, ilike, sql, SQL } from "drizzle-orm"
-import { alias as aliasedTable } from "drizzle-orm/pg-core"
-import { calculateBMI } from "./vitals-utils"
+import { PROCEDURE_STATUS, type InpatientFilters, type VitalSigns } from "@/types/inpatient"
+import { getSession } from "@/lib/rbac"
 
-// Create aliases for user table to avoid conflicts in multi-join queries
-const administeredByUser = aliasedTable(user, "administeredByUser")
-const fulfilledByUser = aliasedTable(user, "fulfilledByUser")
-const orderedByUser = aliasedTable(user, "orderedByUser")
-const performedByUser = aliasedTable(user, "performedByUser")
+import { calculateBMI } from "./vitals-utils"
 import type {
   RoomInput,
   BedAssignmentInput,
@@ -33,8 +31,12 @@ import type {
   AdministerPrescriptionInput,
   UpdateProcedureStatusInput,
 } from "./validation"
-import type { InpatientFilters, VitalSigns } from "@/types/inpatient"
-import { getSession } from "../rbac"
+
+// Create aliases for user table to avoid conflicts in multi-join queries
+const administeredByUser = aliasedTable(user, "administeredByUser")
+const fulfilledByUser = aliasedTable(user, "fulfilledByUser")
+const orderedByUser = aliasedTable(user, "orderedByUser")
+const performedByUser = aliasedTable(user, "performedByUser")
 
 /**
  * Build WHERE conditions for inpatient list query
@@ -646,6 +648,33 @@ export async function createInpatientPrescription(data: InpatientPrescriptionInp
 }
 
 /**
+ * Get inpatient prescriptions for a visit
+ */
+export async function getInpatientPrescriptions(visitId: string) {
+  const results = await db
+    .select({
+      prescription: prescriptions,
+      drug: drugs,
+      administeredBy: administeredByUser,
+      fulfilledBy: fulfilledByUser,
+    })
+    .from(prescriptions)
+    .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+    .leftJoin(administeredByUser, eq(prescriptions.administeredBy, administeredByUser.id))
+    .leftJoin(fulfilledByUser, eq(prescriptions.fulfilledBy, fulfilledByUser.id))
+    .where(eq(prescriptions.visitId, visitId))
+    .orderBy(desc(prescriptions.createdAt))
+
+  return results.map((row) => ({
+    ...row.prescription,
+    drugName: row.drug?.name,
+    drugPrice: row.drug?.price,
+    administeredByName: row.administeredBy?.name,
+    fulfilledByName: row.fulfilledBy?.name,
+  }))
+}
+
+/**
  * Mark prescription as administered (for nurses)
  */
 export async function administerPrescription(data: AdministerPrescriptionInput) {
@@ -679,17 +708,6 @@ export async function deleteInpatientPrescription(prescriptionId: string) {
  */
 export async function createInpatientProcedure(data: InpatientProcedureInput) {
   const session = await getSession()
-
-  // If serviceId provided, fetch service details
-  let serviceData = null
-  if (data.serviceId) {
-    const serviceResult = await db
-      .select()
-      .from(services)
-      .where(eq(services.id, data.serviceId))
-      .limit(1)
-    serviceData = serviceResult[0]
-  }
 
   await db.insert(procedures).values({
     visitId: data.visitId,
@@ -738,16 +756,18 @@ export async function getInpatientProcedures(visitId: string) {
  * Update procedure status
  */
 export async function updateProcedureStatus(data: UpdateProcedureStatusInput) {
-  const updateData: any = {
+  let updateData: PgUpdateSetSource<typeof procedures> = {
     status: data.status,
     notes: data.notes || null,
-    updatedAt: new Date(),
   }
 
   // If status is completed, set performedBy and performedAt
-  if (data.status === "completed" && data.performedBy) {
-    updateData.performedBy = data.performedBy
-    updateData.performedAt = new Date()
+  if (data.status === PROCEDURE_STATUS.COMPLETED && data.performedBy) {
+    updateData = {
+      ...updateData,
+      performedBy: data.performedBy,
+      performedAt: new Date(),
+    }
   }
 
   await db.update(procedures).set(updateData).where(eq(procedures.id, data.procedureId))

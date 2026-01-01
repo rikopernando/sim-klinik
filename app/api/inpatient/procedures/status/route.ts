@@ -1,34 +1,32 @@
 /**
- * Inpatient Prescriptions API Route
- * Handles prescription orders for inpatient care
+ * Update Procedure Status API Route
+ * PATCH /api/inpatient/procedures/status
+ * For updating procedure workflow status
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { createInpatientPrescription } from "@/lib/inpatient/api-service"
-import { inpatientPrescriptionSchema } from "@/lib/inpatient/validation"
 import z from "zod"
+import { NextRequest, NextResponse } from "next/server"
+
+import { updateProcedureStatus } from "@/lib/inpatient/api-service"
+import { updateProcedureStatusSchema } from "@/lib/inpatient/validation"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 
-/**
- * POST /api/inpatient/prescriptions
- * Create a new prescription order
- */
-export async function POST(request: NextRequest) {
+export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json()
-    const validatedData = inpatientPrescriptionSchema.parse(body)
+    const validatedData = updateProcedureStatusSchema.parse(body)
 
-    await createInpatientPrescription(validatedData)
+    await updateProcedureStatus(validatedData)
 
     const response: ResponseApi = {
-      message: "Prescription order created successfully",
+      message: "Procedure status updated successfully",
       status: HTTP_STATUS_CODES.CREATED,
     }
 
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
-    console.error("Error creating prescription:", error)
+    console.error("Error updating procedure status:", error)
 
     if (error instanceof z.ZodError) {
       const response: ResponseError<unknown> = {
@@ -41,9 +39,9 @@ export async function POST(request: NextRequest) {
         status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
       })
     }
-
     // Handle business logic errors
-    const errorMessage = error instanceof Error ? error.message : "Failed to create prescription"
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to update procedure status"
     const response: ResponseError<unknown> = {
       error: errorMessage,
       message: errorMessage,

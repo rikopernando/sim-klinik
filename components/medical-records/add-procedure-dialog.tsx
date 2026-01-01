@@ -138,11 +138,13 @@ export function AddProcedureDialog({
   const handleServiceSelect = useCallback(
     (index: number, service: Service) => {
       // Auto-fill service data
-      form.setValue(`procedures.${index}.serviceId`, service.id)
-      form.setValue(`procedures.${index}.serviceName`, service.name)
-      form.setValue(`procedures.${index}.servicePrice`, service.price)
-      form.setValue(`procedures.${index}.icd9Code`, service.code)
-      form.setValue(`procedures.${index}.description`, service.description || service.name)
+      form.setValue(`procedures.${index}.serviceId`, service.id, { shouldValidate: true })
+      form.setValue(`procedures.${index}.serviceName`, service.name, { shouldValidate: true })
+      form.setValue(`procedures.${index}.servicePrice`, service.price, { shouldValidate: true })
+      form.setValue(`procedures.${index}.icd9Code`, service.code, { shouldValidate: true })
+      form.setValue(`procedures.${index}.description`, service.description || service.name, {
+        shouldValidate: true,
+      })
       setServiceSearches((prev) => ({ ...prev, [index]: service.name }))
     },
     [form]
