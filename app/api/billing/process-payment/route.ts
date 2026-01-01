@@ -9,7 +9,7 @@ import { ZodError } from "zod"
 import { processPaymentSchema } from "@/lib/billing/validation"
 import { processPaymentWithDiscount } from "@/lib/billing/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 
 /**

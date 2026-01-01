@@ -11,7 +11,7 @@ import { db } from "@/db"
 import { visits } from "@/db/schema/visits"
 import { materialUsageSchema } from "@/lib/inpatient/validation"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { recordMaterialUsage } from "@/lib/inpatient/api-service"
 
 /**

@@ -9,7 +9,7 @@ import { db } from "@/db"
 import { rooms } from "@/db/schema/inpatient"
 import { roomCreateSchema } from "@/lib/validations/rooms"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { eq, ilike, and, count, desc } from "drizzle-orm"
 
 /**

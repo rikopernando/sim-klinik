@@ -7,7 +7,7 @@ import { generateMRNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { RegisteredPatient } from "@/types/registration"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * Patient Registration Schema

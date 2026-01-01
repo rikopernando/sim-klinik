@@ -8,7 +8,7 @@ import { z } from "zod"
 import { roomSchema, roomUpdateSchema } from "@/lib/inpatient/validation"
 import { getAllRoomsWithOccupancy, createRoom, updateRoom } from "@/lib/inpatient/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/rooms

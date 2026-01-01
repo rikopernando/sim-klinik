@@ -9,7 +9,7 @@ import { prescriptionFulfillmentSchema } from "@/lib/pharmacy/validation"
 import { getPendingPrescriptions, fulfillPrescription } from "@/lib/pharmacy/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { PrescriptionQueueItem } from "@/types/pharmacy"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 
 /**

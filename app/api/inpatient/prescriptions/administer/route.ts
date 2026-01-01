@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { administerPrescription } from "@/lib/inpatient/api-service"
 import { administerPrescriptionSchema } from "@/lib/inpatient/validation"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 
 export async function POST(request: NextRequest) {

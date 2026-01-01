@@ -9,7 +9,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
 import { isValidStatusTransition, VisitStatus } from "@/types/visit-status"
 import { lockSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { createBillingFromMedicalRecord, recalculateBilling } from "@/lib/billing/api-service"
 
 /**

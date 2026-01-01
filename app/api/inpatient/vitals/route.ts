@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { vitalSignsSchema } from "@/lib/inpatient/validation"
 import {

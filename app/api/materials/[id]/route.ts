@@ -9,7 +9,7 @@ import { db } from "@/db"
 import { materialUsage } from "@/db/schema/inpatient"
 import { eq } from "drizzle-orm"
 import { ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * DELETE /api/materials/[id]

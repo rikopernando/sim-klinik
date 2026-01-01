@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 import { getVisitsReadyForBilling } from "@/lib/billing/api-service"
 

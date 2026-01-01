@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { getBillingDetails } from "@/lib/billing/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 
 export const GET = withRBAC(

@@ -7,7 +7,7 @@ import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { getInitialVisitStatus } from "@/types/visit-status"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { RegisteredVisit } from "@/types/visit"
 
 /**

@@ -10,7 +10,7 @@ import { userRoles, roles } from "@/db/schema/roles"
 import { eq, asc } from "drizzle-orm"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { Pharmacist } from "@/types/user"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/doctors

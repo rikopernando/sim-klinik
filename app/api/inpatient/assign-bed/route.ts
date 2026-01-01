@@ -12,7 +12,7 @@ import { visits } from "@/db/schema/visits"
 import { bedAssignments, rooms } from "@/db/schema/inpatient"
 import { bedAssignmentSchema } from "@/lib/inpatient/validation"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { getSession } from "@/lib/rbac"
 import z from "zod"
 

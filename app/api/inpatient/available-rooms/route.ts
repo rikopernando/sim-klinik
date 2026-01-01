@@ -10,7 +10,7 @@ import { gt } from "drizzle-orm"
 import { db } from "@/db"
 import { rooms } from "@/db/schema/inpatient"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 export async function GET() {
   try {

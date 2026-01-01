@@ -10,7 +10,7 @@ import { eq, and, or, isNull, sql } from "drizzle-orm"
 import { db } from "@/db"
 import { visits, patients, bedAssignments } from "@/db/schema"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 export async function GET(request: NextRequest) {
   try {

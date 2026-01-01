@@ -10,7 +10,7 @@ import { db } from "@/db"
 import { polis } from "@/db/schema/visits"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { Poli } from "@/types/poli"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 export async function GET() {
   try {

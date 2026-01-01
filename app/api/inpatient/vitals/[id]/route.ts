@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/db"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { vitalsHistory } from "@/db/schema/inpatient"
 

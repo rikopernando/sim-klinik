@@ -10,7 +10,7 @@ import { patients } from "@/db/schema/patients"
 import { bedAssignments } from "@/db/schema/inpatient"
 import { rooms } from "@/db/schema/inpatient"
 import { and, count, desc, eq } from "drizzle-orm"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import {
   buildInpatientWhereConditions,
   calculateDaysInHospital,

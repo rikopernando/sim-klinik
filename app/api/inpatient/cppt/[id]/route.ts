@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { db } from "@/db"
 import { cppt } from "@/db/schema/medical-records"

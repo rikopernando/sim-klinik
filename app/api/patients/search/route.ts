@@ -5,7 +5,7 @@ import { or, sql } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { RegisteredPatient } from "@/types/registration"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/patients/search

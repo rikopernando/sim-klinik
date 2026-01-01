@@ -11,7 +11,7 @@ import { user } from "@/db/schema/auth"
 import { userRoles, roles } from "@/db/schema/roles"
 import { Doctor } from "@/types/user"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/doctors

@@ -7,7 +7,7 @@ import { prescriptions, medicalRecords, drugs, visits, patients } from "@/db/sch
 import { sendNotification } from "@/lib/notifications/sse-manager"
 import { createPrescriptionFormSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 /**
  * POST /api/medical-records/prescriptions
  * Add a prescription to a medical record
