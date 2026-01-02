@@ -6,7 +6,7 @@
  * Now both drugs and materials share the same inventory system.
  */
 import { db } from "@/db"
-import { inventoryItems, inventoryBatches } from "@/db/schema"
+import { inventoryItems, inventoryBatches, stockMovements } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 
 const materials = [
@@ -411,6 +411,7 @@ async function seedMaterials() {
     let insertedCount = 0
     let skippedCount = 0
     let batchCount = 0
+    let movementCount = 0
 
     for (const material of materials) {
       // Check if material already exists in drugs table
@@ -443,11 +444,23 @@ async function seedMaterials() {
         receivedDate: new Date(),
       }
 
-      await db.insert(inventoryBatches).values(batch)
+      const [insertedBatch] = await db.insert(inventoryBatches).values(batch).returning()
       console.log(
         `   📦 Created batch: ${batch.batchNumber} (${batch.stockQuantity} ${material.unit})`
       )
       batchCount++
+
+      // Create stock movement record for audit trail
+      await db.insert(stockMovements).values({
+        inventoryId: insertedBatch.id,
+        movementType: "in",
+        quantity: batch.stockQuantity, // Positive for incoming stock
+        reason: "Initial stock - Material seeding",
+        referenceId: null,
+        performedBy: null, // System seeding, no user
+      })
+      console.log(`   📝 Created stock movement: +${batch.stockQuantity} ${material.unit} (IN)`)
+      movementCount++
     }
 
     console.log("\n" + "=".repeat(70))
@@ -457,6 +470,7 @@ async function seedMaterials() {
     console.log(`   - Inserted: ${insertedCount} materials`)
     console.log(`   - Skipped: ${skippedCount} materials (already exist)`)
     console.log(`   - Created: ${batchCount} inventory batches`)
+    console.log(`   - Recorded: ${movementCount} stock movements (audit trail)`)
 
     // Verify by querying materials from unified inventory
     const totalMaterials = await db
@@ -476,6 +490,7 @@ async function seedMaterials() {
 
     console.log(`\n✓ Verified: Materials successfully stored in unified "drugs" table`)
     console.log(`💡 Materials are now available for recording in inpatient care`)
+    console.log(`📝 Stock movements tracked for audit trail and inventory reports`)
     console.log(`🔍 Query materials using: WHERE item_type = 'material'`)
 
     process.exit(0)
