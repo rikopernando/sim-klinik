@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
   } catch (error) {
+    console.error("Error recording material usage:", error)
     if (error instanceof z.ZodError) {
       const response: ResponseError<unknown> = {
         error: error.issues,

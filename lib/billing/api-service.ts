@@ -20,6 +20,7 @@ import {
   calculateChange,
 } from "./billing-utils"
 import { ProcessPaymentInput } from "./validation"
+import { aggregateDischargebilling } from "./discharge-aggregation"
 
 /**
  * Billing Totals Type
@@ -737,4 +738,91 @@ export async function recalculateBilling(visitId: string, tx?: DbTransaction): P
       remainingAmount: totals.remainingAmount.toFixed(2),
     })
     .where(eq(billings.id, existingBilling.id))
+}
+
+// ============================================================================
+// INPATIENT DISCHARGE BILLING
+// ============================================================================
+
+/**
+ * Create billing for inpatient discharge
+ * Aggregates all charges: room, materials, medications, procedures
+ *
+ * Uses the discharge aggregation utility to collect all billable items
+ * from the patient's inpatient stay and creates a comprehensive billing record.
+ *
+ * @param visitId - The inpatient visit ID
+ * @param tx - Optional transaction object for atomic operations
+ * @returns Billing ID
+ *
+ * Business Rules:
+ * - Only works for inpatient visits
+ * - Automatically aggregates:
+ *   - Room charges (daily rate × days stayed)
+ *   - Material usage from nursing care
+ *   - Fulfilled prescriptions from pharmacy
+ *   - Completed medical procedures
+ *   - Other billable services
+ *
+ * Performance:
+ * - All aggregations run in parallel
+ * - Single transaction for atomicity
+ * - Efficient bulk insert for billing items
+ */
+export async function createInpatientDischargeBilling(
+  visitId: string,
+  tx?: DbTransaction
+): Promise<string> {
+  const dbInstance = tx || db
+
+  // Aggregate all discharge charges
+  const aggregate = await aggregateDischargebilling(visitId)
+
+  if (aggregate.items.length === 0) {
+    throw new Error(
+      "Tidak ada item yang dapat ditagihkan. Pastikan pasien memiliki catatan rawat inap."
+    )
+  }
+
+  // Calculate totals
+  const subtotal = parseFloat(aggregate.subtotal)
+
+  // Create billing record
+  const [billing] = await dbInstance
+    .insert(billings)
+    .values({
+      visitId,
+      subtotal: subtotal.toFixed(2),
+      discount: "0.00",
+      discountPercentage: null,
+      tax: "0.00",
+      insuranceCoverage: "0.00",
+      totalAmount: subtotal.toFixed(2),
+      patientPayable: subtotal.toFixed(2),
+      paidAmount: "0.00",
+      remainingAmount: subtotal.toFixed(2),
+      paymentStatus: "pending",
+    })
+    .returning()
+
+  // Insert all billing items
+  if (aggregate.items.length > 0) {
+    await dbInstance.insert(billingItems).values(
+      aggregate.items.map((item) => ({
+        billingId: billing.id,
+        itemType: item.itemType,
+        itemId: item.itemId || null,
+        itemName: item.itemName,
+        itemCode: item.itemCode || null,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
+        discount: item.discount || "0.00",
+        totalPrice: item.totalPrice || item.unitPrice,
+        description: item.description || null,
+      }))
+    )
+  }
+
+  return billing.id
 }

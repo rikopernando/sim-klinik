@@ -32,7 +32,7 @@ export const GET = withRBAC(
       const response: ResponseApi<typeof billingDetails> = {
         data: billingDetails,
         message: "Billing details fetched successfully",
-        status: HTTP_STATUS_CODES.CREATED,
+        status: HTTP_STATUS_CODES.OK,
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
