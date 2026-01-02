@@ -43,6 +43,7 @@ export function RecordMaterialDialog({
 
   const {
     form,
+    values,
     totalPrice,
     handleMaterialSelect,
     handleSubmit,
@@ -96,7 +97,7 @@ export function RecordMaterialDialog({
             />
 
             {/* Quantity & Unit */}
-            <QuantityUnitFields form={form} />
+            <QuantityUnitFields form={form} values={values} />
 
             {/* Prices */}
             <PriceFields form={form} totalPrice={totalPrice} />

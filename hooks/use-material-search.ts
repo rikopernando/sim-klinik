@@ -1,22 +1,14 @@
 /**
  * useMaterialSearch Hook
  * Fetches materials from unified inventory system
+ * Uses axios-based service layer for consistency
  */
 
 import { useState, useCallback, useEffect } from "react"
-
 import { useDebounce } from "@/hooks/use-debounce"
-
-export interface Material {
-  id: string
-  name: string
-  category: string | null
-  unit: string
-  price: string
-  minimumStock: number
-  description: string | null
-  totalStock: number
-}
+import { searchMaterials } from "@/lib/services/inpatient.service"
+import { getErrorMessage } from "@/lib/utils/error"
+import type { Material } from "@/types/material"
 
 interface UseMaterialSearchReturn {
   materials: Material[]
@@ -24,6 +16,8 @@ interface UseMaterialSearchReturn {
   error: string | null
   search: (query: string) => void
 }
+
+const MIN_LENGTH_QUERY = 2
 
 export function useMaterialSearch(): UseMaterialSearchReturn {
   const [query, setQuery] = useState("")
@@ -34,28 +28,19 @@ export function useMaterialSearch(): UseMaterialSearchReturn {
   // Debounce search query to avoid too many API calls
   const debouncedQuery = useDebounce(query, 300)
 
-  // Fetch materials from API
+  // Fetch materials from API using service layer
   const fetchMaterials = useCallback(async (searchQuery: string) => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const params = new URLSearchParams()
-      if (searchQuery) {
-        params.append("search", searchQuery)
-      }
-      params.append("limit", "20")
-
-      const response = await fetch(`/api/materials?${params.toString()}`)
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to fetch materials")
-      }
-
-      setMaterials(result.data || [])
+      const results = await searchMaterials({
+        search: searchQuery || undefined,
+        limit: 20,
+      })
+      setMaterials(results)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch materials"
+      const errorMessage = getErrorMessage(err)
       setError(errorMessage)
       setMaterials([])
     } finally {
@@ -65,6 +50,11 @@ export function useMaterialSearch(): UseMaterialSearchReturn {
 
   // Fetch when debounced query changes
   useEffect(() => {
+    if (debouncedQuery.length < MIN_LENGTH_QUERY) {
+      setMaterials([])
+      return
+    }
+
     fetchMaterials(debouncedQuery)
   }, [debouncedQuery, fetchMaterials])
 

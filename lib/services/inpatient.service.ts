@@ -20,6 +20,7 @@ import {
   MaterialUsageInput,
   InpatientPrescriptionInput,
 } from "@/lib/inpatient/validation"
+import type { Material } from "@/types/material"
 
 import { ApiServiceError, handleApiError } from "./api.service"
 
@@ -265,6 +266,28 @@ export async function deleteMaterialUsage(materialId: string): Promise<void> {
     await axios.delete(`/api/materials/${materialId}`)
   } catch (error) {
     console.error("Error deleting material usage:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Search materials from unified inventory
+ * Fetches materials with stock information
+ */
+export async function searchMaterials(params?: {
+  search?: string
+  limit?: number
+}): Promise<Material[]> {
+  try {
+    const response = await axios.get<ResponseApi<Material[]>>(`/api/materials`, { params })
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    console.error("Error searching materials:", error)
     handleApiError(error)
   }
 }

@@ -30,10 +30,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "50")
 
     // Build query conditions
-    const conditions = [
-      eq(inventoryItems.itemType, "material"),
-      eq(inventoryItems.isActive, true),
-    ]
+    const conditions = [eq(inventoryItems.itemType, "material"), eq(inventoryItems.isActive, true)]
 
     if (search) {
       conditions.push(ilike(inventoryItems.name, `%${search}%`))

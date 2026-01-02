@@ -6,10 +6,15 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { IconSearch, IconPackage, IconAlertCircle } from "@tabler/icons-react"
+import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { useMaterialSearch, type Material } from "@/hooks/use-material-search"
+import { Spinner } from "@/components/ui/spinner"
+import { useMaterialSearch } from "@/hooks/use-material-search"
+import type { Material } from "@/types/material"
 import { cn } from "@/lib/utils"
+import { FieldLabel, FieldDescription, FieldError } from "@/components/ui/field"
+
+import { MaterialListItem } from "./material-list-item"
 
 interface MaterialSearchProps {
   value: string
@@ -97,12 +102,16 @@ export function MaterialSearch({
 
   return (
     <div ref={wrapperRef} className="relative w-full">
-      <label htmlFor="material-search" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+      <FieldLabel htmlFor="drugSearch">
         {label} {required && <span className="text-destructive">*</span>}
-      </label>
+      </FieldLabel>
 
       <div className="relative mt-2">
-        <IconSearch className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        {isLoading ? (
+          <Spinner className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        ) : (
+          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        )}
         <Input
           ref={inputRef}
           id="material-search"
@@ -110,71 +119,29 @@ export function MaterialSearch({
           value={value}
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
           className={cn("pl-9", error && "border-destructive")}
         />
-        {isLoading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          </div>
-        )}
       </div>
 
-      {error && (
-        <p className="mt-1 text-sm text-destructive">{error}</p>
+      {isLoading && <FieldDescription className="!mt-1">Mencari...</FieldDescription>}
+      {value && value.length >= 2 && !isLoading && materials.length === 0 && (
+        <FieldDescription className="!mt-1">
+          Tidak ada alat kesehatan yang ditemukan
+        </FieldDescription>
       )}
+      {error && <FieldError className="!mt-1">{error}</FieldError>}
 
       {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border bg-popover shadow-md">
-          {materials.length === 0 && !isLoading && (
-            <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
-              <IconAlertCircle className="h-4 w-4" />
-              {value ? "Material tidak ditemukan" : "Ketik untuk mencari material"}
-            </div>
-          )}
-
+      {isOpen && value && materials.length > 0 && (
+        <div className="bg-popover absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-md border shadow-md">
           {materials.map((material, index) => (
-            <button
+            <MaterialListItem
               key={material.id}
-              type="button"
+              material={material}
+              isActive={index === focusedIndex}
               onClick={() => handleSelect(material)}
-              className={cn(
-                "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
-                "hover:bg-accent focus:bg-accent focus:outline-none",
-                index === focusedIndex && "bg-accent",
-                material.totalStock === 0 && "opacity-50"
-              )}
-            >
-              <IconPackage className="mt-0.5 h-4 w-4 flex-shrink-0 text-muted-foreground" />
-              <div className="flex-1 space-y-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium leading-none">{material.name}</p>
-                  <span className="text-xs text-muted-foreground">
-                    Rp {parseFloat(material.price).toLocaleString("id-ID")}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  {material.category && <span>{material.category}</span>}
-                  <span>•</span>
-                  <span className={cn(
-                    material.totalStock === 0 && "text-destructive font-medium",
-                    material.totalStock < material.minimumStock && material.totalStock > 0 && "text-orange-500 font-medium"
-                  )}>
-                    Stok: {material.totalStock} {material.unit}
-                  </span>
-                </div>
-                {material.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-1">
-                    {material.description}
-                  </p>
-                )}
-                {material.totalStock === 0 && (
-                  <p className="text-xs font-medium text-destructive">Stok habis</p>
-                )}
-              </div>
-            </button>
+            />
           ))}
         </div>
       )}

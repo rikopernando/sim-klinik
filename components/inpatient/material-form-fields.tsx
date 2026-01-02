@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
 import { MaterialSearch } from "./material-search"
 import { formatCurrency } from "@/lib/billing/billing-utils"
-import type { Material } from "@/hooks/use-material-search"
+import type { Material } from "@/types/material"
 import { CurrencyInput } from "@/components/ui/currency-input"
 
 interface MaterialFormData {
@@ -61,15 +61,14 @@ export const MaterialSearchField = memo(function MaterialSearchField({
 })
 
 interface QuantityUnitFieldsProps {
+  values: MaterialFormData
   form: UseFormReturn<MaterialFormData>
 }
 
 export const QuantityUnitFields = memo(function QuantityUnitFields({
   form,
+  values,
 }: QuantityUnitFieldsProps) {
-  const unit = form.watch("unit")
-  const availableStock = form.watch("availableStock")
-
   return (
     <div className="grid grid-cols-2 gap-4">
       {/* Quantity */}
@@ -92,9 +91,12 @@ export const QuantityUnitFields = memo(function QuantityUnitFields({
               {fieldState.error?.message && fieldState.invalid && (
                 <FieldError>{fieldState.error.message}</FieldError>
               )}
-              {availableStock !== undefined && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Stok tersedia: <span className="font-medium">{availableStock} {unit}</span>
+              {values.availableStock !== undefined && (
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Stok tersedia:{" "}
+                  <span className="font-medium">
+                    {values.availableStock} {values.unit}
+                  </span>
                 </p>
               )}
             </>
@@ -105,12 +107,12 @@ export const QuantityUnitFields = memo(function QuantityUnitFields({
       {/* Unit (Read-only) */}
       <Field>
         <FieldLabel htmlFor="unit">Satuan</FieldLabel>
-        <Input
-          id="unit"
-          type="text"
-          value={unit || "-"}
-          readOnly
-          className="bg-muted"
+        <Controller
+          name="unit"
+          control={form.control}
+          render={({ field }) => (
+            <Input {...field} readOnly className="bg-muted" placeholder="Satuan" />
+          )}
         />
       </Field>
     </div>
@@ -173,7 +175,7 @@ interface NotesFieldProps {
 export const NotesField = memo(function NotesField({ form }: NotesFieldProps) {
   return (
     <Field>
-      <FieldLabel htmlFor="notes">Catatan (Opsional)</FieldLabel>
+      <FieldLabel htmlFor="notes">Catatan</FieldLabel>
       <Controller
         control={form.control}
         name="notes"
