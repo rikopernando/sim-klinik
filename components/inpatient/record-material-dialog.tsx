@@ -47,8 +47,8 @@ export function RecordMaterialDialog({
     handleMaterialSelect,
     handleSubmit,
     resetForm,
-    serviceSearch,
-    setServiceSearch,
+    materialSearch,
+    setMaterialSearch,
   } = useMaterialForm({
     visitId,
     onSuccess,
@@ -87,9 +87,9 @@ export function RecordMaterialDialog({
             {/* Material Search */}
             <MaterialSearchField
               form={form}
-              value={serviceSearch}
+              value={materialSearch}
               onChange={(value) => {
-                setServiceSearch(value)
+                setMaterialSearch(value)
                 form.setValue("materialName", value)
               }}
               onMaterialSelect={handleMaterialSelect}

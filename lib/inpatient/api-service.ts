@@ -9,7 +9,13 @@ import { alias as aliasedTable, PgUpdateSetSource } from "drizzle-orm/pg-core"
 import { db } from "@/db"
 import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema/inpatient"
 import { cppt, procedures } from "@/db/schema/medical-records"
-import { prescriptions, drugs } from "@/db/schema/inventory"
+import {
+  prescriptions,
+  drugs,
+  inventoryItems,
+  inventoryBatches,
+  stockMovements,
+} from "@/db/schema/inventory"
 import { services } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
@@ -464,26 +470,105 @@ export async function getCPPTEntries(visitId: string) {
 
 /**
  * Material Usage Service
+ * Uses unified inventory system - materials are in "drugs" table with item_type='material'
  */
 export async function recordMaterialUsage(data: MaterialUsageInput) {
-  // Calculate total price
-  const unitPrice = parseFloat(data.unitPrice || "0")
-  const totalPrice = (unitPrice * parseFloat(data.quantity)).toFixed(2)
   const session = await getSession()
+  const quantityUsed = parseFloat(data.quantity)
 
-  // Create material usage record
-  // Let database handle usedAt and createdAt with .defaultNow() for timezone consistency
+  // 1. Get material details from unified inventory (drugs table)
+  const [material] = await db
+    .select()
+    .from(inventoryItems)
+    .where(and(eq(inventoryItems.id, data.itemId), eq(inventoryItems.itemType, "material")))
+    .limit(1)
+
+  if (!material) {
+    throw new Error("Material not found or is not a material item")
+  }
+
+  // 2. Find available batch to use
+  let batchToUse
+  if (data.batchId) {
+    // Use specific batch if provided
+    const [batch] = await db
+      .select()
+      .from(inventoryBatches)
+      .where(and(eq(inventoryBatches.id, data.batchId), eq(inventoryBatches.drugId, data.itemId)))
+      .limit(1)
+
+    if (!batch || batch.stockQuantity < quantityUsed) {
+      throw new Error("Specified batch not found or insufficient stock")
+    }
+    batchToUse = batch
+  } else {
+    // Use FIFO: oldest unexpired batch with sufficient stock
+    const availableBatches = await db
+      .select()
+      .from(inventoryBatches)
+      .where(
+        and(
+          eq(inventoryBatches.drugId, data.itemId),
+          gte(inventoryBatches.stockQuantity, 1), // Has stock
+          gte(inventoryBatches.expiryDate, new Date()) // Not expired
+        )
+      )
+      .orderBy(inventoryBatches.expiryDate) // FIFO: use oldest first
+      .limit(1)
+
+    if (availableBatches.length === 0) {
+      throw new Error(`Insufficient stock for ${material.name}`)
+    }
+
+    batchToUse = availableBatches[0]
+
+    if (batchToUse.stockQuantity < quantityUsed) {
+      throw new Error(
+        `Insufficient stock. Available: ${batchToUse.stockQuantity} ${material.unit}, Requested: ${quantityUsed} ${material.unit}`
+      )
+    }
+  }
+
+  // 3. Calculate total price
+  const unitPrice = parseFloat(material.price)
+  const totalPrice = (unitPrice * quantityUsed).toFixed(2)
+
+  // 4. Deduct stock from batch
+  await db
+    .update(inventoryBatches)
+    .set({
+      stockQuantity: batchToUse.stockQuantity - quantityUsed,
+      updatedAt: new Date(),
+    })
+    .where(eq(inventoryBatches.id, batchToUse.id))
+
+  // 5. Create stock movement record
+  const [stockMovement] = await db
+    .insert(stockMovements)
+    .values({
+      inventoryId: batchToUse.id,
+      movementType: "out",
+      quantity: -quantityUsed, // Negative for outgoing
+      reason: `Used for patient visit (inpatient material usage)`,
+      referenceId: data.visitId, // Reference to visit
+      performedBy: session?.user.id || null,
+    })
+    .returning()
+
+  // 6. Create material usage record for billing
   await db
     .insert(materialUsage)
     .values({
       visitId: data.visitId,
-      serviceId: data.serviceId,
-      materialName: data.materialName,
-      quantity: parseFloat(data.quantity),
-      unitPrice: data.unitPrice,
+      itemId: data.itemId, // Reference to inventoryItems
+      materialName: material.name,
+      quantity: quantityUsed,
+      unit: material.unit,
+      unitPrice: material.price,
       totalPrice,
       usedBy: session?.user.id || null,
       notes: data.notes || null,
+      stockMovementId: stockMovement.id, // Link to stock movement for audit trail
     })
     .returning()
 }

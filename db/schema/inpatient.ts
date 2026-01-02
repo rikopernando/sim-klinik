@@ -2,6 +2,7 @@ import { pgTable, varchar, text, timestamp, decimal, integer } from "drizzle-orm
 import { visits } from "./visits"
 import { user } from "./auth"
 import { services } from "./billing"
+import { inventoryItems, stockMovements } from "./inventory"
 
 /**
  * Rooms Table
@@ -88,6 +89,7 @@ export const bedAssignments = pgTable("bed_assignments", {
 /**
  * Material Usage Table
  * Track medical materials/supplies used for inpatient care
+ * Uses unified inventory system - materials are in "drugs" table with item_type='material'
  */
 export const materialUsage = pgTable("material_usage", {
   id: text("id")
@@ -97,17 +99,25 @@ export const materialUsage = pgTable("material_usage", {
     .notNull()
     .references(() => visits.id, { onDelete: "cascade" }),
 
-  // Service reference (NEW - preferred approach)
+  // Unified inventory reference (NEW - references drugs table with item_type='material')
+  itemId: text("item_id").references(() => inventoryItems.id),
+
+  // LEGACY: Service reference (kept for backward compatibility, will be deprecated)
   serviceId: text("service_id").references(() => services.id),
 
-  // Legacy fields (kept for backward compatibility, will be deprecated)
+  // Material details (auto-filled from inventory)
   materialName: varchar("material_name", { length: 255 }),
   unit: varchar("unit", { length: 50 }), // pcs, box, unit, etc.
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
 
   // Core fields
-  quantity: integer("quantity").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(), // Changed to decimal for fractional quantities
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+
+  // Stock tracking
+  stockMovementId: text("stock_movement_id").references(() => stockMovements.id), // Link to inventory deduction
+
+  // Audit trail
   usedBy: text("used_by").references(() => user.id), // Staff who used the material
   usedAt: timestamp("used_at", { withTimezone: true }).defaultNow().notNull(),
   notes: text("notes"),

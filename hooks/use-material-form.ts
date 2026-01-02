@@ -1,6 +1,7 @@
 /**
  * useMaterialForm Hook
  * Custom hook for material recording form logic
+ * Uses unified inventory system
  */
 
 import { useState, useCallback, useMemo, Dispatch, SetStateAction } from "react"
@@ -9,15 +10,17 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
 
-import type { Service } from "@/hooks/use-service-search"
+import type { Material } from "@/hooks/use-material-search"
 import { recordMaterialUsage } from "@/lib/services/inpatient.service"
 import { getErrorMessage } from "@/lib/utils/error"
 
 const materialUsageFormSchema = z.object({
-  serviceId: z.string(), // NEW: Service ID for service-based approach
+  itemId: z.string().min(1, "Material harus dipilih"), // Unified inventory item ID
   materialName: z.string().min(1, "Alat Kesehatan wajib diisi"),
+  unit: z.string().min(1, "Satuan wajib diisi"),
   quantity: z.string().min(1, "Jumlah wajib diisi"),
   unitPrice: z.string().min(1, "Harga satuan wajib diisi"),
+  availableStock: z.number().optional(), // For display only
   notes: z.string().optional(),
 })
 
@@ -32,9 +35,9 @@ interface UseMaterialFormOptions {
 interface UseMaterialFormReturn {
   form: ReturnType<typeof useForm<MaterialFormData>>
   totalPrice: string
-  serviceSearch: string
-  setServiceSearch: Dispatch<SetStateAction<string>>
-  handleMaterialSelect: (material: Service) => void
+  materialSearch: string
+  setMaterialSearch: Dispatch<SetStateAction<string>>
+  handleMaterialSelect: (material: Material) => void
   handleSubmit: (data: MaterialFormData) => Promise<void>
   resetForm: () => void
 }
@@ -44,15 +47,17 @@ export function useMaterialForm({
   onSuccess,
   onClose,
 }: UseMaterialFormOptions): UseMaterialFormReturn {
-  const [serviceSearch, setServiceSearch] = useState("")
+  const [materialSearch, setMaterialSearch] = useState("")
 
   const form = useForm<MaterialFormData>({
     resolver: zodResolver(materialUsageFormSchema),
     defaultValues: {
-      serviceId: "", // NEW: Service ID
+      itemId: "",
       materialName: "",
+      unit: "",
       quantity: "",
       unitPrice: "",
+      availableStock: 0,
       notes: "",
     },
   })
@@ -69,11 +74,13 @@ export function useMaterialForm({
 
   // Handle material selection from autocomplete
   const handleMaterialSelect = useCallback(
-    (material: Service) => {
-      form.setValue("serviceId", material.id, { shouldValidate: true }) // NEW: Set service ID
+    (material: Material) => {
+      form.setValue("itemId", material.id, { shouldValidate: true })
       form.setValue("materialName", material.name, { shouldValidate: true })
+      form.setValue("unit", material.unit, { shouldValidate: true })
       form.setValue("unitPrice", material.price, { shouldValidate: true })
-      setServiceSearch(material.name)
+      form.setValue("availableStock", material.totalStock)
+      setMaterialSearch(material.name)
     },
     [form]
   )
@@ -82,18 +89,23 @@ export function useMaterialForm({
   const handleSubmit = useCallback(
     async (data: MaterialFormData) => {
       try {
-        // Use service-based approach if serviceId exists, otherwise fallback to legacy
+        // Check if sufficient stock
+        if (data.availableStock !== undefined && parseFloat(data.quantity) > data.availableStock) {
+          toast.error("Stok tidak mencukupi", {
+            description: `Stok tersedia: ${data.availableStock} ${data.unit}`,
+          })
+          return
+        }
+
         await recordMaterialUsage({
           visitId,
-          serviceId: data.serviceId, // NEW: Send serviceId (preferred)
-          materialName: data.materialName, // Legacy fallback
+          itemId: data.itemId, // Unified inventory item ID
           quantity: data.quantity,
-          unitPrice: data.unitPrice,
           notes: data.notes,
         })
 
         toast.success("Material berhasil dicatat", {
-          description: `${data.materialName} x${data.quantity}`,
+          description: `${data.materialName} x${data.quantity} ${data.unit}`,
         })
 
         // Reset form and close dialog
@@ -110,13 +122,14 @@ export function useMaterialForm({
   // Reset form
   const resetForm = useCallback(() => {
     form.reset()
+    setMaterialSearch("")
   }, [form])
 
   return {
     form,
     totalPrice,
-    serviceSearch,
-    setServiceSearch,
+    materialSearch,
+    setMaterialSearch,
     handleMaterialSelect,
     handleSubmit,
     resetForm,

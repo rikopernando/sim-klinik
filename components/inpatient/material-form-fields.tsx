@@ -1,6 +1,7 @@
 /**
  * Material Form Fields Components
  * Reusable form field components for material recording
+ * Uses unified inventory system
  */
 
 import { memo } from "react"
@@ -8,16 +9,18 @@ import { Controller, UseFormReturn } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
-import { ServiceSearch } from "@/components/medical-records/service-search"
+import { MaterialSearch } from "./material-search"
 import { formatCurrency } from "@/lib/billing/billing-utils"
-import type { Service } from "@/hooks/use-service-search"
+import type { Material } from "@/hooks/use-material-search"
 import { CurrencyInput } from "@/components/ui/currency-input"
 
 interface MaterialFormData {
-  serviceId: string // NEW: Service ID for service-based approach
+  itemId: string // Unified inventory item ID
   materialName: string
+  unit: string
   quantity: string
   unitPrice: string
+  availableStock?: number
   notes?: string
 }
 
@@ -25,7 +28,7 @@ interface MaterialSearchFieldProps {
   form: UseFormReturn<MaterialFormData>
   value: string
   onChange: (value: string) => void
-  onMaterialSelect: (material: Service) => void
+  onMaterialSelect: (material: Material) => void
 }
 
 export const MaterialSearchField = memo(function MaterialSearchField({
@@ -41,20 +44,15 @@ export const MaterialSearchField = memo(function MaterialSearchField({
         name="materialName"
         render={({ fieldState }) => {
           return (
-            <>
-              <ServiceSearch
-                value={value}
-                onChange={onChange}
-                onSelect={onMaterialSelect}
-                label="Cari Alat Kesehatan"
-                placeholder="Ketik nama alat kesehatan..."
-                serviceType="material"
-                required
-              />
-              {fieldState.error?.message && fieldState.invalid && (
-                <FieldError>{fieldState.error.message}</FieldError>
-              )}
-            </>
+            <MaterialSearch
+              value={value}
+              onChange={onChange}
+              onSelect={onMaterialSelect}
+              label="Material / Alat Kesehatan"
+              placeholder="Ketik nama material atau alat kesehatan..."
+              required
+              error={fieldState.error?.message}
+            />
           )
         }}
       />
@@ -69,30 +67,53 @@ interface QuantityUnitFieldsProps {
 export const QuantityUnitFields = memo(function QuantityUnitFields({
   form,
 }: QuantityUnitFieldsProps) {
+  const unit = form.watch("unit")
+  const availableStock = form.watch("availableStock")
+
   return (
-    <Field>
-      <FieldLabel htmlFor="quantity">
-        Jumlah <span className="text-destructive">*</span>
-      </FieldLabel>
-      <Controller
-        control={form.control}
-        name="quantity"
-        render={({ field, fieldState }) => (
-          <>
-            <CurrencyInput
-              min="1"
-              id="quantity"
-              placeholder="1"
-              value={field.value}
-              onValueChange={field.onChange}
-            />
-            {fieldState.error?.message && fieldState.invalid && (
-              <FieldError>{fieldState.error.message}</FieldError>
-            )}
-          </>
-        )}
-      />
-    </Field>
+    <div className="grid grid-cols-2 gap-4">
+      {/* Quantity */}
+      <Field>
+        <FieldLabel htmlFor="quantity">
+          Jumlah <span className="text-destructive">*</span>
+        </FieldLabel>
+        <Controller
+          control={form.control}
+          name="quantity"
+          render={({ field, fieldState }) => (
+            <>
+              <CurrencyInput
+                min="1"
+                id="quantity"
+                placeholder="1"
+                value={field.value}
+                onValueChange={field.onChange}
+              />
+              {fieldState.error?.message && fieldState.invalid && (
+                <FieldError>{fieldState.error.message}</FieldError>
+              )}
+              {availableStock !== undefined && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Stok tersedia: <span className="font-medium">{availableStock} {unit}</span>
+                </p>
+              )}
+            </>
+          )}
+        />
+      </Field>
+
+      {/* Unit (Read-only) */}
+      <Field>
+        <FieldLabel htmlFor="unit">Satuan</FieldLabel>
+        <Input
+          id="unit"
+          type="text"
+          value={unit || "-"}
+          readOnly
+          className="bg-muted"
+        />
+      </Field>
+    </div>
   )
 })
 

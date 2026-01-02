@@ -67,29 +67,20 @@ export const cpptSchema = z.object({
 
 /**
  * Material Usage Schema
- * Supports both new serviceId approach and legacy materialName approach
+ * Uses unified inventory system - materials are in "drugs" table with item_type='material'
  */
-export const materialUsageSchema = z
-  .object({
-    visitId: z.string().min(1, "Visit ID harus valid"),
+export const materialUsageSchema = z.object({
+  visitId: z.string().min(1, "Visit ID harus valid"),
 
-    // NEW: Service-based approach (preferred)
-    serviceId: z.string().min(1, "Service ID harus diisi"),
+  // Unified inventory approach - references drugs table (item_type='material')
+  itemId: z.string().min(1, "Material harus dipilih"),
 
-    // LEGACY: Direct material input (for backward compatibility)
-    materialName: z.string().optional(),
-    unit: z.string().optional(),
-    unitPrice: z.string().optional(),
-
-    // Core fields
-    quantity: z.string().min(1, "Jumlah harus diisi"),
-    usedBy: z.string().optional(),
-    notes: z.string().optional(),
-  })
-  .refine((data) => data.serviceId || data.materialName, {
-    message: "Service ID atau Nama Material harus diisi",
-    path: ["serviceId"],
-  })
+  // Core fields
+  quantity: z.string().min(1, "Jumlah harus diisi"),
+  batchId: z.string().optional(), // Optional: specific inventory batch to use
+  usedBy: z.string().optional(),
+  notes: z.string().optional(),
+})
 
 /**
  * Room Update Schema
