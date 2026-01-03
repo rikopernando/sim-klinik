@@ -79,7 +79,7 @@ export function useMaterialForm({
       form.setValue("materialName", material.name, { shouldValidate: true })
       form.setValue("unit", material.unit, { shouldValidate: true })
       form.setValue("unitPrice", material.price, { shouldValidate: true })
-      form.setValue("availableStock", material.totalStock, { shouldValidate: true })
+      form.setValue("availableStock", parseFloat(material.totalStock), { shouldValidate: true })
       setMaterialSearch(material.name)
     },
     [form]

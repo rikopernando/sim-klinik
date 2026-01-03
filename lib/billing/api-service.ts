@@ -341,24 +341,26 @@ export async function getBillingStatistics() {
 }
 
 /**
- * Get visits ready for billing (RME locked, not yet paid)
+ * Get visits ready for billing
  *
  * Fetches visits that meet the billing criteria:
- * 1. Medical record is locked (RME completed and locked by doctor)
- * 2. Payment is NOT fully completed (pending, partial, or no billing exists)
+ * - OUTPATIENT: Medical record is locked (RME completed)
+ * - INPATIENT: Visit status is 'ready_for_billing' (discharge billing created)
+ * - Payment is NOT fully completed (pending, partial, or no billing exists)
  *
  * This is the BILLING QUEUE - shows visits waiting for payment processing
  *
  * @returns Array of visits with patient, billing, and medical record info
  *
  * Business Rules:
- * - Medical record MUST be locked before billing can be created
- * - Visits with no billing record are included (need billing creation)
+ * - OUTPATIENT: Medical record MUST be locked before billing (cashier creates billing)
+ * - INPATIENT: Billing MUST be created first, then visit marked as ready_for_billing (cashier processes payment only)
+ * - Visits with no billing record are included (outpatient needs billing creation)
  * - Visits with pending or partial payment are included
  * - Visits with fully paid status are excluded
  *
  * Performance optimizations:
- * - Uses LEFT JOIN for optional billing data
+ * - Uses LEFT JOIN for optional billing and medical record data
  * - Efficient WHERE clause with indexed columns
  * - Ordered by creation date (newest first)
  */
@@ -376,10 +378,21 @@ export async function getVisitsReadyForBilling() {
     .leftJoin(billings, eq(visits.id, billings.visitId))
     .where(
       and(
-        // Medical record must be locked (RME completed)
-        eq(medicalRecords.isLocked, true),
+        // Visit must be ready for billing
+        or(
+          // OUTPATIENT: Medical record must be locked
+          and(eq(visits.visitType, "outpatient"), eq(medicalRecords.isLocked, true)),
+          // INPATIENT: Visit status must be ready_for_billing (billing already created)
+          and(eq(visits.visitType, "inpatient"), eq(visits.status, "ready_for_billing"))
+        ),
         // Payment must be incomplete (pending, partial, or no billing exists)
-        or(eq(billings.paymentStatus, "pending"), eq(billings.paymentStatus, "partial"))
+        or(
+          // No billing exists yet (outpatient only - inpatient always has billing)
+          sql`${billings.id} IS NULL`,
+          // Billing exists but not fully paid
+          eq(billings.paymentStatus, "pending"),
+          eq(billings.paymentStatus, "partial")
+        )
       )
     )
     .orderBy(desc(visits.createdAt))

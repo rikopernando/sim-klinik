@@ -6,13 +6,15 @@
 
 import { memo } from "react"
 import { Controller, UseFormReturn } from "react-hook-form"
+
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
-import { MaterialSearch } from "./material-search"
 import { formatCurrency } from "@/lib/billing/billing-utils"
 import type { Material } from "@/types/material"
 import { CurrencyInput } from "@/components/ui/currency-input"
+
+import { MaterialSearch } from "./material-search"
 
 interface MaterialFormData {
   itemId: string // Unified inventory item ID

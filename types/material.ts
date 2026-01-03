@@ -11,7 +11,7 @@ export interface Material {
   price: string
   minimumStock: number
   description: string | null
-  totalStock: number
+  totalStock: string
 }
 
 export interface MaterialBatch {
@@ -64,7 +64,9 @@ export interface MaterialWithStatus extends Material {
  * Helper to determine stock status
  */
 export function getMaterialStockStatus(material: Material): MaterialWithStatus["stockStatus"] {
-  if (material.totalStock === 0) return "out_of_stock"
-  if (material.totalStock < material.minimumStock) return "low_stock"
+  const totalStock = parseFloat(material.totalStock)
+
+  if (totalStock === 0) return "out_of_stock"
+  if (totalStock < material.minimumStock) return "low_stock"
   return "in_stock"
 }
