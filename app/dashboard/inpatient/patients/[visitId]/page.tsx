@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { usePatientDetail } from "@/hooks/use-patient-detail"
+import { usePermission } from "@/hooks/use-permission"
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
 import { PatientInfoCard } from "@/components/inpatient/patient-info-card"
 import { VitalsHistoryTable } from "@/components/inpatient/vitals-history-table"
@@ -32,6 +33,7 @@ export default function PatientDetailPage() {
   const router = useRouter()
 
   const { patientDetail, isLoading, refresh } = usePatientDetail(visitId)
+  const { hasPermission } = usePermission()
 
   if (isLoading) {
     return (
@@ -103,11 +105,13 @@ export default function PatientDetailPage() {
                     : "Belum ada rekaman tanda vital"}
                 </CardDescription>
               </div>
-              <RecordVitalsDialog
-                visitId={visitId}
-                patientName={patientDetail.patient.patientName}
-                onSuccess={refresh}
-              />
+              {hasPermission("inpatient:write") && (
+                <RecordVitalsDialog
+                  visitId={visitId}
+                  patientName={patientDetail.patient.patientName}
+                  onSuccess={refresh}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -127,11 +131,13 @@ export default function PatientDetailPage() {
                     : "Belum ada catatan CPPT"}
                 </CardDescription>
               </div>
-              <CPPTDialog
-                visitId={visitId}
-                patientName={patientDetail.patient.patientName}
-                onSuccess={refresh}
-              />
+              {hasPermission("inpatient:write") && (
+                <CPPTDialog
+                  visitId={visitId}
+                  patientName={patientDetail.patient.patientName}
+                  onSuccess={refresh}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -171,11 +177,13 @@ export default function PatientDetailPage() {
                     : "Belum ada penggunaan lat kesehatan"}
                 </CardDescription>
               </div>
-              <RecordMaterialDialog
-                visitId={visitId}
-                patientName={patientDetail.patient.patientName}
-                onSuccess={refresh}
-              />
+              {hasPermission("inpatient:write") && (
+                <RecordMaterialDialog
+                  visitId={visitId}
+                  patientName={patientDetail.patient.patientName}
+                  onSuccess={refresh}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -201,11 +209,13 @@ export default function PatientDetailPage() {
                     : "Belum ada resep obat"}
                 </CardDescription>
               </div>
-              <CreatePrescriptionDialog
-                visitId={visitId}
-                patientName={patientDetail.patient.patientName}
-                onSuccess={refresh}
-              />
+              {hasPermission("prescriptions:write") && (
+                <CreatePrescriptionDialog
+                  visitId={visitId}
+                  patientName={patientDetail.patient.patientName}
+                  onSuccess={refresh}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -225,11 +235,13 @@ export default function PatientDetailPage() {
                     : "Belum ada tindakan medis"}
                 </CardDescription>
               </div>
-              <CreateProcedureDialog
-                visitId={visitId}
-                patientName={patientDetail.patient.patientName}
-                onSuccess={refresh}
-              />
+              {hasPermission("inpatient:write") && (
+                <CreateProcedureDialog
+                  visitId={visitId}
+                  patientName={patientDetail.patient.patientName}
+                  onSuccess={refresh}
+                />
+              )}
             </div>
           </CardHeader>
           <CardContent>
@@ -238,11 +250,13 @@ export default function PatientDetailPage() {
         </Card>
 
         <Separator />
-        <CompleteDischargeDialog
-          visitId={visitId}
-          patientName={patientDetail.patient.patientName}
-          onSuccess={refresh}
-        />
+        {hasPermission("discharge:write") && (
+          <CompleteDischargeDialog
+            visitId={visitId}
+            patientName={patientDetail.patient.patientName}
+            onSuccess={refresh}
+          />
+        )}
       </div>
     </div>
   )

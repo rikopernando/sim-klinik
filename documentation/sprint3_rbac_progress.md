@@ -104,14 +104,61 @@ export const METHOD = withRBAC(async (request: NextRequest, { user, role }) => {
 ### Super Admin
 - ✅ Full access to all inpatient operations
 
+### 3. Created `usePermission` Hook
+**File:** `/hooks/use-permission.ts`
+
+A client-side React hook for permission checking with the following capabilities:
+- `hasPermission(permission)` - Check single permission
+- `hasAnyPermission(permissions[])` - Check if user has any of the permissions
+- `hasAllPermissions(permissions[])` - Check if user has all permissions
+- `hasRole(role)` - Check if user has specific role
+- `hasAnyRole(roles[])` - Check if user has any of the roles
+- Exposes `userRole`, `userPermissions`, `isLoading` state
+
+### 4. Updated UI Components for Permission-Based Hiding
+
+#### Patient Detail Page
+**File:** `/app/dashboard/inpatient/patients/[visitId]/page.tsx`
+
+Updated to conditionally render action dialogs based on permissions:
+- ✅ `RecordVitalsDialog` - requires `inpatient:write`
+- ✅ `CPPTDialog` - requires `inpatient:write`
+- ✅ `RecordMaterialDialog` - requires `inpatient:write`
+- ✅ `CreatePrescriptionDialog` - requires `prescriptions:write`
+- ✅ `CreateProcedureDialog` - requires `inpatient:write`
+- ✅ `CompleteDischargeDialog` - requires `discharge:write`
+
+#### Room Card Component
+**File:** `/components/inpatient/room-card.tsx`
+
+Updated to conditionally render bed assignment button:
+- ✅ "Alokasi Bed" button - requires `inpatient:manage_beds`
+
+**Pattern Applied:**
+```typescript
+const { hasPermission } = usePermission()
+
+// In JSX
+{hasPermission("inpatient:write") && (
+  <RecordVitalsDialog ... />
+)}
+```
+
 ## 📋 Remaining Tasks (Priority 1: RBAC)
 
-- [ ] Create `usePermission` hook for client-side permission checking
-- [ ] Hide UI elements based on permissions
+- [x] Create inpatient permissions file
+- [x] Apply `withRBAC` to all inpatient routes
+- [x] Create `usePermission` hook for client-side permission checking
+- [x] Hide UI elements based on permissions
 - [ ] Test RBAC with different user roles
 
 ## Next Steps
 
-After completing Priority 1 (RBAC), proceed with:
-- **Priority 2:** Bed Transfer feature
-- **Priority 3:** Data Validation improvements
+1. **Test RBAC with different user roles** (Final task for Priority 1)
+   - Create test users with different roles (nurse, doctor, admin)
+   - Verify API route access control
+   - Verify UI button visibility based on permissions
+
+2. After completing Priority 1, proceed with:
+   - **Priority 2:** Bed Transfer feature
+   - **Priority 3:** Data Validation improvements

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import type { RoomWithOccupancy } from "@/types/inpatient"
+import { usePermission } from "@/hooks/use-permission"
 
 import { BedAssigmentDialog } from "./bed-assignment-dialog"
 
@@ -22,6 +23,7 @@ interface RoomCardProps {
 
 export function RoomCard({ room, onAssignBed }: RoomCardProps) {
   const [isOpenBedAssigment, setOpenBedAssigment] = useState(false)
+  const { hasPermission } = usePermission()
 
   // Status styling
   const getStatusColor = () => {
@@ -125,15 +127,17 @@ export function RoomCard({ room, onAssignBed }: RoomCardProps) {
         )}
 
         {/* Action Button */}
-        <Button
-          size="sm"
-          className="w-full"
-          disabled={room.occupiedBeds === room.bedCount}
-          onClick={() => onAssignBed(room)}
-        >
-          <UserPlus className="mr-2 h-4 w-4" />
-          Alokasi Bed
-        </Button>
+        {hasPermission("inpatient:manage_beds") && (
+          <Button
+            size="sm"
+            className="w-full"
+            disabled={room.occupiedBeds === room.bedCount}
+            onClick={() => onAssignBed(room)}
+          >
+            <UserPlus className="mr-2 h-4 w-4" />
+            Alokasi Bed
+          </Button>
+        )}
       </CardFooter>
     </Card>
   )
