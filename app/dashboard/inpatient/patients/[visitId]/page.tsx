@@ -238,37 +238,11 @@ export default function PatientDetailPage() {
         </Card>
 
         <Separator />
-
-        {/* Complete Discharge Section */}
-        <Card className="border-green-200 bg-green-50/30 dark:border-green-900 dark:bg-green-950/30">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Selesaikan Rawat Inap</CardTitle>
-                <CardDescription>
-                  Tandai rawat inap selesai dan kirim ke kasir untuk proses pembayaran
-                </CardDescription>
-              </div>
-              <CompleteDischargeDialog
-                visitId={visitId}
-                patientName={patientDetail.patient.patientName}
-                onSuccess={refresh}
-              />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
-              <p className="mb-2 text-sm">
-                Klik tombol <strong>&quot;Selesai Rawat Inap&quot;</strong> untuk:
-              </p>
-              <ul className="text-muted-foreground mx-auto max-w-md space-y-1 text-left text-xs">
-                <li>✓ Melihat preview total tagihan</li>
-                <li>✓ Menandai rawat inap selesai</li>
-                <li>✓ Mengirim pasien ke antrian kasir</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+        <CompleteDischargeDialog
+          visitId={visitId}
+          patientName={patientDetail.patient.patientName}
+          onSuccess={refresh}
+        />
       </div>
     </div>
   )

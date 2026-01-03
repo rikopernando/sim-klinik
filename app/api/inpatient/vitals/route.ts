@@ -12,93 +12,97 @@ import {
   recordVitalSigns as recordVitalSignsService,
   getVitalSignsHistory,
 } from "@/lib/inpatient/api-service"
-import { getSession } from "@/lib/rbac"
+import { withRBAC } from "@/lib/rbac/middleware"
 
-export async function POST(request: NextRequest) {
-  try {
-    // Get session to retrieve user ID
-    const session = await getSession()
+/**
+ * POST /api/inpatient/vitals
+ * Record vital signs
+ * Requires: inpatient:write permission
+ */
+export const POST = withRBAC(
+  async (request: NextRequest, { user }) => {
+    try {
+      const body = await request.json()
 
-    if (!session?.user) {
-      const response: ResponseError<unknown> = {
-        error: "Unauthorized",
-        status: HTTP_STATUS_CODES.UNAUTHORIZED,
-        message: "You must be logged in to record vital signs",
+      // Validate request body and override recordedBy with authenticated user ID
+      const validatedData = vitalSignsSchema.parse({
+        ...body,
+        recordedBy: user.id,
+      })
+
+      // Record vital signs
+      const newVitals = await recordVitalSignsService(validatedData)
+
+      const response: ResponseApi<typeof newVitals> = {
+        status: HTTP_STATUS_CODES.CREATED,
+        message: "Vital signs recorded successfully",
+        data: newVitals,
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.UNAUTHORIZED })
-    }
 
-    const body = await request.json()
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
+    } catch (error) {
+      console.error("Error recording vital signs:", error)
 
-    // Validate request body and override recordedBy with session user ID
-    const validatedData = vitalSignsSchema.parse({
-      ...body,
-      recordedBy: session.user.id,
-    })
-
-    // Record vital signs
-    const newVitals = await recordVitalSignsService(validatedData)
-
-    const response: ResponseApi<typeof newVitals> = {
-      status: HTTP_STATUS_CODES.CREATED,
-      message: "Vital signs recorded successfully",
-      data: newVitals,
-    }
-
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
-  } catch (error) {
-    console.error("Error recording vital signs:", error)
-
-    if (error instanceof Error && error.name === "ZodError") {
-      const response: ResponseError<unknown> = {
-        error: "Validation failed",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-        message: "Invalid vital signs data",
+      if (error instanceof Error && error.name === "ZodError") {
+        const response: ResponseError<unknown> = {
+          error: "Validation failed",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "Invalid vital signs data",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
-    }
 
-    const response: ResponseError<unknown> = {
-      error: error instanceof Error ? error.message : "Unknown error",
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      message: "Failed to record vital signs",
-    }
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
-  }
-}
-
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const visitId = searchParams.get("visitId")
-
-    if (!visitId) {
       const response: ResponseError<unknown> = {
-        error: "Missing visitId parameter",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-        message: "visitId is required",
+        error: error instanceof Error ? error.message : "Unknown error",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: "Failed to record vital signs",
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
     }
+  },
+  { permissions: ["inpatient:write"] }
+)
 
-    // Get vitals history
-    const vitals = await getVitalSignsHistory(visitId)
+/**
+ * GET /api/inpatient/vitals
+ * Get vitals history
+ * Requires: inpatient:read permission
+ */
+export const GET = withRBAC(
+  async (request: NextRequest) => {
+    try {
+      const { searchParams } = new URL(request.url)
+      const visitId = searchParams.get("visitId")
 
-    const response: ResponseApi<typeof vitals> = {
-      status: HTTP_STATUS_CODES.OK,
-      message: "Vitals history fetched successfully",
-      data: vitals,
+      if (!visitId) {
+        const response: ResponseError<unknown> = {
+          error: "Missing visitId parameter",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "visitId is required",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
+
+      // Get vitals history
+      const vitals = await getVitalSignsHistory(visitId)
+
+      const response: ResponseApi<typeof vitals> = {
+        status: HTTP_STATUS_CODES.OK,
+        message: "Vitals history fetched successfully",
+        data: vitals,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+    } catch (error) {
+      console.error("Error fetching vitals history:", error)
+
+      const response: ResponseError<unknown> = {
+        error: error instanceof Error ? error.message : "Unknown error",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: "Failed to fetch vitals history",
+      }
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
     }
-
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
-  } catch (error) {
-    console.error("Error fetching vitals history:", error)
-
-    const response: ResponseError<unknown> = {
-      error: error instanceof Error ? error.message : "Unknown error",
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      message: "Failed to fetch vitals history",
-    }
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
-  }
-}
+  },
+  { permissions: ["inpatient:read"] }
+)

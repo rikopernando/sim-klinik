@@ -11,168 +11,190 @@ import { ResponseApi, ResponseError } from "@/types/api"
 import { db } from "@/db"
 import { cppt } from "@/db/schema/medical-records"
 import { cpptSchema } from "@/lib/inpatient/validation"
-import { getSession } from "@/lib/rbac"
+import { withRBAC } from "@/lib/rbac/middleware"
 
 interface RouteParams {
-  params: Promise<{
-    id: string
-  }>
+  id: string
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params
+/**
+ * PUT /api/inpatient/cppt/[id]
+ * Update CPPT entry
+ * Requires: inpatient:write permission
+ */
+export const PUT = withRBAC(
+  async (
+    request: NextRequest,
+    {
+      params,
+      user,
+      role,
+    }: {
+      params: RouteParams
+      user: { id: string; email: string; name: string }
+      role?: string | null
+    }
+  ) => {
+    try {
+      const { id } = params
 
-    if (!id) {
-      const response: ResponseError<unknown> = {
-        error: "Missing CPPT ID",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-        message: "CPPT ID is required",
+      if (!id) {
+        const response: ResponseError<unknown> = {
+          error: "Missing CPPT ID",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "CPPT ID is required",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
-    }
 
-    // Get session to retrieve user ID and role
-    const session = await getSession()
+      // Get the CPPT record
+      const [cpptRecord] = await db.select().from(cppt).where(eq(cppt.id, id))
 
-    if (!session?.user) {
-      const response: ResponseError<unknown> = {
-        error: "Unauthorized",
-        status: HTTP_STATUS_CODES.UNAUTHORIZED,
-        message: "You must be logged in to create CPPT entries",
+      if (!cpptRecord) {
+        const response: ResponseError<unknown> = {
+          error: "CPPT entry not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+          message: "The specified CPPT entry does not exist",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.UNAUTHORIZED })
-    }
 
-    // Get the CPPT record
-    const [cpptRecord] = await db.select().from(cppt).where(eq(cppt.id, id))
+      // Check if record is within 2 hours (7200000 ms)
+      const createdAt = new Date(cpptRecord.createdAt)
+      const now = new Date()
+      const timeDifference = now.getTime() - createdAt.getTime()
+      const twoHoursInMs = 7200000
 
-    if (!cpptRecord) {
-      const response: ResponseError<unknown> = {
-        error: "CPPT entry not found",
-        status: HTTP_STATUS_CODES.NOT_FOUND,
-        message: "The specified CPPT entry does not exist",
+      if (timeDifference > twoHoursInMs) {
+        const response: ResponseError<unknown> = {
+          error: "Edit time window expired",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: "CPPT entries can only be edited within 2 hours of creation",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
-    }
 
-    // Check if record is within 2 hours (7200000 ms)
-    const createdAt = new Date(cpptRecord.createdAt)
-    const now = new Date()
-    const timeDifference = now.getTime() - createdAt.getTime()
-    const twoHoursInMs = 7200000
+      const body = await request.json()
+      // Determine author role from authenticated user's role
+      const authorRole = role === "doctor" ? "doctor" : "nurse"
+      // Validate request body and set authorId and authorRole from authenticated user
+      const validatedData = cpptSchema.parse({
+        ...body,
+        authorId: user.id,
+        authorRole: authorRole,
+      })
 
-    if (timeDifference > twoHoursInMs) {
-      const response: ResponseError<unknown> = {
-        error: "Edit time window expired",
-        status: HTTP_STATUS_CODES.FORBIDDEN,
-        message: "CPPT entries can only be edited within 2 hours of creation",
+      // Update the record
+      const [updatedCPPT] = await db
+        .update(cppt)
+        .set(validatedData)
+        .where(eq(cppt.id, id))
+        .returning()
+
+      const response: ResponseApi<typeof updatedCPPT> = {
+        status: HTTP_STATUS_CODES.OK,
+        message: "CPPT entry updated successfully",
+        data: updatedCPPT,
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
-    }
 
-    const body = await request.json()
-    // Determine author role from session
-    const authorRole = session.user.role === "doctor" ? "doctor" : "nurse"
-    // Validate request body and set authorId and authorRole from session
-    const validatedData = cpptSchema.parse({
-      ...body,
-      authorId: session.user.id,
-      authorRole: authorRole,
-    })
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+    } catch (error) {
+      console.error("Error updating CPPT entry:", error)
 
-    // Update the record
-    const [updatedCPPT] = await db
-      .update(cppt)
-      .set(validatedData)
-      .where(eq(cppt.id, id))
-      .returning()
-
-    const response: ResponseApi<typeof updatedCPPT> = {
-      status: HTTP_STATUS_CODES.OK,
-      message: "CPPT entry updated successfully",
-      data: updatedCPPT,
-    }
-
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
-  } catch (error) {
-    console.error("Error updating CPPT entry:", error)
-
-    if (error instanceof Error && error.name === "ZodError") {
-      const response: ResponseError<unknown> = {
-        error: "Validation failed",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-        message: "Invalid CPPT data",
+      if (error instanceof Error && error.name === "ZodError") {
+        const response: ResponseError<unknown> = {
+          error: "Validation failed",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "Invalid CPPT data",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
-    }
 
-    const response: ResponseError<unknown> = {
-      error: error instanceof Error ? error.message : "Unknown error",
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      message: "Failed to update CPPT entry",
-    }
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
-  }
-}
-
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
-    const { id } = await params
-
-    if (!id) {
       const response: ResponseError<unknown> = {
-        error: "Missing CPPT ID",
-        status: HTTP_STATUS_CODES.BAD_REQUEST,
-        message: "CPPT ID is required",
+        error: error instanceof Error ? error.message : "Unknown error",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: "Failed to update CPPT entry",
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
     }
+  },
+  { permissions: ["inpatient:write"] }
+)
 
-    // Get the CPPT record
-    const [cpptRecord] = await db.select().from(cppt).where(eq(cppt.id, id))
+/**
+ * DELETE /api/inpatient/cppt/[id]
+ * Delete CPPT entry
+ * Requires: inpatient:write permission
+ */
+export const DELETE = withRBAC(
+  async (
+    _request: NextRequest,
+    {
+      params,
+    }: {
+      params: RouteParams
+      user: { id: string; email: string; name: string }
+      role?: string | null
+    }
+  ) => {
+    try {
+      const { id } = params
 
-    if (!cpptRecord) {
+      if (!id) {
+        const response: ResponseError<unknown> = {
+          error: "Missing CPPT ID",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "CPPT ID is required",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
+
+      // Get the CPPT record
+      const [cpptRecord] = await db.select().from(cppt).where(eq(cppt.id, id))
+
+      if (!cpptRecord) {
+        const response: ResponseError<unknown> = {
+          error: "CPPT entry not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+          message: "The specified CPPT entry does not exist",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
+      }
+
+      // Check if record is within 1 hour (3600000 ms)
+      const createdAt = new Date(cpptRecord.createdAt)
+      const now = new Date()
+      const timeDifference = now.getTime() - createdAt.getTime()
+      const oneHourInMs = 3600000
+
+      if (timeDifference > oneHourInMs) {
+        const response: ResponseError<unknown> = {
+          error: "Delete time window expired",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: "CPPT entries can only be deleted within 1 hour of creation",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
+
+      // Delete the record
+      await db.delete(cppt).where(eq(cppt.id, id))
+
+      const response: ResponseApi = {
+        status: HTTP_STATUS_CODES.OK,
+        message: "CPPT entry deleted successfully",
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+    } catch (error) {
+      console.error("Error deleting CPPT entry:", error)
+
       const response: ResponseError<unknown> = {
-        error: "CPPT entry not found",
-        status: HTTP_STATUS_CODES.NOT_FOUND,
-        message: "The specified CPPT entry does not exist",
+        error: error instanceof Error ? error.message : "Unknown error",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        message: "Failed to delete CPPT entry",
       }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
     }
-
-    // Check if record is within 1 hour (3600000 ms)
-    const createdAt = new Date(cpptRecord.createdAt)
-    const now = new Date()
-    const timeDifference = now.getTime() - createdAt.getTime()
-    const oneHourInMs = 3600000
-
-    if (timeDifference > oneHourInMs) {
-      const response: ResponseError<unknown> = {
-        error: "Delete time window expired",
-        status: HTTP_STATUS_CODES.FORBIDDEN,
-        message: "CPPT entries can only be deleted within 1 hour of creation",
-      }
-      return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
-    }
-
-    // Delete the record
-    await db.delete(cppt).where(eq(cppt.id, id))
-
-    const response: ResponseApi = {
-      status: HTTP_STATUS_CODES.OK,
-      message: "CPPT entry deleted successfully",
-    }
-
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
-  } catch (error) {
-    console.error("Error deleting CPPT entry:", error)
-
-    const response: ResponseError<unknown> = {
-      error: error instanceof Error ? error.message : "Unknown error",
-      status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
-      message: "Failed to delete CPPT entry",
-    }
-    return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
-  }
-}
+  },
+  { permissions: ["inpatient:write"] }
+)
