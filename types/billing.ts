@@ -389,6 +389,11 @@ export interface DischargeBillingSummary {
       amount: string
       count: number
     }
+    serviceCharges: {
+      label: string
+      amount: string
+      count: number
+    }
   }
   subtotal: string
   totalItems: number

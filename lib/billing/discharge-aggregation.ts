@@ -30,6 +30,7 @@ export interface DischargeBillingAggregate {
     materialCharges: string
     medicationCharges: string
     procedureCharges: string
+    serviceCharges: string
   }
   subtotal: string
   itemCount: number
@@ -196,6 +197,23 @@ async function aggregateProcedureCharges(visitId: string): Promise<BillingItemIn
 }
 
 /**
+ * Aggregate service charges (consultations, etc.)
+ * Can be expanded to include doctor consultations, nurse services, etc.
+ */
+async function aggregateServiceCharges(visitId: string): Promise<BillingItemInput[]> {
+  // TODO: Implement service charge aggregation
+  // This could include:
+  // - Doctor consultation fees (from visits table)
+  // - Nursing care fees
+  // - Emergency room fees
+  // - Other billable services not captured elsewhere
+
+  // For now, return empty array
+  // Can be expanded based on business requirements
+  return []
+}
+
+/**
  * Main aggregation function
  * Collects all billable items for an inpatient visit
  */
@@ -221,15 +239,23 @@ export async function aggregateDischargebilling(
   }
 
   // Aggregate all charges in parallel for performance
-  const [roomItems, materialItems, medicationItems, procedureItems] = await Promise.all([
-    aggregateRoomCharges(visitId),
-    aggregateMaterialCharges(visitId),
-    aggregateMedicationCharges(visitId),
-    aggregateProcedureCharges(visitId),
-  ])
+  const [roomItems, materialItems, medicationItems, procedureItems, serviceItems] =
+    await Promise.all([
+      aggregateRoomCharges(visitId),
+      aggregateMaterialCharges(visitId),
+      aggregateMedicationCharges(visitId),
+      aggregateProcedureCharges(visitId),
+      aggregateServiceCharges(visitId),
+    ])
 
   // Combine all items
-  const allItems = [...roomItems, ...materialItems, ...medicationItems, ...procedureItems]
+  const allItems = [
+    ...roomItems,
+    ...materialItems,
+    ...medicationItems,
+    ...procedureItems,
+    ...serviceItems,
+  ]
 
   // Calculate breakdown totals
   const calculateTotal = (items: BillingItemInput[]) =>
@@ -240,6 +266,7 @@ export async function aggregateDischargebilling(
     materialCharges: calculateTotal(materialItems),
     medicationCharges: calculateTotal(medicationItems),
     procedureCharges: calculateTotal(procedureItems),
+    serviceCharges: calculateTotal(serviceItems),
   }
 
   const subtotal = calculateTotal(allItems)
@@ -284,6 +311,11 @@ export async function getDischargeBillingSummary(
         label: "Tindakan Medis",
         amount: aggregate.breakdown.procedureCharges,
         count: aggregate.items.filter((i) => i.itemType === "service").length,
+      },
+      serviceCharges: {
+        label: "Layanan Lainnya",
+        amount: aggregate.breakdown.serviceCharges,
+        count: 0, // Will be updated when service aggregation is implemented
       },
     },
     subtotal: aggregate.subtotal,
