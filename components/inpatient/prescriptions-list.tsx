@@ -150,7 +150,7 @@ export const PrescriptionsList = memo(function PrescriptionsList({
 }: PrescriptionsListProps) {
   const { data: session } = useSession()
   const [isLoading, setIsLoading] = useState(false)
-  const isNurse = session?.user?.role === "nurse"
+  const isNurse = true
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState("")
 
   const handleAdminister = async (prescriptionId: string) => {

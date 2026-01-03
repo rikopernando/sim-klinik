@@ -32,6 +32,13 @@ export interface DischargeBillingAggregate {
     procedureCharges: string
     serviceCharges: string
   }
+  counts: {
+    roomCount: number
+    materialCount: number
+    medicationCount: number
+    procedureCount: number
+    serviceCount: number
+  }
   subtotal: string
   itemCount: number
 }
@@ -197,20 +204,59 @@ async function aggregateProcedureCharges(visitId: string): Promise<BillingItemIn
 }
 
 /**
- * Aggregate service charges (consultations, etc.)
- * Can be expanded to include doctor consultations, nurse services, etc.
+ * Aggregate service charges (administration, consultation)
+ * Includes standard fees that apply to inpatient visits
  */
-async function aggregateServiceCharges(visitId: string): Promise<BillingItemInput[]> {
-  // TODO: Implement service charge aggregation
-  // This could include:
-  // - Doctor consultation fees (from visits table)
-  // - Nursing care fees
-  // - Emergency room fees
-  // - Other billable services not captured elsewhere
+async function aggregateServiceCharges(): Promise<BillingItemInput[]> {
+  const serviceItems: BillingItemInput[] = []
 
-  // For now, return empty array
-  // Can be expanded based on business requirements
-  return []
+  // 1. Add Administration Fee
+  const adminService = await db
+    .select()
+    .from(services)
+    .where(and(eq(services.serviceType, "administration"), eq(services.isActive, true)))
+    .limit(1)
+
+  if (adminService.length > 0) {
+    const service = adminService[0]
+    const price = parseFloat(service.price)
+    serviceItems.push({
+      itemType: "service" as const,
+      itemId: service.id,
+      itemName: service.name,
+      itemCode: service.code || undefined,
+      quantity: 1,
+      unitPrice: service.price,
+      discount: "0",
+      totalPrice: price.toFixed(2),
+      description: "Biaya administrasi pendaftaran rawat inap",
+    })
+  }
+
+  // 2. Add Doctor Consultation Fee
+  const consultationService = await db
+    .select()
+    .from(services)
+    .where(and(eq(services.serviceType, "consultation"), eq(services.isActive, true)))
+    .limit(1)
+
+  if (consultationService.length > 0) {
+    const service = consultationService[0]
+    const price = parseFloat(service.price)
+    serviceItems.push({
+      itemType: "service" as const,
+      itemId: service.id,
+      itemName: service.name,
+      itemCode: service.code || undefined,
+      quantity: 1,
+      unitPrice: service.price,
+      discount: "0",
+      totalPrice: price.toFixed(2),
+      description: "Biaya konsultasi dokter rawat inap",
+    })
+  }
+
+  return serviceItems
 }
 
 /**
@@ -245,7 +291,7 @@ export async function aggregateDischargebilling(
       aggregateMaterialCharges(visitId),
       aggregateMedicationCharges(visitId),
       aggregateProcedureCharges(visitId),
-      aggregateServiceCharges(visitId),
+      aggregateServiceCharges(),
     ])
 
   // Combine all items
@@ -269,12 +315,21 @@ export async function aggregateDischargebilling(
     serviceCharges: calculateTotal(serviceItems),
   }
 
+  const counts = {
+    roomCount: roomItems.length,
+    materialCount: materialItems.length,
+    medicationCount: medicationItems.length,
+    procedureCount: procedureItems.length,
+    serviceCount: serviceItems.length,
+  }
+
   const subtotal = calculateTotal(allItems)
 
   return {
     visitId,
     items: allItems,
     breakdown,
+    counts,
     subtotal,
     itemCount: allItems.length,
   }
@@ -295,27 +350,27 @@ export async function getDischargeBillingSummary(
       roomCharges: {
         label: "Biaya Kamar & Rawat Inap",
         amount: aggregate.breakdown.roomCharges,
-        count: aggregate.items.filter((i) => i.itemType === "room").length,
+        count: aggregate.counts.roomCount,
       },
       materialCharges: {
         label: "Alat Kesehatan & Material",
         amount: aggregate.breakdown.materialCharges,
-        count: aggregate.items.filter((i) => i.itemType === "material").length,
+        count: aggregate.counts.materialCount,
       },
       medicationCharges: {
         label: "Obat-obatan",
         amount: aggregate.breakdown.medicationCharges,
-        count: aggregate.items.filter((i) => i.itemType === "drug").length,
+        count: aggregate.counts.medicationCount,
       },
       procedureCharges: {
         label: "Tindakan Medis",
         amount: aggregate.breakdown.procedureCharges,
-        count: aggregate.items.filter((i) => i.itemType === "service").length,
+        count: aggregate.counts.procedureCount,
       },
       serviceCharges: {
-        label: "Layanan Lainnya",
+        label: "Administrasi & Konsultasi",
         amount: aggregate.breakdown.serviceCharges,
-        count: 0, // Will be updated when service aggregation is implemented
+        count: aggregate.counts.serviceCount,
       },
     },
     subtotal: aggregate.subtotal,
