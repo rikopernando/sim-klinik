@@ -6,7 +6,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { visits } from "@/db/schema/visits"
-import { createInpatientDischargeBilling } from "@/lib/billing/api-service"
+import { billingItems } from "@/db/schema/billing"
+import { createInpatientDischargeBilling, recalculateBilling } from "@/lib/billing/api-service"
 import { z } from "zod"
 import { eq, and } from "drizzle-orm"
 import { ResponseApi, ResponseError } from "@/types/api"
@@ -17,6 +18,8 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
  */
 const createDischargeBillingSchema = z.object({
   visitId: z.string().min(1, "Visit ID is required"),
+  billingAdjustment: z.number().optional(), // Positive = surcharge, Negative = discount
+  adjustmentNote: z.string().optional(), // Note explaining the adjustment
 })
 
 /**
@@ -60,19 +63,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
     }
 
-    // Create discharge billing (aggregates all inpatient charges)
-    await createInpatientDischargeBilling(validatedData.visitId)
+    // Wrap all operations in a transaction for atomicity
+    await db.transaction(async (tx) => {
+      // 1. Create discharge billing (aggregates all inpatient charges)
+      const billingId = await createInpatientDischargeBilling(validatedData.visitId, tx)
 
-    // Update visit status to ready_for_billing
-    // This makes the visit appear in billing queue with billing already created
-    await db
-      .update(visits)
-      .set({
-        status: "ready_for_billing",
-        // endTime: new Date(),
-        // dischargeDate: new Date(),
-      })
-      .where(and(eq(visits.id, validatedData.visitId), eq(visits.visitType, "inpatient")))
+      // 2. Apply billing adjustment if provided
+      if (validatedData.billingAdjustment && validatedData.billingAdjustment !== 0) {
+        const adjustmentAmount = validatedData.billingAdjustment
+        const isDiscount = adjustmentAmount < 0
+
+        // Add billing item for adjustment
+        await tx.insert(billingItems).values({
+          billingId,
+          itemType: "adjustment",
+          itemId: null,
+          itemName: isDiscount ? "Diskon Rawat Inap" : "Biaya Tambahan Rawat Inap",
+          itemCode: "INPATIENT_ADJ",
+          quantity: 1,
+          unitPrice: adjustmentAmount.toString(),
+          subtotal: adjustmentAmount.toString(),
+          discount: "0",
+          totalPrice: adjustmentAmount.toString(),
+          description:
+            validatedData.adjustmentNote ||
+            (isDiscount ? "Diskon diberikan untuk rawat inap" : "Biaya tambahan rawat inap"),
+        })
+
+        // 3. Recalculate billing totals
+        await recalculateBilling(validatedData.visitId, tx)
+      }
+
+      // 4. Update visit status to ready_for_billing
+      // This makes the visit appear in billing queue with billing already created
+      await tx
+        .update(visits)
+        .set({
+          status: "ready_for_billing",
+          // endTime: new Date(),
+          // dischargeDate: new Date(),
+        })
+        .where(and(eq(visits.id, validatedData.visitId), eq(visits.visitType, "inpatient")))
+    })
 
     const response: ResponseApi = {
       message: "Discharge billing created successfully",

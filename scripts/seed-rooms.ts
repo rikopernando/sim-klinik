@@ -182,8 +182,7 @@ const ROOM_DATA = [
     floor: "3",
     building: "Gedung A",
     dailyRate: "2500000",
-    facilities:
-      "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
+    facilities: "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
     description: "Intensive Care Unit dengan peralatan lengkap",
   },
   {
@@ -194,8 +193,7 @@ const ROOM_DATA = [
     floor: "3",
     building: "Gedung A",
     dailyRate: "2500000",
-    facilities:
-      "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
+    facilities: "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
     description: "Intensive Care Unit dengan peralatan lengkap",
   },
   {
@@ -206,8 +204,7 @@ const ROOM_DATA = [
     floor: "3",
     building: "Gedung A",
     dailyRate: "2500000",
-    facilities:
-      "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
+    facilities: "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
     description: "Intensive Care Unit dengan peralatan lengkap",
   },
   {
@@ -218,8 +215,7 @@ const ROOM_DATA = [
     floor: "3",
     building: "Gedung A",
     dailyRate: "2500000",
-    facilities:
-      "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
+    facilities: "Ventilator, Monitor Jantung, AC, Peralatan Medis Lengkap, Nurse Station 24/7",
     description: "Intensive Care Unit dengan peralatan lengkap",
   },
 
@@ -232,8 +228,7 @@ const ROOM_DATA = [
     floor: "4",
     building: "Gedung C",
     dailyRate: "1000000",
-    facilities:
-      "AC dengan Filter HEPA, Tekanan Negatif, Kamar Mandi Dalam, Airlock Entrance",
+    facilities: "AC dengan Filter HEPA, Tekanan Negatif, Kamar Mandi Dalam, Airlock Entrance",
     description: "Ruang isolasi untuk penyakit menular",
   },
   {
@@ -244,8 +239,7 @@ const ROOM_DATA = [
     floor: "4",
     building: "Gedung C",
     dailyRate: "1000000",
-    facilities:
-      "AC dengan Filter HEPA, Tekanan Negatif, Kamar Mandi Dalam, Airlock Entrance",
+    facilities: "AC dengan Filter HEPA, Tekanan Negatif, Kamar Mandi Dalam, Airlock Entrance",
     description: "Ruang isolasi untuk penyakit menular",
   },
   {
@@ -256,8 +250,7 @@ const ROOM_DATA = [
     floor: "4",
     building: "Gedung C",
     dailyRate: "1000000",
-    facilities:
-      "AC dengan Filter HEPA, Tekanan Negatif, Kamar Mandi Dalam, Airlock Entrance",
+    facilities: "AC dengan Filter HEPA, Tekanan Negatif, Kamar Mandi Dalam, Airlock Entrance",
     description: "Ruang isolasi untuk penyakit menular",
   },
 ]
