@@ -7,24 +7,11 @@ import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { toast } from "sonner"
-import { createInpatientPrescription } from "@/lib/services/inpatient.service"
-import { type Drug } from "@/hooks/use-drug-search"
 import { useCallback, useState } from "react"
 
-const prescriptionItemSchema = z.object({
-  drugId: z.string().min(1, "Obat harus dipilih"),
-  drugName: z.string().min(1),
-  drugPrice: z.string().optional(),
-  dosage: z.string().optional(),
-  frequency: z.string().min(1, "Frekuensi harus diisi"),
-  route: z.string().optional(),
-  quantity: z.number().int().positive("Jumlah harus positif"),
-  instructions: z.string().optional(),
-  isRecurring: z.boolean(),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-  administrationSchedule: z.string().optional(),
-})
+import { createInpatientPrescription } from "@/lib/services/inpatient.service"
+import { type Drug } from "@/hooks/use-drug-search"
+import { prescriptionItemSchema } from "@/lib/inpatient/validation"
 
 const prescriptionFormSchema = z.object({
   prescriptions: z.array(prescriptionItemSchema).min(1, "Minimal 1 resep harus ditambahkan"),

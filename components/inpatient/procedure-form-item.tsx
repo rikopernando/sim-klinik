@@ -151,6 +151,7 @@ export const ProcedureFormItem = memo(function ProcedureFormItem({
             />
           </div>
           <FieldDescription>Kapan tindakan dijadwalkan untuk dilakukan</FieldDescription>
+          <FieldError errors={[form.formState.errors.procedures?.[index]?.scheduledDate]} />
         </Field>
       </div>
 

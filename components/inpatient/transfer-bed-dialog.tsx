@@ -9,7 +9,7 @@ import { useState, useMemo } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { Loader2 } from "lucide-react"
+import { Loader2, MoveHorizontalIcon } from "lucide-react"
 
 import {
   Dialog,
@@ -99,7 +99,12 @@ export function TransferBedDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button variant="outline">Transfer Bed</Button>}
+        {trigger || (
+          <Button variant="outline">
+            <MoveHorizontalIcon className="h-4 w-4" />
+            Transfer Bed
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>

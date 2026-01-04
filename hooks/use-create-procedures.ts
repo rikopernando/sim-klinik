@@ -13,16 +13,55 @@ import { format } from "date-fns"
 import { createInpatientProcedure } from "@/lib/services/inpatient.service"
 import { type Service } from "@/hooks/use-service-search"
 
-const procedureItemSchema = z.object({
-  serviceId: z.string().optional(),
-  serviceName: z.string().min(1, "Nama tindakan harus diisi"),
-  description: z.string().min(1, "Deskripsi harus diisi"),
-  icd9Code: z.string().optional(),
-  servicePrice: z.string().optional(),
-  scheduledDate: z.date().optional(),
-  scheduledTime: z.string().optional(),
-  notes: z.string().optional(),
-})
+const procedureItemSchema = z
+  .object({
+    serviceId: z.string().optional(),
+    serviceName: z.string().min(1, "Nama tindakan harus diisi"),
+    description: z.string().min(1, "Deskripsi harus diisi"),
+    icd9Code: z.string().optional(),
+    servicePrice: z.string().optional(),
+    scheduledDate: z.date().optional(),
+    scheduledTime: z.string().optional(),
+    notes: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      const scheduledAt = data.scheduledDate
+        ? `${format(data.scheduledDate, "yyyy-MM-dd")}T${data.scheduledTime || "00:00"}:00`
+        : undefined
+      // If scheduledAt is provided, validate it's a valid date
+      if (scheduledAt) {
+        const scheduledDate = new Date(scheduledAt)
+        if (isNaN(scheduledDate.getTime())) {
+          return false
+        }
+      }
+      return true
+    },
+    {
+      message: "Format tanggal jadwal tidak valid",
+      path: ["scheduledDate"],
+    }
+  )
+  .refine(
+    (data) => {
+      const scheduledAt = data.scheduledDate
+        ? `${format(data.scheduledDate, "yyyy-MM-dd")}T${data.scheduledTime || "00:00"}:00`
+        : undefined
+      // scheduledAt should not be too far in the past (max 24 hours)
+      if (scheduledAt) {
+        const scheduledDate = new Date(scheduledAt)
+        const now = new Date()
+        const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000)
+        return scheduledDate >= twentyFourHoursAgo
+      }
+      return true
+    },
+    {
+      message: "Tanggal jadwal tidak boleh lebih dari 24 jam yang lalu",
+      path: ["scheduledDate"],
+    }
+  )
 
 const procedureFormSchema = z.object({
   procedures: z.array(procedureItemSchema).min(1, "Minimal 1 tindakan harus ditambahkan"),

@@ -44,8 +44,14 @@ export const POST = withRBAC(
 
         // 2. Find current active bed assignment
         const [currentAssignment] = await tx
-          .select()
+          .select({
+            roomNumber: rooms.roomNumber,
+            id: bedAssignments.id,
+            roomId: bedAssignments.roomId,
+            bedNumber: bedAssignments.bedNumber,
+          })
           .from(bedAssignments)
+          .leftJoin(rooms, eq(bedAssignments.roomId, rooms.id))
           .where(
             and(
               eq(bedAssignments.visitId, validatedData.visitId),
@@ -118,7 +124,7 @@ export const POST = withRBAC(
           roomId: validatedData.newRoomId,
           bedNumber: validatedData.newBedNumber,
           assignedBy: user.id,
-          notes: `Transfer dari Kamar ${currentAssignment.roomId} Bed ${currentAssignment.bedNumber}. Alasan: ${validatedData.transferReason}`,
+          notes: `Transfer dari Kamar ${currentAssignment.roomNumber} Bed ${currentAssignment.bedNumber}. Alasan: ${validatedData.transferReason}`,
           assignedAt: sql`CURRENT_TIMESTAMP`,
         })
 

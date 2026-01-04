@@ -7,17 +7,33 @@
 
 import { BedDouble, ArrowRight, User, Calendar, Coins } from "lucide-react"
 
+import { usePermission } from "@/hooks/use-permission"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { TransferBedDialog } from "@/components/inpatient/transfer-bed-dialog"
 import type { BedAssignmentHistoryItem } from "@/types/inpatient"
 import { formatDate, formatDateTime } from "@/lib/utils/date"
 import { formatCurrency } from "@/lib/utils/billing"
 
 interface BedAssignmentHistoryProps {
   history: BedAssignmentHistoryItem[]
+  visitId: string
+  patientName: string
+  currentRoomNumber?: string
+  currentBedNumber?: string
+  onSuccess?: () => void
 }
 
-export function BedAssignmentHistory({ history }: BedAssignmentHistoryProps) {
+export function BedAssignmentHistory({
+  history,
+  visitId,
+  patientName,
+  currentRoomNumber,
+  currentBedNumber,
+  onSuccess,
+}: BedAssignmentHistoryProps) {
+  const { hasPermission } = usePermission()
+
   if (history.length === 0) {
     return (
       <Card>
@@ -54,7 +70,17 @@ export function BedAssignmentHistory({ history }: BedAssignmentHistoryProps) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        {/* Transfer Bed Button */}
+        {hasPermission("inpatient:manage_beds") && currentRoomNumber && (
+          <TransferBedDialog
+            visitId={visitId}
+            patientName={patientName}
+            currentRoomNumber={currentRoomNumber}
+            currentBedNumber={currentBedNumber}
+            onSuccess={onSuccess}
+          />
+        )}
+        <div className="mt-4 space-y-4">
           {/* Current Assignment */}
           {currentAssignment && (
             <div className="border-l-4 border-l-green-500 bg-green-50 p-4 dark:bg-green-950/20">

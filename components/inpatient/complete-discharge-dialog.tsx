@@ -99,10 +99,12 @@ export function CompleteDischargeDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button variant="default" size="lg">
-          <IconCheck className="mr-2 h-5 w-5" />
-          Selesai Rawat Inap
-        </Button>
+        <div className="flex justify-end">
+          <Button variant="default" size="lg">
+            <IconCheck className="mr-2 h-5 w-5" />
+            Selesai Rawat Inap
+          </Button>
+        </div>
       </DialogTrigger>
 
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
