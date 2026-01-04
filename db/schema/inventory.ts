@@ -1,5 +1,5 @@
 import { pgTable, varchar, text, timestamp, decimal, boolean, integer } from "drizzle-orm/pg-core"
-import { medicalRecords, cppt } from "./medical-records"
+import { medicalRecords } from "./medical-records"
 import { visits } from "./visits"
 import { user } from "./auth"
 
@@ -83,14 +83,13 @@ export const prescriptions = pgTable("prescriptions", {
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
 
-  // OUTPATIENT reference (one-time prescription)
+  // Medical record reference (can be outpatient consultation or inpatient progress note)
   medicalRecordId: text("medical_record_id").references(() => medicalRecords.id, {
     onDelete: "cascade",
   }),
 
-  // INPATIENT references (daily/recurring medications)
+  // Visit reference (for inpatient prescriptions)
   visitId: text("visit_id").references(() => visits.id, { onDelete: "cascade" }),
-  cpptId: text("cppt_id").references(() => cppt.id), // Optional - which CPPT entry ordered it
 
   drugId: text("drug_id") // Keep original column name for compatibility
     .notNull()

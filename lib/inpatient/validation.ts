@@ -220,21 +220,41 @@ export const vitalSignsSchema = z
   )
 
 /**
- * CPPT Schema
+ * Medical Record Schema (Unified)
+ * Replaces separate medical_records and CPPT schemas
+ * Supports multiple record types for different clinical documentation needs
  */
-export const cpptSchema = z.object({
+export const medicalRecordSchema = z.object({
   visitId: z.string().min(1, "Visit ID harus valid"),
   authorId: z.string().min(1, "Author ID is required"),
-  authorRole: z.enum(["doctor", "nurse"], {
+  authorRole: z.enum(["doctor", "nurse", "specialist"], {
     message: "Author role is required",
   }),
-  subjective: z.string().optional(),
-  objective: z.string().optional(),
-  assessment: z.string().optional(),
-  plan: z.string().optional(),
-  progressNote: z.string().min(1, "Progress note is required"),
+  recordType: z
+    .enum(["initial_consultation", "progress_note", "discharge_summary", "procedure_note", "specialist_consultation"])
+    .default("progress_note"),
+
+  // SOAP Notes (used across all record types)
+  soapSubjective: z.string().optional(),
+  soapObjective: z.string().optional(),
+  soapAssessment: z.string().optional(),
+  soapPlan: z.string().optional(),
+
+  // Progress documentation (primarily for progress notes)
+  progressNote: z.string().optional(),
   instructions: z.string().optional(),
+
+  // Additional clinical documentation (primarily for initial consultations)
+  physicalExam: z.string().optional(),
+  laboratoryResults: z.string().optional(),
+  radiologyResults: z.string().optional(),
 })
+
+/**
+ * DEPRECATED: Use medicalRecordSchema instead
+ * Kept for backward compatibility - will be removed in future version
+ */
+export const cpptSchema = medicalRecordSchema
 
 /**
  * Material Usage Schema
@@ -615,7 +635,8 @@ export type RoomInput = z.infer<typeof roomSchema>
 export type BedAssignmentInput = z.infer<typeof bedAssignmentSchema>
 export type BedTransferInput = z.infer<typeof bedTransferSchema>
 export type VitalSignsInput = z.infer<typeof vitalSignsSchema>
-export type CPPTInput = z.infer<typeof cpptSchema>
+export type MedicalRecordInput = z.infer<typeof medicalRecordSchema>
+export type CPPTInput = z.infer<typeof cpptSchema> // Deprecated: Use MedicalRecordInput
 export type MaterialUsageInput = z.infer<typeof materialUsageSchema>
 export type RoomUpdateInput = z.infer<typeof roomUpdateSchema>
 export type InpatientPrescriptionInput = z.infer<typeof inpatientPrescriptionSchema>
