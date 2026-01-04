@@ -1,7 +1,10 @@
 /**
- * Inpatient CPPT Edit/Delete API Endpoint
- * PUT /api/inpatient/cppt/[id] - Edit CPPT entry (within 2 hours)
- * DELETE /api/inpatient/cppt/[id] - Delete CPPT entry (within 1 hour)
+ * Inpatient Medical Record (Progress Note) Edit/Delete API Endpoint
+ * PUT /api/inpatient/cppt/[id] - Edit progress note (within 2 hours)
+ * DELETE /api/inpatient/cppt/[id] - Delete progress note (within 1 hour)
+ *
+ * Note: This endpoint maintains "cppt" in the URL for backward compatibility,
+ * but internally uses the unified medical_records table with recordType='progress_note'
  */
 
 import { NextRequest, NextResponse } from "next/server"
@@ -9,8 +12,8 @@ import { eq } from "drizzle-orm"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { db } from "@/db"
-import { cppt } from "@/db/schema/medical-records"
-import { cpptSchema } from "@/lib/inpatient/validation"
+import { medicalRecords } from "@/db/schema/medical-records"
+import { medicalRecordSchema } from "@/lib/inpatient/validation"
 import { withRBAC } from "@/lib/rbac/middleware"
 
 interface RouteParams {
@@ -47,20 +50,20 @@ export const PUT = withRBAC(
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
 
-      // Get the CPPT record
-      const [cpptRecord] = await db.select().from(cppt).where(eq(cppt.id, id))
+      // Get the medical record
+      const [record] = await db.select().from(medicalRecords).where(eq(medicalRecords.id, id))
 
-      if (!cpptRecord) {
+      if (!record) {
         const response: ResponseError<unknown> = {
-          error: "CPPT entry not found",
+          error: "Medical record not found",
           status: HTTP_STATUS_CODES.NOT_FOUND,
-          message: "The specified CPPT entry does not exist",
+          message: "The specified medical record does not exist",
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
       }
 
       // Check if record is within 2 hours (7200000 ms)
-      const createdAt = new Date(cpptRecord.createdAt)
+      const createdAt = new Date(record.createdAt)
       const now = new Date()
       const timeDifference = now.getTime() - createdAt.getTime()
       const twoHoursInMs = 7200000
@@ -76,25 +79,29 @@ export const PUT = withRBAC(
 
       const body = await request.json()
       // Determine author role from authenticated user's role
-      const authorRole = role === "doctor" ? "doctor" : "nurse"
-      // Validate request body and set authorId and authorRole from authenticated user
-      const validatedData = cpptSchema.parse({
+      const authorRole = role === "doctor" ? ("doctor" as const) : ("nurse" as const)
+      // Validate request body and set authorId, authorRole, and recordType
+      const validatedData = medicalRecordSchema.parse({
         ...body,
         authorId: user.id,
         authorRole: authorRole,
+        recordType: "progress_note", // Explicitly set as progress note
       })
 
       // Update the record
-      const [updatedCPPT] = await db
-        .update(cppt)
-        .set(validatedData)
-        .where(eq(cppt.id, id))
+      const [updatedRecord] = await db
+        .update(medicalRecords)
+        .set({
+          ...validatedData,
+          updatedAt: new Date(),
+        })
+        .where(eq(medicalRecords.id, id))
         .returning()
 
-      const response: ResponseApi<typeof updatedCPPT> = {
+      const response: ResponseApi<typeof updatedRecord> = {
         status: HTTP_STATUS_CODES.OK,
-        message: "CPPT entry updated successfully",
-        data: updatedCPPT,
+        message: "Progress note updated successfully",
+        data: updatedRecord,
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
@@ -149,20 +156,20 @@ export const DELETE = withRBAC(
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
 
-      // Get the CPPT record
-      const [cpptRecord] = await db.select().from(cppt).where(eq(cppt.id, id))
+      // Get the medical record
+      const [record] = await db.select().from(medicalRecords).where(eq(medicalRecords.id, id))
 
-      if (!cpptRecord) {
+      if (!record) {
         const response: ResponseError<unknown> = {
-          error: "CPPT entry not found",
+          error: "Medical record not found",
           status: HTTP_STATUS_CODES.NOT_FOUND,
-          message: "The specified CPPT entry does not exist",
+          message: "The specified medical record does not exist",
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
       }
 
       // Check if record is within 1 hour (3600000 ms)
-      const createdAt = new Date(cpptRecord.createdAt)
+      const createdAt = new Date(record.createdAt)
       const now = new Date()
       const timeDifference = now.getTime() - createdAt.getTime()
       const oneHourInMs = 3600000
@@ -171,17 +178,17 @@ export const DELETE = withRBAC(
         const response: ResponseError<unknown> = {
           error: "Delete time window expired",
           status: HTTP_STATUS_CODES.FORBIDDEN,
-          message: "CPPT entries can only be deleted within 1 hour of creation",
+          message: "Progress notes can only be deleted within 1 hour of creation",
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
       }
 
       // Delete the record
-      await db.delete(cppt).where(eq(cppt.id, id))
+      await db.delete(medicalRecords).where(eq(medicalRecords.id, id))
 
       const response: ResponseApi = {
         status: HTTP_STATUS_CODES.OK,
-        message: "CPPT entry deleted successfully",
+        message: "Progress note deleted successfully",
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })

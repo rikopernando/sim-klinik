@@ -30,9 +30,7 @@ export const medicalRecords = pgTable("medical_records", {
   authorRole: varchar("author_role", { length: 20 }).notNull(), // doctor, nurse, specialist
 
   // Record type - determines workflow and locking behavior
-  recordType: varchar("record_type", { length: 30 })
-    .notNull()
-    .default("initial_consultation"), // initial_consultation, progress_note, discharge_summary, procedure_note, specialist_consultation
+  recordType: varchar("record_type", { length: 30 }).notNull().default("initial_consultation"), // initial_consultation, progress_note, discharge_summary, procedure_note, specialist_consultation
 
   // SOAP Notes
   soapSubjective: text("soap_subjective"), // Patient's complaints and history

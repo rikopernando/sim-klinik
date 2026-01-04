@@ -43,7 +43,7 @@ export const GET = withRBAC(
           visitId: medicalRecords.visitId,
         })
         .from(medicalRecords)
-        .where(and(eq(medicalRecords.doctorId, user.id), eq(medicalRecords.isLocked, false)))
+        .where(and(eq(medicalRecords.authorId, user.id), eq(medicalRecords.isLocked, false)))
 
       // Get total patients seen (all time)
       const totalPatientsResult = await db

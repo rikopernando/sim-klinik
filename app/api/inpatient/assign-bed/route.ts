@@ -170,6 +170,7 @@ export const POST = withRBAC(
         await tx
           .update(visits)
           .set({
+            status: "in_examination",
             roomId: validatedData.roomId,
             admissionDate: sql`COALESCE(${visits.admissionDate}, CURRENT_TIMESTAMP)`,
           })

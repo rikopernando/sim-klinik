@@ -35,7 +35,7 @@ import {
   PLAN_SUGGESTIONS,
 } from "@/lib/medical/soap-suggestions"
 
-const cpptFormSchema = cpptSchema.omit({ visitId: true, authorId: true, authorRole: true })
+const cpptFormSchema = cpptSchema.omit({ visitId: true, authorId: true, authorRole: true, recordType: true })
 
 type CPPTFormData = z.infer<typeof cpptFormSchema>
 
@@ -54,10 +54,10 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
   const form = useForm<CPPTFormData>({
     resolver: zodResolver(cpptFormSchema),
     defaultValues: {
-      subjective: "",
-      objective: "",
-      assessment: "",
-      plan: "",
+      soapSubjective: "",
+      soapObjective: "",
+      soapAssessment: "",
+      soapPlan: "",
       progressNote: "",
       instructions: "",
     },
@@ -104,16 +104,16 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
           <FieldGroup>
             {/* Subjective */}
             <Field>
-              <FieldLabel htmlFor="subjective">S - Subjective (Keluhan Pasien)</FieldLabel>
+              <FieldLabel htmlFor="soapSubjective">S - Subjective (Keluhan Pasien)</FieldLabel>
               <FieldDescription>
                 Keluhan yang disampaikan pasien atau keluarga pasien
               </FieldDescription>
               <Controller
                 control={form.control}
-                name="subjective"
+                name="soapSubjective"
                 render={({ field }) => (
                   <AutocompleteTextarea
-                    id="subjective"
+                    id="soapSubjective"
                     value={field.value || ""}
                     onChange={field.onChange}
                     placeholder="Ketik untuk melihat saran keluhan umum pasien..."
@@ -122,21 +122,21 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   />
                 )}
               />
-              <FieldError errors={[form.formState.errors.subjective]} />
+              <FieldError errors={[form.formState.errors.soapSubjective]} />
             </Field>
 
             {/* Objective */}
             <Field>
-              <FieldLabel htmlFor="objective">O - Objective (Pemeriksaan Objektif)</FieldLabel>
+              <FieldLabel htmlFor="soapObjective">O - Objective (Pemeriksaan Objektif)</FieldLabel>
               <FieldDescription>
                 Hasil pemeriksaan fisik, tanda vital, dan hasil laboratorium
               </FieldDescription>
               <Controller
                 control={form.control}
-                name="objective"
+                name="soapObjective"
                 render={({ field }) => (
                   <AutocompleteTextarea
-                    id="objective"
+                    id="soapObjective"
                     value={field.value || ""}
                     onChange={field.onChange}
                     placeholder="Ketik untuk melihat saran hasil pemeriksaan fisik..."
@@ -145,21 +145,21 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   />
                 )}
               />
-              <FieldError errors={[form.formState.errors.objective]} />
+              <FieldError errors={[form.formState.errors.soapObjective]} />
             </Field>
 
             {/* Assessment */}
             <Field>
-              <FieldLabel htmlFor="assessment">A - Assessment (Penilaian/Diagnosis)</FieldLabel>
+              <FieldLabel htmlFor="soapAssessment">A - Assessment (Penilaian/Diagnosis)</FieldLabel>
               <FieldDescription>
                 Diagnosis kerja, diagnosis banding, atau penilaian kondisi pasien
               </FieldDescription>
               <Controller
                 control={form.control}
-                name="assessment"
+                name="soapAssessment"
                 render={({ field }) => (
                   <AutocompleteTextarea
-                    id="assessment"
+                    id="soapAssessment"
                     value={field.value || ""}
                     onChange={field.onChange}
                     placeholder="Ketik untuk melihat saran diagnosis umum..."
@@ -168,21 +168,21 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   />
                 )}
               />
-              <FieldError errors={[form.formState.errors.assessment]} />
+              <FieldError errors={[form.formState.errors.soapAssessment]} />
             </Field>
 
             {/* Plan */}
             <Field>
-              <FieldLabel htmlFor="plan">P - Plan (Rencana Tindakan)</FieldLabel>
+              <FieldLabel htmlFor="soapPlan">P - Plan (Rencana Tindakan)</FieldLabel>
               <FieldDescription>
                 Rencana pemeriksaan, pengobatan, dan tindakan selanjutnya
               </FieldDescription>
               <Controller
                 control={form.control}
-                name="plan"
+                name="soapPlan"
                 render={({ field }) => (
                   <AutocompleteTextarea
-                    id="plan"
+                    id="soapPlan"
                     value={field.value || ""}
                     onChange={field.onChange}
                     placeholder="Ketik untuk melihat saran rencana terapi..."
@@ -191,7 +191,7 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                   />
                 )}
               />
-              <FieldError errors={[form.formState.errors.plan]} />
+              <FieldError errors={[form.formState.errors.soapPlan]} />
             </Field>
           </FieldGroup>
 

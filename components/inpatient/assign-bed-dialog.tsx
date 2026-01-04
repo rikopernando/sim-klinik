@@ -144,6 +144,12 @@ export function AssignBedDialog({
 
   const isValid = selectedVisit && selectedRoomId && bedNumber.trim() && isValidBedNumber
 
+  // Generate bed options based on selected room
+  const bedOptions = useMemo(() => {
+    if (!selectedRoom) return []
+    return Array.from({ length: selectedRoom.bedCount }, (_, i) => (i + 1).toString())
+  }, [selectedRoom])
+
   // Handlers
   const handleSubmit = async () => {
     if (!isValid || !selectedVisit) return
@@ -322,17 +328,22 @@ export function AssignBedDialog({
                   <FieldLabel>
                     Nomor Bed <span className="text-destructive">*</span>
                   </FieldLabel>
-                  <Input
-                    type="number"
-                    placeholder={
-                      selectedRoom ? `1 - ${selectedRoom.bedCount}` : "Pilih kamar terlebih dahulu"
-                    }
-                    value={bedNumber}
-                    onChange={(e) => setBedNumber(e.target.value)}
-                    disabled={!selectedRoomId || isAssigning}
-                    min={1}
-                    max={selectedRoom?.bedCount || 1}
-                  />
+                  <Select
+                    onValueChange={(value) => setBedNumber(value)}
+                    value={selectedRoomId}
+                    disabled={!selectedRoom || bedOptions.length === 0}
+                  >
+                    <SelectTrigger id="newBedNumber">
+                      <SelectValue placeholder="Pilih nomor bed" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {bedOptions.map((bed) => (
+                        <SelectItem key={bed} value={bed}>
+                          Bed {bed}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   {bedNumber && !isValidBedNumber && selectedRoom && (
                     <p className="text-destructive text-xs">
                       Nomor bed harus antara 1 dan {selectedRoom.bedCount}

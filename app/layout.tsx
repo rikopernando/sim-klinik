@@ -20,7 +20,7 @@ const parkinsans = Parkinsans({
 })
 
 export const metadata: Metadata = {
-  title: "Codeguide Starter Fullstack",
+  title: "Klinik Bumi Andalas",
   description:
     "A modern Next.js starter with TypeScript, TailwindCSS, shadcn/ui, Better Auth, and Drizzle ORM",
 }

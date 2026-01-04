@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { medicalRecords, visits } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
+import { db } from "@/db"
+import { medicalRecords, visits } from "@/db/schema"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
-import { MedicalRecord } from "@/types/medical-record"
 
 /**
  * Medical Record Schema
@@ -29,7 +28,7 @@ const medicalRecordSchema = z.object({
  * Requires: medical_records:write permission
  */
 export const POST = withRBAC(
-  async (request: NextRequest, { user }) => {
+  async (request: NextRequest, { user, role }) => {
     try {
       const body = await request.json()
       const validatedData = medicalRecordSchema.parse(body)
@@ -70,12 +69,16 @@ export const POST = withRBAC(
         })
       }
 
+      // Determine author role from authenticated user's role, default to "doctor"
+      const authorRole = role === "doctor" ? ("doctor" as const) : ("doctor" as const)
+
       // Create medical record with authenticated user as doctor
       const newRecord = await db
         .insert(medicalRecords)
         .values({
           visitId: validatedData.visitId,
-          doctorId: user.id,
+          authorId: user.id,
+          authorRole: authorRole,
           soapSubjective: validatedData.soapSubjective || null,
           soapObjective: validatedData.soapObjective || null,
           soapAssessment: validatedData.soapAssessment || null,
@@ -88,7 +91,7 @@ export const POST = withRBAC(
         })
         .returning()
 
-      const response: ResponseApi<MedicalRecord> = {
+      const response: ResponseApi<(typeof newRecord)[0]> = {
         message: "Medical record created successfully",
         data: newRecord[0],
         status: HTTP_STATUS_CODES.CREATED,

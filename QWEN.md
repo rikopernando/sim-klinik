@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a **sim-klinik** project (likely Simulasi Klinik in Indonesian, meaning Clinic Simulation), built as a modern web application using the **Codeguide Starter Fullstack** template. Under the hood, it's a Next.js 15 full-stack application with TypeScript, authentication, and database integration.
+This is a **sim-klinik** project (likely Simulasi Klinik in Indonesian, meaning Clinic Simulation), built as a modern web application using the **Klinik Bumi Andalas** template. Under the hood, it's a Next.js 15 full-stack application with TypeScript, authentication, and database integration.
 
 ### Tech Stack
 

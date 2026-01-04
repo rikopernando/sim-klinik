@@ -231,7 +231,13 @@ export const medicalRecordSchema = z.object({
     message: "Author role is required",
   }),
   recordType: z
-    .enum(["initial_consultation", "progress_note", "discharge_summary", "procedure_note", "specialist_consultation"])
+    .enum([
+      "initial_consultation",
+      "progress_note",
+      "discharge_summary",
+      "procedure_note",
+      "specialist_consultation",
+    ])
     .default("progress_note"),
 
   // SOAP Notes (used across all record types)
@@ -331,7 +337,7 @@ export const roomUpdateSchema = z
 export const inpatientPrescriptionSchema = z
   .object({
     visitId: z.string().min(1, "Visit ID harus valid"),
-    cpptId: z.string().optional(), // Optional - which CPPT entry ordered it
+    medicalRecordId: z.string().optional(), // Optional - which medical record ordered it
     drugId: z.string().min(1, "Obat harus dipilih"),
 
     // Prescription details
@@ -453,7 +459,7 @@ export const inpatientPrescriptionSchema = z
 export const inpatientProcedureSchema = z
   .object({
     visitId: z.string().min(1, "Visit ID harus valid"),
-    cpptId: z.string().optional(), // Optional - which CPPT entry ordered it
+    medicalRecordId: z.string().optional(), // Optional - which medical record ordered it
 
     // Service reference (preferred) or manual entry
     serviceId: z.string().optional(),

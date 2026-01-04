@@ -41,7 +41,7 @@ interface UseMedicalRecordReturn {
     soapPlan?: string
   }) => Promise<void>
   saveDraft: () => Promise<void>
-  lockRecord: (userId: string, billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
+  lockRecord: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   unlockRecord: () => Promise<void>
   updateRecord: (updates: Partial<MedicalRecordData["medicalRecord"]>) => void
 }
@@ -60,12 +60,15 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
   const fetchMedicalRecord = useCallback(async () => {
     try {
       setError(null)
+      setIsLoading(true)
       const data = await getMedicalRecordByVisit(visitId)
       setRecordData(data)
       return data
     } catch (err) {
       setError(getErrorMessage(err))
       throw err
+    } finally {
+      setIsLoading(false)
     }
   }, [visitId])
 
@@ -76,15 +79,8 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       return
     }
 
-    try {
-      setIsLoading(true)
-      await fetchMedicalRecord()
-      isInitializedRef.current = true
-    } catch (err) {
-      // Error already handled in fetchMedicalRecord
-    } finally {
-      setIsLoading(false)
-    }
+    await fetchMedicalRecord()
+    isInitializedRef.current = true
   }, [fetchMedicalRecord])
 
   // Reload function for updates
@@ -126,7 +122,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
   }, [visitId, recordData, reloadMedicalRecord])
 
   const lockRecord = useCallback(
-    async (userId: string, billingAdjustment?: number, adjustmentNote?: string) => {
+    async (billingAdjustment?: number, adjustmentNote?: string) => {
       if (!recordData) return
 
       try {
@@ -135,7 +131,6 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
 
         await lockMedicalRecord({
           id: recordData.medicalRecord.id,
-          userId,
           billingAdjustment,
           adjustmentNote,
         })

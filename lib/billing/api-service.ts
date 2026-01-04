@@ -258,7 +258,17 @@ export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
       .where(eq(billings.id, data.billingId))
 
     // ========================================
-    // STEP 8: Return result
+    // STEP 8: UPDATE VISIT STATUS TO PAID
+    // ========================================
+    await tx
+      .update(visits)
+      .set({
+        status: "paid",
+      })
+      .where(eq(visits.id, billing.visitId))
+
+    // ========================================
+    // STEP 9: Return result
     // ========================================
     return {
       payment: newPayment,

@@ -45,7 +45,7 @@ export const POST = withRBAC(
 
       if (error instanceof Error && error.name === "ZodError") {
         const response: ResponseError<unknown> = {
-          error: "Validation failed",
+          error: error,
           status: HTTP_STATUS_CODES.BAD_REQUEST,
           message: "Invalid vital signs data",
         }

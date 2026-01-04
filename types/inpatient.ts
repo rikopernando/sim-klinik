@@ -24,9 +24,28 @@ export const ROOM_STATUS = {
 export type RoomType = "VIP" | "Class 1" | "Class 2" | "Class 3" | "ICU" | "NICU" | "Isolation"
 
 /**
- * Author Role for CPPT
+ * Medical Record Type
+ * Determines the type and purpose of clinical documentation
  */
-export type AuthorRole = "doctor" | "nurse"
+export type RecordType =
+  | "initial_consultation"
+  | "progress_note"
+  | "discharge_summary"
+  | "procedure_note"
+  | "specialist_consultation"
+
+export const RECORD_TYPE = {
+  INITIAL_CONSULTATION: "initial_consultation" as RecordType,
+  PROGRESS_NOTE: "progress_note" as RecordType,
+  DISCHARGE_SUMMARY: "discharge_summary" as RecordType,
+  PROCEDURE_NOTE: "procedure_note" as RecordType,
+  SPECIALIST_CONSULTATION: "specialist_consultation" as RecordType,
+} as const
+
+/**
+ * Author Role for Medical Records
+ */
+export type AuthorRole = "doctor" | "nurse" | "specialist"
 
 /**
  * Consciousness Level
@@ -110,7 +129,47 @@ export interface VitalSigns {
 }
 
 /**
- * CPPT Entity
+ * Medical Record Entity (Unified)
+ * Replaces separate medical_records and CPPT entities
+ * Supports all types of clinical documentation
+ */
+export interface MedicalRecord {
+  id: string
+  visitId: string
+  authorId: string
+  authorRole: AuthorRole
+  authorName?: string
+  recordType: RecordType
+
+  // SOAP Notes (used across all record types)
+  soapSubjective: string | null
+  soapObjective: string | null
+  soapAssessment: string | null
+  soapPlan: string | null
+
+  // Progress documentation (primarily for progress notes)
+  progressNote: string | null
+  instructions: string | null
+
+  // Additional clinical documentation (primarily for consultations)
+  physicalExam: string | null
+  laboratoryResults: string | null
+  radiologyResults: string | null
+
+  // Status
+  isLocked: boolean
+  isDraft: boolean
+  lockedAt: string | null
+  lockedBy: string | null
+
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * CPPT Entity (DEPRECATED)
+ * @deprecated Use MedicalRecord with recordType='progress_note' instead
+ * Kept for backward compatibility only
  */
 export interface CPPT {
   id: string
@@ -184,7 +243,33 @@ export interface VitalSignsInput {
 }
 
 /**
- * CPPT Input Data
+ * Medical Record Input Data
+ */
+export interface MedicalRecordInput {
+  visitId: string
+  authorId: string
+  authorRole: AuthorRole
+  recordType?: RecordType
+
+  // SOAP Notes
+  soapSubjective?: string
+  soapObjective?: string
+  soapAssessment?: string
+  soapPlan?: string
+
+  // Progress documentation
+  progressNote?: string
+  instructions?: string
+
+  // Additional clinical documentation
+  physicalExam?: string
+  laboratoryResults?: string
+  radiologyResults?: string
+}
+
+/**
+ * CPPT Input Data (DEPRECATED)
+ * @deprecated Use MedicalRecordInput instead
  */
 export interface CPPTInput {
   visitId: string
@@ -249,7 +334,7 @@ export const PROCEDURE_STATUS = {
 export interface InpatientPrescription {
   id: string
   visitId: string
-  cpptId: string | null
+  medicalRecordId: string | null // Reference to medical_records (can be progress_note or consultation)
   drugId: string
   drugName?: string
   drugPrice?: string
@@ -294,7 +379,7 @@ export interface InpatientPrescription {
 export interface InpatientProcedure {
   id: string
   visitId: string
-  cpptId: string | null
+  medicalRecordId: string | null // Reference to medical_records (can be progress_note or consultation)
 
   // Service reference
   serviceId: string | null
@@ -327,7 +412,7 @@ export interface InpatientProcedure {
  */
 export interface InpatientPrescriptionInput {
   visitId: string
-  cpptId?: string
+  medicalRecordId?: string // Optional reference to the medical record that ordered it
   drugId: string
   dosage: string
   frequency: string
@@ -347,7 +432,7 @@ export interface InpatientPrescriptionInput {
  */
 export interface InpatientProcedureInput {
   visitId: string
-  cpptId?: string
+  medicalRecordId?: string // Optional reference to the medical record that ordered it
   serviceId?: string
   description: string
   icd9Code?: string
@@ -465,7 +550,8 @@ export interface PatientDetail {
   daysInHospital: number
   totalRoomCost: string
   vitals: VitalSigns[]
-  cpptEntries: CPPT[]
+  medicalRecords: MedicalRecord[] // Replaces cpptEntries - now includes all medical documentation
+  cpptEntries: CPPT[] // Deprecated: Use medicalRecords filtered by recordType='progress_note'
   materials: MaterialUsage[]
   totalMaterialCost: string
   prescriptions: InpatientPrescription[]

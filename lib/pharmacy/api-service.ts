@@ -567,7 +567,7 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
       )
     )
     .innerJoin(patients, eq(visits.patientId, patients.id))
-    .leftJoin(user, eq(medicalRecords.doctorId, user.id))
+    .leftJoin(user, eq(medicalRecords.authorId, user.id))
     // LEFT JOIN room/bed info for inpatient visits
     .leftJoin(rooms, eq(visits.roomId, rooms.id))
     .leftJoin(

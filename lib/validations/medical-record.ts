@@ -111,7 +111,6 @@ export type ProcedureFormBulkData = z.infer<typeof procedureFormBulkSchema>
  */
 export const lockSchema = z.object({
   id: z.string(),
-  userId: z.string(),
   billingAdjustment: z.number().optional(), // Positive = surcharge, Negative = discount
   adjustmentNote: z.string().optional(), // Note explaining the adjustment
 })

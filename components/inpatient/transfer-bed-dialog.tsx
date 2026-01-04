@@ -121,7 +121,9 @@ export function TransferBedDialog({
           <FieldGroup>
             {/* Room Selection */}
             <Field>
-              <FieldLabel htmlFor="newRoomId">Kamar Tujuan *</FieldLabel>
+              <FieldLabel htmlFor="newRoomId">
+                Kamar Tujuan <span className="text-destructive">*</span>
+              </FieldLabel>
               <Controller
                 control={form.control}
                 name="newRoomId"
@@ -164,7 +166,9 @@ export function TransferBedDialog({
 
             {/* Bed Number Selection */}
             <Field>
-              <FieldLabel htmlFor="newBedNumber">Nomor Bed *</FieldLabel>
+              <FieldLabel htmlFor="newBedNumber">
+                Nomor Bed <span className="text-destructive">*</span>
+              </FieldLabel>
               <Controller
                 control={form.control}
                 name="newBedNumber"
@@ -192,7 +196,9 @@ export function TransferBedDialog({
 
             {/* Transfer Reason */}
             <Field>
-              <FieldLabel htmlFor="transferReason">Alasan Transfer *</FieldLabel>
+              <FieldLabel htmlFor="transferReason">
+                Alasan Transfer <span className="text-destructive">*</span>*
+              </FieldLabel>
               <Controller
                 control={form.control}
                 name="transferReason"

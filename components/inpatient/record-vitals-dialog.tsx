@@ -34,6 +34,7 @@ import {
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field"
 import { vitalSignsSchema } from "@/lib/inpatient/validation"
 import { recordVitalSigns } from "@/lib/services/inpatient.service"
+import { getErrorMessage } from "@/lib/utils/error"
 
 const vitalSignsFormSchema = vitalSignsSchema.omit({ visitId: true, recordedBy: true })
 
@@ -87,7 +88,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
       onSuccess?.()
     } catch (error) {
       console.error("Error recording vital signs:", error)
-      toast.error("Gagal mencatat tanda vital")
+      toast.error(getErrorMessage(error))
     }
   }
 

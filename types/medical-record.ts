@@ -8,7 +8,7 @@ import { Patient } from "./registration"
 export interface MedicalRecord {
   id: string
   visitId: string
-  doctorId: string
+  authorId: string
   soapSubjective: string | null
   soapObjective: string | null
   soapAssessment: string | null

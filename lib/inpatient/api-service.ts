@@ -8,7 +8,7 @@ import { alias as aliasedTable, PgUpdateSetSource } from "drizzle-orm/pg-core"
 
 import { db } from "@/db"
 import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema/inpatient"
-import { cppt, procedures } from "@/db/schema/medical-records"
+import { medicalRecords, procedures } from "@/db/schema/medical-records"
 import { prescriptions, drugs } from "@/db/schema/inventory"
 import { services } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
@@ -419,7 +419,8 @@ export async function getVitalSignsHistory(visitId: string) {
 }
 
 /**
- * CPPT Service
+ * Medical Record Service (Progress Notes)
+ * Note: Function names kept as "CPPT" for backward compatibility
  */
 export async function createCPPTEntry(data: CPPTInput) {
   // Check if visit exists
@@ -429,43 +430,61 @@ export async function createCPPTEntry(data: CPPTInput) {
     throw new Error("Visit not found")
   }
 
-  // Create CPPT entry
-  const [newCPPT] = await db
-    .insert(cppt)
+  // Create medical record entry with recordType='progress_note'
+  const [newRecord] = await db
+    .insert(medicalRecords)
     .values({
       visitId: data.visitId,
       authorId: data.authorId,
       authorRole: data.authorRole,
-      subjective: data.subjective || null,
-      objective: data.objective || null,
-      assessment: data.assessment || null,
-      plan: data.plan || null,
+      recordType: "progress_note", // Set as progress note
+      soapSubjective: data.soapObjective || null,
+      soapObjective: data.soapObjective || null,
+      soapAssessment: data.soapAssessment || null,
+      soapPlan: data.soapPlan || null,
       progressNote: data.progressNote,
       instructions: data.instructions || null,
+      isLocked: false,
+      isDraft: false,
     })
     .returning()
 
-  return newCPPT
+  return newRecord
 }
 
 export async function getCPPTEntries(visitId: string) {
   const results = await db
     .select({
-      cpptEntry: cppt,
+      medicalRecord: medicalRecords,
       author: {
         id: user.id,
         name: user.name,
         email: user.email,
       },
     })
-    .from(cppt)
-    .leftJoin(user, eq(cppt.authorId, user.id))
-    .where(eq(cppt.visitId, visitId))
-    .orderBy(desc(cppt.createdAt))
+    .from(medicalRecords)
+    .leftJoin(user, eq(medicalRecords.authorId, user.id))
+    .where(
+      and(
+        eq(medicalRecords.visitId, visitId),
+        eq(medicalRecords.recordType, "progress_note") // Filter by progress notes only
+      )
+    )
+    .orderBy(desc(medicalRecords.createdAt))
 
-  // Transform results to include author name
+  // Transform results to include author name and map to CPPT format for backward compatibility
   return results.map((result) => ({
-    ...result.cpptEntry,
+    id: result.medicalRecord.id,
+    visitId: result.medicalRecord.visitId,
+    authorId: result.medicalRecord.authorId,
+    authorRole: result.medicalRecord.authorRole,
+    subjective: result.medicalRecord.soapSubjective,
+    objective: result.medicalRecord.soapObjective,
+    assessment: result.medicalRecord.soapAssessment,
+    plan: result.medicalRecord.soapPlan,
+    progressNote: result.medicalRecord.progressNote || "",
+    instructions: result.medicalRecord.instructions,
+    createdAt: result.medicalRecord.createdAt.toISOString(),
     authorName: result.author?.name || result.author?.email || "Unknown User",
   }))
 }
@@ -704,7 +723,7 @@ export async function getPatientDetailData(visitId: string) {
 export async function createInpatientPrescription(data: InpatientPrescriptionInput) {
   await db.insert(prescriptions).values({
     visitId: data.visitId,
-    cpptId: data.cpptId || null,
+    medicalRecordId: data.medicalRecordId || null,
     drugId: data.drugId,
     dosage: data.dosage,
     frequency: data.frequency,
@@ -787,7 +806,7 @@ export async function createInpatientProcedure(data: InpatientProcedureInput) {
 
   await db.insert(procedures).values({
     visitId: data.visitId,
-    cpptId: data.cpptId || null,
+    medicalRecordId: data.medicalRecordId || null,
     serviceId: data.serviceId || null,
     description: data.description,
     icd9Code: data.icd9Code || null,
