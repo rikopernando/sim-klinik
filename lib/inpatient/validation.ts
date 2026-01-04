@@ -30,6 +30,16 @@ export const bedAssignmentSchema = z.object({
 })
 
 /**
+ * Bed Transfer Schema
+ */
+export const bedTransferSchema = z.object({
+  visitId: z.string().min(1, "Visit ID harus valid"),
+  newRoomId: z.string().min(1, "Room ID baru harus valid"),
+  newBedNumber: z.string().min(1, "Nomor bed baru wajib diisi"),
+  transferReason: z.string().min(1, "Alasan transfer wajib diisi"),
+})
+
+/**
  * Vital Signs Schema
  */
 export const vitalSignsSchema = z.object({
@@ -172,6 +182,7 @@ export const updateProcedureStatusSchema = z.object({
  */
 export type RoomInput = z.infer<typeof roomSchema>
 export type BedAssignmentInput = z.infer<typeof bedAssignmentSchema>
+export type BedTransferInput = z.infer<typeof bedTransferSchema>
 export type VitalSignsInput = z.infer<typeof vitalSignsSchema>
 export type CPPTInput = z.infer<typeof cpptSchema>
 export type MaterialUsageInput = z.infer<typeof materialUsageSchema>

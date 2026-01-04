@@ -59,6 +59,12 @@ export const INPATIENT_ROUTE_PERMISSIONS = {
    */
   UPDATE_ROOM: ["inpatient:manage_beds"] as Permission[],
 
+  /**
+   * POST /api/inpatient/transfer-bed
+   * Transfer patient to a different bed
+   */
+  TRANSFER_BED: ["inpatient:manage_beds"] as Permission[],
+
   // ============================================================================
   // VITALS MANAGEMENT
   // ============================================================================

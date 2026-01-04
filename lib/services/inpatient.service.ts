@@ -15,6 +15,7 @@ import {
 import { Pagination, ResponseApi } from "@/types/api"
 import {
   BedAssignmentInput,
+  BedTransferInput,
   CPPTInput,
   VitalSignsInput,
   MaterialUsageInput,
@@ -43,6 +44,15 @@ export async function prosesAssignBed(payload: BedAssignmentInput) {
     await axios.post("/api/inpatient/assign-bed", payload)
   } catch (error) {
     console.error("Error assign bed:", error)
+    handleApiError(error)
+  }
+}
+
+export async function transferBed(payload: BedTransferInput): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/transfer-bed", payload)
+  } catch (error) {
+    console.error("Error transferring bed:", error)
     handleApiError(error)
   }
 }

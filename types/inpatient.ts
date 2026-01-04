@@ -417,6 +417,22 @@ export interface InpatientFilters {
 /**
  * Patient Detail Data
  */
+export interface BedAssignmentHistoryItem {
+  id: string
+  roomId: string
+  roomNumber: string
+  roomType: string
+  bedNumber: string
+  assignedAt: string
+  dischargedAt: string | null
+  notes: string | null
+  assignedBy: string | null
+  assignedByName: string | null
+  dailyRate: string
+  days: number
+  totalCost: string
+}
+
 export interface PatientDetail {
   patient: {
     visitId: string
@@ -445,6 +461,7 @@ export interface PatientDetail {
     notes: string | null
     dailyRate: string
   } | null
+  bedAssignmentHistory: BedAssignmentHistoryItem[]
   daysInHospital: number
   totalRoomCost: string
   vitals: VitalSigns[]

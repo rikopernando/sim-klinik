@@ -600,6 +600,44 @@ export async function getPatientDetailData(visitId: string) {
 
   const currentBedAssignment = bedAssignmentResult.length > 0 ? bedAssignmentResult[0] : null
 
+  // Get bed assignment history (all assignments including discharged ones)
+  const bedAssignmentHistoryRaw = await db
+    .select({
+      id: bedAssignments.id,
+      roomId: bedAssignments.roomId,
+      roomNumber: rooms.roomNumber,
+      roomType: rooms.roomType,
+      bedNumber: bedAssignments.bedNumber,
+      assignedAt: bedAssignments.assignedAt,
+      dischargedAt: bedAssignments.dischargedAt,
+      notes: bedAssignments.notes,
+      assignedBy: bedAssignments.assignedBy,
+      assignedByName: user.name,
+      dailyRate: rooms.dailyRate,
+    })
+    .from(bedAssignments)
+    .innerJoin(rooms, eq(bedAssignments.roomId, rooms.id))
+    .leftJoin(user, eq(bedAssignments.assignedBy, user.id))
+    .where(eq(bedAssignments.visitId, visitId))
+    .orderBy(desc(bedAssignments.assignedAt))
+
+  // Calculate cost for each assignment period
+  const bedAssignmentHistory = bedAssignmentHistoryRaw.map((assignment) => {
+    const startDate = new Date(assignment.assignedAt)
+    const endDate = assignment.dischargedAt ? new Date(assignment.dischargedAt) : new Date()
+    const days = Math.max(
+      1,
+      Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+    )
+    const totalCost = parseFloat(assignment.dailyRate) * days
+
+    return {
+      ...assignment,
+      days,
+      totalCost: totalCost.toFixed(2),
+    }
+  })
+
   // Get vital signs history (with user names)
   const vitals = await getVitalSignsHistory(visitId)
 
@@ -641,6 +679,7 @@ export async function getPatientDetailData(visitId: string) {
   return {
     patient: visitData,
     bedAssignment: currentBedAssignment,
+    bedAssignmentHistory,
     daysInHospital,
     totalRoomCost: totalRoomCost.toFixed(2),
     vitals,

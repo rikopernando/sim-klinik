@@ -27,6 +27,8 @@ import { CreateProcedureDialog } from "@/components/inpatient/create-procedure-d
 import { PrescriptionsList } from "@/components/inpatient/prescriptions-list"
 import { ProceduresList } from "@/components/inpatient/procedures-list"
 import { CompleteDischargeDialog } from "@/components/inpatient/complete-discharge-dialog"
+import { TransferBedDialog } from "@/components/inpatient/transfer-bed-dialog"
+import { BedAssignmentHistory } from "@/components/inpatient/bed-assignment-history"
 
 export default function PatientDetailPage() {
   const { visitId } = useParams<{ visitId: string }>()
@@ -90,6 +92,22 @@ export default function PatientDetailPage() {
 
         {/* Patient Info Card */}
         <PatientInfoCard data={patientDetail} />
+
+        {/* Transfer Bed Button */}
+        {hasPermission("inpatient:manage_beds") && patientDetail.bedAssignment && (
+          <div className="flex justify-end">
+            <TransferBedDialog
+              visitId={visitId}
+              patientName={patientDetail.patient.patientName}
+              currentRoomNumber={patientDetail.bedAssignment.roomNumber}
+              currentBedNumber={patientDetail.bedAssignment.bedNumber}
+              onSuccess={refresh}
+            />
+          </div>
+        )}
+
+        {/* Bed Assignment History */}
+        <BedAssignmentHistory history={patientDetail.bedAssignmentHistory} />
 
         <Separator />
 

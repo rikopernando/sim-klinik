@@ -46,9 +46,11 @@ export interface DischargeBillingAggregate {
 /**
  * Calculate room charges based on bed assignment duration
  * Uses daily rate × number of days stayed (rounded up)
+ * Aggregates ALL bed assignments (includes room transfers)
  */
 async function aggregateRoomCharges(visitId: string): Promise<BillingItemInput[]> {
-  const bedAssignment = await db
+  // Get ALL bed assignments for this visit (not just one)
+  const bedAssignmentList = await db
     .select({
       id: bedAssignments.id,
       assignedAt: bedAssignments.assignedAt,
@@ -61,26 +63,26 @@ async function aggregateRoomCharges(visitId: string): Promise<BillingItemInput[]
     .from(bedAssignments)
     .innerJoin(rooms, eq(bedAssignments.roomId, rooms.id))
     .where(eq(bedAssignments.visitId, visitId))
-    .limit(1)
+    .orderBy(bedAssignments.assignedAt) // Order by assignment date
 
-  if (bedAssignment.length === 0) {
+  if (bedAssignmentList.length === 0) {
     return []
   }
 
-  const assignment = bedAssignment[0]
-  const startDate = new Date(assignment.assignedAt)
-  const endDate = assignment.dischargedAt ? new Date(assignment.dischargedAt) : new Date()
+  // Create billing items for each bed assignment (each room stay)
+  return bedAssignmentList.map((assignment) => {
+    const startDate = new Date(assignment.assignedAt)
+    const endDate = assignment.dischargedAt ? new Date(assignment.dischargedAt) : new Date()
 
-  // Calculate days stayed (minimum 1 day, rounded up)
-  const millisecondsDiff = endDate.getTime() - startDate.getTime()
-  const daysDiff = Math.ceil(millisecondsDiff / (1000 * 60 * 60 * 24))
-  const daysStayed = Math.max(1, daysDiff)
+    // Calculate days stayed (minimum 1 day, rounded up)
+    const millisecondsDiff = endDate.getTime() - startDate.getTime()
+    const daysDiff = Math.ceil(millisecondsDiff / (1000 * 60 * 60 * 24))
+    const daysStayed = Math.max(1, daysDiff)
 
-  const dailyRate = parseFloat(assignment.dailyRate)
-  const totalRoomCharge = (dailyRate * daysStayed).toFixed(2)
+    const dailyRate = parseFloat(assignment.dailyRate)
+    const totalRoomCharge = (dailyRate * daysStayed).toFixed(2)
 
-  return [
-    {
+    return {
       itemType: "room" as const,
       itemName: `Kamar ${assignment.roomType} - ${assignment.roomNumber} (Bed ${assignment.bedNumber})`,
       itemCode: assignment.roomNumber,
@@ -89,8 +91,8 @@ async function aggregateRoomCharges(visitId: string): Promise<BillingItemInput[]
       discount: "0",
       totalPrice: totalRoomCharge,
       description: `Biaya rawat inap ${daysStayed} hari`,
-    },
-  ]
+    }
+  })
 }
 
 /**
