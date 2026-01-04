@@ -25,7 +25,10 @@ export const inventoryItems = pgTable("drugs", {
   // Materials: "Consumables", "Dressings", "Medical Devices", etc.
 
   unit: varchar("unit", { length: 50 }).notNull(), // tablet, capsule, ml, pcs, box, roll, etc.
+  // Basically, this price for prescriptions
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  // new for support old data schema
+  generalPrice: decimal("general_price", { precision: 10, scale: 2 }),
   minimumStock: integer("minimum_stock").notNull().default(10), // Alert threshold
   description: text("description"),
 
