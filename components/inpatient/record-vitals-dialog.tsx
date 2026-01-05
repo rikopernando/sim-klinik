@@ -135,7 +135,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
                     id="pulse"
                     type="number"
                     placeholder="80"
-                    {...field}
+                    value={field.value ? field.value.toString() : ""}
                     onChange={(e) =>
                       field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                     }
@@ -156,7 +156,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
                     id="bloodPressureSystolic"
                     type="number"
                     placeholder="120"
-                    {...field}
+                    value={field.value ? field.value.toString() : ""}
                     onChange={(e) =>
                       field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                     }
@@ -177,7 +177,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
                     id="bloodPressureDiastolic"
                     type="number"
                     placeholder="80"
-                    {...field}
+                    value={field.value ? field.value.toString() : ""}
                     onChange={(e) =>
                       field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                     }
@@ -198,7 +198,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
                     id="respiratoryRate"
                     type="number"
                     placeholder="20"
-                    {...field}
+                    value={field.value ? field.value.toString() : ""}
                     onChange={(e) =>
                       field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                     }
@@ -260,7 +260,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
                     min="0"
                     max="10"
                     placeholder="0"
-                    {...field}
+                    value={field.value ? field.value.toString() : ""}
                     onChange={(e) =>
                       field.onChange(e.target.value ? parseInt(e.target.value) : undefined)
                     }

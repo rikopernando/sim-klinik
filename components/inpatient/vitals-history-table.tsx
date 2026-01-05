@@ -6,8 +6,6 @@
 "use client"
 
 import { useState } from "react"
-import { format } from "date-fns"
-import { id as localeId } from "date-fns/locale"
 import {
   Table,
   TableBody,
@@ -39,6 +37,8 @@ import {
   getOxygenSaturationStatus,
   getBMICategoryID,
 } from "@/lib/inpatient/vitals-utils"
+import { getErrorMessage } from "@/lib/utils/error"
+import { formatDateTime } from "@/lib/utils/date"
 
 interface VitalsHistoryTableProps {
   vitals: VitalSigns[]
@@ -46,7 +46,11 @@ interface VitalsHistoryTableProps {
   isLocked?: boolean
 }
 
-export function VitalsHistoryTable({ vitals, onRefresh, isLocked = false }: VitalsHistoryTableProps) {
+export function VitalsHistoryTable({
+  vitals,
+  onRefresh,
+  isLocked = false,
+}: VitalsHistoryTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const canDelete = (recordedAt: string) => {
@@ -65,11 +69,7 @@ export function VitalsHistoryTable({ vitals, onRefresh, isLocked = false }: Vita
       onRefresh?.()
     } catch (error) {
       console.error("Error deleting vital signs:", error)
-      if (error instanceof Error && error.message.includes("time window")) {
-        toast.error("Data tanda vital hanya dapat dihapus dalam 1 jam setelah pencatatan")
-      } else {
-        toast.error("Gagal menghapus data tanda vital")
-      }
+      toast.error(getErrorMessage(error))
     } finally {
       setDeletingId(null)
     }
@@ -108,7 +108,7 @@ export function VitalsHistoryTable({ vitals, onRefresh, isLocked = false }: Vita
           return (
             <TableRow key={vital.id}>
               <TableCell className="font-medium whitespace-nowrap">
-                {format(new Date(vital.recordedAt), "dd MMM yyyy, HH:mm", { locale: localeId })}
+                {formatDateTime(vital.recordedAt)}
               </TableCell>
 
               {/* Temperature with status highlighting */}

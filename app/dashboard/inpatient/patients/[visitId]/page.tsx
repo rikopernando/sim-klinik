@@ -30,8 +30,13 @@ import { CompleteDischargeDialog } from "@/components/inpatient/complete-dischar
 import { BedAssignmentHistory } from "@/components/inpatient/bed-assignment-history"
 import { VisitLockBanner } from "@/components/inpatient/visit-lock-banner"
 import { canFinishInpatient, VisitStatus } from "@/types/visit-status"
+import { DischargeSummaryDialog } from "@/components/inpatient/discharge-summary-dialog"
+import { DischargeSummaryCard } from "@/components/inpatient/discharge-summary-card"
+import { FinalDischargeDialog } from "@/components/inpatient/final-discharge-dialog"
+import { useSession } from "@/lib/auth-client"
 
 export default function PatientDetailPage() {
+  const { data: session } = useSession()
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
 
@@ -40,6 +45,11 @@ export default function PatientDetailPage() {
 
   // Check if visit is locked (ready_for_billing status)
   const isLocked = patientDetail?.patient.status === "ready_for_billing"
+  const isAbleToFillTheDischargeSummary =
+    !patientDetail?.dischargeSummary &&
+    patientDetail?.patient.status !== "ready_for_billing" &&
+    hasPermission("inpatient:write") &&
+    session?.user?.role === "doctor"
 
   if (isLoading) {
     return (
@@ -290,6 +300,42 @@ export default function PatientDetailPage() {
           </CardContent>
         </Card>
 
+        <Separator />
+
+        {/* Discharge Summary Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold tracking-tight">Ringkasan Medis Pulang</h2>
+              <p className="text-muted-foreground text-sm">
+                {patientDetail.dischargeSummary
+                  ? "Resume medis telah dibuat dan visit telah terkunci"
+                  : "Resume medis diperlukan sebelum pasien dapat dipulangkan"}
+              </p>
+            </div>
+            {isAbleToFillTheDischargeSummary && (
+              <DischargeSummaryDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            )}
+          </div>
+
+          {patientDetail.dischargeSummary ? (
+            <DischargeSummaryCard dischargeSummary={patientDetail.dischargeSummary} />
+          ) : (
+            <Card>
+              <CardContent className="py-8">
+                <p className="text-muted-foreground text-center">
+                  Ringkasan medis pulang belum dibuat. Dokter harus mengisi ringkasan medis sebelum
+                  pasien dapat dipulangkan.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
         {canFinishInpatient(patientDetail.patient.status as VisitStatus) && (
           <>
             <Separator />
@@ -302,6 +348,30 @@ export default function PatientDetailPage() {
             )}
           </>
         )}
+
+        {/* Final Discharge Section */}
+        {patientDetail.dischargeSummary &&
+          patientDetail.patient.status === "ready_for_billing" &&
+          hasPermission("discharge:write") && (
+            <>
+              <Separator />
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight">Pemulangan Pasien</h2>
+                  <p className="text-muted-foreground text-sm">
+                    Pastikan pembayaran telah lunas sebelum memulangkan pasien
+                  </p>
+                </div>
+                <FinalDischargeDialog
+                  visitId={visitId}
+                  patientName={patientDetail.patient.patientName}
+                  roomNumber={patientDetail.bedAssignment?.roomNumber}
+                  bedNumber={patientDetail.bedAssignment?.bedNumber}
+                  onSuccess={refresh}
+                />
+              </div>
+            </>
+          )}
       </div>
     </div>
   )

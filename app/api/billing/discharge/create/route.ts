@@ -9,7 +9,7 @@ import { visits } from "@/db/schema/visits"
 import { billingItems } from "@/db/schema/billing"
 import { createInpatientDischargeBilling, recalculateBilling } from "@/lib/billing/api-service"
 import { z } from "zod"
-import { eq, and } from "drizzle-orm"
+import { eq } from "drizzle-orm"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 
@@ -93,17 +93,6 @@ export async function POST(request: NextRequest) {
         // 3. Recalculate billing totals
         await recalculateBilling(validatedData.visitId, tx)
       }
-
-      // 4. Update visit status to ready_for_billing
-      // This makes the visit appear in billing queue with billing already created
-      await tx
-        .update(visits)
-        .set({
-          status: "ready_for_billing",
-          // endTime: new Date(),
-          // dischargeDate: new Date(),
-        })
-        .where(and(eq(visits.id, validatedData.visitId), eq(visits.visitType, "inpatient")))
     })
 
     const response: ResponseApi = {

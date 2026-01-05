@@ -81,7 +81,7 @@ const PrescriptionRow = memo(function PrescriptionRow({
       <TableCell>
         <div className="space-y-1">
           {prescription.isAdministered ? (
-            <Badge variant="default" className="bg-green-600">
+            <Badge variant="default">
               <IconCheck className="mr-1 h-3 w-3" />
               Sudah Diberikan
             </Badge>

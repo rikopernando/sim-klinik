@@ -518,6 +518,29 @@ export interface BedAssignmentHistoryItem {
   totalCost: string
 }
 
+/**
+ * Discharge Summary Entity
+ */
+export interface DischargeSummary {
+  id: string
+  visitId: string
+  admissionDiagnosis: string
+  dischargeDiagnosis: string
+  clinicalSummary: string
+  proceduresPerformed: string | null
+  medicationsOnDischarge: string | null
+  dischargeInstructions: string
+  dietaryRestrictions: string | null
+  activityRestrictions: string | null
+  followUpDate: Date | null
+  followUpInstructions: string | null
+  dischargedBy: string
+  dischargedByName?: string
+  dischargedAt: Date
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface PatientDetail {
   patient: {
     visitId: string
@@ -557,4 +580,5 @@ export interface PatientDetail {
   totalMaterialCost: string
   prescriptions: InpatientPrescription[]
   procedures: InpatientProcedure[]
+  dischargeSummary: DischargeSummary | null
 }

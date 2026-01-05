@@ -6,10 +6,14 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 
 **Current Status:**
 
-- ✅ Database schema complete (rooms, bed_assignments, vitals_history, material_usage, cppt tables exist)
+- ✅ Database schema complete (rooms, bed_assignments, vitals_history, material_usage, unified medical_records)
 - ✅ Room dashboard exists (`/app/dashboard/inpatient/rooms/page.tsx`)
-- ✅ Room API endpoints exist (`/api/rooms`, `/api/rooms/assign`)
-- 🔄 Phase 1 implementation in progress
+- ✅ Phase 1 - Core Inpatient Management (COMPLETED)
+- ✅ Phase 2 - Clinical Documentation (COMPLETED)
+- ✅ Phase 3.1 - Material Usage Recording (COMPLETED)
+- ✅ Additional Features: Lock/Unlock, Prescriptions, Procedures (COMPLETED)
+- ✅ Billing Integration - "Selesai Rawat Inap" (COMPLETED via CompleteDischargeDialog)
+- 🔄 Phase 4 - Discharge Process (CURRENT PHASE)
 
 ---
 
@@ -73,7 +77,47 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 
 ## Implementation Phases
 
-### **Phase 1: Core Inpatient Management** (CURRENT PHASE)
+---
+
+## Completed Phases Summary
+
+### ✅ **Phase 1: Core Inpatient Management** (COMPLETED)
+
+**Implemented Features:**
+- ✅ Bed assignment/allocation dialog and API
+- ✅ Room dashboard with real-time bed availability
+- ✅ Inpatient patient list with filters and search
+- ✅ Patient detail dashboard with comprehensive information
+- ✅ Bed transfer functionality
+- ✅ Bed assignment history tracking
+
+### ✅ **Phase 2: Clinical Documentation** (COMPLETED)
+
+**Implemented Features:**
+- ✅ Vital signs recording with full vitals tracking
+- ✅ Vital signs history table with delete functionality (1-hour window)
+- ✅ CPPT (Integrated Progress Notes) for doctors and nurses
+- ✅ CPPT history with edit/delete functionality
+- ✅ Vitals trend chart for clinical analysis
+- ✅ CPPT timeline view
+- ✅ Lock/Unlock feature for visits (ready_for_billing status)
+
+### ✅ **Phase 3.1: Material Usage & Additional Features** (COMPLETED)
+
+**Implemented Features:**
+- ✅ Material usage recording from unified inventory
+- ✅ Material usage history with cost tracking
+- ✅ Material delete functionality (1-hour window)
+- ✅ Inpatient prescriptions (create, list, delete, administer)
+- ✅ Inpatient procedures (create, list, status updates, delete)
+- ✅ Billing integration - "Selesai Rawat Inap" button (CompleteDischargeDialog)
+  - Aggregates room charges, materials, procedures, prescriptions
+  - Creates billing record
+  - Available when visit status allows
+
+---
+
+### **Phase 1: Core Inpatient Management** (REFERENCE - COMPLETED)
 
 **Goal:** Enable basic inpatient admission, bed assignment, and patient list management
 
@@ -389,11 +433,19 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 
 ---
 
-### **Phase 3: Billing Integration** (FUTURE PHASE)
+### **Phase 3: Billing Integration** (PARTIALLY COMPLETED)
 
 **Goal:** Seamless integration with billing system for room charges and materials
 
-<!-- #### Phase 3.1: Daily Room Charges
+**✅ COMPLETED: "Selesai Rawat Inap" - Billing Creation**
+- Implemented via `CompleteDischargeDialog` component
+- Location: `/components/inpatient/complete-discharge-dialog.tsx`
+- Pre-check: Discharge summary must exist
+- Aggregates all billing items: room charges, materials, procedures, prescriptions
+- Creates comprehensive billing record
+- Status remains 'ready_for_billing' for payment processing
+
+<!-- #### Phase 3.1: Daily Room Charges (DEPRECATED - handled by CompleteDischargeDialog)
 **User Story:** "Sistem otomatis menghitung biaya kamar harian dan menambahkan ke billing"
 
 **Tasks:**
@@ -481,112 +533,150 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 
 ---
 
-### **Phase 4: Discharge Process** (FUTURE PHASE)
+### **Phase 4: Discharge Process** (CURRENT PHASE)
 
-**Goal:** Complete discharge workflow with medical summary and billing verification
+**Goal:** Complete discharge workflow with medical summary and final discharge
+
+**Real-Life Hospital Discharge Flow:**
+
+```
+Step 1: Discharge Summary (Resume Medis) by Doctor
+   ↓ Sets visit status to 'ready_for_billing' (LOCKS visit clinically)
+
+Step 2: "Selesai Rawat Inap" - Billing Creation [✅ ALREADY IMPLEMENTED]
+   ↓ Pre-check: Discharge summary must exist
+   ↓ Aggregates all existing billing items (room, materials, procedures, prescriptions)
+   ↓ Status remains 'ready_for_billing'
+
+Step 3: Payment Processing (Kasir Module)
+   ↓ Cashier processes payment until LUNAS
+
+Step 4: Final Discharge
+   ↓ Release bed, set dischargeDate, status to 'completed'
+```
 
 #### Phase 4.1: Discharge Summary (Resume Medis)
 
 **User Story:** "Dokter mengisi Ringkasan Medis Pulang dan instruksi kontrol"
 
+**Important Notes:**
+- This is a **MEDICAL DOCUMENT** for patient to take home
+- "Procedures performed" = **documentation only** (already billed during hospitalization)
+- "Medications on discharge" = **prescriptions for HOME use** (NOT what was given during hospitalization)
+- Completing this summary **LOCKS the visit** by setting status to 'ready_for_billing'
+
 **Tasks:**
 
-1. **Create discharge summary form**
-   - Location: `/components/inpatient/discharge-summary-form.tsx`
+1. **Create discharge summary form dialog**
+   - Location: `/components/inpatient/discharge-summary-dialog.tsx`
    - Fields from discharge_summaries table:
-     - Admission diagnosis
-     - Discharge diagnosis
-     - Clinical summary (course of treatment)
-     - Procedures performed
-     - Medications on discharge
-     - Discharge instructions
+     - Admission diagnosis (ICD-10)
+     - Discharge diagnosis (ICD-10)
+     - Clinical summary (course of treatment during hospitalization)
+     - Procedures performed (documentation - list of procedures already done and billed)
+     - Medications on discharge (prescriptions for patient to buy at pharmacy for home use)
+     - Discharge instructions (wound care, activity restrictions, etc.)
      - Dietary restrictions
      - Activity restrictions
      - Follow-up date
      - Follow-up instructions
    - Rich text editor for lengthy fields
-   - Save as draft, finalize later
+   - ICD-10 autocomplete for diagnoses
 
 2. **Create discharge summary API endpoint**
    - Location: `/app/api/inpatient/discharge-summary/route.ts`
-   - Method: POST, PUT
-   - Validation: Visit must be inpatient type
-   - On finalize: Update visit.status to 'ready_for_billing'
+   - Method: POST, GET
+   - Validation: Visit must be inpatient type and in 'in_examination' status
+   - **On save: Update visit.status to 'ready_for_billing'** (LOCKS the visit)
+   - Only doctors can create discharge summary
 
 3. **Create discharge summary view component**
    - Location: `/components/inpatient/discharge-summary-view.tsx`
+   - Display discharge summary in readable format
    - Printable format
-   - Export to PDF
-   - Hospital letterhead template
+   - Export to PDF (future enhancement)
 
 **API Endpoints:**
 
-- `POST /api/inpatient/discharge-summary` - Create discharge summary
-- `PUT /api/inpatient/discharge-summary/[id]` - Update discharge summary
+- `POST /api/inpatient/discharge-summary` - Create discharge summary and lock visit
 - `GET /api/inpatient/discharge-summary?visitId={id}` - Get discharge summary
-- `POST /api/inpatient/discharge-summary/[id]/finalize` - Finalize summary
 
 **Components:**
 
-- `/components/inpatient/discharge-summary-form.tsx`
+- `/components/inpatient/discharge-summary-dialog.tsx`
 - `/components/inpatient/discharge-summary-view.tsx`
 
 **Acceptance Criteria:**
 
-- [ ] Only doctors can create/finalize discharge summary
-- [ ] Can save as draft and edit later
-- [ ] Once finalized, cannot edit (create addendum instead)
-- [ ] PDF export with hospital branding
-- [ ] Visit status changes to 'ready_for_billing'
+- [ ] Only doctors can create discharge summary
+- [ ] ICD-10 autocomplete for admission and discharge diagnosis
+- [ ] Visit status changes to 'ready_for_billing' on save (LOCKS visit)
+- [ ] Discharge summary appears on patient detail page
+- [ ] Cannot create discharge summary if visit already locked
 
 ---
 
-#### Phase 4.2: Discharge Workflow
+#### Phase 4.2: Final Discharge (Pasien Pulang)
 
-**User Story:** "Pasien pulang setelah billing lunas dan bed dirilis"
+**User Story:** "Pasien pulang fisik dari rumah sakit setelah billing lunas dan bed dirilis"
+
+**Important Notes:**
+- This is the **FINAL STEP** after payment is LUNAS
+- "Selesai Rawat Inap" (billing creation) is **ALREADY IMPLEMENTED** via `CompleteDischargeDialog`
+- This phase is about the **physical discharge** - releasing the bed and completing the visit
 
 **Tasks:**
 
-1. **Create discharge patient dialog**
-   - Location: `/components/inpatient/discharge-patient-dialog.tsx`
-   - Pre-checks:
-     - Discharge summary finalized ✅
-     - Billing status is 'paid' ✅
-     - All prescriptions fulfilled ✅
+1. **Create final discharge dialog**
+   - Location: `/components/inpatient/final-discharge-dialog.tsx`
+   - Pre-checks before allowing discharge:
+     - Discharge summary exists ✅
+     - Billing status is 'paid' (LUNAS) ✅
+     - Visit status is 'ready_for_billing' ✅
+   - Show pre-check status with visual indicators (checkmarks)
+   - Confirmation dialog with patient info
    - Actions on discharge:
-     - Set visit.dischargeDate
-     - Set bed_assignments.dischargedAt
-     - Update rooms.availableBeds (increment)
+     - Set visit.dischargeDate (current timestamp)
+     - Set bed_assignments.dischargedAt (current timestamp)
+     - Update rooms.availableBeds (increment by 1)
      - Set visit.status to 'completed'
 
-2. **Create discharge API endpoint**
-   - Location: `/app/api/inpatient/discharge/route.ts`
+2. **Create final discharge API endpoint**
+   - Location: `/app/api/inpatient/final-discharge/route.ts`
    - Method: POST
-   - Validation: All pre-checks must pass
+   - Pre-check validations:
+     - Discharge summary must exist
+     - Billing must be 'paid'
+     - Visit must be 'ready_for_billing'
    - Transaction: Update visit, bed_assignments, rooms atomically
+   - Permissions: discharge:write
 
 3. **Update patient detail dashboard**
-   - Add "Discharge Patient" button
-   - Show pre-check status (green checkmarks)
-   - Block discharge if any pre-check fails
+   - Add "Pasien Pulang" button (visible after billing is paid)
+   - Show discharge eligibility status
+   - Disable button if pre-checks fail
+   - Show helpful error messages for failed pre-checks
 
 **API Endpoints:**
 
-- `POST /api/inpatient/discharge` - Discharge patient
-- `GET /api/inpatient/discharge/pre-check?visitId={id}` - Check discharge eligibility
+- `POST /api/inpatient/final-discharge` - Complete final discharge
+- `GET /api/inpatient/discharge/eligibility?visitId={id}` - Check discharge eligibility
 
 **Components:**
 
-- `/components/inpatient/discharge-patient-dialog.tsx`
-- `/components/inpatient/discharge-pre-check.tsx`
+- `/components/inpatient/final-discharge-dialog.tsx`
+- `/components/inpatient/discharge-eligibility-check.tsx` (shows pre-check status)
 
 **Acceptance Criteria:**
 
-- [ ] Cannot discharge if billing not paid
-- [ ] Cannot discharge without finalized discharge summary
-- [ ] Bed released automatically on discharge
+- [ ] Cannot discharge if billing status is not 'paid'
+- [ ] Cannot discharge without discharge summary
+- [ ] Bed released automatically (availableBeds incremented)
 - [ ] Visit status changes to 'completed'
-- [ ] Room availableBeds count increments
+- [ ] visit.dischargeDate is set to current timestamp
+- [ ] bed_assignments.dischargedAt is set to current timestamp
+- [ ] All operations happen in a transaction (atomic)
+- [ ] Clear error messages if pre-checks fail
 
 ---
 
@@ -853,7 +943,11 @@ types/
 
 ---
 
-**Document Version:** 1.0
-**Last Updated:** 2025-12-21
+**Document Version:** 2.0
+**Last Updated:** 2026-01-05
 **Author:** Development Team
-**Status:** Phase 1 In Progress
+**Status:** Phase 4 (Discharge Process) In Progress
+
+**Change Log:**
+- v2.0 (2026-01-05): Updated to reflect completed Phases 1-3, clarified discharge workflow
+- v1.0 (2025-12-21): Initial implementation plan

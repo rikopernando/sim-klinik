@@ -184,7 +184,7 @@ export async function deleteVitalSigns(vitalId: string): Promise<void> {
  * Create a CPPT entry
  */
 export async function createCPPTEntry(
-  data: Omit<CPPTInput, "authorId" | "authorRole">
+  data: Omit<CPPTInput, "authorId" | "authorRole" | "recordType">
 ): Promise<void> {
   try {
     await axios.post("/api/inpatient/cppt", data)

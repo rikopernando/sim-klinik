@@ -205,5 +205,5 @@ export function canLockMedicalRecord(status: VisitStatus): boolean {
 }
 
 export function canFinishInpatient(status: VisitStatus) {
-  return status === "in_examination"
+  return status === "ready_for_billing"
 }

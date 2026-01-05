@@ -84,7 +84,7 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Rekam Medis",
           url: "/dashboard/medical-records",
-          icon: IconStethoscope,
+          icon: IconReportMedical,
         },
         {
           title: "UGD",
@@ -295,7 +295,7 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Rekam Medis",
           url: "/dashboard/medical-records",
-          icon: IconReportMedical,
+          icon: IconStethoscope,
         },
         {
           title: "UGD",
@@ -306,6 +306,17 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Pasien Pulang",
           url: "/dashboard/discharge",
           icon: IconUserCheck,
+        },
+        {
+          title: "Rawat Inap",
+          url: "/dashboard/inpatient",
+          icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+          ],
         },
       ],
     },

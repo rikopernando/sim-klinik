@@ -10,7 +10,7 @@ import { db } from "@/db"
 import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema/inpatient"
 import { medicalRecords, procedures } from "@/db/schema/medical-records"
 import { prescriptions, drugs } from "@/db/schema/inventory"
-import { services } from "@/db/schema/billing"
+import { services, dischargeSummaries } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
 import { user } from "@/db/schema/auth"
@@ -715,6 +715,25 @@ export async function getPatientDetailData(visitId: string) {
   // Fetch procedures
   const procedures = await getInpatientProcedures(visitId)
 
+  // Fetch discharge summary (if exists)
+  const dischargeSummaryResult = await db
+    .select({
+      dischargeSummary: dischargeSummaries,
+      dischargedByUser: user,
+    })
+    .from(dischargeSummaries)
+    .leftJoin(user, eq(dischargeSummaries.dischargedBy, user.id))
+    .where(eq(dischargeSummaries.visitId, visitId))
+    .limit(1)
+
+  const dischargeSummary =
+    dischargeSummaryResult.length > 0
+      ? {
+          ...dischargeSummaryResult[0].dischargeSummary,
+          dischargedByName: dischargeSummaryResult[0].dischargedByUser?.name || null,
+        }
+      : null
+
   return {
     patient: visitData,
     bedAssignment: currentBedAssignment,
@@ -730,6 +749,7 @@ export async function getPatientDetailData(visitId: string) {
     })),
     prescriptions,
     procedures,
+    dischargeSummary,
   }
 }
 

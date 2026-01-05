@@ -635,6 +635,24 @@ export const prescriptionItemSchema = z
   )
 
 /**
+ * Discharge Summary Schema
+ * Used when doctor fills discharge summary (Resume Medis)
+ */
+export const dischargeSummarySchema = z.object({
+  visitId: z.string().min(1, "Visit ID is required"),
+  admissionDiagnosis: z.string().min(1, "Diagnosis masuk wajib diisi"),
+  dischargeDiagnosis: z.string().min(1, "Diagnosis pulang wajib diisi"),
+  clinicalSummary: z.string().min(1, "Ringkasan klinis wajib diisi"),
+  proceduresPerformed: z.string().optional(),
+  medicationsOnDischarge: z.string().optional(),
+  dischargeInstructions: z.string().min(1, "Instruksi pulang wajib diisi"),
+  dietaryRestrictions: z.string().optional(),
+  activityRestrictions: z.string().optional(),
+  followUpDate: z.date().optional().nullable(),
+  followUpInstructions: z.string().optional(),
+})
+
+/**
  * Type exports
  */
 export type RoomInput = z.infer<typeof roomSchema>
@@ -649,3 +667,4 @@ export type InpatientPrescriptionInput = z.infer<typeof inpatientPrescriptionSch
 export type InpatientProcedureInput = z.infer<typeof inpatientProcedureSchema>
 export type AdministerPrescriptionInput = z.infer<typeof administerPrescriptionSchema>
 export type UpdateProcedureStatusInput = z.infer<typeof updateProcedureStatusSchema>
+export type DischargeSummaryInput = z.infer<typeof dischargeSummarySchema>

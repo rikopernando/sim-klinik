@@ -35,7 +35,12 @@ import {
   PLAN_SUGGESTIONS,
 } from "@/lib/medical/soap-suggestions"
 
-const cpptFormSchema = cpptSchema.omit({ visitId: true, authorId: true, authorRole: true, recordType: true })
+const cpptFormSchema = cpptSchema.omit({
+  visitId: true,
+  authorId: true,
+  authorRole: true,
+  recordType: true,
+})
 
 type CPPTFormData = z.infer<typeof cpptFormSchema>
 
