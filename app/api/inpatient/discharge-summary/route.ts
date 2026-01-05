@@ -104,7 +104,7 @@ export const POST = withRBAC(
           dischargeInstructions: validatedData.dischargeInstructions,
           dietaryRestrictions: validatedData.dietaryRestrictions || null,
           activityRestrictions: validatedData.activityRestrictions || null,
-          followUpDate: validatedData.followUpDate || null,
+          followUpDate: validatedData.followUpDate ? new Date(validatedData.followUpDate) : null,
           followUpInstructions: validatedData.followUpInstructions || null,
           dischargedBy: user.id,
         })

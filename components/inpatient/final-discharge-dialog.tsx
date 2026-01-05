@@ -69,7 +69,7 @@ export function FinalDischargeDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="w-full">
+        <Button size="lg">
           <IconDoorExit className="mr-2 h-5 w-5" />
           Pulangkan Pasien (Final Discharge)
         </Button>
@@ -103,12 +103,12 @@ export function FinalDischargeDialog({
           {/* Checklist Info */}
           <div className="space-y-3 rounded-lg border p-4">
             <div className="flex items-center gap-3 text-sm">
-              <IconClipboardCheck className="text-green-600 h-5 w-5" />
+              <IconClipboardCheck className="h-5 w-5 text-green-600" />
               <span className="font-medium">Resume medis telah dibuat</span>
             </div>
 
             <div className="flex items-center gap-3 text-sm">
-              <IconCheck className="text-green-600 h-5 w-5" />
+              <IconCheck className="h-5 w-5 text-green-600" />
               <span className="font-medium">Billing telah dibuat dan lunas</span>
             </div>
 
@@ -130,7 +130,12 @@ export function FinalDischargeDialog({
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isSubmitting}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setOpen(false)}
+            disabled={isSubmitting}
+          >
             Batal
           </Button>
           <Button type="button" onClick={handleFinalDischarge} disabled={isSubmitting}>

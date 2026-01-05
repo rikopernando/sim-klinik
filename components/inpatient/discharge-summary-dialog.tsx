@@ -33,8 +33,19 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { dischargeSummarySchema, DischargeSummaryInput } from "@/lib/inpatient/validation"
 import axios from "axios"
+import z from "zod"
+import { dischargeSummarySchema } from "@/lib/inpatient/validation"
+
+const dischargeSummaryInputSchema = dischargeSummarySchema
+  .omit({
+    followUpDate: true,
+  })
+  .extend({
+    followUpDate: z.date().optional(),
+  })
+
+type DischargeSummaryInput = z.infer<typeof dischargeSummaryInputSchema>
 
 interface DischargeSummaryDialogProps {
   visitId: string
@@ -51,7 +62,7 @@ export function DischargeSummaryDialog({
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<DischargeSummaryInput>({
-    resolver: zodResolver(dischargeSummarySchema),
+    resolver: zodResolver(dischargeSummaryInputSchema),
     defaultValues: {
       visitId,
       admissionDiagnosis: "",

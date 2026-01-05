@@ -648,7 +648,7 @@ export const dischargeSummarySchema = z.object({
   dischargeInstructions: z.string().min(1, "Instruksi pulang wajib diisi"),
   dietaryRestrictions: z.string().optional(),
   activityRestrictions: z.string().optional(),
-  followUpDate: z.date().optional().nullable(),
+  followUpDate: z.string().optional().nullable(),
   followUpInstructions: z.string().optional(),
 })
 

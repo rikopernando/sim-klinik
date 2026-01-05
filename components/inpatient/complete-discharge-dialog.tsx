@@ -99,7 +99,7 @@ export function CompleteDischargeDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <div className="flex justify-end">
+        <div className="flex justify-start">
           <Button variant="default" size="lg">
             <IconCheck className="mr-2 h-5 w-5" />
             Selesai Rawat Inap
