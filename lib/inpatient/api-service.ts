@@ -92,6 +92,25 @@ export function calculateDaysInHospital(admissionDate: Date): number {
 }
 
 /**
+ * Check if a visit is locked (ready for billing)
+ * Returns error message if locked, null if not locked
+ */
+export async function checkVisitLocked(visitId: string): Promise<string | null> {
+  const [visit] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1)
+
+  if (!visit) {
+    return "Visit not found"
+  }
+
+  // If visit is ready for billing, it's locked
+  if (visit.status === "ready_for_billing") {
+    return "Tidak dapat mengubah data - Visit sudah terkunci (ready for billing)"
+  }
+
+  return null
+}
+
+/**
  * Fetch latest vitals for multiple visits efficiently
  * Uses window function to avoid N+1 queries
  */
@@ -587,6 +606,7 @@ export async function getPatientDetailData(visitId: string) {
     visitType: visitResult[0].visits.visitType,
     admissionDate: visitResult[0].visits.admissionDate,
     dischargeDate: visitResult[0].visits.dischargeDate,
+    status: visitResult[0].visits.status,
     patientId: visitResult[0].patients.id,
     mrNumber: visitResult[0].patients.mrNumber,
     patientName: visitResult[0].patients.name,

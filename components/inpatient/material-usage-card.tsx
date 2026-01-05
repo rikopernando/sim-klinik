@@ -28,6 +28,7 @@ interface MaterialUsageCardProps {
   materials: MaterialUsage[]
   totalCost: string
   onRefresh?: () => void
+  isLocked?: boolean
 }
 
 // Memoized empty state component
@@ -40,10 +41,12 @@ const MaterialRow = memo(function MaterialRow({
   material,
   canDelete,
   onDeleteClick,
+  isLocked,
 }: {
   material: MaterialUsage
   canDelete: boolean
   onDeleteClick: (material: MaterialUsage) => void
+  isLocked: boolean
 }) {
   return (
     <TableRow>
@@ -61,7 +64,7 @@ const MaterialRow = memo(function MaterialRow({
         {material.notes || "-"}
       </TableCell>
       <TableCell>
-        {canDelete && (
+        {canDelete && !isLocked && (
           <Button
             variant="ghost"
             size="icon"
@@ -80,6 +83,7 @@ export const MaterialUsageCard = memo(function MaterialUsageCard({
   materials,
   totalCost,
   onRefresh,
+  isLocked = false,
 }: MaterialUsageCardProps) {
   const {
     deleteDialogOpen,
@@ -117,6 +121,7 @@ export const MaterialUsageCard = memo(function MaterialUsageCard({
               material={material}
               canDelete={canDelete(material.usedAt)}
               onDeleteClick={handleDeleteClick}
+              isLocked={isLocked}
             />
           ))}
         </TableBody>

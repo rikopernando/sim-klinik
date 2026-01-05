@@ -5,10 +5,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { deleteInpatientProcedure } from "@/lib/inpatient/api-service"
+import { deleteInpatientProcedure, checkVisitLocked } from "@/lib/inpatient/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { db } from "@/db"
+import { procedures } from "@/db/schema/medical-records"
+import { eq } from "drizzle-orm"
 
 interface RouteParams {
   id: string
@@ -35,6 +38,29 @@ export const DELETE = withRBAC(
           status: HTTP_STATUS_CODES.BAD_REQUEST,
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
+
+      // Get procedure to check visitId
+      const [procedure] = await db.select().from(procedures).where(eq(procedures.id, id)).limit(1)
+
+      if (!procedure) {
+        const response: ResponseError<unknown> = {
+          error: "Procedure not found",
+          message: "Procedure not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
+      }
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(procedure.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
       }
 
       await deleteInpatientProcedure(id)

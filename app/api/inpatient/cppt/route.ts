@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { medicalRecordSchema } from "@/lib/inpatient/validation"
-import { createCPPTEntry, getCPPTEntries } from "@/lib/inpatient/api-service"
+import { createCPPTEntry, getCPPTEntries, checkVisitLocked } from "@/lib/inpatient/api-service"
 import { withRBAC } from "@/lib/rbac/middleware"
 
 /**
@@ -34,6 +34,17 @@ export const POST = withRBAC(
         authorRole: authorRole,
         recordType: "progress_note", // Explicitly set as progress note
       })
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(validatedData.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
 
       // Create progress note (uses unified medical records)
       await createCPPTEntry(validatedData)

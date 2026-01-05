@@ -128,6 +128,19 @@ export async function fetchPatientDetail(visitId: string): Promise<PatientDetail
 }
 
 /**
+ * Unlock a visit (doctor only)
+ * Deletes billing records and reverts visit status to in_examination
+ */
+export async function unlockInpatientVisit(visitId: string): Promise<void> {
+  try {
+    await axios.post(`/api/inpatient/patients/${visitId}/unlock`)
+  } catch (error) {
+    console.error("Error unlocking visit:", error)
+    handleApiError(error)
+  }
+}
+
+/**
  * Record vital signs for a patient
  */
 export async function recordVitalSigns(data: VitalSignsInput): Promise<void> {

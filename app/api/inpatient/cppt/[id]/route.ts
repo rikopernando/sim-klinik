@@ -15,6 +15,7 @@ import { db } from "@/db"
 import { medicalRecords } from "@/db/schema/medical-records"
 import { medicalRecordSchema } from "@/lib/inpatient/validation"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { checkVisitLocked } from "@/lib/inpatient/api-service"
 
 interface RouteParams {
   id: string
@@ -62,6 +63,17 @@ export const PUT = withRBAC(
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
       }
 
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(record.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
+
       // Check if record is within 2 hours (7200000 ms)
       const createdAt = new Date(record.createdAt)
       const now = new Date()
@@ -91,10 +103,7 @@ export const PUT = withRBAC(
       // Update the record
       const [updatedRecord] = await db
         .update(medicalRecords)
-        .set({
-          ...validatedData,
-          updatedAt: new Date(),
-        })
+        .set(validatedData)
         .where(eq(medicalRecords.id, id))
         .returning()
 
@@ -166,6 +175,17 @@ export const DELETE = withRBAC(
           message: "The specified medical record does not exist",
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
+      }
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(record.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
       }
 
       // Check if record is within 1 hour (3600000 ms)

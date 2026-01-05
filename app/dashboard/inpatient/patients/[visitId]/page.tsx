@@ -28,6 +28,8 @@ import { PrescriptionsList } from "@/components/inpatient/prescriptions-list"
 import { ProceduresList } from "@/components/inpatient/procedures-list"
 import { CompleteDischargeDialog } from "@/components/inpatient/complete-discharge-dialog"
 import { BedAssignmentHistory } from "@/components/inpatient/bed-assignment-history"
+import { VisitLockBanner } from "@/components/inpatient/visit-lock-banner"
+import { canFinishInpatient, VisitStatus } from "@/types/visit-status"
 
 export default function PatientDetailPage() {
   const { visitId } = useParams<{ visitId: string }>()
@@ -35,6 +37,9 @@ export default function PatientDetailPage() {
 
   const { patientDetail, isLoading, refresh } = usePatientDetail(visitId)
   const { hasPermission } = usePermission()
+
+  // Check if visit is locked (ready_for_billing status)
+  const isLocked = patientDetail?.patient.status === "ready_for_billing"
 
   if (isLoading) {
     return (
@@ -89,6 +94,14 @@ export default function PatientDetailPage() {
           </Button>
         </div>
 
+        {/* Lock Banner */}
+        <VisitLockBanner
+          visitStatus={patientDetail.patient.status}
+          visitId={visitId}
+          patientName={patientDetail.patient.patientName}
+          onUnlockSuccess={refresh}
+        />
+
         {/* Patient Info Card */}
         <PatientInfoCard data={patientDetail} />
 
@@ -116,7 +129,7 @@ export default function PatientDetailPage() {
                     : "Belum ada rekaman tanda vital"}
                 </CardDescription>
               </div>
-              {hasPermission("inpatient:write") && (
+              {hasPermission("inpatient:write") && !isLocked && (
                 <RecordVitalsDialog
                   visitId={visitId}
                   patientName={patientDetail.patient.patientName}
@@ -126,7 +139,11 @@ export default function PatientDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <VitalsHistoryTable vitals={patientDetail.vitals} onRefresh={refresh} />
+            <VitalsHistoryTable
+              vitals={patientDetail.vitals}
+              onRefresh={refresh}
+              isLocked={isLocked}
+            />
           </CardContent>
         </Card>
 
@@ -142,7 +159,7 @@ export default function PatientDetailPage() {
                     : "Belum ada catatan CPPT"}
                 </CardDescription>
               </div>
-              {hasPermission("inpatient:write") && (
+              {hasPermission("inpatient:write") && !isLocked && (
                 <CPPTDialog
                   visitId={visitId}
                   patientName={patientDetail.patient.patientName}
@@ -152,7 +169,11 @@ export default function PatientDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <CPPTHistoryCard entries={patientDetail.cpptEntries} onRefresh={refresh} />
+            <CPPTHistoryCard
+              entries={patientDetail.cpptEntries}
+              onRefresh={refresh}
+              isLocked={isLocked}
+            />
           </CardContent>
         </Card>
 
@@ -188,7 +209,7 @@ export default function PatientDetailPage() {
                     : "Belum ada penggunaan lat kesehatan"}
                 </CardDescription>
               </div>
-              {hasPermission("inpatient:write") && (
+              {hasPermission("inpatient:write") && !isLocked && (
                 <RecordMaterialDialog
                   visitId={visitId}
                   patientName={patientDetail.patient.patientName}
@@ -202,6 +223,7 @@ export default function PatientDetailPage() {
               materials={patientDetail.materials}
               totalCost={patientDetail.totalMaterialCost}
               onRefresh={refresh}
+              isLocked={isLocked}
             />
           </CardContent>
         </Card>
@@ -220,7 +242,7 @@ export default function PatientDetailPage() {
                     : "Belum ada resep obat"}
                 </CardDescription>
               </div>
-              {hasPermission("prescriptions:write") && (
+              {hasPermission("prescriptions:write") && !isLocked && (
                 <CreatePrescriptionDialog
                   visitId={visitId}
                   patientName={patientDetail.patient.patientName}
@@ -230,7 +252,11 @@ export default function PatientDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <PrescriptionsList prescriptions={patientDetail.prescriptions} onRefresh={refresh} />
+            <PrescriptionsList
+              prescriptions={patientDetail.prescriptions}
+              onRefresh={refresh}
+              isLocked={isLocked}
+            />
           </CardContent>
         </Card>
 
@@ -246,7 +272,7 @@ export default function PatientDetailPage() {
                     : "Belum ada tindakan medis"}
                 </CardDescription>
               </div>
-              {hasPermission("inpatient:write") && (
+              {hasPermission("inpatient:write") && !isLocked && (
                 <CreateProcedureDialog
                   visitId={visitId}
                   patientName={patientDetail.patient.patientName}
@@ -256,17 +282,25 @@ export default function PatientDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <ProceduresList procedures={patientDetail.procedures} onRefresh={refresh} />
+            <ProceduresList
+              procedures={patientDetail.procedures}
+              onRefresh={refresh}
+              isLocked={isLocked}
+            />
           </CardContent>
         </Card>
 
-        <Separator />
-        {hasPermission("discharge:write") && (
-          <CompleteDischargeDialog
-            visitId={visitId}
-            patientName={patientDetail.patient.patientName}
-            onSuccess={refresh}
-          />
+        {canFinishInpatient(patientDetail.patient.status as VisitStatus) && (
+          <>
+            <Separator />
+            {hasPermission("discharge:write") && (
+              <CompleteDischargeDialog
+                visitId={visitId}
+                patientName={patientDetail.patient.patientName}
+                onSuccess={refresh}
+              />
+            )}
+          </>
         )}
       </div>
     </div>

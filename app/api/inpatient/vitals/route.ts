@@ -11,6 +11,7 @@ import { vitalSignsSchema } from "@/lib/inpatient/validation"
 import {
   recordVitalSigns as recordVitalSignsService,
   getVitalSignsHistory,
+  checkVisitLocked,
 } from "@/lib/inpatient/api-service"
 import { withRBAC } from "@/lib/rbac/middleware"
 
@@ -29,6 +30,17 @@ export const POST = withRBAC(
         ...body,
         recordedBy: user.id,
       })
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(validatedData.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
 
       // Record vital signs
       const newVitals = await recordVitalSignsService(validatedData)

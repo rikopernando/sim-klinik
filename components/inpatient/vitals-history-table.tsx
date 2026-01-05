@@ -43,9 +43,10 @@ import {
 interface VitalsHistoryTableProps {
   vitals: VitalSigns[]
   onRefresh?: () => void
+  isLocked?: boolean
 }
 
-export function VitalsHistoryTable({ vitals, onRefresh }: VitalsHistoryTableProps) {
+export function VitalsHistoryTable({ vitals, onRefresh, isLocked = false }: VitalsHistoryTableProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const canDelete = (recordedAt: string) => {
@@ -255,7 +256,7 @@ export function VitalsHistoryTable({ vitals, onRefresh }: VitalsHistoryTableProp
 
               {/* Delete Action */}
               <TableCell className="text-center">
-                {canDelete(vital.recordedAt) && (
+                {canDelete(vital.recordedAt) && !isLocked && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="ghost" size="sm" disabled={deletingId === vital.id}>

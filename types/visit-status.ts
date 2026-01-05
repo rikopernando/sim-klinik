@@ -203,3 +203,7 @@ export function canLockMedicalRecord(status: VisitStatus): boolean {
   // Can lock when examined but not yet ready for billing
   return status === "examined"
 }
+
+export function canFinishInpatient(status: VisitStatus) {
+  return status === "in_examination"
+}

@@ -12,6 +12,7 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { vitalsHistory } from "@/db/schema/inpatient"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { checkVisitLocked } from "@/lib/inpatient/api-service"
 
 interface RouteParams {
   id: string
@@ -50,6 +51,17 @@ export const DELETE = withRBAC(
           message: "The specified vital signs record does not exist",
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
+      }
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(vitalRecord.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
       }
 
       // Check if record is within 1 hour (3600000 ms)

@@ -4,7 +4,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createInpatientPrescription } from "@/lib/inpatient/api-service"
+import {
+  createInpatientPrescription,
+  checkVisitLocked,
+} from "@/lib/inpatient/api-service"
 import { inpatientPrescriptionSchema } from "@/lib/inpatient/validation"
 import z from "zod"
 import { ResponseApi, ResponseError } from "@/types/api"
@@ -21,6 +24,17 @@ export const POST = withRBAC(
     try {
       const body = await request.json()
       const validatedData = inpatientPrescriptionSchema.parse(body)
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(validatedData.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
 
       await createInpatientPrescription(validatedData)
 

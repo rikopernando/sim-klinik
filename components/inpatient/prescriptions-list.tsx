@@ -31,6 +31,7 @@ import { Spinner } from "../ui/spinner"
 interface PrescriptionsListProps {
   prescriptions: InpatientPrescription[]
   onRefresh?: () => void
+  isLocked?: boolean
 }
 
 // Memoized empty state component
@@ -50,12 +51,14 @@ const PrescriptionRow = memo(function PrescriptionRow({
   onDelete,
   isNurse,
   isLoading,
+  isLocked,
 }: {
   prescription: InpatientPrescription
   onAdminister: (id: string) => void
   onDelete: (id: string) => void
   isNurse: boolean
   isLoading: boolean
+  isLocked: boolean
 }) {
   return (
     <TableRow>
@@ -127,7 +130,7 @@ const PrescriptionRow = memo(function PrescriptionRow({
               )}
             </Button>
           )}
-          {!prescription.isAdministered && (
+          {!prescription.isAdministered && !isLocked && (
             <Button
               variant="ghost"
               size="icon"
@@ -147,6 +150,7 @@ const PrescriptionRow = memo(function PrescriptionRow({
 export const PrescriptionsList = memo(function PrescriptionsList({
   prescriptions,
   onRefresh,
+  isLocked = false,
 }: PrescriptionsListProps) {
   const { data: session } = useSession()
   const [isLoading, setIsLoading] = useState(false)
@@ -224,6 +228,7 @@ export const PrescriptionsList = memo(function PrescriptionsList({
               onDelete={handleDelete}
               isNurse={isNurse}
               isLoading={isLoading && selectedPrescriptionId === prescription.id}
+              isLocked={isLocked}
             />
           ))}
         </TableBody>

@@ -16,6 +16,7 @@ import { bedTransferSchema } from "@/lib/inpatient/validation"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { checkVisitLocked } from "@/lib/inpatient/api-service"
 
 export const POST = withRBAC(
   async (request: NextRequest, { user }) => {
@@ -24,6 +25,17 @@ export const POST = withRBAC(
 
       // Validate input
       const validatedData = bedTransferSchema.parse(body)
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(validatedData.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
 
       // Execute bed transfer in a transaction
       await db.transaction(async (tx) => {

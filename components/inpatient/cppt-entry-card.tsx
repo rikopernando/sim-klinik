@@ -36,9 +36,10 @@ import { CPPT } from "@/types/inpatient"
 interface CPPTEntryCardProps {
   entry: CPPT
   onRefresh?: () => void
+  isLocked?: boolean
 }
 
-export function CPPTEntryCard({ entry, onRefresh }: CPPTEntryCardProps) {
+export function CPPTEntryCard({ entry, onRefresh, isLocked = false }: CPPTEntryCardProps) {
   const [expanded, setExpanded] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -109,7 +110,7 @@ export function CPPTEntryCard({ entry, onRefresh }: CPPTEntryCardProps) {
                 )}
               </Button>
             )}
-            {canDelete(entry.createdAt) && (
+            {canDelete(entry.createdAt) && !isLocked && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button variant="ghost" size="sm" disabled={deletingId === entry.id}>

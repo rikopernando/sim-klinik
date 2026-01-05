@@ -35,6 +35,7 @@ import { updateProcedureStatus, deleteInpatientProcedure } from "@/lib/services/
 interface ProceduresListProps {
   procedures: InpatientProcedure[]
   onRefresh?: () => void
+  isLocked?: boolean
 }
 
 // Status badge configuration
@@ -67,12 +68,14 @@ const ProcedureRow = memo(function ProcedureRow({
   onDelete,
   isLoading,
   canChangeStatus,
+  isLocked,
 }: {
   isLoading: boolean
   procedure: InpatientProcedure
   onStatusChange: (id: string, status: ProcedureStatus) => void
   onDelete: (id: string) => void
   canChangeStatus: boolean
+  isLocked: boolean
 }) {
   const statusConfig = STATUS_CONFIG[procedure.status]
   const StatusIcon = statusConfig.icon
@@ -125,7 +128,7 @@ const ProcedureRow = memo(function ProcedureRow({
                 </SelectContent>
               </Select>
             )}
-          {procedure.status === "ordered" && (
+          {procedure.status === "ordered" && !isLocked && (
             <Button
               variant="ghost"
               size="icon"
@@ -146,6 +149,7 @@ const ProcedureRow = memo(function ProcedureRow({
 export const ProceduresList = memo(function ProceduresList({
   procedures,
   onRefresh,
+  isLocked = false,
 }: ProceduresListProps) {
   const { data: session } = useSession()
   const [isLoading, setIsLoading] = useState(false)
@@ -225,6 +229,7 @@ export const ProceduresList = memo(function ProceduresList({
               onDelete={handleDelete}
               canChangeStatus={canChangeStatus}
               isLoading={isLoading && selectedRowId === procedure.id}
+              isLocked={isLocked}
             />
           ))}
         </TableBody>

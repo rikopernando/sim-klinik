@@ -525,6 +525,7 @@ export interface PatientDetail {
     visitType: string
     admissionDate: string | null
     dischargeDate: string | null
+    status: string
     patientId: string
     mrNumber: string
     patientName: string

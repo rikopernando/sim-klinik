@@ -14,7 +14,7 @@ import { inventoryItems, inventoryBatches } from "@/db/schema/inventory"
 import { materialUsageSchema } from "@/lib/inpatient/validation"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
-import { recordMaterialUsage } from "@/lib/inpatient/api-service"
+import { recordMaterialUsage, checkVisitLocked } from "@/lib/inpatient/api-service"
 import { withRBAC } from "@/lib/rbac/middleware"
 
 /**
@@ -122,6 +122,17 @@ export const POST = withRBAC(
         return NextResponse.json(response, {
           status: HTTP_STATUS_CODES.NOT_FOUND,
         })
+      }
+
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(validatedData.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
       }
 
       await recordMaterialUsage(validatedData)
