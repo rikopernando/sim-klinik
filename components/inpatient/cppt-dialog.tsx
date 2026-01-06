@@ -118,6 +118,7 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                 name="soapSubjective"
                 render={({ field }) => (
                   <AutocompleteTextarea
+                    multiValue
                     id="soapSubjective"
                     value={field.value || ""}
                     onChange={field.onChange}
@@ -141,6 +142,7 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                 name="soapObjective"
                 render={({ field }) => (
                   <AutocompleteTextarea
+                    multiValue
                     id="soapObjective"
                     value={field.value || ""}
                     onChange={field.onChange}
@@ -164,6 +166,7 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                 name="soapAssessment"
                 render={({ field }) => (
                   <AutocompleteTextarea
+                    multiValue
                     id="soapAssessment"
                     value={field.value || ""}
                     onChange={field.onChange}
@@ -187,6 +190,7 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
                 name="soapPlan"
                 render={({ field }) => (
                   <AutocompleteTextarea
+                    multiValue
                     id="soapPlan"
                     value={field.value || ""}
                     onChange={field.onChange}

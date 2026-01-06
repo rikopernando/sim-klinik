@@ -113,6 +113,7 @@ export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapForm
       {SOAP_SECTIONS.map((section) => (
         <SectionCard key={section.key} title={section.title} description={section.description}>
           <AutocompleteTextarea
+            multiValue
             value={localData[section.key]}
             onChange={(e) => handleChange(section.key, e.target.value)}
             placeholder={section.placeholder}
