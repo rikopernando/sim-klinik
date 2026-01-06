@@ -149,7 +149,7 @@ async function runMigration() {
           ON CONFLICT (id) DO NOTHING
         `)
 
-        console.log(`✅ Migrated ${result.rowCount || 0} CPPT records to medical_records`)
+        console.log(`✅ Migrated ${result.length || 0} CPPT records to medical_records`)
 
         console.log("📊 Step 6: Updating procedures table...")
 

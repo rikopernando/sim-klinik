@@ -53,7 +53,7 @@ export const DELETE = withRBAC(
       }
 
       // Check if visit is locked
-      const lockError = await checkVisitLocked(procedure.visitId)
+      const lockError = await checkVisitLocked(procedure.visitId || "")
       if (lockError) {
         const response: ResponseError<unknown> = {
           error: "Visit locked",

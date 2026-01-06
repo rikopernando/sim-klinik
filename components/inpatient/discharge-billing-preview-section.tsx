@@ -81,7 +81,9 @@ export function DischargeBillingPreviewSection({
         {/* Procedure Charges */}
         {parseFloat(summary.breakdown.procedureCharges.amount) > 0 && (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{summary.breakdown.procedureCharges.label}</span>
+            <span className="text-muted-foreground">
+              {summary.breakdown.procedureCharges.label}
+            </span>
             <span>{formatCurrency(parseFloat(summary.breakdown.procedureCharges.amount))}</span>
           </div>
         )}
@@ -112,9 +114,7 @@ export function DischargeBillingPreviewSection({
               )}
             >
               <span>
-                {adjustmentType === "discount"
-                  ? "Diskon Rawat Inap"
-                  : "Biaya Tambahan Rawat Inap"}
+                {adjustmentType === "discount" ? "Diskon Rawat Inap" : "Biaya Tambahan Rawat Inap"}
               </span>
               <span>
                 {adjustmentType === "discount" ? "- " : "+ "}
@@ -130,9 +130,7 @@ export function DischargeBillingPreviewSection({
         )}
 
         {/* Show total items */}
-        <div className="text-muted-foreground pt-2 text-xs">
-          {summary.totalItems} item total
-        </div>
+        <div className="text-muted-foreground pt-2 text-xs">{summary.totalItems} item total</div>
       </div>
     </div>
   )

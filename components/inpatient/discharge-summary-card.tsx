@@ -119,7 +119,7 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">
             {dischargeSummary.clinicalSummary}
           </p>
         </CardContent>
@@ -141,7 +141,7 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">Tindakan yang Dilakukan</Badge>
                   </div>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {dischargeSummary.proceduresPerformed}
                   </p>
                 </div>
@@ -156,7 +156,7 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">Obat untuk Dibawa Pulang</Badge>
                   </div>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {dischargeSummary.medicationsOnDischarge}
                   </p>
                 </div>
@@ -175,7 +175,7 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="whitespace-pre-wrap text-sm leading-relaxed">
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">
             {dischargeSummary.dischargeInstructions}
           </p>
         </CardContent>
@@ -253,7 +253,7 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
                   <IconClipboardList className="text-muted-foreground mt-0.5 h-4 w-4" />
                   <div className="flex-1 space-y-1">
                     <p className="text-muted-foreground text-sm">Instruksi Kontrol</p>
-                    <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
                       {dischargeSummary.followUpInstructions}
                     </p>
                   </div>

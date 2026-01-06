@@ -4,10 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import {
-  createInpatientPrescription,
-  checkVisitLocked,
-} from "@/lib/inpatient/api-service"
+import { createInpatientPrescription, checkVisitLocked } from "@/lib/inpatient/api-service"
 import { inpatientPrescriptionSchema } from "@/lib/inpatient/validation"
 import z from "zod"
 import { ResponseApi, ResponseError } from "@/types/api"
