@@ -3,14 +3,13 @@
  * PUT /api/lab/results/[id]/verify - Verify lab result
  */
 
+import { ZodError } from "zod"
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { labResults, labOrders } from "@/db/schema/laboratory"
-import { eq } from "drizzle-orm"
 import { withRBAC, User } from "@/lib/rbac/middleware"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
-import type { VerifyLabResultInput } from "@/types/lab"
+import { verifyLabResult } from "@/lib/lab/service"
+import { verifyLabResultSchema } from "@/lib/lab/validation"
 
 /**
  * PUT /api/lab/results/[id]/verify
@@ -21,57 +20,13 @@ export const PUT = withRBAC(
   async (request: NextRequest, { params, user }: { params: { id: string }; user: User }) => {
     try {
       const resultId = params.id
-      const body = (await request.json()) as VerifyLabResultInput
+      const body = await request.json()
 
-      // Get result
-      const [result] = await db
-        .select()
-        .from(labResults)
-        .where(eq(labResults.id, resultId))
-        .limit(1)
+      // Validate request body (optional notes)
+      const validatedData = verifyLabResultSchema.parse(body)
 
-      if (!result) {
-        const response: ResponseError<unknown> = {
-          error: "Result not found",
-          status: HTTP_STATUS_CODES.NOT_FOUND,
-          message: "Lab result not found",
-        }
-        return NextResponse.json(response, { status: HTTP_STATUS_CODES.NOT_FOUND })
-      }
-
-      if (result.isVerified) {
-        const response: ResponseError<unknown> = {
-          error: "Already verified",
-          status: HTTP_STATUS_CODES.BAD_REQUEST,
-          message: "This result has already been verified",
-        }
-        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
-      }
-
-      // Update result as verified
-      const [verifiedResult] = await db
-        .update(labResults)
-        .set({
-          isVerified: true,
-          verifiedBy: user.id,
-          verifiedAt: new Date(),
-          resultNotes: body.notes || result.resultNotes,
-        })
-        .where(eq(labResults.id, resultId))
-        .returning()
-
-      // Update order status to verified
-      await db
-        .update(labOrders)
-        .set({
-          status: "verified",
-          verifiedBy: user.id,
-          verifiedAt: new Date(),
-        })
-        .where(eq(labOrders.id, result.orderId))
-
-      // TODO: Create notification for ordering doctor
-      // TODO: If critical value, send urgent notification
+      // Verify result using service layer
+      const verifiedResult = await verifyLabResult(resultId, user.id, validatedData.notes)
 
       const response: ResponseApi<typeof verifiedResult> = {
         status: HTTP_STATUS_CODES.OK,
@@ -82,6 +37,15 @@ export const PUT = withRBAC(
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Error verifying lab result:", error)
+
+      if (error instanceof ZodError) {
+        const response: ResponseError<unknown> = {
+          error: error.message,
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "Invalid verification data",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
 
       const response: ResponseError<unknown> = {
         error: error instanceof Error ? error.message : "Unknown error",

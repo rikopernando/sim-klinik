@@ -4,14 +4,13 @@
  * POST /api/lab/tests - Create new lab test (admin only)
  */
 
+import { ZodError } from "zod"
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { labTests } from "@/db/schema/laboratory"
-import { ilike, and, eq, or } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi, ResponseError } from "@/types/api"
-import type { CreateLabTestInput } from "@/types/lab"
+import { getLabTests, createLabTest } from "@/lib/lab/service"
+import { createLabTestSchema, labTestFiltersSchema } from "@/lib/lab/validation"
 
 /**
  * GET /api/lab/tests
@@ -23,60 +22,17 @@ export const GET = withRBAC(
   async (request: NextRequest) => {
     try {
       const { searchParams } = new URL(request.url)
-      const search = searchParams.get("search") || ""
-      const category = searchParams.get("category")
-      const department = searchParams.get("department")
-      const isActive = searchParams.get("isActive")
 
-      // Build where conditions
-      const conditions = []
+      // Parse and validate query parameters
+      const filters = labTestFiltersSchema.parse({
+        search: searchParams.get("search") || undefined,
+        category: searchParams.get("category") || undefined,
+        department: searchParams.get("department") || undefined,
+        isActive: searchParams.get("isActive") || undefined,
+      })
 
-      // Filter by active status (default to true)
-      if (isActive !== null) {
-        conditions.push(eq(labTests.isActive, isActive === "true"))
-      } else {
-        conditions.push(eq(labTests.isActive, true))
-      }
-
-      // Filter by department
-      if (department) {
-        conditions.push(eq(labTests.department, department))
-      }
-
-      // Filter by category
-      if (category) {
-        conditions.push(eq(labTests.category, category))
-      }
-
-      // Search by code or name
-      if (search) {
-        conditions.push(
-          or(ilike(labTests.code, `%${search}%`), ilike(labTests.name, `%${search}%`))
-        )
-      }
-
-      // Query lab tests
-      const result = await db
-        .select({
-          id: labTests.id,
-          code: labTests.code,
-          name: labTests.name,
-          category: labTests.category,
-          department: labTests.department,
-          price: labTests.price,
-          specimenType: labTests.specimenType,
-          specimenVolume: labTests.specimenVolume,
-          specimenContainer: labTests.specimenContainer,
-          tatHours: labTests.tatHours,
-          requiresFasting: labTests.requiresFasting,
-          description: labTests.description,
-          instructions: labTests.instructions,
-          isActive: labTests.isActive,
-        })
-        .from(labTests)
-        .where(and(...conditions))
-        .limit(50)
-        .orderBy(labTests.name)
+      // Get lab tests using service layer
+      const result = await getLabTests(filters)
 
       const response: ResponseApi<typeof result> = {
         status: HTTP_STATUS_CODES.OK,
@@ -87,6 +43,15 @@ export const GET = withRBAC(
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Error fetching lab tests:", error)
+
+      if (error instanceof ZodError) {
+        const response: ResponseError<unknown> = {
+          error: error.message,
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "Invalid query parameters",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
 
       const response: ResponseError<unknown> = {
         error: error instanceof Error ? error.message : "Unknown error",
@@ -107,32 +72,13 @@ export const GET = withRBAC(
 export const POST = withRBAC(
   async (request: NextRequest) => {
     try {
-      const body = (await request.json()) as CreateLabTestInput
+      const body = await request.json()
 
-      // TODO: Add Zod validation for CreateLabTestInput
+      // Validate request body
+      const validatedData = createLabTestSchema.parse(body)
 
-      // Insert new lab test
-      const [newTest] = await db
-        .insert(labTests)
-        .values({
-          code: body.code,
-          name: body.name,
-          category: body.category,
-          department: body.department,
-          price: body.price.toString(),
-          specimenType: body.specimenType,
-          specimenVolume: body.specimenVolume,
-          specimenContainer: body.specimenContainer,
-          tatHours: body.tatHours,
-          loincCode: body.loincCode,
-          cptCode: body.cptCode,
-          resultTemplate: body.resultTemplate,
-          description: body.description,
-          instructions: body.instructions,
-          requiresFasting: body.requiresFasting,
-          isActive: true,
-        })
-        .returning()
+      // Create lab test using service layer
+      const newTest = await createLabTest(validatedData)
 
       const response: ResponseApi<typeof newTest> = {
         status: HTTP_STATUS_CODES.CREATED,
@@ -143,6 +89,15 @@ export const POST = withRBAC(
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
     } catch (error) {
       console.error("Error creating lab test:", error)
+
+      if (error instanceof ZodError) {
+        const response: ResponseError<unknown> = {
+          error: error.message,
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+          message: "Invalid lab test data",
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
+      }
 
       const response: ResponseError<unknown> = {
         error: error instanceof Error ? error.message : "Unknown error",

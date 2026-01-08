@@ -3,7 +3,16 @@
  * Tables for lab test management, ordering, results, and notifications
  */
 
-import { pgTable, text, varchar, timestamp, decimal, boolean, integer, jsonb } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  text,
+  varchar,
+  timestamp,
+  decimal,
+  boolean,
+  integer,
+  jsonb,
+} from "drizzle-orm/pg-core"
 import { visits } from "./visits"
 import { patients } from "./patients"
 import { user } from "./auth"

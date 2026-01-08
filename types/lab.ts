@@ -463,19 +463,3 @@ export const LAB_ORDER_TRANSITIONS: LabOrderStatusTransition[] = [
     allowedRoles: ["lab_technician", "lab_supervisor"],
   },
 ]
-
-// ============================================================================
-// VALIDATION HELPERS
-// ============================================================================
-
-export function isValidStatusTransition(from: OrderStatus, to: OrderStatus): boolean {
-  return LAB_ORDER_TRANSITIONS.some((t) => t.from === from && t.to === to)
-}
-
-export function getNextValidStatuses(currentStatus: OrderStatus): OrderStatus[] {
-  return LAB_ORDER_TRANSITIONS.filter((t) => t.from === currentStatus).map((t) => t.to)
-}
-
-export function isCriticalResult(result: NumericResultData): boolean {
-  return result.flag === RESULT_FLAGS.CRITICAL_HIGH || result.flag === RESULT_FLAGS.CRITICAL_LOW
-}
