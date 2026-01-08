@@ -223,6 +223,8 @@ export async function requireAllPermissions(permissionsRequired: Permission[]) {
  * );
  * ```
  */
+export type User = { id: string; email: string; name: string }
+
 export function withRBAC<TParams = Record<string, string | string[]>>(
   handler: (
     req: NextRequest,

@@ -14,6 +14,9 @@ export type UserRole =
   | "pharmacist"
   | "cashier"
   | "receptionist"
+  | "lab_technician"
+  | "lab_supervisor"
+  | "radiologist"
 
 export const USER_ROLES = {
   SUPER_ADMIN: "super_admin" as UserRole,
@@ -23,6 +26,9 @@ export const USER_ROLES = {
   PHARMACIST: "pharmacist" as UserRole,
   CASHIER: "cashier" as UserRole,
   RECEPTIONIST: "receptionist" as UserRole,
+  LAB_TECHNICIAN: "lab_technician" as UserRole,
+  LAB_SUPERVISOR: "lab_supervisor" as UserRole,
+  RADIOLOGIST: "radiologist" as UserRole,
 } as const
 
 /**
@@ -69,6 +75,11 @@ export type Permission =
   | "discharge:read"
   | "discharge:write"
 
+  // Laboratory & Radiology
+  | "lab:read"
+  | "lab:write"
+  | "lab:verify"
+
   // System
   | "system:admin"
   | "system:reports"
@@ -103,6 +114,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "inpatient:manage_beds",
     "discharge:read",
     "discharge:write",
+    "lab:read",
+    "lab:write",
+    "lab:verify",
     "system:admin",
     "system:reports",
   ],
@@ -120,6 +134,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "billing:read",
     "inpatient:read",
     "discharge:read",
+    "lab:read",
     "system:admin",
     "system:reports",
   ],
@@ -137,6 +152,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "inpatient:write",
     "discharge:read",
     "discharge:write",
+    "lab:read",
+    "lab:write", // Doctors can order lab tests
   ],
 
   nurse: [
@@ -147,6 +164,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "inpatient:read",
     "inpatient:write",
     "inpatient:manage_beds",
+    "lab:read",
+    "lab:write", // Nurses can collect specimens
   ],
 
   pharmacist: [
@@ -167,6 +186,29 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   receptionist: ["patients:read", "patients:write", "visits:read", "visits:write"],
+
+  lab_technician: [
+    "patients:read",
+    "visits:read",
+    "lab:read",
+    "lab:write", // Can enter results and process orders
+  ],
+
+  lab_supervisor: [
+    "patients:read",
+    "visits:read",
+    "lab:read",
+    "lab:write",
+    "lab:verify", // Can verify results
+  ],
+
+  radiologist: [
+    "patients:read",
+    "visits:read",
+    "lab:read",
+    "lab:write",
+    "lab:verify", // Can enter and verify radiology results
+  ],
 }
 
 /**
@@ -223,6 +265,24 @@ export const ROLE_INFO: Record<
     description: "Patient registration and visits",
     color: "bg-pink-600",
   },
+  lab_technician: {
+    label: "Analis Laboratorium",
+    labelId: "Laboratory Technician",
+    description: "Laboratory test processing and result entry",
+    color: "bg-cyan-600",
+  },
+  lab_supervisor: {
+    label: "Supervisor Laboratorium",
+    labelId: "Laboratory Supervisor",
+    description: "Laboratory result verification and quality control",
+    color: "bg-indigo-600",
+  },
+  radiologist: {
+    label: "Radiolog",
+    labelId: "Radiologist",
+    description: "Radiology imaging and interpretation",
+    color: "bg-violet-600",
+  },
 }
 
 /**
@@ -237,6 +297,7 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/dashboard/emergency",
     "/dashboard/inpatient",
     "/dashboard/pharmacy",
+    "/dashboard/laboratory",
     "/dashboard/cashier",
     "/dashboard/discharge",
     "/dashboard/reports",
@@ -251,6 +312,7 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/dashboard/emergency",
     "/dashboard/inpatient",
     "/dashboard/pharmacy",
+    "/dashboard/laboratory",
     "/dashboard/cashier",
     "/dashboard/discharge",
     "/dashboard/reports",
@@ -262,16 +324,23 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/dashboard/visits",
     "/dashboard/medical-records",
     "/dashboard/emergency",
+    "/dashboard/laboratory",
     "/dashboard/discharge",
   ],
 
-  nurse: ["/dashboard", "/dashboard/patients", "/dashboard/inpatient", "/dashboard/emergency"],
+  nurse: ["/dashboard", "/dashboard/patients", "/dashboard/inpatient", "/dashboard/emergency", "/dashboard/laboratory"],
 
   pharmacist: ["/dashboard", "/dashboard/pharmacy"],
 
   cashier: ["/dashboard", "/dashboard/cashier", "/dashboard/discharge"],
 
   receptionist: ["/dashboard", "/dashboard/patients", "/dashboard/visits"],
+
+  lab_technician: ["/dashboard", "/dashboard/laboratory"],
+
+  lab_supervisor: ["/dashboard", "/dashboard/laboratory", "/dashboard/reports"],
+
+  radiologist: ["/dashboard", "/dashboard/laboratory", "/dashboard/reports"],
 }
 
 /**

@@ -27,3 +27,6 @@ export * from "./inpatient"
 
 // Billing
 export * from "./billing"
+
+// Laboratory & Radiology
+export * from "./laboratory"
