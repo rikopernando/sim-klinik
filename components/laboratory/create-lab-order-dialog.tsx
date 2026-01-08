@@ -139,7 +139,7 @@ export function CreateLabOrderDialog({
 
               {/* Continue Button */}
               {selectedTest && (
-                <div className="bg-background sticky bottom-0 border-t pt-4">
+                <div className="bg-background sticky -bottom-6 py-4">
                   <Button onClick={handleContinue} className="w-full" size="lg">
                     Lanjut ke Detail Order
                     <IconArrowLeft className="ml-2 h-4 w-4 rotate-180" />
