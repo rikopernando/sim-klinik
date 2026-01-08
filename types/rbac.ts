@@ -328,7 +328,13 @@ export const ROLE_ROUTES: Record<UserRole, string[]> = {
     "/dashboard/discharge",
   ],
 
-  nurse: ["/dashboard", "/dashboard/patients", "/dashboard/inpatient", "/dashboard/emergency", "/dashboard/laboratory"],
+  nurse: [
+    "/dashboard",
+    "/dashboard/patients",
+    "/dashboard/inpatient",
+    "/dashboard/emergency",
+    "/dashboard/laboratory",
+  ],
 
   pharmacist: ["/dashboard", "/dashboard/pharmacy"],
 

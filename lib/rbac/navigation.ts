@@ -121,6 +121,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard/cashier",
           icon: IconCash,
         },
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
       ],
     },
     {
@@ -228,6 +233,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
         },
       ],
     },

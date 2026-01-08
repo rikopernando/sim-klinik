@@ -35,6 +35,7 @@ import { DischargeSummaryDialog } from "@/components/inpatient/discharge-summary
 import { DischargeSummaryCard } from "@/components/inpatient/discharge-summary-card"
 import { FinalDischargeDialog } from "@/components/inpatient/final-discharge-dialog"
 import { useSession } from "@/lib/auth-client"
+import { CreateLabOrderDialog, LabOrdersList } from "@/components/laboratory"
 
 export default function PatientDetailPage() {
   const { data: session } = useSession()
@@ -298,6 +299,29 @@ export default function PatientDetailPage() {
               onRefresh={refresh}
               isLocked={isLocked}
             />
+          </CardContent>
+        </Card>
+
+        {/* Laboratory Orders Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Pemeriksaan Laboratorium & Radiologi</CardTitle>
+                <CardDescription>Order pemeriksaan penunjang diagnostik</CardDescription>
+              </div>
+              {hasPermission("inpatient:write") && !isLocked && (
+                <CreateLabOrderDialog
+                  visitId={visitId}
+                  patientId={patientDetail.patient.patientId}
+                  patientName={patientDetail.patient.patientName}
+                  onSuccess={refresh}
+                />
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <LabOrdersList visitId={visitId} />
           </CardContent>
         </Card>
 
