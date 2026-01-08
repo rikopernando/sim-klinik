@@ -6,13 +6,14 @@
  */
 
 import { useParams, useRouter } from "next/navigation"
+import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
+
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { usePatientDetail } from "@/hooks/use-patient-detail"
 import { usePermission } from "@/hooks/use-permission"
-import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
 import { PatientInfoCard } from "@/components/inpatient/patient-info-card"
 import { VitalsHistoryTable } from "@/components/inpatient/vitals-history-table"
 import { RecordVitalsDialog } from "@/components/inpatient/record-vitals-dialog"

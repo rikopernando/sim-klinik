@@ -15,7 +15,6 @@ import {
   IconCheck,
   IconClipboardCheck,
 } from "@tabler/icons-react"
-import axios from "axios"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,6 +27,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { getErrorMessage } from "@/lib/utils/error"
+import { finalInpatientDischargeSummary } from "@/lib/services/inpatient.service"
 
 interface FinalDischargeDialogProps {
   visitId: string
@@ -50,17 +51,13 @@ export function FinalDischargeDialog({
   const handleFinalDischarge = async () => {
     setIsSubmitting(true)
     try {
-      await axios.post("/api/inpatient/final-discharge", { visitId })
+      await finalInpatientDischargeSummary({ visitId })
       toast.success("Pasien berhasil dipulangkan. Kamar telah dibebaskan.")
       setOpen(false)
       onSuccess()
     } catch (error) {
       console.error("Error processing final discharge:", error)
-      if (axios.isAxiosError(error) && error.response) {
-        toast.error(error.response.data.message || "Gagal memproses pemulangan pasien")
-      } else {
-        toast.error("Gagal memproses pemulangan pasien")
-      }
+      toast.error(getErrorMessage(error))
     } finally {
       setIsSubmitting(false)
     }
@@ -74,7 +71,7 @@ export function FinalDischargeDialog({
           Pulangkan Pasien (Final Discharge)
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconDoorExit className="h-5 w-5" />

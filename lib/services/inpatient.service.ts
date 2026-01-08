@@ -20,6 +20,7 @@ import {
   VitalSignsInput,
   MaterialUsageInput,
   InpatientPrescriptionInput,
+  DischargeSummaryInput,
 } from "@/lib/inpatient/validation"
 import type { Material } from "@/types/material"
 
@@ -405,6 +406,32 @@ export async function deleteInpatientProcedure(procedureId: string): Promise<voi
     await axios.delete(`/api/inpatient/procedures/${procedureId}`)
   } catch (error) {
     console.error("Error deleting procedure:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Create Discharge Summary
+ */
+export async function createInpatientDischargeSummary(
+  payload: DischargeSummaryInput
+): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/discharge-summary", payload)
+  } catch (error) {
+    console.error("Error create inpatient discharge summary:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Final Discharge Summary
+ */
+export async function finalInpatientDischargeSummary(payload: { visitId: string }): Promise<void> {
+  try {
+    await axios.post("/api/inpatient/final-discharge", payload)
+  } catch (error) {
+    console.error("Error final discharge summary:", error)
     handleApiError(error)
   }
 }

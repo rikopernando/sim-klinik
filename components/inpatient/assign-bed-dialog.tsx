@@ -330,7 +330,7 @@ export function AssignBedDialog({
                   </FieldLabel>
                   <Select
                     onValueChange={(value) => setBedNumber(value)}
-                    value={selectedRoomId}
+                    value={bedNumber}
                     disabled={!selectedRoom || bedOptions.length === 0}
                   >
                     <SelectTrigger id="newBedNumber">

@@ -57,5 +57,5 @@ export const GET = withRBAC(
       })
     }
   },
-  { permissions: ["billing:read"] }
+  { permissions: ["discharge:write"] }
 )

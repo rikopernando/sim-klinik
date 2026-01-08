@@ -88,7 +88,11 @@ export function buildInpatientWhereConditions(filters: InpatientFilters): SQL[] 
  */
 export function calculateDaysInHospital(admissionDate: Date): number {
   const today = new Date()
-  return Math.floor((today.getTime() - admissionDate.getTime()) / (1000 * 60 * 60 * 24))
+  const days = Math.max(
+    1,
+    Math.ceil((admissionDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  )
+  return days
 }
 
 /**
