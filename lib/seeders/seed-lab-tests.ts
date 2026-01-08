@@ -532,7 +532,8 @@ const COMMON_LAB_TESTS = [
       type: "descriptive",
       fields: ["findings", "impression"],
     },
-    description: "Pemeriksaan radiologi dada tampak depan (AP) untuk evaluasi paru, jantung, dan mediastinum",
+    description:
+      "Pemeriksaan radiologi dada tampak depan (AP) untuk evaluasi paru, jantung, dan mediastinum",
     instructions: "Lepaskan benda logam dari dada. Tidak perlu puasa.",
     requiresFasting: false,
     isActive: true,
@@ -552,7 +553,8 @@ const COMMON_LAB_TESTS = [
       type: "descriptive",
       fields: ["findings", "impression"],
     },
-    description: "Pemeriksaan radiologi dada tampak belakang (PA) untuk evaluasi paru, jantung, dan mediastinum",
+    description:
+      "Pemeriksaan radiologi dada tampak belakang (PA) untuk evaluasi paru, jantung, dan mediastinum",
     instructions: "Lepaskan benda logam dari dada. Tidak perlu puasa.",
     requiresFasting: false,
     isActive: true,
@@ -596,8 +598,10 @@ const COMMON_LAB_TESTS = [
       type: "descriptive",
       fields: ["findings", "impression"],
     },
-    description: "Pemeriksaan ultrasonografi abdomen atas (hati, kandung empedu, pankreas, limpa, ginjal)",
-    instructions: "Puasa 6-8 jam sebelum pemeriksaan. Minum air putih 3-4 gelas 1 jam sebelum pemeriksaan.",
+    description:
+      "Pemeriksaan ultrasonografi abdomen atas (hati, kandung empedu, pankreas, limpa, ginjal)",
+    instructions:
+      "Puasa 6-8 jam sebelum pemeriksaan. Minum air putih 3-4 gelas 1 jam sebelum pemeriksaan.",
     requiresFasting: true,
     isActive: true,
   },

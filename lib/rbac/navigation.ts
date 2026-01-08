@@ -458,6 +458,85 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
   ],
+
+  lab_technician: [
+    {
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
+    },
+    {
+      label: "Laboratorium",
+      items: [
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+      ],
+    },
+  ],
+
+  lab_supervisor: [
+    {
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
+    },
+    {
+      label: "Laboratorium",
+      items: [
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+        {
+          title: "Laporan",
+          url: "/dashboard/reports",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+  ],
+
+  radiologist: [
+    {
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
+    },
+    {
+      label: "Radiologi",
+      items: [
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+        {
+          title: "Laporan",
+          url: "/dashboard/reports",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+  ],
 }
 
 /**
