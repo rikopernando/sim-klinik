@@ -25,7 +25,7 @@ import { LabOrderForm } from "./lab-order-form"
 interface CreateLabOrderDialogProps {
   visitId: string
   patientId: string
-  patientName: string
+  patientName?: string
   onSuccess?: () => void
 }
 
@@ -94,9 +94,11 @@ export function CreateLabOrderDialog({
             <IconFlask className="h-5 w-5" />
             Order Laboratorium & Radiologi
           </DialogTitle>
-          <DialogDescription>
-            Pasien: <strong>{patientName}</strong>
-          </DialogDescription>
+          {patientName && (
+            <DialogDescription>
+              Pasien: <strong>{patientName}</strong>
+            </DialogDescription>
+          )}
         </DialogHeader>
 
         {/* Step Indicator */}

@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLabOrders } from "@/hooks/use-lab-orders"
 import { formatCurrency } from "@/lib/utils/billing"
+import { OrderDetailDialog } from "./order-detail-dialog"
 
 interface LabOrdersListProps {
   visitId: string
@@ -96,6 +97,10 @@ export function LabOrdersList({ visitId }: LabOrdersListProps) {
     )
   }
 
+  const renderOrderDetailDialog = (orderId: string) => {
+    return <OrderDetailDialog orderId={orderId} />
+  }
+
   return (
     <div className="space-y-3">
       {orders.map((order) => (
@@ -134,7 +139,7 @@ export function LabOrdersList({ visitId }: LabOrdersListProps) {
 
               <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <span>
-                  Ordered
+                  Ordered{" "}
                   {formatDistanceToNow(new Date(order.orderedAt), {
                     addSuffix: true,
                     locale: idLocale,
@@ -161,6 +166,7 @@ export function LabOrdersList({ visitId }: LabOrdersListProps) {
               {order.test?.tatHours && order.status === "ordered" && (
                 <p className="text-muted-foreground text-xs">TAT: {order.test.tatHours}h</p>
               )}
+              {renderOrderDetailDialog(order.id)}
             </div>
           </div>
         </Card>

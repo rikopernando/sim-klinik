@@ -60,8 +60,8 @@ export const labTests = pgTable("lab_tests", {
   isActive: boolean("is_active").default(true),
   requiresFasting: boolean("requires_fasting").default(false),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -79,8 +79,8 @@ export const labTestPanels = pgTable("lab_test_panels", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(), // Discounted panel price
   isActive: boolean("is_active").default(true),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -99,7 +99,7 @@ export const labTestPanelItems = pgTable("lab_test_panel_items", {
     .notNull()
     .references(() => labTests.id, { onDelete: "cascade" }),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -132,23 +132,25 @@ export const labOrders = pgTable("lab_orders", {
   orderedBy: text("ordered_by")
     .notNull()
     .references(() => user.id),
-  orderedAt: timestamp("ordered_at").defaultNow().notNull(),
+  orderedAt: timestamp("ordered_at", { withTimezone: true }).defaultNow().notNull(),
 
   // Specimen info
   specimenCollectedBy: text("specimen_collected_by").references(() => user.id),
-  specimenCollectedAt: timestamp("specimen_collected_at"),
+  specimenCollectedAt: timestamp("specimen_collected_at", {
+    withTimezone: true,
+  }),
   specimenNotes: text("specimen_notes"),
 
   // Processing info
   processedBy: text("processed_by").references(() => user.id), // Lab technician
-  startedAt: timestamp("started_at"), // When analysis started
+  startedAt: timestamp("started_at", { withTimezone: true }), // When analysis started
 
   // Verification info
   verifiedBy: text("verified_by").references(() => user.id), // Supervisor/Pathologist
-  verifiedAt: timestamp("verified_at"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
 
   // Completion info
-  completedAt: timestamp("completed_at"),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
 
   // Status tracking
   status: varchar("status", { length: 50 }).default("ordered"),
@@ -165,8 +167,8 @@ export const labOrders = pgTable("lab_orders", {
   notes: text("notes"), // General notes
   cancelledReason: text("cancelled_reason"),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -216,16 +218,16 @@ export const labResults = pgTable("lab_results", {
   // Quality control
   isVerified: boolean("is_verified").default(false),
   verifiedBy: text("verified_by").references(() => user.id),
-  verifiedAt: timestamp("verified_at"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
 
   // Timestamps
   enteredBy: text("entered_by")
     .notNull()
     .references(() => user.id),
-  enteredAt: timestamp("entered_at").defaultNow().notNull(),
+  enteredAt: timestamp("entered_at", { withTimezone: true }).defaultNow().notNull(),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -249,7 +251,7 @@ export const labResultParameters = pgTable("lab_result_parameters", {
   referenceMax: decimal("reference_max", { precision: 10, scale: 2 }),
   flag: varchar("flag", { length: 20 }), // "normal", "high", "low", "critical_high", "critical_low"
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -273,14 +275,14 @@ export const labNotifications = pgTable("lab_notifications", {
   message: text("message").notNull(),
 
   isRead: boolean("is_read").default(false),
-  readAt: timestamp("read_at"),
+  readAt: timestamp("read_at", { withTimezone: true }),
 
   // Delivery channels
   sentViaEmail: boolean("sent_via_email").default(false),
   sentViaSms: boolean("sent_via_sms").default(false),
   sentViaApp: boolean("sent_via_app").default(true),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
