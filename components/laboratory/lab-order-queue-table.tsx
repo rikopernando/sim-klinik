@@ -6,10 +6,9 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { IconFlask, IconFilter, IconRefresh } from "@tabler/icons-react"
+import { IconFlask } from "@tabler/icons-react"
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import {
   Select,
   SelectContent,
@@ -18,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Badge } from "@/components/ui/badge"
 import { useLabOrders } from "@/hooks/use-lab-orders"
 import type { OrderStatus } from "@/types/lab"
 
@@ -27,19 +25,12 @@ import { LabOrderRow } from "./lab-order-row"
 interface LabOrderQueueTableProps {
   defaultStatus?: OrderStatus | OrderStatus[]
   showFilters?: boolean
-  title?: string
-  description?: string
 }
 
 type UrgencyFilter = "all" | "urgent" | "stat"
 type DepartmentFilter = "all" | "LAB" | "RAD"
 
-export function LabOrderQueueTable({
-  defaultStatus,
-  showFilters = true,
-  title = "Antrian Order Laboratorium",
-  description = "Proses dan kelola order pemeriksaan laboratorium",
-}: LabOrderQueueTableProps) {
+export function LabOrderQueueTable({ defaultStatus, showFilters = true }: LabOrderQueueTableProps) {
   const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilter>("all")
   const [urgencyFilter, setUrgencyFilter] = useState<UrgencyFilter>("all")
 
@@ -84,51 +75,14 @@ export function LabOrderQueueTable({
     [sortedOrders, refetch]
   )
 
-  const stats = useMemo(() => {
-    return {
-      total: filteredOrders.length,
-      urgent: filteredOrders.filter((o) => o.urgency === "urgent" || o.urgency === "stat").length,
-      stat: filteredOrders.filter((o) => o.urgency === "stat").length,
-    }
-  }, [filteredOrders])
-
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <IconFlask className="h-5 w-5" />
-              {title}
-            </CardTitle>
-            <CardDescription>
-              {description} • {stats.total} order
-              {stats.urgent > 0 && (
-                <>
-                  {" "}
-                  • <span className="font-medium text-orange-600">{stats.urgent} urgent</span>
-                </>
-              )}
-              {stats.stat > 0 && (
-                <>
-                  {" "}
-                  • <span className="font-medium text-red-600">{stats.stat} STAT</span>
-                </>
-              )}
-            </CardDescription>
-          </div>
+      {showFilters && (
+        <CardHeader>
           <div className="flex items-center gap-2">
-            <Button onClick={refetch} variant="outline" size="sm">
-              <IconRefresh className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        {showFilters && (
-          <div className="flex items-center gap-2 pt-4">
-            <IconFilter className="text-muted-foreground h-4 w-4" />
+            <div className="text-muted-foreground text-sm font-medium">Filter</div>
             <Select value={departmentFilter} onValueChange={handleDepartmentChange}>
-              <SelectTrigger className="w-[160px]">
+              <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Departemen" />
               </SelectTrigger>
               <SelectContent>
@@ -142,7 +96,7 @@ export function LabOrderQueueTable({
               value={urgencyFilter}
               onValueChange={(value) => setUrgencyFilter(value as UrgencyFilter)}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Urgensi" />
               </SelectTrigger>
               <SelectContent>
@@ -151,15 +105,9 @@ export function LabOrderQueueTable({
                 <SelectItem value="stat">STAT</SelectItem>
               </SelectContent>
             </Select>
-
-            {stats.total > 0 && (
-              <div className="ml-auto flex items-center gap-2">
-                <Badge variant="outline">{stats.total} total</Badge>
-              </div>
-            )}
           </div>
-        )}
-      </CardHeader>
+        </CardHeader>
+      )}
       <CardContent>
         {loading ? (
           <div className="space-y-3">
@@ -173,20 +121,18 @@ export function LabOrderQueueTable({
             <p className="text-muted-foreground text-sm">Tidak ada order dalam antrian</p>
           </div>
         ) : (
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[50px]">#</TableHead>
-                  <TableHead className="min-w-[200px]">Tes / Pasien</TableHead>
-                  <TableHead className="min-w-[150px]">Detail Order</TableHead>
-                  <TableHead className="min-w-[120px]">Status</TableHead>
-                  <TableHead className="min-w-[180px] text-right">Aksi</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>{tableRows}</TableBody>
-            </Table>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
+                <TableHead className="min-w-[200px]">Tes / Pasien</TableHead>
+                <TableHead className="min-w-[150px]">Detail Order</TableHead>
+                <TableHead className="min-w-[120px]">Status</TableHead>
+                <TableHead className="min-w-[180px] text-right">Aksi</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>{tableRows}</TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>

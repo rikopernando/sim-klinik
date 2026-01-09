@@ -5,11 +5,7 @@
 
 import { useState, useMemo, useCallback } from "react"
 import { Suggestion } from "@/components/ui/autocomplete-textarea"
-import {
-  filterSuggestions,
-  getCurrentLine,
-  getCurrentSearchTerm,
-} from "@/lib/utils/autocomplete"
+import { filterSuggestions, getCurrentLine, getCurrentSearchTerm } from "@/lib/utils/autocomplete"
 
 interface UseAutocompleteOptions {
   suggestions: Suggestion[]

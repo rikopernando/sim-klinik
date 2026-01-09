@@ -20,6 +20,7 @@ import {
   IconSettings,
   IconUser,
   IconDatabase,
+  IconFlask,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -120,6 +121,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
         },
         {
           title: "Laboratorium & Radiologi",
@@ -233,6 +239,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
         },
         {
           title: "Laboratorium & Radiologi",
@@ -484,6 +495,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Laboratorium",
       items: [
         {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
+        },
+        {
           title: "Laboratorium & Radiologi",
           url: "/dashboard/laboratory",
           icon: IconStethoscope,
@@ -506,6 +522,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
     {
       label: "Laboratorium",
       items: [
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
+        },
         {
           title: "Laboratorium & Radiologi",
           url: "/dashboard/laboratory",

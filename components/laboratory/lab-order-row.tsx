@@ -19,10 +19,11 @@ import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { useUpdateLabOrderStatus } from "@/hooks/use-update-lab-order-status"
+import type { LabOrderWithRelations } from "@/types/lab"
+
 import { CollectSpecimenDialog } from "./collect-specimen-dialog"
 import { ResultEntryDialog } from "./result-entry-dialog"
 import { OrderDetailDialog } from "./order-detail-dialog"
-import type { LabOrderWithRelations } from "@/types/lab"
 
 interface LabOrderRowProps {
   order: LabOrderWithRelations

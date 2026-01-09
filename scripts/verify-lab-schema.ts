@@ -26,9 +26,7 @@ async function verifyLabSchema() {
     })
 
     // Count total tests
-    const totalTests = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(labTests)
+    const totalTests = await db.select({ count: sql<number>`count(*)::int` }).from(labTests)
     console.log(`   📊 Total tests in database: ${totalTests[0].count}`)
 
     // Check by department
