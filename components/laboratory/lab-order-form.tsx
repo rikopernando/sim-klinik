@@ -25,6 +25,7 @@ import { FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/componen
 import { createLabOrderSchema } from "@/lib/lab/validation"
 import type { LabTest } from "@/types/lab"
 import { formatCurrency } from "@/lib/utils/billing"
+import { Input } from "@/components/ui/input"
 
 const formSchema = createLabOrderSchema.omit({ visitId: true, patientId: true })
 
@@ -116,9 +117,16 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
 
       <Separator />
 
+      <FieldGroup>
+        <FieldLabel>Deskripsi</FieldLabel>
+        <Input readOnly disabled name="description" value={selectedTest.description || ""} />
+      </FieldGroup>
+
       {/* Urgency */}
       <FieldGroup>
-        <FieldLabel>Urgensi *</FieldLabel>
+        <FieldLabel>
+          Urgensi <span className="text-destructive">*</span>
+        </FieldLabel>
         <Controller
           name="urgency"
           control={form.control}
@@ -162,7 +170,9 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
 
       {/* Clinical Indication */}
       <FieldGroup>
-        <FieldLabel>Indikasi Klinis *</FieldLabel>
+        <FieldLabel>
+          Indikasi Klinis <span className="text-destructive">*</span>
+        </FieldLabel>
         <Controller
           name="clinicalIndication"
           control={form.control}
@@ -175,8 +185,8 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
             />
           )}
         />
-        <FieldDescription>Informasi klinis untuk membantu interpretasi hasil</FieldDescription>
         <FieldError>{form.formState.errors.clinicalIndication?.message}</FieldError>
+        <FieldDescription>Informasi klinis untuk membantu interpretasi hasil</FieldDescription>
       </FieldGroup>
 
       {/* Additional Notes */}

@@ -53,8 +53,11 @@ export const createLabOrderSchema = z
     patientId: z.uuid("Invalid patient ID"),
     testId: z.uuid("Invalid test ID").optional(),
     panelId: z.uuid("Invalid panel ID").optional(),
-    urgency: z.enum([ORDER_URGENCY.ROUTINE, ORDER_URGENCY.URGENT, ORDER_URGENCY.STAT]).optional(),
-    clinicalIndication: z.string().max(1000, "Clinical indication too long").optional(),
+    urgency: z.enum([ORDER_URGENCY.ROUTINE, ORDER_URGENCY.URGENT, ORDER_URGENCY.STAT]),
+    clinicalIndication: z
+      .string()
+      .max(1000, "Clinical indication too long")
+      .min(1, "Clinical indication is required"),
     notes: z.string().max(1000, "Notes too long").optional(),
   })
   .refine((data) => data.testId || data.panelId, {

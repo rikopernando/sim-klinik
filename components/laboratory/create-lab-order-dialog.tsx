@@ -17,9 +17,10 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { useCreateLabOrder } from "@/hooks/use-create-lab-order"
+import type { LabTest, CreateLabOrderInput } from "@/types/lab"
+
 import { LabTestCatalog } from "./lab-test-catalog"
 import { LabOrderForm } from "./lab-order-form"
-import type { LabTest, CreateLabOrderInput } from "@/types/lab"
 
 interface CreateLabOrderDialogProps {
   visitId: string
@@ -102,9 +103,7 @@ export function CreateLabOrderDialog({
         <div className="flex items-center gap-2 py-4">
           <div className="flex flex-1 items-center gap-2">
             <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                step === 1 ? "bg-primary text-primary-foreground" : "bg-green-500 text-white"
-              }`}
+              className={`bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium`}
             >
               {step === 1 ? "1" : <IconCheck className="h-4 w-4" />}
             </div>
@@ -114,7 +113,9 @@ export function CreateLabOrderDialog({
             </div>
           </div>
 
-          <div className="bg-border h-px flex-1" />
+          <div className="flex-1">
+            <div className="bg-border h-px w-[80%]" />
+          </div>
 
           <div className="flex flex-1 items-center gap-2">
             <div
@@ -139,7 +140,10 @@ export function CreateLabOrderDialog({
 
               {/* Continue Button */}
               {selectedTest && (
-                <div className="bg-background sticky -bottom-6 py-4">
+                <div
+                  style={{ width: "calc(100% + 48px)" }}
+                  className="bg-background sticky -bottom-6 -mb-6 -ml-6 p-4"
+                >
                   <Button onClick={handleContinue} className="w-full" size="lg">
                     Lanjut ke Detail Order
                     <IconArrowLeft className="ml-2 h-4 w-4 rotate-180" />

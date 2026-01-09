@@ -109,5 +109,5 @@ export const POST = withRBAC(
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR })
     }
   },
-  { permissions: ["lab:write", "inpatient:write"], roles: ["doctor"] }
+  { permissions: ["lab:write", "inpatient:write"] }
 )

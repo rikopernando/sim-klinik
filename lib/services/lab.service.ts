@@ -25,22 +25,12 @@ import { ApiServiceError, handleApiError } from "./api.service"
  */
 export async function fetchLabTests(filters?: Partial<LabTestFilters>): Promise<LabTest[]> {
   try {
-    const params = new URLSearchParams()
-
-    if (filters?.search) {
-      params.append("search", filters.search)
-    }
-    if (filters?.category) {
-      params.append("category", filters.category)
-    }
-    if (filters?.department) {
-      params.append("department", filters.department)
-    }
-    if (filters?.isActive !== undefined) {
-      params.append("isActive", filters.isActive.toString())
+    const params = {
+      ...filters,
+      isActive: filters?.isActive ? filters?.isActive?.toString() : undefined,
     }
 
-    const response = await axios.get<ResponseApi<LabTest[]>>(`/api/lab/tests?${params}`)
+    const response = await axios.get<ResponseApi<LabTest[]>>(`/api/lab/tests`, { params })
 
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing data")

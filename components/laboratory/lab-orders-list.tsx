@@ -5,14 +5,15 @@
 
 "use client"
 
+import { formatDistanceToNow } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+
 import { IconFlask, IconClock, IconCheck, IconAlertCircle } from "@tabler/icons-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLabOrders } from "@/hooks/use-lab-orders"
 import { formatCurrency } from "@/lib/utils/billing"
-import { formatDistanceToNow } from "date-fns"
-import { id as idLocale } from "date-fns/locale"
 
 interface LabOrdersListProps {
   visitId: string
@@ -133,7 +134,7 @@ export function LabOrdersList({ visitId }: LabOrdersListProps) {
 
               <div className="text-muted-foreground flex items-center gap-2 text-xs">
                 <span>
-                  Ordered{" "}
+                  Ordered
                   {formatDistanceToNow(new Date(order.orderedAt), {
                     addSuffix: true,
                     locale: idLocale,
