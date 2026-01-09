@@ -10,10 +10,8 @@ import {
   IconClock,
   IconCheck,
   IconAlertCircle,
-  IconDroplet,
   IconPlayerPlay,
-  IconFileText,
-  IconEye,
+  IconDroplet,
 } from "@tabler/icons-react"
 import { TableRow, TableCell } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -21,6 +19,9 @@ import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { useUpdateLabOrderStatus } from "@/hooks/use-update-lab-order-status"
+import { CollectSpecimenDialog } from "./collect-specimen-dialog"
+import { ResultEntryDialog } from "./result-entry-dialog"
+import { OrderDetailDialog } from "./order-detail-dialog"
 import type { LabOrderWithRelations } from "@/types/lab"
 
 interface LabOrderRowProps {
@@ -40,11 +41,6 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
       setIsProcessing(false)
     },
   })
-
-  const handleCollectSpecimen = async () => {
-    setIsProcessing(true)
-    await updateStatus(order.id, { status: "specimen_collected" })
-  }
 
   const handleStartProcessing = async () => {
     setIsProcessing(true)
@@ -104,17 +100,7 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
   const getActionButtons = () => {
     switch (order.status) {
       case "ordered":
-        return (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleCollectSpecimen}
-            disabled={isProcessing}
-          >
-            <IconDroplet className="mr-2 h-4 w-4" />
-            Ambil Spesimen
-          </Button>
-        )
+        return <CollectSpecimenDialog order={order} onSuccess={onSuccess} />
       case "specimen_collected":
         return (
           <Button
@@ -128,20 +114,10 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
           </Button>
         )
       case "in_progress":
-        return (
-          <Button size="sm" variant="default">
-            <IconFileText className="mr-2 h-4 w-4" />
-            Input Hasil
-          </Button>
-        )
+        return <ResultEntryDialog order={order} onSuccess={onSuccess} />
       case "completed":
       case "verified":
-        return (
-          <Button size="sm" variant="outline">
-            <IconEye className="mr-2 h-4 w-4" />
-            Lihat Detail
-          </Button>
-        )
+        return <OrderDetailDialog orderId={order.id} />
       default:
         return null
     }

@@ -10,7 +10,7 @@ import type { CreateLabResultInput } from "@/types/lab"
 import { getErrorMessage } from "@/lib/utils/error"
 
 interface UseCreateLabResultOptions {
-  onSuccess?: (resultId: string) => void
+  onSuccess?: (result: { id: string; criticalValue: boolean }) => void
   onError?: (error: Error) => void
 }
 
@@ -41,7 +41,7 @@ export function useCreateLabResult(
           toast.success("Hasil laboratorium berhasil disimpan")
         }
 
-        onSuccess?.(result.id)
+        onSuccess?.(result)
         return result.id
       } catch (error) {
         toast.error(getErrorMessage(error))
