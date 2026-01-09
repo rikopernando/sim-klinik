@@ -16,7 +16,7 @@ interface UseUpdateLabOrderStatusOptions {
 
 interface UseUpdateLabOrderStatusReturn {
   isUpdating: boolean
-  updateStatus: (orderId: string, data: UpdateLabOrderStatusInput) => Promise<boolean>
+  updateStatus: (orderId: string, data: UpdateLabOrderStatusInput) => Promise<void>
 }
 
 export function useUpdateLabOrderStatus(
@@ -26,18 +26,16 @@ export function useUpdateLabOrderStatus(
   const [isUpdating, setIsUpdating] = useState(false)
 
   const update = useCallback(
-    async (orderId: string, data: UpdateLabOrderStatusInput): Promise<boolean> => {
+    async (orderId: string, data: UpdateLabOrderStatusInput) => {
       setIsUpdating(true)
 
       try {
         await updateLabOrderStatus(orderId, data)
         toast.success("Status order berhasil diupdate")
         onSuccess?.()
-        return true
       } catch (error) {
         toast.error(getErrorMessage(error))
         onError?.(error as Error)
-        return false
       } finally {
         setIsUpdating(false)
       }

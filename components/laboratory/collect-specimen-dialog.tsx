@@ -6,10 +6,11 @@
 "use client"
 
 import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { IconDroplet, IconX } from "@tabler/icons-react"
+
 import {
   Dialog,
   DialogContent,
@@ -20,10 +21,9 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
+import { FieldGroup, FieldLabel } from "@/components/ui/field"
 import { useUpdateLabOrderStatus } from "@/hooks/use-update-lab-order-status"
 import type { LabOrderWithRelations } from "@/types/lab"
 
@@ -34,7 +34,6 @@ interface CollectSpecimenDialogProps {
 }
 
 const formSchema = z.object({
-  collectionTime: z.string().min(1, "Waktu pengambilan harus diisi"),
   notes: z.string().optional(),
 })
 
@@ -46,7 +45,6 @@ export function CollectSpecimenDialog({ order, trigger, onSuccess }: CollectSpec
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      collectionTime: new Date().toISOString().slice(0, 16), // Format for datetime-local
       notes: "",
     },
   })
@@ -118,30 +116,21 @@ export function CollectSpecimenDialog({ order, trigger, onSuccess }: CollectSpec
           </div>
 
           {/* Collection Time */}
-          <div className="space-y-2">
-            <Label htmlFor="collectionTime">Waktu Pengambilan *</Label>
-            <Input
-              id="collectionTime"
-              type="datetime-local"
-              {...form.register("collectionTime")}
-              className="font-mono"
+          <FieldGroup>
+            <FieldLabel>Catatan</FieldLabel>
+            <Controller
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <Textarea
+                  id="notes"
+                  placeholder="Catat kondisi spesimen, volume, atau informasi relevan lainnya..."
+                  rows={3}
+                  {...field}
+                />
+              )}
             />
-            {form.formState.errors.collectionTime && (
-              <p className="text-sm text-red-600">{form.formState.errors.collectionTime.message}</p>
-            )}
-          </div>
-
-          {/* Collection Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Catatan Pengambilan</Label>
-            <Textarea
-              id="notes"
-              placeholder="Catat kondisi spesimen, volume, atau informasi relevan lainnya..."
-              {...form.register("notes")}
-              rows={3}
-            />
-            <p className="text-muted-foreground text-xs">Opsional</p>
-          </div>
+          </FieldGroup>
 
           {/* Test Specimen Type Info */}
           {order.test?.specimenType && (

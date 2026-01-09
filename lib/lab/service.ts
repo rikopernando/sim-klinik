@@ -204,6 +204,7 @@ export async function getLabOrders(
         name: labTests.name,
         category: labTests.category,
         department: labTests.department,
+        resultTemplate: labTests.resultTemplate,
       },
       patient: {
         id: patients.id,

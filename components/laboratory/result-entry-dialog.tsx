@@ -44,6 +44,7 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>
 
 export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDialogProps) {
+  console.log({ order })
   const [open, setOpen] = useState(false)
   const [showCriticalWarning, setShowCriticalWarning] = useState(false)
 
