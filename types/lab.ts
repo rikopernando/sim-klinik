@@ -305,24 +305,6 @@ export interface StartProcessingInput {
   notes?: string
 }
 
-// Lab Result APIs
-export interface CreateLabResultInput {
-  orderId: string
-  resultData: ResultData
-  attachmentUrl?: string
-  attachmentType?: AttachmentType
-  resultNotes?: string
-  criticalValue?: boolean
-  parameters?: Array<{
-    parameterName: string
-    parameterValue: string
-    unit?: string
-    referenceMin?: number
-    referenceMax?: number
-    flag?: ResultFlag
-  }>
-}
-
 export interface VerifyLabResultInput {
   resultId: string
   notes?: string

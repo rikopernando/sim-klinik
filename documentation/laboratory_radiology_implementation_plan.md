@@ -56,6 +56,7 @@ The **Laboratory & Radiology Module (LIS/RIS)** is a critical component of Phase
 ### Scope
 
 This module covers:
+
 - ✅ Laboratory services (blood tests, urine tests, etc.)
 - ✅ Radiology/Imaging services (X-Ray, USG, CT Scan, etc.)
 - ✅ Digital order management
@@ -238,6 +239,7 @@ This module covers:
 ### Radiology Workflow
 
 Similar to lab workflow, with these differences:
+
 - **Phase 2**: Patient scheduled for imaging appointment
 - **Phase 3**: Imaging performed by radiology technician → Images captured
 - **Phase 4**: Radiologist interprets images → Enters findings/impressions
@@ -252,6 +254,7 @@ Similar to lab workflow, with these differences:
 #### FR-1: Lab/Radiology Ordering
 
 **Must Have:**
+
 - Doctor can order multiple tests in one request
 - Support for test panels/profiles (e.g., "Lipid Panel" includes multiple tests)
 - Urgency levels: Routine, Urgent, STAT (immediate)
@@ -260,6 +263,7 @@ Similar to lab workflow, with these differences:
 - Auto-calculation of total cost
 
 **Nice to Have:**
+
 - Favorite test lists per doctor
 - Order templates (e.g., "Diabetes Workup")
 - Contraindication warnings (e.g., "Patient pregnant - avoid X-ray")
@@ -267,6 +271,7 @@ Similar to lab workflow, with these differences:
 #### FR-2: Worklist Management
 
 **Must Have:**
+
 - List of pending orders sorted by urgency/date
 - Filter by: test type, urgency, department, patient
 - Quick search by patient name/MR number
@@ -274,6 +279,7 @@ Similar to lab workflow, with these differences:
 - Batch processing capabilities
 
 **Nice to Have:**
+
 - Estimated turnaround time display
 - Overdue order alerts
 - Workload distribution (assign to specific technician)
@@ -281,6 +287,7 @@ Similar to lab workflow, with these differences:
 #### FR-3: Result Entry
 
 **Must Have:**
+
 - Structured result entry for common tests (numeric, text, select options)
 - Unit management (mg/dL, mmol/L, etc.)
 - Reference range display (normal values)
@@ -290,6 +297,7 @@ Similar to lab workflow, with these differences:
 - Verification workflow (tech → supervisor)
 
 **Nice to Have:**
+
 - Delta check (compare with previous results)
 - Quality control integration
 - Voice-to-text for result entry
@@ -298,6 +306,7 @@ Similar to lab workflow, with these differences:
 #### FR-4: Result Viewing
 
 **Must Have:**
+
 - Integrated view in patient RME/CPPT
 - Chronological display (latest first)
 - Flag indicators for abnormal values
@@ -306,6 +315,7 @@ Similar to lab workflow, with these differences:
 - Result comparison (current vs previous)
 
 **Nice to Have:**
+
 - Trend graphs (e.g., HbA1c over 6 months)
 - Critical value alerts
 - Result sharing (send to patient email)
@@ -313,6 +323,7 @@ Similar to lab workflow, with these differences:
 #### FR-5: Master Data Management
 
 **Must Have:**
+
 - Lab test catalog (CRUD operations)
 - Test categories/groups
 - Pricing management
@@ -321,6 +332,7 @@ Similar to lab workflow, with these differences:
 - Unit of measurement
 
 **Nice to Have:**
+
 - Test synonyms/aliases
 - CPT/LOINC code mapping (for integrations)
 - Test combinations (panels)
@@ -328,11 +340,13 @@ Similar to lab workflow, with these differences:
 #### FR-6: Notifications
 
 **Must Have:**
+
 - Email notification to doctor when result ready
 - In-app notification (dashboard badge)
 - Critical value immediate alerts
 
 **Nice to Have:**
+
 - SMS notifications
 - WhatsApp Business API integration
 - Patient notifications (result ready)
@@ -599,9 +613,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 ### Lab Tests Management (Master Data)
 
 #### GET /api/lab/tests
+
 **Purpose**: Get list of all lab tests (catalog)
 
 **Query Parameters**:
+
 ```typescript
 {
   category?: string          // Filter by category
@@ -612,6 +628,7 @@ lab_orders ──→ billing_items (auto-created on completion)
 ```
 
 **Response**:
+
 ```typescript
 {
   status: 200,
@@ -636,9 +653,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:read`, `radiology:read`
 
 #### POST /api/lab/tests
+
 **Purpose**: Create new lab test (admin only)
 
 **Request Body**:
+
 ```typescript
 {
   code: "HBA1C",
@@ -660,6 +679,7 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:admin`
 
 #### PUT /api/lab/tests/[id]
+
 **Purpose**: Update lab test
 
 **Permissions**: `lab:admin`
@@ -669,9 +689,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 ### Lab Order Management
 
 #### GET /api/lab/orders
+
 **Purpose**: Get list of lab orders
 
 **Query Parameters**:
+
 ```typescript
 {
   visit_id?: string          // Filter by visit
@@ -688,6 +710,7 @@ lab_orders ──→ billing_items (auto-created on completion)
 ```
 
 **Response**:
+
 ```typescript
 {
   status: 200,
@@ -728,9 +751,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:read`, `radiology:read`
 
 #### POST /api/lab/orders
+
 **Purpose**: Create new lab order(s)
 
 **Request Body**:
+
 ```typescript
 {
   visit_id: "uuid",
@@ -750,6 +775,7 @@ lab_orders ──→ billing_items (auto-created on completion)
 ```
 
 **Response**:
+
 ```typescript
 {
   status: 201,
@@ -764,9 +790,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:write`, `radiology:write`
 
 #### PATCH /api/lab/orders/[id]/status
+
 **Purpose**: Update order status (specimen collected, in progress, etc.)
 
 **Request Body**:
+
 ```typescript
 {
   status: "specimen_collected",
@@ -777,6 +805,7 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:write`, `radiology:write`
 
 #### DELETE /api/lab/orders/[id]
+
 **Purpose**: Cancel lab order (only if not yet processed)
 
 **Permissions**: `lab:write`, `radiology:write`
@@ -786,9 +815,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 ### Lab Results Management
 
 #### POST /api/lab/orders/[orderId]/results
+
 **Purpose**: Enter lab result
 
 **Request Body**:
+
 ```typescript
 {
   result_data: {
@@ -829,6 +860,7 @@ lab_orders ──→ billing_items (auto-created on completion)
 ```
 
 **Response**:
+
 ```typescript
 {
   status: 201,
@@ -844,9 +876,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:write`, `radiology:write`
 
 #### PUT /api/lab/results/[id]/verify
+
 **Purpose**: Verify result (supervisor/pathologist)
 
 **Request Body**:
+
 ```typescript
 {
   is_verified: true,
@@ -857,9 +891,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 **Permissions**: `lab:verify`, `radiology:verify`
 
 #### GET /api/lab/orders/[orderId]/results
+
 **Purpose**: Get result for specific order
 
 **Response**:
+
 ```typescript
 {
   status: 200,
@@ -886,9 +922,11 @@ lab_orders ──→ billing_items (auto-created on completion)
 ### Patient Results View
 
 #### GET /api/patients/[patientId]/lab-results
+
 **Purpose**: Get all lab results for a patient
 
 **Query Parameters**:
+
 ```typescript
 {
   visit_id?: string          // Filter by specific visit
@@ -1213,12 +1251,14 @@ export function ResultViewCard({ result, showTrends }: ResultViewCardProps) {
 **Location**: Patient detail page, CPPT dialog
 
 **Features**:
+
 - **Order Button**: Add "Order Lab Tests" button in CPPT dialog
 - **Results Display**: Show lab results in dedicated tab
 - **Auto-link**: Lab orders automatically linked to CPPT entry
 - **Clinical Context**: Lab results visible when writing SOAP notes
 
 **Example Integration**:
+
 ```tsx
 // In components/inpatient/cppt-dialog.tsx
 
@@ -1239,6 +1279,7 @@ export function ResultViewCard({ result, showTrends }: ResultViewCardProps) {
 ### 2. Integration with Billing
 
 **Auto-billing Flow**:
+
 1. Lab order created → Status: "ordered"
 2. Result submitted and verified → Status: "completed"
 3. **Trigger**: On status change to "completed"
@@ -1246,36 +1287,43 @@ export function ResultViewCard({ result, showTrends }: ResultViewCardProps) {
 5. **Data**: Pull price from `lab_orders.price` (snapshot at order time)
 
 **Implementation**:
+
 ```typescript
 // In API endpoint: POST /api/lab/results/[id]/verify
 
 await db.transaction(async (tx) => {
   // 1. Mark result as verified
-  await tx.update(labResults)
+  await tx
+    .update(labResults)
     .set({ is_verified: true, verified_by: userId, verified_at: new Date() })
     .where(eq(labResults.id, resultId))
 
   // 2. Update order status to completed
-  await tx.update(labOrders)
-    .set({ status: 'completed', completed_at: new Date() })
+  await tx
+    .update(labOrders)
+    .set({ status: "completed", completed_at: new Date() })
     .where(eq(labOrders.id, orderId))
 
   // 3. Create billing item (if not already billed)
   const [order] = await tx.select().from(labOrders).where(eq(labOrders.id, orderId))
 
   if (!order.is_billed) {
-    const [billingItem] = await tx.insert(billingItems).values({
-      visitId: order.visit_id,
-      itemType: 'lab_test',
-      itemId: order.test_id,
-      itemName: testName,
-      quantity: 1,
-      unitPrice: order.price,
-      totalPrice: order.price
-    }).returning()
+    const [billingItem] = await tx
+      .insert(billingItems)
+      .values({
+        visitId: order.visit_id,
+        itemType: "lab_test",
+        itemId: order.test_id,
+        itemName: testName,
+        quantity: 1,
+        unitPrice: order.price,
+        totalPrice: order.price,
+      })
+      .returning()
 
     // Link billing item to lab order
-    await tx.update(labOrders)
+    await tx
+      .update(labOrders)
       .set({ is_billed: true, billing_item_id: billingItem.id })
       .where(eq(labOrders.id, orderId))
   }
@@ -1288,12 +1336,14 @@ await db.transaction(async (tx) => {
 ### 3. Integration with Inpatient Flow
 
 **Inpatient-specific Features**:
+
 - Lab orders visible in patient detail page
 - Results shown in timeline alongside vitals and CPPT
 - Urgent/STAT orders for critical patients
 - Lab results influence discharge decisions
 
 **UI Integration**:
+
 ```tsx
 // In app/dashboard/inpatient/patients/[visitId]/page.tsx
 
@@ -1315,6 +1365,7 @@ await db.transaction(async (tx) => {
 ### 4. Integration with Pharmacy
 
 **Cross-reference**:
+
 - Some tests require fasting → Pharmacy can see if patient needs to skip breakfast meds
 - Drug monitoring (e.g., Digoxin levels) → Pharmacy can track therapeutic levels
 
@@ -1343,12 +1394,12 @@ export async function generateLabOrderNumber(): Promise<string> {
 
   if (lastOrder) {
     // Extract number from LAB-2025-0001 → 0001
-    const lastNumber = parseInt(lastOrder.order_number.split('-')[2])
+    const lastNumber = parseInt(lastOrder.order_number.split("-")[2])
     nextNumber = lastNumber + 1
   }
 
   // Pad with zeros: 1 → "0001"
-  const paddedNumber = nextNumber.toString().padStart(4, '0')
+  const paddedNumber = nextNumber.toString().padStart(4, "0")
 
   return `${prefix}${paddedNumber}`
 }
@@ -1391,24 +1442,19 @@ export function calculateFlag(
 ```typescript
 // lib/services/lab.service.ts
 
-export async function uploadLabResultFile(
-  file: File,
-  orderId: string
-): Promise<string> {
+export async function uploadLabResultFile(file: File, orderId: string): Promise<string> {
   // Upload to Supabase Storage or local storage
   const fileName = `lab-results/${orderId}/${Date.now()}-${file.name}`
 
   // Upload to storage
-  const { data, error } = await supabase.storage
-    .from('lab-attachments')
-    .upload(fileName, file)
+  const { data, error } = await supabase.storage.from("lab-attachments").upload(fileName, file)
 
   if (error) throw error
 
   // Get public URL
-  const { data: { publicUrl } } = supabase.storage
-    .from('lab-attachments')
-    .getPublicUrl(fileName)
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from("lab-attachments").getPublicUrl(fileName)
 
   return publicUrl
 }
@@ -1443,9 +1489,9 @@ const initialLabTests = [
         { name: "RBC", unit: "10^6/uL", reference_min: 4.5, reference_max: 5.5 },
         { name: "Hemoglobin", unit: "g/dL", reference_min: 13.0, reference_max: 17.0 },
         { name: "Hematocrit", unit: "%", reference_min: 40, reference_max: 50 },
-        { name: "Platelet", unit: "10^3/uL", reference_min: 150, reference_max: 400 }
-      ]
-    }
+        { name: "Platelet", unit: "10^3/uL", reference_min: 150, reference_max: 400 },
+      ],
+    },
   },
 
   // Clinical Chemistry
@@ -1466,8 +1512,8 @@ const initialLabTests = [
       reference_min: 70,
       reference_max: 100,
       critical_low: 50,
-      critical_high: 200
-    }
+      critical_high: 200,
+    },
   },
 
   {
@@ -1485,8 +1531,8 @@ const initialLabTests = [
       type: "numeric",
       unit: "%",
       reference_min: 4.0,
-      reference_max: 5.6
-    }
+      reference_max: 5.6,
+    },
   },
 
   // Radiology
@@ -1501,8 +1547,8 @@ const initialLabTests = [
     requires_fasting: false,
     result_template: {
       type: "descriptive",
-      fields: ["findings", "impression"]
-    }
+      fields: ["findings", "impression"],
+    },
   },
 
   // Add more tests...
@@ -1521,7 +1567,7 @@ const labPanels = [
     description: "Comprehensive diabetes screening and monitoring",
     tests: ["FBS", "HBA1C", "CHOLESTEROL", "TRIGLYCERIDES"],
     regular_price: 320000,
-    panel_price: 280000  // 12.5% discount
+    panel_price: 280000, // 12.5% discount
   },
 
   {
@@ -1530,7 +1576,7 @@ const labPanels = [
     description: "Cardiovascular risk assessment",
     tests: ["CHOLESTEROL", "HDL", "LDL", "TRIGLYCERIDES"],
     regular_price: 150000,
-    panel_price: 120000
+    panel_price: 120000,
   },
 
   {
@@ -1539,8 +1585,8 @@ const labPanels = [
     description: "Routine health screening",
     tests: ["CBC", "FBS", "URINALYSIS", "XRAY-CHEST-PA"],
     regular_price: 305000,
-    panel_price: 250000
-  }
+    panel_price: 250000,
+  },
 ]
 ```
 
@@ -1565,10 +1611,7 @@ export async function sendLabResultNotification(
   orderId: string,
   isCritical: boolean = false
 ) {
-  const [order] = await db
-    .select()
-    .from(labOrders)
-    .where(eq(labOrders.id, orderId))
+  const [order] = await db.select().from(labOrders).where(eq(labOrders.id, orderId))
 
   const notificationMessage = isCritical
     ? `🚨 CRITICAL lab result ready for ${order.patientName}`
@@ -1578,9 +1621,9 @@ export async function sendLabResultNotification(
   await db.insert(labNotifications).values({
     order_id: orderId,
     recipient_id: doctorId,
-    notification_type: isCritical ? 'critical_value' : 'result_ready',
+    notification_type: isCritical ? "critical_value" : "result_ready",
     message: notificationMessage,
-    sent_via_app: true
+    sent_via_app: true,
   })
 
   // Send email (optional)
@@ -1588,7 +1631,7 @@ export async function sendLabResultNotification(
     await sendEmail({
       to: doctorEmail,
       subject: "URGENT: Critical Lab Result",
-      body: notificationMessage
+      body: notificationMessage,
     })
   }
 }
@@ -1634,15 +1677,10 @@ export async function getLabStatistics(dateFrom: Date, dateTo: Date) {
       completed_orders: sql<number>`count(*) filter (where status = 'completed')`,
       pending_orders: sql<number>`count(*) filter (where status != 'completed' and status != 'cancelled')`,
       total_revenue: sql<number>`sum(price) filter (where status = 'completed')`,
-      avg_tat_hours: sql<number>`avg(extract(epoch from (completed_at - ordered_at)) / 3600) filter (where completed_at is not null)`
+      avg_tat_hours: sql<number>`avg(extract(epoch from (completed_at - ordered_at)) / 3600) filter (where completed_at is not null)`,
     })
     .from(labOrders)
-    .where(
-      and(
-        gte(labOrders.ordered_at, dateFrom),
-        lte(labOrders.ordered_at, dateTo)
-      )
-    )
+    .where(and(gte(labOrders.ordered_at, dateFrom), lte(labOrders.ordered_at, dateTo)))
 
   return stats[0]
 }
@@ -1659,26 +1697,26 @@ export async function getLabStatistics(dateFrom: Date, dateTo: Date) {
 
 export const LAB_PERMISSIONS = {
   // Lab tests catalog management
-  'lab:admin': ['super_admin', 'admin'],
+  "lab:admin": ["super_admin", "admin"],
 
   // Ordering lab tests
-  'lab:write': ['doctor', 'nurse'],
-  'radiology:write': ['doctor'],
+  "lab:write": ["doctor", "nurse"],
+  "radiology:write": ["doctor"],
 
   // Viewing orders/results
-  'lab:read': ['doctor', 'nurse', 'lab_technician', 'admin'],
-  'radiology:read': ['doctor', 'radiologist', 'radiology_technician', 'admin'],
+  "lab:read": ["doctor", "nurse", "lab_technician", "admin"],
+  "radiology:read": ["doctor", "radiologist", "radiology_technician", "admin"],
 
   // Entering results
-  'lab:enter_results': ['lab_technician'],
-  'radiology:enter_results': ['radiologist', 'radiology_technician'],
+  "lab:enter_results": ["lab_technician"],
+  "radiology:enter_results": ["radiologist", "radiology_technician"],
 
   // Verifying results
-  'lab:verify': ['lab_supervisor', 'pathologist'],
-  'radiology:verify': ['radiologist'],
+  "lab:verify": ["lab_supervisor", "pathologist"],
+  "radiology:verify": ["radiologist"],
 
   // Billing
-  'lab:billing': ['cashier', 'admin']
+  "lab:billing": ["cashier", "admin"],
 }
 ```
 
@@ -1696,6 +1734,7 @@ export const LAB_PERMISSIONS = {
 **Overall Progress: 90% Complete** 🎯
 
 **Status Summary:**
+
 - ✅ **Week 1**: Foundation & Database - COMPLETED (100%)
 - ✅ **Week 2**: Order Management - COMPLETED (100%)
 - ✅ **Week 3**: Lab Worklist & Result Entry - COMPLETED (100%)
@@ -1704,6 +1743,7 @@ export const LAB_PERMISSIONS = {
 **Latest Update:** 2025-01-09
 
 **Key Achievements:**
+
 - 🗄️ Complete database schema with 6 tables
 - 🔌 Full API layer with 8 endpoints
 - ⚛️ 14+ React components built (including Lab Technician Queue Page)
@@ -1719,6 +1759,7 @@ export const LAB_PERMISSIONS = {
 ### Week 1: Foundation & Database ✅ COMPLETED
 
 **Tasks:**
+
 - [x] Create database schema (all tables)
 - [x] Write database migrations
 - [x] Create seed data for initial lab tests
@@ -1726,6 +1767,7 @@ export const LAB_PERMISSIONS = {
 - [x] Create API endpoint structure
 
 **Deliverables:**
+
 - ✅ Database tables created (lab_tests, lab_orders, lab_results, lab_result_parameters, lab_notifications)
 - ✅ Seed script with 20+ common lab tests
 - ✅ File upload infrastructure ready (attachment_url, attachment_type in schema)
@@ -1735,6 +1777,7 @@ export const LAB_PERMISSIONS = {
 ### Week 2: Order Management ✅ COMPLETED
 
 **Tasks:**
+
 - [x] Build lab test catalog API (GET /api/lab/tests)
 - [x] Create order lab dialog component (CreateLabOrderDialog)
 - [x] Implement multi-test selection UI (LabTestCatalog with search and filters)
@@ -1743,6 +1786,7 @@ export const LAB_PERMISSIONS = {
 - [x] Add to inpatient patient detail page
 
 **Deliverables:**
+
 - ✅ Doctors can order lab tests from CPPT
 - ✅ Orders saved to database with auto-generated order numbers (LAB-2025-XXXX)
 - ✅ Auto-billing integration working (creates billing_items on completion)
@@ -1753,6 +1797,7 @@ export const LAB_PERMISSIONS = {
 ### Week 3: Lab Worklist & Result Entry ✅ COMPLETED
 
 **Tasks:**
+
 - [x] Build lab worklist page (LabOrderQueueTable component)
 - [x] Create result entry dialog (ResultEntryDialog component)
 - [x] Implement dynamic form based on test template (supports numeric, descriptive, radiology)
@@ -1761,6 +1806,7 @@ export const LAB_PERMISSIONS = {
 - [x] Implement notification system (backend notifications API)
 
 **Deliverables:**
+
 - ✅ Lab technicians can view worklist (sortable by urgency, filterable by department/status)
 - ✅ Technicians can enter results (ResultEntryDialog with dynamic forms)
 - ✅ Supervisors can verify results (verification API endpoint)
@@ -1773,6 +1819,7 @@ export const LAB_PERMISSIONS = {
 ### Week 4: Result Viewing & Polish 🚧 IN PROGRESS (75% Complete)
 
 **Tasks:**
+
 - [x] Build result view component (OrderDetailDialog with comprehensive result display)
 - [x] Build Lab Technician Queue Page (action-oriented worklist with auto-refresh)
 - [ ] Add result history/trends (trend visualization component needed)
@@ -1783,18 +1830,21 @@ export const LAB_PERMISSIONS = {
 - [ ] Testing and bug fixes (ongoing)
 
 **Deliverables:**
+
 - ✅ Doctors can view results in RME (OrderDetailDialog shows complete order history and results)
 - ⏳ Trend visualization working (basic display ready, graphs pending)
 - ✅ Critical value alerts functional (orange-themed warnings + auto-dismiss alerts)
 - ⏳ Complete end-to-end workflow tested (functional but needs comprehensive testing)
 
 **Completed Components:**
+
 - ✅ OrderDetailDialog - comprehensive view with timeline, results, verification status
 - ✅ LabOrdersList - display orders for specific visit
 - ✅ Laboratory Dashboard page - statistics and order list
 - ✅ Lab Technician Queue Page - action-oriented worklist with 4 tabs (Actionable, Urgent/STAT, In Progress, Completed) and auto-refresh
 
 **Remaining Work:**
+
 - 📊 Result trend charts/graphs
 - 🔄 Result comparison (current vs previous)
 - 🖨️ Print/download reports as PDF
@@ -1806,7 +1856,9 @@ export const LAB_PERMISSIONS = {
 ## Implementation File Inventory
 
 ### Database Schema
+
 **Location:** `db/schema/lab.ts`
+
 - ✅ `labTests` - Master catalog of lab tests
 - ✅ `labTestPanels` - Test panel definitions
 - ✅ `labTestPanelItems` - Panel-to-test relationships
@@ -1816,25 +1868,31 @@ export const LAB_PERMISSIONS = {
 - ✅ `labNotifications` - Notification logs
 
 ### API Endpoints
+
 **Location:** `app/api/lab/`
 
 **Tests Endpoints:**
+
 - ✅ `GET /api/lab/tests` - Fetch lab test catalog
 - ✅ `POST /api/lab/tests` - Create new test (admin)
 - ✅ `PUT /api/lab/tests/[id]` - Update test (admin)
 
 **Orders Endpoints:**
+
 - ✅ `GET /api/lab/orders` - Fetch orders with filters
 - ✅ `GET /api/lab/orders/[id]` - Fetch single order
 - ✅ `POST /api/lab/orders` - Create new order(s)
 - ✅ `PATCH /api/lab/orders/[id]/status` - Update order status
 
 **Results Endpoints:**
+
 - ✅ `POST /api/lab/results` - Create lab result
 - ✅ `PUT /api/lab/results/[id]/verify` - Verify result
 
 ### TypeScript Types
+
 **Location:** `types/lab.ts` (466 lines)
+
 - ✅ Database model interfaces
 - ✅ API request/response types
 - ✅ View models with relations
@@ -1842,7 +1900,9 @@ export const LAB_PERMISSIONS = {
 - ✅ Validation schemas
 
 ### Service Layer
+
 **Location:** `lib/services/lab.service.ts` (213 lines)
+
 - ✅ `fetchLabTests()` - Get test catalog
 - ✅ `fetchLabOrders()` - Get orders with filters
 - ✅ `fetchLabOrderById()` - Get single order
@@ -1852,7 +1912,9 @@ export const LAB_PERMISSIONS = {
 - ✅ `verifyLabResult()` - Verify result
 
 ### React Hooks
+
 **Location:** `hooks/`
+
 - ✅ `use-lab-tests.ts` (100 lines) - Fetch and filter tests
 - ✅ `use-lab-orders.ts` (86 lines) - Fetch orders with filters
 - ✅ `use-lab-order.ts` (62 lines) - Fetch single order
@@ -1862,15 +1924,18 @@ export const LAB_PERMISSIONS = {
 - ✅ `use-verify-lab-result.ts` (48 lines) - Verify result
 
 ### UI Components
+
 **Location:** `components/laboratory/`
 
 **Doctor Workflow:**
+
 - ✅ `create-lab-order-dialog.tsx` (163 lines) - 2-step order wizard
 - ✅ `lab-test-catalog.tsx` (214 lines) - Searchable test browser
 - ✅ `lab-order-form.tsx` (231 lines) - Order details form
 - ✅ `lab-orders-list.tsx` (169 lines) - Patient's lab orders
 
 **Lab Technician Workflow:**
+
 - ✅ `lab-order-queue-table.tsx` (181 lines) - Order queue with sorting
 - ✅ `lab-order-row.tsx` (~200 lines) - Individual order row with actions
 - ✅ `collect-specimen-dialog.tsx` (~170 lines) - Specimen collection form
@@ -1878,24 +1943,31 @@ export const LAB_PERMISSIONS = {
 - ✅ `order-detail-dialog.tsx` (370 lines) - Comprehensive order view
 
 **Shared:**
+
 - ✅ `index.ts` - Component exports
 
 ### Pages
+
 **Location:** `app/dashboard/`
+
 - ✅ `laboratory/page.tsx` (256 lines) - Main lab dashboard with statistics
 - ✅ `laboratory/queue/page.tsx` (254 lines) - Lab Technician Queue Page with 4 tabs and auto-refresh
 
 **Integration:**
+
 - ✅ `inpatient/patients/[visitId]/page.tsx` - Added lab orders section
 - ✅ `lib/rbac/navigation.ts` - Added queue page to navigation for lab_technician, lab_supervisor, admin, and super_admin roles
 
 ### Utilities & Validation
+
 - ✅ Zod validation schemas in API routes
 - ✅ Error handling utilities
 - ✅ Type-safe JSONB result data structures
 
 ### Seeds/Scripts
+
 **Location:** `lib/seeders/`
+
 - ✅ `seed-lab-tests.ts` - Initial lab test catalog
 - ✅ Test panel definitions
 
@@ -1908,6 +1980,7 @@ export const LAB_PERMISSIONS = {
 **Given**: Doctor viewing inpatient patient
 **When**: Doctor orders CBC test
 **Then**:
+
 1. Order dialog opens with test catalog
 2. Doctor selects CBC, adds indication
 3. Order submitted successfully
@@ -1924,6 +1997,7 @@ export const LAB_PERMISSIONS = {
 **Given**: Lab tech entering glucose result
 **When**: Value entered is 250 mg/dL (critical high)
 **Then**:
+
 1. System automatically flags as critical
 2. Immediate notification sent to doctor
 3. Alert badge appears in doctor's dashboard
@@ -1934,6 +2008,7 @@ export const LAB_PERMISSIONS = {
 **Given**: Doctor wants comprehensive diabetes workup
 **When**: Doctor selects "Diabetes Panel"
 **Then**:
+
 1. Panel expands to show included tests (FBS, HbA1c, Lipids)
 2. Discounted price displayed
 3. One order created per test
@@ -1944,6 +2019,7 @@ export const LAB_PERMISSIONS = {
 **Given**: Lab tech receives hemolyzed blood sample
 **When**: Lab tech marks specimen as rejected
 **Then**:
+
 1. Order status changes to "rejected"
 2. Notification sent to ordering doctor
 3. Doctor can re-order or cancel
@@ -1954,6 +2030,7 @@ export const LAB_PERMISSIONS = {
 **Given**: Patient has previous HbA1c result (7.5%)
 **When**: New HbA1c result entered (6.2%)
 **Then**:
+
 1. System shows both values side-by-side
 2. Trend arrow indicates improvement
 3. Percentage change calculated
@@ -2002,24 +2079,24 @@ export const LAB_PERMISSIONS = {
 
 ### Common Lab Test Reference
 
-| Test Name | Code | Category | TAT | Fasting Required |
-|-----------|------|----------|-----|------------------|
-| Complete Blood Count | CBC | Hematology | 2h | No |
-| Blood Glucose (Fasting) | FBS | Chemistry | 1h | Yes |
-| HbA1c | HBA1C | Chemistry | 24h | No |
-| Cholesterol Total | CHOL | Chemistry | 2h | Yes |
-| HDL Cholesterol | HDL | Chemistry | 2h | Yes |
-| LDL Cholesterol | LDL | Chemistry | 2h | Yes |
-| Triglycerides | TRIG | Chemistry | 2h | Yes |
-| Uric Acid | URIC | Chemistry | 2h | No |
-| Creatinine | CREAT | Chemistry | 2h | No |
-| SGOT/AST | SGOT | Chemistry | 2h | No |
-| SGPT/ALT | SGPT | Chemistry | 2h | No |
-| Urinalysis | URIN | Urinalysis | 1h | No |
-| HIV Screening | HIV | Immunology | 24h | No |
-| Hepatitis B Surface Antigen | HBSAG | Immunology | 24h | No |
-| Chest X-Ray (PA) | XRAY-CHEST | Radiology | 4h | No |
-| Abdomen USG | USG-ABD | Radiology | 4h | No |
+| Test Name                   | Code       | Category   | TAT | Fasting Required |
+| --------------------------- | ---------- | ---------- | --- | ---------------- |
+| Complete Blood Count        | CBC        | Hematology | 2h  | No               |
+| Blood Glucose (Fasting)     | FBS        | Chemistry  | 1h  | Yes              |
+| HbA1c                       | HBA1C      | Chemistry  | 24h | No               |
+| Cholesterol Total           | CHOL       | Chemistry  | 2h  | Yes              |
+| HDL Cholesterol             | HDL        | Chemistry  | 2h  | Yes              |
+| LDL Cholesterol             | LDL        | Chemistry  | 2h  | Yes              |
+| Triglycerides               | TRIG       | Chemistry  | 2h  | Yes              |
+| Uric Acid                   | URIC       | Chemistry  | 2h  | No               |
+| Creatinine                  | CREAT      | Chemistry  | 2h  | No               |
+| SGOT/AST                    | SGOT       | Chemistry  | 2h  | No               |
+| SGPT/ALT                    | SGPT       | Chemistry  | 2h  | No               |
+| Urinalysis                  | URIN       | Urinalysis | 1h  | No               |
+| HIV Screening               | HIV        | Immunology | 24h | No               |
+| Hepatitis B Surface Antigen | HBSAG      | Immunology | 24h | No               |
+| Chest X-Ray (PA)            | XRAY-CHEST | Radiology  | 4h  | No               |
+| Abdomen USG                 | USG-ABD    | Radiology  | 4h  | No               |
 
 ### Abbreviations
 
@@ -2043,11 +2120,13 @@ export const LAB_PERMISSIONS = {
 ---
 
 **Document Approval:**
+
 - [ ] Technical Lead Review
 - [ ] Product Owner Approval
 - [ ] Development Team Acknowledgment
 
 **Next Steps:**
+
 1. Review and approve this implementation plan
 2. Set up project board/tickets based on roadmap
 3. Begin Week 1 implementation (Database & Foundation)

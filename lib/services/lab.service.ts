@@ -11,9 +11,10 @@ import type {
   LabOrderFilters,
   CreateLabOrderInput,
   UpdateLabOrderStatusInput,
-  CreateLabResultInput,
 } from "@/types/lab"
 import type { ResponseApi } from "@/types/api"
+import { CreateLabResultInput } from "@/lib/lab"
+
 import { ApiServiceError, handleApiError } from "./api.service"
 
 // ============================================================================
@@ -194,7 +195,7 @@ export async function createLabResult(data: CreateLabResultInput): Promise<{
 }
 
 /**
- * Verify lab result
+ * Verify lab result by result ID
  */
 export async function verifyLabResult(resultId: string, notes?: string): Promise<void> {
   try {

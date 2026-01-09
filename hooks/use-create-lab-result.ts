@@ -6,8 +6,8 @@
 import { useState, useCallback } from "react"
 import { toast } from "sonner"
 import { createLabResult } from "@/lib/services/lab.service"
-import type { CreateLabResultInput } from "@/types/lab"
 import { getErrorMessage } from "@/lib/utils/error"
+import { CreateLabResultInput } from "@/lib/lab"
 
 interface UseCreateLabResultOptions {
   onSuccess?: (result: { id: string; criticalValue: boolean }) => void

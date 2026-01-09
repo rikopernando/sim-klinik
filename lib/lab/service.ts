@@ -17,7 +17,6 @@ import { user } from "@/db/schema/auth"
 import type {
   CreateLabOrderInput,
   UpdateLabOrderStatusInput,
-  CreateLabResultInput,
   LabTestFilters,
   LabTest,
   LabOrder,
@@ -31,7 +30,12 @@ import {
   canAcceptResults,
   hasAnyCriticalValue,
 } from "./utils"
-import { CreateLabTestInput, LabOrderFilters, UpdateLabTestInput } from "./validation"
+import {
+  CreateLabResultInput,
+  CreateLabTestInput,
+  LabOrderFilters,
+  UpdateLabTestInput,
+} from "./validation"
 
 // ============================================================================
 // LAB TEST SERVICES

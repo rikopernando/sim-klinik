@@ -117,11 +117,7 @@ export const radiologyResultDataSchema = z.object({
   comparison: z.string().optional(),
 })
 
-export const resultDataSchema = z.union([
-  numericResultDataSchema,
-  descriptiveResultDataSchema,
-  radiologyResultDataSchema,
-])
+export const resultDataSchema = z.union([numericResultDataSchema, descriptiveResultDataSchema])
 
 export const labResultParameterSchema = z.object({
   parameterName: z.string().min(1, "Parameter name is required").max(100),
@@ -197,3 +193,4 @@ export type CreateLabResultInput = z.infer<typeof createLabResultSchema>
 export type VerifyLabResultInput = z.infer<typeof verifyLabResultSchema>
 export type LabTestFilters = z.infer<typeof labTestFiltersSchema>
 export type LabOrderFilters = z.infer<typeof labOrderFiltersSchema>
+export type ParameterResultInput = z.infer<typeof labResultParameterSchema>
