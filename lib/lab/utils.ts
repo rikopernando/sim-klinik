@@ -6,8 +6,9 @@
 import { desc, ilike } from "drizzle-orm"
 import { db } from "@/db"
 import { labOrders } from "@/db/schema/laboratory"
-import type { OrderStatus, ResultData, NumericResultData } from "@/types/lab"
+import type { OrderStatus, NumericResultData } from "@/types/lab"
 import { RESULT_FLAGS } from "@/types/lab"
+import { ResultData } from "./validation"
 
 // ============================================================================
 // ORDER NUMBER GENERATION

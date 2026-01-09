@@ -106,7 +106,6 @@ function convertFormDataToResultInput(
   template: ResultTemplate | null
 ): CreateLabResultInput {
   let resultData: CreateLabResultInput["resultData"]
-  let parameters: ParameterResultInput[] = []
 
   if (isNumericTemplate(template)) {
     const data = formData as NumericResultFormData
@@ -134,7 +133,7 @@ function convertFormDataToResultInput(
   } else if (isMultiParameterTemplate(template)) {
     const data = formData as MultiParameterResultFormData
 
-    parameters = template.parameters.map((param, index) => {
+    const parameters: ParameterResultInput[] = template.parameters.map((param, index) => {
       const paramKey = createParameterKey(index)
       const value = parseFloat(data[paramKey]) || 0
       const { min, max } = param.referenceRange
@@ -152,19 +151,19 @@ function convertFormDataToResultInput(
       }
 
       return {
-        parameterName: param.name,
-        parameterValue: value.toString(),
+        name: param.name,
+        value: value.toString(),
         unit: param.unit,
-        referenceMin: param.referenceRange.min,
-        referenceMax: param.referenceRange.max,
+        referenceRange: {
+          min: param.referenceRange.min,
+          max: param.referenceRange.max,
+        },
         flag,
       }
     })
 
-    // For multi-parameter templates, provide a default descriptive result
     resultData = {
-      findings: "Multi-parameter test results",
-      interpretation: "See parameters for detailed values",
+      parameters,
     }
   } else if (isDescriptiveTemplate(template)) {
     const data = formData as DescriptiveResultFormData
@@ -184,7 +183,6 @@ function convertFormDataToResultInput(
   return {
     orderId,
     resultData,
-    parameters,
     resultNotes: formData.notes,
     criticalValue: formData.isCritical,
   }

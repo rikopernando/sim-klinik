@@ -3,6 +3,8 @@
  * Type-safe interfaces for lab tests, orders, results, and notifications
  */
 
+import { ResultData } from "@/lib/lab"
+
 // ============================================================================
 // ENUMS & CONSTANTS
 // ============================================================================
@@ -227,8 +229,6 @@ export interface DescriptiveResultTemplate {
   type: "descriptive"
   fields: string[] // e.g., ["findings", "impression"]
 }
-
-export type ResultData = NumericResultData | DescriptiveResultData | RadiologyResultData
 
 export interface NumericResultData {
   value: number

@@ -117,14 +117,16 @@ export const radiologyResultDataSchema = z.object({
   comparison: z.string().optional(),
 })
 
-export const resultDataSchema = z.union([numericResultDataSchema, descriptiveResultDataSchema])
-
 export const labResultParameterSchema = z.object({
-  parameterName: z.string().min(1, "Parameter name is required").max(100),
-  parameterValue: z.string().min(1, "Parameter value is required"),
+  name: z.string().min(1, "Parameter name is required").max(100),
+  value: z.string().min(1, "Parameter value is required"),
   unit: z.string().max(50).optional(),
-  referenceMin: z.number().optional(),
-  referenceMax: z.number().optional(),
+  referenceRange: z
+    .object({
+      min: z.number(),
+      max: z.number(),
+    })
+    .optional(),
   flag: z
     .enum([
       RESULT_FLAGS.NORMAL,
@@ -135,6 +137,16 @@ export const labResultParameterSchema = z.object({
     ])
     .optional(),
 })
+
+export const labParameterSchema = z.object({
+  parameters: z.array(labResultParameterSchema).optional(),
+})
+
+export const resultDataSchema = z.union([
+  numericResultDataSchema,
+  descriptiveResultDataSchema,
+  labParameterSchema,
+])
 
 export const createLabResultSchema = z.object({
   orderId: z.uuid("Invalid order ID"),
@@ -150,7 +162,6 @@ export const createLabResultSchema = z.object({
     .optional(),
   resultNotes: z.string().max(1000).optional(),
   criticalValue: z.boolean().optional(),
-  parameters: z.array(labResultParameterSchema).optional(),
 })
 
 export const verifyLabResultSchema = z.object({
@@ -194,3 +205,4 @@ export type VerifyLabResultInput = z.infer<typeof verifyLabResultSchema>
 export type LabTestFilters = z.infer<typeof labTestFiltersSchema>
 export type LabOrderFilters = z.infer<typeof labOrderFiltersSchema>
 export type ParameterResultInput = z.infer<typeof labResultParameterSchema>
+export type ResultData = z.infer<typeof resultDataSchema>

@@ -525,18 +525,22 @@ export async function createLabResult(
     .returning()
 
   // Insert parameters if provided
-  if (data.parameters && data.parameters.length > 0) {
-    await db.insert(labResultParameters).values(
-      data.parameters.map((param) => ({
-        resultId: newResult.id,
-        parameterName: param.parameterName,
-        parameterValue: param.parameterValue,
-        unit: param.unit,
-        referenceMin: param.referenceMin?.toString(),
-        referenceMax: param.referenceMax?.toString(),
-        flag: param.flag,
-      }))
-    )
+  // resultData can be labParameterSchema which contains parameters
+  if ("parameters" in data.resultData && data.resultData.parameters) {
+    const params = data.resultData.parameters
+    if (params.length > 0) {
+      await db.insert(labResultParameters).values(
+        params.map((param) => ({
+          resultId: newResult.id,
+          parameterName: param.name,
+          parameterValue: param.value,
+          unit: param.unit,
+          referenceMin: param.referenceRange?.min?.toString(),
+          referenceMax: param.referenceRange?.max?.toString(),
+          flag: param.flag,
+        }))
+      )
+    }
   }
 
   // Update order status to completed
