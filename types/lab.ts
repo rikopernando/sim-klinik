@@ -241,6 +241,19 @@ export interface NumericResultData {
   interpretation?: string
 }
 
+export interface MultiParameterResultData {
+  parameters?: Array<{
+    name: string
+    value: number
+    unit: string
+    referenceRange: {
+      min: number
+      max: number
+    }
+    flag: ResultFlag
+  }>
+}
+
 export interface DescriptiveResultData {
   findings: string
   interpretation: string

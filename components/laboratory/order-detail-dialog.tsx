@@ -1,11 +1,12 @@
 /**
  * Order Detail Dialog Component
  * Comprehensive view of lab order with results and timeline
+ * Refactored for modularity, type safety, and performance
  */
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo, memo } from "react"
 import {
   IconEye,
   IconX,
@@ -32,14 +33,144 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useLabOrder } from "@/hooks/use-lab-order"
 import { formatDistanceToNow, format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
+import { ResultDisplay } from "./result-display"
+import type { LabOrderWithRelations } from "@/types/lab"
+
+// ============================================================================
+// HELPER COMPONENTS
+// ============================================================================
+
+interface StatusBadgeProps {
+  status: string | null
+}
+
+const StatusBadge = memo(({ status }: StatusBadgeProps) => {
+  switch (status) {
+    case "verified":
+      return (
+        <Badge variant="default" className="bg-green-600">
+          <IconCheck className="mr-1 h-3 w-3" />
+          Verified
+        </Badge>
+      )
+    case "completed":
+      return (
+        <Badge variant="secondary">
+          <IconCheck className="mr-1 h-3 w-3" />
+          Completed
+        </Badge>
+      )
+    case "in_progress":
+      return (
+        <Badge variant="default" className="bg-blue-600">
+          <IconClock className="mr-1 h-3 w-3" />
+          In Progress
+        </Badge>
+      )
+    case "specimen_collected":
+      return (
+        <Badge variant="outline" className="border-blue-600 text-blue-600">
+          <IconDroplet className="mr-1 h-3 w-3" />
+          Specimen Collected
+        </Badge>
+      )
+    case "ordered":
+      return (
+        <Badge variant="outline" className="border-yellow-600 text-yellow-600">
+          <IconClock className="mr-1 h-3 w-3" />
+          Ordered
+        </Badge>
+      )
+    default:
+      return <Badge variant="outline">{status || "Unknown"}</Badge>
+  }
+})
+StatusBadge.displayName = "StatusBadge"
+
+// ============================================================================
+// TIMELINE COMPONENTS
+// ============================================================================
+
+interface TimelineItemProps {
+  icon: React.ReactNode
+  title: string
+  subtitle: string
+}
+
+const TimelineItem = memo(({ icon, title, subtitle }: TimelineItemProps) => (
+  <div className="flex items-start gap-3">
+    <div className="text-muted-foreground mt-1">{icon}</div>
+    <div className="flex-1">
+      <p className="text-sm font-medium">{title}</p>
+      <p className="text-muted-foreground text-xs">{subtitle}</p>
+    </div>
+  </div>
+))
+TimelineItem.displayName = "TimelineItem"
+
+interface OrderTimelineProps {
+  order: LabOrderWithRelations
+}
+
+const OrderTimeline = memo(({ order }: OrderTimelineProps) => (
+  <div className="space-y-3">
+    <h4 className="font-semibold">Timeline Order</h4>
+    <div className="space-y-2">
+      <TimelineItem
+        icon={<IconClock className="h-4 w-4" />}
+        title="Order Dibuat"
+        subtitle={`${format(new Date(order.orderedAt), "dd MMM yyyy, HH:mm", { locale: idLocale })} • ${order.orderedByUser.name}`}
+      />
+
+      {order.status !== "ordered" && (
+        <TimelineItem
+          icon={<IconDroplet className="h-4 w-4" />}
+          title="Spesimen Collected"
+          subtitle="Status updated"
+        />
+      )}
+
+      {order.result && (
+        <TimelineItem
+          icon={<IconFileText className="h-4 w-4" />}
+          title="Hasil Diinput"
+          subtitle={`${format(new Date(order.result.enteredAt), "dd MMM yyyy, HH:mm", { locale: idLocale })} • ${order.result.enteredBy}`}
+        />
+      )}
+
+      {order.result?.isVerified && order.result.verifiedAt && (
+        <TimelineItem
+          icon={<IconCheck className="h-4 w-4" />}
+          title="Hasil Diverifikasi"
+          subtitle={`${format(new Date(order.result.verifiedAt), "dd MMM yyyy, HH:mm", { locale: idLocale })} • ${order.result.verifiedBy || "Unknown"}`}
+        />
+      )}
+    </div>
+  </div>
+))
+OrderTimeline.displayName = "OrderTimeline"
+
+// ============================================================================
+// MAIN DIALOG COMPONENT
+// ============================================================================
 
 interface OrderDetailDialogProps {
   orderId: string
   trigger?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function OrderDetailDialog({ orderId, trigger }: OrderDetailDialogProps) {
-  const [open, setOpen] = useState(false)
+export function OrderDetailDialog({
+  orderId,
+  trigger,
+  open: controlledOpen,
+  onOpenChange,
+}: OrderDetailDialogProps) {
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+  const setOpen = onOpenChange || setInternalOpen
+
   const { order, loading, refetch } = useLabOrder({
     orderId,
     autoFetch: false,
@@ -51,47 +182,18 @@ export function OrderDetailDialog({ orderId, trigger }: OrderDetailDialogProps) 
     }
   }, [open, refetch])
 
-  const getStatusBadge = (status: string | null) => {
-    switch (status) {
-      case "verified":
-        return (
-          <Badge variant="default" className="bg-green-600">
-            <IconCheck className="mr-1 h-3 w-3" />
-            Verified
-          </Badge>
-        )
-      case "completed":
-        return (
-          <Badge variant="secondary">
-            <IconCheck className="mr-1 h-3 w-3" />
-            Completed
-          </Badge>
-        )
-      case "in_progress":
-        return (
-          <Badge variant="default" className="bg-blue-600">
-            <IconClock className="mr-1 h-3 w-3" />
-            In Progress
-          </Badge>
-        )
-      case "specimen_collected":
-        return (
-          <Badge variant="outline" className="border-blue-600 text-blue-600">
-            <IconDroplet className="mr-1 h-3 w-3" />
-            Specimen Collected
-          </Badge>
-        )
-      case "ordered":
-        return (
-          <Badge variant="outline" className="border-yellow-600 text-yellow-600">
-            <IconClock className="mr-1 h-3 w-3" />
-            Ordered
-          </Badge>
-        )
-      default:
-        return <Badge variant="outline">{status || "Unknown"}</Badge>
-    }
-  }
+  // Memoize computed values
+  const urgencyBadge = useMemo(() => {
+    if (!order?.urgency || order.urgency === "routine") return null
+    return (
+      <Badge
+        variant={order.urgency === "stat" ? "destructive" : "default"}
+        className={order.urgency === "urgent" ? "bg-orange-500" : ""}
+      >
+        {order.urgency.toUpperCase()}
+      </Badge>
+    )
+  }, [order?.urgency])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -134,18 +236,11 @@ export function OrderDetailDialog({ orderId, trigger }: OrderDetailDialogProps) 
                         {order.test?.name || "Test Unknown"}
                       </h3>
                       <Badge variant="secondary">{order.test?.department}</Badge>
-                      {order.urgency && order.urgency !== "routine" && (
-                        <Badge
-                          variant={order.urgency === "stat" ? "destructive" : "default"}
-                          className={order.urgency === "urgent" ? "bg-orange-500" : ""}
-                        >
-                          {order.urgency.toUpperCase()}
-                        </Badge>
-                      )}
+                      {urgencyBadge}
                     </div>
                     <p className="text-muted-foreground font-mono text-sm">{order.orderNumber}</p>
                   </div>
-                  {getStatusBadge(order.status)}
+                  <StatusBadge status={order.status} />
                 </div>
 
                 <Separator />
@@ -241,39 +336,7 @@ export function OrderDetailDialog({ orderId, trigger }: OrderDetailDialogProps) 
                   </Alert>
                 )}
 
-                <div className="rounded-lg border bg-blue-50 p-4 dark:bg-blue-950">
-                  <div className="space-y-2">
-                    <p className="text-muted-foreground text-xs">Nilai Hasil</p>
-                    {"value" in order.result.resultData ? (
-                      <p className="text-2xl font-bold">
-                        {order.result.resultData.value}
-                        <span className="text-muted-foreground ml-2 text-base font-normal">
-                          {order.result.resultData.unit}
-                        </span>
-                      </p>
-                    ) : "findings" in order.result.resultData ? (
-                      <div>
-                        <p className="font-medium">{order.result.resultData.findings}</p>
-                        {"interpretation" in order.result.resultData &&
-                          order.result.resultData.interpretation && (
-                            <p className="text-muted-foreground mt-2 text-sm">
-                              <span className="font-medium">Interpretasi:</span>{" "}
-                              {order.result.resultData.interpretation}
-                            </p>
-                          )}
-                        {"impression" in order.result.resultData &&
-                          order.result.resultData.impression && (
-                            <p className="text-muted-foreground mt-2 text-sm">
-                              <span className="font-medium">Kesan:</span>{" "}
-                              {order.result.resultData.impression}
-                            </p>
-                          )}
-                      </div>
-                    ) : (
-                      <p className="text-sm">Hasil tersedia</p>
-                    )}
-                  </div>
-                </div>
+                <ResultDisplay resultData={order.result.resultData} />
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-md border p-3">
@@ -317,63 +380,7 @@ export function OrderDetailDialog({ orderId, trigger }: OrderDetailDialogProps) 
             )}
 
             {/* Status Timeline */}
-            <div className="space-y-3">
-              <h4 className="font-semibold">Timeline Order</h4>
-              <div className="space-y-2">
-                <div className="flex items-start gap-3">
-                  <IconClock className="text-muted-foreground mt-1 h-4 w-4" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">Order Dibuat</p>
-                    <p className="text-muted-foreground text-xs">
-                      {format(new Date(order.orderedAt), "dd MMM yyyy, HH:mm", {
-                        locale: idLocale,
-                      })}{" "}
-                      • {order.orderedByUser.name}
-                    </p>
-                  </div>
-                </div>
-
-                {order.status !== "ordered" && (
-                  <div className="flex items-start gap-3">
-                    <IconDroplet className="text-muted-foreground mt-1 h-4 w-4" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Spesimen Collected</p>
-                      <p className="text-muted-foreground text-xs">Status updated</p>
-                    </div>
-                  </div>
-                )}
-
-                {order.result && (
-                  <div className="flex items-start gap-3">
-                    <IconFileText className="text-muted-foreground mt-1 h-4 w-4" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Hasil Diinput</p>
-                      <p className="text-muted-foreground text-xs">
-                        {format(new Date(order.result.enteredAt), "dd MMM yyyy, HH:mm", {
-                          locale: idLocale,
-                        })}{" "}
-                        • {order.result.enteredBy}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {order.result?.isVerified && order.result.verifiedAt && (
-                  <div className="flex items-start gap-3">
-                    <IconCheck className="text-muted-foreground mt-1 h-4 w-4" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Hasil Diverifikasi</p>
-                      <p className="text-muted-foreground text-xs">
-                        {format(new Date(order.result.verifiedAt), "dd MMM yyyy, HH:mm", {
-                          locale: idLocale,
-                        })}{" "}
-                        • {order.result.verifiedBy || "Unknown"}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <OrderTimeline order={order} />
 
             <div className="flex justify-end">
               <Button variant="outline" onClick={() => setOpen(false)}>

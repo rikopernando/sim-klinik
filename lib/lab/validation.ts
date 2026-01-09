@@ -145,6 +145,7 @@ export const labParameterSchema = z.object({
 export const resultDataSchema = z.union([
   numericResultDataSchema,
   descriptiveResultDataSchema,
+  radiologyResultDataSchema,
   labParameterSchema,
 ])
 

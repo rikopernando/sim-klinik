@@ -196,11 +196,20 @@ export async function getLabOrders(
       price: labOrders.price,
       orderedBy: labOrders.orderedBy,
       orderedAt: labOrders.orderedAt,
+      specimenCollectedBy: labOrders.specimenCollectedBy,
       specimenCollectedAt: labOrders.specimenCollectedAt,
-      completedAt: labOrders.completedAt,
+      specimenNotes: labOrders.specimenNotes,
+      processedBy: labOrders.processedBy,
+      startedAt: labOrders.startedAt,
+      verifiedBy: labOrders.verifiedBy,
       verifiedAt: labOrders.verifiedAt,
+      completedAt: labOrders.completedAt,
+      cancelledReason: labOrders.cancelledReason,
+      isBilled: labOrders.isBilled,
+      billingItemId: labOrders.billingItemId,
       notes: labOrders.notes,
       createdAt: labOrders.createdAt,
+      updatedAt: labOrders.updatedAt,
       // Relations
       test: {
         id: labTests.id,
@@ -219,23 +228,78 @@ export async function getLabOrders(
         id: user.id,
         name: user.name,
       },
+      result: {
+        id: labResults.id,
+        resultData: labResults.resultData,
+        attachmentUrl: labResults.attachmentUrl,
+        attachmentType: labResults.attachmentType,
+        resultNotes: labResults.resultNotes,
+        criticalValue: labResults.criticalValue,
+        isVerified: labResults.isVerified,
+        verifiedBy: labResults.verifiedBy,
+        verifiedAt: labResults.verifiedAt,
+        enteredBy: labResults.enteredBy,
+        enteredAt: labResults.enteredAt,
+      },
     })
     .from(labOrders)
     .leftJoin(labTests, eq(labOrders.testId, labTests.id))
     .leftJoin(patients, eq(labOrders.patientId, patients.id))
     .leftJoin(user, eq(labOrders.orderedBy, user.id))
+    .leftJoin(labResults, eq(labOrders.id, labResults.orderId))
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(labOrders.orderedAt))
     .limit(100)
 
   // Filter by department if specified (after join)
+  let filteredResult = result
   if (filters.department) {
-    return result.filter(
-      (order) => order.test?.department === filters.department
-    ) as LabOrderWithRelations[]
+    filteredResult = result.filter((order) => order.test?.department === filters.department)
   }
 
-  return result as LabOrderWithRelations[]
+  // Fetch parameters for all results that have them
+  const resultIds = filteredResult
+    .map((order) => order.result?.id)
+    .filter((id): id is string => id !== null && id !== undefined)
+
+  let parametersMap: Record<string, (typeof labResultParameters.$inferSelect)[]> = {}
+  if (resultIds.length > 0) {
+    const allParameters = await db
+      .select()
+      .from(labResultParameters)
+      .where(inArray(labResultParameters.resultId, resultIds))
+
+    // Group parameters by resultId
+    parametersMap = allParameters.reduce(
+      (acc, param) => {
+        if (!acc[param.resultId]) {
+          acc[param.resultId] = []
+        }
+        acc[param.resultId].push(param)
+        return acc
+      },
+      {} as Record<string, (typeof labResultParameters.$inferSelect)[]>
+    )
+  }
+
+  // Map results with parameters and convert null to undefined for optional relations
+  const ordersWithResults = filteredResult.map((order) => {
+    const mappedOrder = {
+      ...order,
+      test: order.test?.id ? (order.test as LabTest) : undefined,
+      result: order.result?.id
+        ? ({
+            ...order.result,
+            parameters: parametersMap[order.result.id]?.length
+              ? parametersMap[order.result.id]
+              : undefined,
+          } as LabResult & { parameters?: (typeof labResultParameters.$inferSelect)[] })
+        : undefined,
+    }
+    return mappedOrder
+  })
+
+  return ordersWithResults as LabOrderWithRelations[]
 }
 
 /**

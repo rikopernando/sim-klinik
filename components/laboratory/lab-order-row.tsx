@@ -19,11 +19,13 @@ import { Button } from "@/components/ui/button"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { useUpdateLabOrderStatus } from "@/hooks/use-update-lab-order-status"
+import { usePermission } from "@/hooks/use-permission"
 import type { LabOrderWithRelations } from "@/types/lab"
 
 import { CollectSpecimenDialog } from "./collect-specimen-dialog"
 import { ResultEntryDialog } from "./result-entry-dialog"
 import { OrderDetailDialog } from "./order-detail-dialog"
+import { VerifyResultDialog } from "./verify-result-dialog"
 
 interface LabOrderRowProps {
   order: LabOrderWithRelations
@@ -33,6 +35,8 @@ interface LabOrderRowProps {
 
 export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
   const [isProcessing, setIsProcessing] = useState(false)
+  const { hasPermission } = usePermission()
+
   const { updateStatus } = useUpdateLabOrderStatus({
     onSuccess: () => {
       setIsProcessing(false)
@@ -117,6 +121,16 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
       case "in_progress":
         return <ResultEntryDialog order={order} onSuccess={onSuccess} />
       case "completed":
+        // Show Verify button for lab supervisors, otherwise show detail
+        if (hasPermission("lab:write") && order.result && !order.result.isVerified) {
+          return (
+            <div className="flex gap-2">
+              <VerifyResultDialog order={order} onSuccess={onSuccess} />
+              <OrderDetailDialog orderId={order.id} />
+            </div>
+          )
+        }
+        return <OrderDetailDialog orderId={order.id} />
       case "verified":
         return <OrderDetailDialog orderId={order.id} />
       default:
