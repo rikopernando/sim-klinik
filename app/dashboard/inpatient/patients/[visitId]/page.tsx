@@ -48,7 +48,9 @@ export default function PatientDetailPage() {
   // Check if visit is locked (billed status)
   const isLocked =
     patientDetail?.patient.status === "billed" ||
-    patientDetail?.patient.status === "ready_for_billing"
+    patientDetail?.patient.status === "ready_for_billing" ||
+    patientDetail?.patient.status === "completed"
+
   const isAbleToFillTheDischargeSummary =
     !patientDetail?.dischargeSummary &&
     !isLocked &&
