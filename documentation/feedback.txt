@@ -40,34 +40,23 @@ New Feedback
 5. Master Data
 6. [x] Grouping Menu
 7. SOAP Form  
-  - [] User bisa input lebih dari 1
+  - [x] User bisa input lebih dari 1
 8. Biiling 
   -  billing.service harusnya bukan tempat query
 9. Rawat inap
-  - Management Stok alat Kesehatan
-  - Siapa yang menandai resep sebagai telah dipenuhi? Di mana apoteker melihat resep yang masih tertunda?
-  - Nurse medication administration UI: Where do nurses see "today's medications to administer"?
-  - Recurring medication scheduler: No cron job to generate daily administration tasks from recurring prescriptions
-  - Procedure execution workflow: Who marks procedures as completed? Where's the UI for this?
-
-   🎯 Key Recommendations Before Phase 4
-
-  Must-Have (Block Phase 4):
-
-  1. Implement prescription fulfillment workflow (pharmacy interface)
-  2. Implement nurse medication administration UI
-  3. Add billing integration (auto-create billing_items, daily room charges)
-  4. Complete material billing integration
-
-  Should-Have (Quality improvements):
-
-  5. Add bed transfer functionality
-  6. Implement RBAC middleware
-  7. Add data validation rules
-
-  Nice-to-Have (Can defer):
+  - [x]Management Stok alat Kesehatan
+  - [x]Siapa yang menandai resep sebagai telah dipenuhi? Di mana apoteker melihat resep yang masih tertunda?
+  - [x]Nurse medication administration UI: Where do nurses see "today's medications to administer"?
+  - [x]Recurring medication scheduler: No cron job to generate daily administration tasks from recurring prescriptions
+  - [x]Procedure execution workflow: Who marks procedures as completed? Where's the UI for this?
 
   8. Notification system
   9. Advanced reporting/analytics
   10. Export features (PDF discharge summary, vitals reports)
 10. Database timezone, contoh ada pada table material usage
+11. Loader pada Dashboard Dokter
+12. Progress Bar
+13. [x] Unit bisa jadi kosong pada Parameter Pemeriksaan dan Hasil Pemeriksaan
+14. [x] Nilai RUjukan bisa jadi kosong pada Parameter Pemeriksaan dan Hasil Pemeriksaan
+15. [x] Input type bisa jadi string  pada Parameter Pemeriksaan dan Hasil Pemeriksaan
+

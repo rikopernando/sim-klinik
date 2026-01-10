@@ -230,10 +230,13 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
             <FieldGroup>
               {template.parameters.map((param, index) => {
                 const paramKey = createParameterKey(index)
+                const hasReferenceRange =
+                  param.referenceRange.min > 0 || param.referenceRange.max > 0
                 return (
                   <Field key={paramKey}>
                     <FieldLabel htmlFor={paramKey}>
-                      {param.name} ({param.unit}) <span className="text-destructive">*</span>
+                      {param.name} {param.unit && `(${param.unit})`}{" "}
+                      <span className="text-destructive">*</span>
                     </FieldLabel>
                     <Controller
                       control={form.control}
@@ -242,10 +245,12 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
                         <>
                           <Input
                             id={paramKey}
-                            type="number"
-                            step="any"
+                            type={param.unit ? "number" : "text"}
+                            step={param.unit ? "any" : undefined}
                             autoComplete="off"
-                            placeholder={`Masukkan nilai ${param.name}...`}
+                            placeholder={`Masukkan nilai ${param.name} ${
+                              param.unit ? `(${param.unit})` : ""
+                            }...`}
                             value={(field.value as string) || ""}
                             onChange={(e) => field.onChange(e.target.value)}
                           />
@@ -255,9 +260,12 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
                         </>
                       )}
                     />
-                    <FieldDescription>
-                      Rujukan: {param.referenceRange.min} - {param.referenceRange.max} {param.unit}
-                    </FieldDescription>
+                    {hasReferenceRange && (
+                      <FieldDescription>
+                        Rujukan: {param.referenceRange.min} - {param.referenceRange.max}{" "}
+                        {param.unit}
+                      </FieldDescription>
+                    )}
                   </Field>
                 )
               })}
@@ -364,7 +372,8 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
         <FieldGroup>
           <Field>
             <FieldLabel htmlFor="findings">
-              Nilai Hasil ({template?.unit}) <span className="text-destructive">*</span>
+              Nilai Hasil {template?.unit && `(${template.unit})`}{" "}
+              <span className="text-destructive">*</span>
             </FieldLabel>
             <Controller
               control={form.control}

@@ -56,7 +56,7 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
     switch (status) {
       case "verified":
         return (
-          <Badge variant="default" className="bg-green-600">
+          <Badge variant="default">
             <IconCheck className="mr-1 h-3 w-3" />
             Verified
           </Badge>

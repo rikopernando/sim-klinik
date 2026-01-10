@@ -6,7 +6,15 @@
  */
 
 import { useState } from "react"
-import { IconFlask, IconRefresh, IconFilter } from "@tabler/icons-react"
+import {
+  IconFlask,
+  IconRefresh,
+  IconFilter,
+  IconClock,
+  IconCheck,
+  IconAlertCircle,
+  IconDroplet,
+} from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -53,6 +61,56 @@ export default function LaboratoryDashboard() {
     urgent: orders.filter((o) => o.urgency === "urgent" || o.urgency === "stat").length,
   }
 
+  const getStatusBadge = (status: string | null) => {
+    switch (status) {
+      case "verified":
+        return (
+          <Badge variant="default">
+            <IconCheck className="mr-1 h-3 w-3" />
+            Verified
+          </Badge>
+        )
+      case "completed":
+        return (
+          <Badge variant="secondary">
+            <IconCheck className="mr-1 h-3 w-3" />
+            Completed
+          </Badge>
+        )
+      case "in_progress":
+        return (
+          <Badge variant="default" className="bg-blue-600">
+            <IconClock className="mr-1 h-3 w-3" />
+            In Progress
+          </Badge>
+        )
+      case "specimen_collected":
+        return (
+          <Badge variant="outline" className="border-blue-600 text-blue-600">
+            <IconDroplet className="mr-1 h-3 w-3" />
+            Specimen Collected
+          </Badge>
+        )
+      case "ordered":
+        return (
+          <Badge variant="outline" className="border-yellow-600 text-yellow-600">
+            <IconClock className="mr-1 h-3 w-3" />
+            Ordered
+          </Badge>
+        )
+      case "cancelled":
+      case "rejected":
+        return (
+          <Badge variant="destructive">
+            <IconAlertCircle className="mr-1 h-3 w-3" />
+            {status === "cancelled" ? "Cancelled" : "Rejected"}
+          </Badge>
+        )
+      default:
+        return <Badge variant="outline">{status || "Unknown"}</Badge>
+    }
+  }
+
   return (
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
@@ -72,8 +130,8 @@ export default function LaboratoryDashboard() {
 
       {/* Statistics Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="gap-4">
+          <CardHeader>
             <CardDescription>Total Order</CardDescription>
             <CardTitle className="text-3xl">{stats.total}</CardTitle>
           </CardHeader>
@@ -82,8 +140,8 @@ export default function LaboratoryDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="gap-4">
+          <CardHeader>
             <CardDescription>Menunggu</CardDescription>
             <CardTitle className="text-3xl text-yellow-600">{stats.pending}</CardTitle>
           </CardHeader>
@@ -92,8 +150,8 @@ export default function LaboratoryDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="gap-4">
+          <CardHeader>
             <CardDescription>Dalam Proses</CardDescription>
             <CardTitle className="text-3xl text-blue-600">{stats.inProgress}</CardTitle>
           </CardHeader>
@@ -102,8 +160,8 @@ export default function LaboratoryDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="gap-4">
+          <CardHeader>
             <CardDescription>Selesai</CardDescription>
             <CardTitle className="text-3xl text-green-600">{stats.completed}</CardTitle>
           </CardHeader>
@@ -112,8 +170,8 @@ export default function LaboratoryDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-2">
+        <Card className="gap-4">
+          <CardHeader>
             <CardDescription>Urgent</CardDescription>
             <CardTitle className="text-3xl text-red-600">{stats.urgent}</CardTitle>
           </CardHeader>
@@ -176,7 +234,7 @@ export default function LaboratoryDashboard() {
           ) : (
             <div className="space-y-3">
               {orders.map((order) => (
-                <Card key={order.id} className="hover:bg-accent/50 transition-colors">
+                <Card key={order.id} className="hover:bg-accent/50 py-0 transition-colors">
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-1">
@@ -223,17 +281,7 @@ export default function LaboratoryDashboard() {
                         </div>
                       </div>
                       <div className="space-y-1 text-right">
-                        <Badge
-                          variant={
-                            order.status === "verified"
-                              ? "default"
-                              : order.status === "completed"
-                                ? "secondary"
-                                : "outline"
-                          }
-                        >
-                          {order.status}
-                        </Badge>
+                        {getStatusBadge(order.status)}
                         <p className="text-primary text-sm font-semibold">
                           {formatCurrency(parseFloat(order.price))}
                         </p>
