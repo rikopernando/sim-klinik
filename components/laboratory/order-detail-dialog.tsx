@@ -6,6 +6,9 @@
 
 "use client"
 
+import { formatDistanceToNow, format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+import Image from "next/image"
 import { useState, useEffect, useMemo, memo } from "react"
 import {
   IconEye,
@@ -18,7 +21,6 @@ import {
   IconUser,
   IconPaperclip,
   IconDownload,
-  IconPhoto,
   IconFile,
 } from "@tabler/icons-react"
 import {
@@ -35,10 +37,9 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useLabOrder } from "@/hooks/use-lab-order"
-import { formatDistanceToNow, format } from "date-fns"
-import { id as idLocale } from "date-fns/locale"
-import { ResultDisplay } from "./result-display"
 import type { LabOrderWithRelations } from "@/types/lab"
+
+import { ResultDisplay } from "./result-display"
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -396,7 +397,7 @@ export function OrderDetailDialog({
                     {(order.result.attachmentType === "JPEG" ||
                       order.result.attachmentType === "PNG") && (
                       <div className="mb-3 overflow-hidden rounded-md border">
-                        <img
+                        <Image
                           src={order.result.attachmentUrl}
                           alt="Lab result attachment"
                           className="h-auto w-full object-contain"
@@ -411,9 +412,7 @@ export function OrderDetailDialog({
                       <div className="bg-muted/30 mb-3 flex items-center justify-center rounded-md border py-8">
                         <div className="text-muted-foreground text-center">
                           <IconFile className="mx-auto mb-2 h-12 w-12" />
-                          <p className="text-sm font-medium">
-                            {order.result.attachmentType} File
-                          </p>
+                          <p className="text-sm font-medium">{order.result.attachmentType} File</p>
                         </div>
                       </div>
                     )}
