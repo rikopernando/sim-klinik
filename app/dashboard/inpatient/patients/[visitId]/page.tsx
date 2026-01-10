@@ -45,11 +45,13 @@ export default function PatientDetailPage() {
   const { patientDetail, isLoading, refresh } = usePatientDetail(visitId)
   const { hasPermission } = usePermission()
 
-  // Check if visit is locked (ready_for_billing status)
-  const isLocked = patientDetail?.patient.status === "ready_for_billing"
+  // Check if visit is locked (billed status)
+  const isLocked =
+    patientDetail?.patient.status === "billed" ||
+    patientDetail?.patient.status === "ready_for_billing"
   const isAbleToFillTheDischargeSummary =
     !patientDetail?.dischargeSummary &&
-    patientDetail?.patient.status !== "ready_for_billing" &&
+    !isLocked &&
     hasPermission("inpatient:write") &&
     session?.user?.role === "doctor"
 
@@ -376,7 +378,7 @@ export default function PatientDetailPage() {
 
         {/* Final Discharge Section */}
         {patientDetail.dischargeSummary &&
-          patientDetail.patient.status === "ready_for_billing" &&
+          patientDetail.patient.status === "billed" &&
           hasPermission("discharge:write") && (
             <>
               <Separator />

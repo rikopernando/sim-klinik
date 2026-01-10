@@ -93,6 +93,14 @@ export async function POST(request: NextRequest) {
         // 3. Recalculate billing totals
         await recalculateBilling(validatedData.visitId, tx)
       }
+
+      // Lock visit by setting status to billed
+      await tx
+        .update(visits)
+        .set({
+          status: "billed",
+        })
+        .where(eq(visits.id, validatedData.visitId))
     })
 
     const response: ResponseApi = {

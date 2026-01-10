@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { visits } from "@/db/schema/visits"
+import { visits, medicalRecords } from "@/db/schema"
 import { billings, billingItems } from "@/db/schema/billing"
 import { eq } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -74,11 +74,11 @@ export const POST = withRBAC(
       }
 
       // Check if visit is ready for billing
-      if (visit.status !== "ready_for_billing") {
+      if (visit.status !== "billed") {
         const response: ResponseError<unknown> = {
           error: "Visit not locked",
           status: HTTP_STATUS_CODES.BAD_REQUEST,
-          message: "Visit is not in ready_for_billing status",
+          message: "Visit is not in billed status",
         }
         return NextResponse.json(response, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
@@ -137,6 +137,17 @@ export const POST = withRBAC(
             updatedAt: new Date(),
           })
           .where(eq(visits.id, visitId))
+
+        // 3. unLock the medical record
+        await tx
+          .update(medicalRecords)
+          .set({
+            isLocked: false,
+            lockedAt: null,
+            lockedBy: null,
+          })
+          .where(eq(medicalRecords.visitId, visitId))
+          .returning()
       })
 
       const response: ResponseApi = {

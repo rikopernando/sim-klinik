@@ -7,6 +7,7 @@
  * - Material usage from nursing care
  * - Medications dispensed (fulfilled prescriptions)
  * - Procedures performed
+ * - Laboratory tests performed
  * - Consultation/service charges
  */
 
@@ -16,6 +17,7 @@ import { bedAssignments, rooms, materialUsage } from "@/db/schema/inpatient"
 import { prescriptions, inventoryItems } from "@/db/schema/inventory"
 import { procedures } from "@/db/schema/medical-records"
 import { services } from "@/db/schema/billing"
+import { labOrders, labTests } from "@/db/schema/laboratory"
 import type { BillingItemInput, DischargeBillingSummary } from "@/types/billing"
 import { visits } from "@/db/schema"
 
@@ -30,6 +32,7 @@ export interface DischargeBillingAggregate {
     materialCharges: string
     medicationCharges: string
     procedureCharges: string
+    laboratoryCharges: string
     serviceCharges: string
   }
   counts: {
@@ -37,6 +40,7 @@ export interface DischargeBillingAggregate {
     materialCount: number
     medicationCount: number
     procedureCount: number
+    laboratoryCount: number
     serviceCount: number
   }
   subtotal: string
@@ -206,6 +210,46 @@ async function aggregateProcedureCharges(visitId: string): Promise<BillingItemIn
 }
 
 /**
+ * Aggregate laboratory test charges
+ * Includes all verified lab orders for this visit
+ */
+async function aggregateLabOrderCharges(visitId: string): Promise<BillingItemInput[]> {
+  const labOrderList = await db
+    .select({
+      id: labOrders.id,
+      orderNumber: labOrders.orderNumber,
+      price: labOrders.price,
+      testName: labTests.name,
+      testCode: labTests.code,
+      orderedAt: labOrders.orderedAt,
+      status: labOrders.status,
+    })
+    .from(labOrders)
+    .leftJoin(labTests, eq(labOrders.testId, labTests.id))
+    .where(
+      and(
+        eq(labOrders.visitId, visitId),
+        eq(labOrders.status, "verified") // Only verified/completed lab orders
+      )
+    )
+
+  return labOrderList.map((order) => {
+    const price = parseFloat(order.price)
+    return {
+      itemType: "laboratory" as const,
+      itemId: order.id,
+      itemName: order.testName || "Lab Test",
+      itemCode: order.testCode || undefined,
+      quantity: 1,
+      unitPrice: order.price,
+      discount: "0",
+      totalPrice: price.toFixed(2),
+      description: order.orderNumber || undefined,
+    }
+  })
+}
+
+/**
  * Aggregate service charges (administration, consultation)
  * Includes standard fees that apply to inpatient visits
  */
@@ -287,12 +331,13 @@ export async function aggregateDischargebilling(
   }
 
   // Aggregate all charges in parallel for performance
-  const [roomItems, materialItems, medicationItems, procedureItems, serviceItems] =
+  const [roomItems, materialItems, medicationItems, procedureItems, labOrderItems, serviceItems] =
     await Promise.all([
       aggregateRoomCharges(visitId),
       aggregateMaterialCharges(visitId),
       aggregateMedicationCharges(visitId),
       aggregateProcedureCharges(visitId),
+      aggregateLabOrderCharges(visitId),
       aggregateServiceCharges(),
     ])
 
@@ -302,6 +347,7 @@ export async function aggregateDischargebilling(
     ...materialItems,
     ...medicationItems,
     ...procedureItems,
+    ...labOrderItems,
     ...serviceItems,
   ]
 
@@ -314,6 +360,7 @@ export async function aggregateDischargebilling(
     materialCharges: calculateTotal(materialItems),
     medicationCharges: calculateTotal(medicationItems),
     procedureCharges: calculateTotal(procedureItems),
+    laboratoryCharges: calculateTotal(labOrderItems),
     serviceCharges: calculateTotal(serviceItems),
   }
 
@@ -322,6 +369,7 @@ export async function aggregateDischargebilling(
     materialCount: materialItems.length,
     medicationCount: medicationItems.length,
     procedureCount: procedureItems.length,
+    laboratoryCount: labOrderItems.length,
     serviceCount: serviceItems.length,
   }
 
@@ -368,6 +416,11 @@ export async function getDischargeBillingSummary(
         label: "Tindakan Medis",
         amount: aggregate.breakdown.procedureCharges,
         count: aggregate.counts.procedureCount,
+      },
+      laboratoryCharges: {
+        label: "Pemeriksaan Laboratorium",
+        amount: aggregate.breakdown.laboratoryCharges,
+        count: aggregate.counts.laboratoryCount,
       },
       serviceCharges: {
         label: "Administrasi & Konsultasi",

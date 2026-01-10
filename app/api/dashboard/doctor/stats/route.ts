@@ -33,7 +33,7 @@ export const GET = withRBAC(
       const inProgressCount = todayVisits.filter((v) => v.status === "in_examination").length
 
       const completedCount = todayVisits.filter(
-        (v) => v.status === "completed" || v.status === "ready_for_billing"
+        (v) => v.status === "completed" || v.status === "ready_for_billing" || v.status === "billed"
       ).length
 
       // Get unlocked medical records for this doctor

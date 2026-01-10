@@ -7,18 +7,13 @@
 import { toast } from "sonner"
 import { useState, useCallback } from "react"
 
-import {
-  getDischargeBillingSummary,
-  completeInpatientDischarge,
-  createDischargeBilling,
-} from "@/lib/services/billing.service"
+import { getDischargeBillingSummary, createDischargeBilling } from "@/lib/services/billing.service"
 import type { DischargeBillingSummary } from "@/types/billing"
 import { getErrorMessage } from "@/lib/utils/error"
 
 interface UseDischargeBillingReturn {
   summary: DischargeBillingSummary | null
   fetchSummary: (visitId: string) => Promise<void>
-  completeDischarge: (visitId: string) => Promise<void>
   createBilling: (
     visitId: string,
     billingAdjustment?: number,
@@ -55,34 +50,6 @@ export function useDischargeBilling(): UseDischargeBillingReturn {
       console.error("Discharge billing summary fetch error:", err)
     } finally {
       setIsFetching(false)
-    }
-  }, [])
-
-  /**
-   * Complete inpatient discharge
-   * Updates visit status to 'completed' - makes it appear in billing queue
-   */
-  const completeDischarge = useCallback(async (visitId: string) => {
-    setIsCompleting(true)
-    setError(null)
-
-    try {
-      await completeInpatientDischarge(visitId)
-      setSuccess(true)
-
-      toast.success("Rawat inap selesai", {
-        description: "Pasien siap untuk proses pembayaran di kasir",
-      })
-      // Auto-clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccess(false)
-      }, 3000)
-    } catch (err) {
-      toast.error(getErrorMessage(err))
-      console.error("Complete discharge error:", err)
-      throw err
-    } finally {
-      setIsCompleting(false)
     }
   }, [])
 
@@ -134,7 +101,6 @@ export function useDischargeBilling(): UseDischargeBillingReturn {
   return {
     summary,
     fetchSummary,
-    completeDischarge,
     createBilling,
     isFetching,
     isCompleting,

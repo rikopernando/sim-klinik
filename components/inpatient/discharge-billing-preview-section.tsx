@@ -96,6 +96,16 @@ export function DischargeBillingPreviewSection({
           </div>
         )}
 
+        {/* Service Charges */}
+        {parseFloat(summary.breakdown.laboratoryCharges.amount) > 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">
+              {summary.breakdown.laboratoryCharges.label}
+            </span>
+            <span>{formatCurrency(parseFloat(summary.breakdown.laboratoryCharges.amount))}</span>
+          </div>
+        )}
+
         <Separator className="my-2" />
 
         {/* Subtotal */}

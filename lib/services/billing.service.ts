@@ -95,20 +95,6 @@ export async function getDischargeBillingSummary(
 }
 
 /**
- * Complete inpatient discharge
- * Marks visit as completed and ready for billing (does NOT create billing)
- * This makes the visit appear in billing queue
- */
-export async function completeInpatientDischarge(visitId: string) {
-  try {
-    await axios.post("/api/inpatient/complete-discharge", { visitId })
-  } catch (error) {
-    console.error("Error in completeInpatientDischarge service:", error)
-    handleApiError(error)
-  }
-}
-
-/**
  * Create discharge billing record
  * Creates billing from aggregated inpatient charges with optional adjustment
  * Called by clinical staff when completing inpatient treatment

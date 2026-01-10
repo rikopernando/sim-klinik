@@ -389,13 +389,14 @@ export async function getVisitsReadyForBilling() {
     .where(
       and(
         // Visit must be ready for billing
-        or(
-          // OUTPATIENT: Medical record must be locked
-          and(eq(visits.visitType, "outpatient"), eq(medicalRecords.isLocked, true)),
-          // INPATIENT: Visit status must be ready_for_billing (billing already created)
-          and(eq(visits.visitType, "inpatient"), eq(visits.status, "ready_for_billing"))
-        ),
+        // or(
+        //   // OUTPATIENT: Medical record must be locked
+        //   and(eq(visits.visitType, "outpatient"), eq(medicalRecords.isLocked, true)),
+        //   // INPATIENT: Visit status must be ready_for_billing (billing already created)
+        //   and(eq(visits.visitType, "inpatient"), eq(visits.status, "ready_for_billing"))
+        // ),
         // Payment must be incomplete (pending, partial, or no billing exists)
+        eq(visits.status, "billed"),
         or(
           // No billing exists yet (outpatient only - inpatient always has billing)
           sql`${billings.id} IS NULL`,
@@ -527,7 +528,7 @@ function createServiceBillingItem(
 
 /**
  * Calculate total billing for a visit
- * Aggregates costs from: admin fee, consultation, procedures, medications
+ * Aggregates costs from: admin fee, consultation, procedures, medications, lab orders
  */
 export async function calculateBillingForVisit(visitId: string) {
   // Validate visit exists
@@ -628,6 +629,45 @@ export async function calculateBillingForVisit(visitId: string) {
     const quantity = prescription.quantity
     const description = `${prescription.dosage}, ${prescription.frequency}`
     addBillingItem(createDrugBillingItem(drug, quantity, description))
+  }
+
+  // 5. Add Laboratory Tests (only verified lab orders)
+  const { labOrders: labOrdersTable, labTests } = await import("@/db/schema/laboratory")
+
+  const labOrdersList = await db
+    .select({
+      labOrder: labOrdersTable,
+      test: {
+        name: labTests.name,
+        code: labTests.code,
+      },
+    })
+    .from(labOrdersTable)
+    .leftJoin(labTests, eq(labOrdersTable.testId, labTests.id))
+    .where(
+      and(
+        eq(labOrdersTable.visitId, visitId),
+        eq(labOrdersTable.status, "verified") // Only verified lab orders
+      )
+    )
+
+  for (const { labOrder, test } of labOrdersList) {
+    const price = parseFloat(labOrder.price)
+    const testName = test?.name || "Lab Test"
+    const testCode = test?.code || null
+
+    addBillingItem({
+      itemType: "laboratory",
+      itemId: labOrder.id,
+      itemName: testName,
+      itemCode: testCode,
+      quantity: 1,
+      unitPrice: labOrder.price,
+      subtotal: price.toFixed(2),
+      discount: "0.00",
+      totalPrice: price.toFixed(2),
+      description: labOrder.orderNumber || undefined,
+    })
   }
 
   return {

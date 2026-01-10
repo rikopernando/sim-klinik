@@ -37,7 +37,7 @@ export function VisitLockBanner({
   const { data: session } = useSession()
 
   // Check if visit is in ready_for_billing status
-  if (visitStatus !== "ready_for_billing") {
+  if (visitStatus !== "billed") {
     return null
   }
 

@@ -90,13 +90,13 @@ export function calculateDaysInHospital(admissionDate: Date): number {
   const today = new Date()
   const days = Math.max(
     1,
-    Math.ceil((admissionDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    Math.ceil((today.getTime() - admissionDate.getTime()) / (1000 * 60 * 60 * 24))
   )
   return days
 }
 
 /**
- * Check if a visit is locked (ready for billing)
+ * Check if a visit is locked (billed)
  * Returns error message if locked, null if not locked
  */
 export async function checkVisitLocked(visitId: string): Promise<string | null> {
@@ -106,9 +106,9 @@ export async function checkVisitLocked(visitId: string): Promise<string | null> 
     return "Visit not found"
   }
 
-  // If visit is ready for billing, it's locked
-  if (visit.status === "ready_for_billing") {
-    return "Tidak dapat mengubah data - Visit sudah terkunci (ready for billing)"
+  // If visit is billed, it's locked
+  if (visit.status === "billed") {
+    return "Tidak dapat mengubah data - Visit sudah terkunci (billed)"
   }
 
   return null
