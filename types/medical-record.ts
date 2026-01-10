@@ -97,11 +97,25 @@ export interface Visit {
   updatedAt: Date
 }
 
+export interface MedicalRecordLabOrder {
+  id: string
+  orderNumber: string | null
+  price: string
+  status: string | null
+  urgency: string | null
+  clinicalIndication: string | null
+  orderedAt: Date
+  testId: string | null
+  testName: string | null
+  testCode: string | null
+}
+
 export interface MedicalRecordData {
   medicalRecord: MedicalRecord
   diagnoses: Diagnosis[]
   procedures: Procedure[]
   prescriptions: Prescription[]
+  labOrders: MedicalRecordLabOrder[]
   visit: Visit
 }
 

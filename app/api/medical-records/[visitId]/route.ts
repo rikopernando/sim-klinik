@@ -12,6 +12,7 @@ import {
   user,
   services,
 } from "@/db/schema"
+import { labOrders, labTests } from "@/db/schema/laboratory"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
@@ -128,6 +129,24 @@ export const GET = withRBAC(
         .where(eq(visits.id, record.visitId))
         .limit(1)
 
+      // Get lab orders for this visit (only verified ones for billing preview)
+      const labOrdersList = await db
+        .select({
+          id: labOrders.id,
+          orderNumber: labOrders.orderNumber,
+          price: labOrders.price,
+          status: labOrders.status,
+          urgency: labOrders.urgency,
+          clinicalIndication: labOrders.clinicalIndication,
+          orderedAt: labOrders.orderedAt,
+          testId: labOrders.testId,
+          testName: labTests.name,
+          testCode: labTests.code,
+        })
+        .from(labOrders)
+        .leftJoin(labTests, eq(labOrders.testId, labTests.id))
+        .where(eq(labOrders.visitId, visitId))
+
       const response: ResponseApi<MedicalRecordData> = {
         message: "Medical record fetched successfully",
         data: {
@@ -135,6 +154,7 @@ export const GET = withRBAC(
           diagnoses: diagnosisList,
           procedures: proceduresList,
           prescriptions: prescriptionsList,
+          labOrders: labOrdersList,
           visit: visitInfo,
         },
         status: HTTP_STATUS_CODES.OK,

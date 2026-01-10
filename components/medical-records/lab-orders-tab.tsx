@@ -24,7 +24,7 @@ export function LabOrdersTab({ visitId, patientId, isLocked, onUpdate }: LabOrde
       )}
 
       {/* Lab Orders List */}
-      <LabOrdersList visitId={visitId} />
+      <LabOrdersList showSubtotal visitId={visitId} />
     </div>
   )
 }

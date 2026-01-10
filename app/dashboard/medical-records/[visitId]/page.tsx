@@ -49,6 +49,7 @@ export default function MedicalRecordPage() {
       return {
         drugsSubtotal: 0,
         proceduresSubtotal: 0,
+        labOrdersSubtotal: 0,
         subtotal: 0,
       }
     }

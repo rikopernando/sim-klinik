@@ -44,7 +44,7 @@ export type ServiceType =
 /**
  * Billing Item Type
  */
-export type BillingItemType = "service" | "drug" | "material" | "room"
+export type BillingItemType = "service" | "drug" | "material" | "room" | "laboratory"
 
 /**
  * Service Entity (Master Data)
@@ -385,6 +385,11 @@ export interface DischargeBillingSummary {
       count: number
     }
     procedureCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+    laboratoryCharges: {
       label: string
       amount: string
       count: number

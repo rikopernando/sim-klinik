@@ -5,6 +5,7 @@
 
 "use client"
 
+import { useMemo } from "react"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
@@ -18,13 +19,24 @@ import { OrderDetailDialog } from "./order-detail-dialog"
 
 interface LabOrdersListProps {
   visitId: string
+  showSubtotal?: boolean
 }
 
-export function LabOrdersList({ visitId }: LabOrdersListProps) {
+export function LabOrdersList({ visitId, showSubtotal }: LabOrdersListProps) {
   const { orders, loading } = useLabOrders({
     initialFilters: { visitId },
     autoFetch: true,
   })
+
+  const subtotal = useMemo(() => {
+    if (!showSubtotal) return 0
+    return orders.reduce((total, order) => {
+      if (order.price) {
+        return total + parseFloat(order.price)
+      }
+      return total
+    }, 0)
+  }, [orders, showSubtotal])
 
   const getStatusBadge = (status: string | null) => {
     switch (status) {
@@ -171,6 +183,15 @@ export function LabOrdersList({ visitId }: LabOrdersListProps) {
           </div>
         </Card>
       ))}
+
+      {showSubtotal && (
+        <div className="mt-4 flex items-center justify-between border-t pt-3">
+          <span className="text-sm font-semibold">Subtotal Lab</span>
+          <span className="text-primary text-lg font-bold">
+            Rp {subtotal.toLocaleString("id-ID")}
+          </span>
+        </div>
+      )}
     </div>
   )
 }

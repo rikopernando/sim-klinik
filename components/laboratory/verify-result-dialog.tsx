@@ -55,7 +55,7 @@ export function VerifyResultDialog({ order, onSuccess, trigger }: VerifyResultDi
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button size="sm" variant="default" className="gap-2 bg-green-600 hover:bg-green-700">
+          <Button size="sm" variant="default" className="gap-2">
             <IconShieldCheck className="h-4 w-4" />
             Verifikasi Hasil
           </Button>

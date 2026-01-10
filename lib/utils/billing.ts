@@ -8,6 +8,7 @@ import { MedicalRecordData } from "@/types/medical-record"
 export interface BillingPreview {
   drugsSubtotal: number
   proceduresSubtotal: number
+  labOrdersSubtotal: number
   // consultationFee: number
   subtotal: number
 }
@@ -38,15 +39,26 @@ export function calculateBillingPreview(recordData: MedicalRecordData): BillingP
     return total + servicePrice
   }, 0)
 
+  // Calculate lab orders subtotal (only verified orders)
+  const labOrdersSubtotal = recordData.labOrders.reduce((total, labOrder) => {
+    // Only include verified lab orders in billing preview
+    if (labOrder.status === "verified") {
+      const labPrice = parseFloat(labOrder.price || "0")
+      return total + labPrice
+    }
+    return total
+  }, 0)
+
   // Get consultation fee based on visit type
   // const consultationFee = CONSULTATION_FEES[recordData.visit.visitType] || 0
 
   // Calculate total
-  const subtotal = drugsSubtotal + proceduresSubtotal
+  const subtotal = drugsSubtotal + proceduresSubtotal + labOrdersSubtotal
 
   return {
     drugsSubtotal,
     proceduresSubtotal,
+    labOrdersSubtotal,
     // consultationFee,
     subtotal,
   }
