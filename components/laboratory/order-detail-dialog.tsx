@@ -6,6 +6,9 @@
 
 "use client"
 
+import { formatDistanceToNow, format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+import Image from "next/image"
 import { useState, useEffect, useMemo, memo } from "react"
 import {
   IconEye,
@@ -16,6 +19,9 @@ import {
   IconDroplet,
   IconFileText,
   IconUser,
+  IconPaperclip,
+  IconDownload,
+  IconFile,
 } from "@tabler/icons-react"
 import {
   Dialog,
@@ -31,10 +37,9 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useLabOrder } from "@/hooks/use-lab-order"
-import { formatDistanceToNow, format } from "date-fns"
-import { id as idLocale } from "date-fns/locale"
-import { ResultDisplay } from "./result-display"
 import type { LabOrderWithRelations } from "@/types/lab"
+
+import { ResultDisplay } from "./result-display"
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -374,6 +379,72 @@ export function OrderDetailDialog({
                   <div className="rounded-md border p-3">
                     <p className="text-muted-foreground text-xs">Catatan Teknisi</p>
                     <p className="text-sm">{order.result.resultNotes}</p>
+                  </div>
+                )}
+
+                {/* Attachment Display */}
+                {order.result.attachmentUrl && (
+                  <div className="rounded-md border p-3">
+                    <div className="mb-2 flex items-center gap-2">
+                      <IconPaperclip className="text-primary h-4 w-4" />
+                      <p className="text-muted-foreground text-xs font-medium">Lampiran File</p>
+                      <Badge variant="secondary" className="text-xs">
+                        {order.result.attachmentType}
+                      </Badge>
+                    </div>
+
+                    {/* Image Preview for JPEG/PNG */}
+                    {(order.result.attachmentType === "JPEG" ||
+                      order.result.attachmentType === "PNG") && (
+                      <div className="mb-3 overflow-hidden rounded-md border">
+                        <Image
+                          src={order.result.attachmentUrl}
+                          alt="Lab result attachment"
+                          className="h-auto w-full object-contain"
+                          style={{ maxHeight: "400px" }}
+                        />
+                      </div>
+                    )}
+
+                    {/* File Icon for PDF/DICOM */}
+                    {(order.result.attachmentType === "PDF" ||
+                      order.result.attachmentType === "DICOM") && (
+                      <div className="bg-muted/30 mb-3 flex items-center justify-center rounded-md border py-8">
+                        <div className="text-muted-foreground text-center">
+                          <IconFile className="mx-auto mb-2 h-12 w-12" />
+                          <p className="text-sm font-medium">{order.result.attachmentType} File</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Download/View Button */}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => window.open(order.result!.attachmentUrl!, "_blank")}
+                      >
+                        <IconEye className="mr-2 h-4 w-4" />
+                        Lihat File
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => {
+                          const link = document.createElement("a")
+                          link.href = order.result!.attachmentUrl!
+                          link.download = `lab-result-${order.orderNumber}`
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                        }}
+                      >
+                        <IconDownload className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>

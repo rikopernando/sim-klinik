@@ -9,7 +9,7 @@ import { useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { IconFileText, IconX, IconAlertTriangle } from "@tabler/icons-react"
+import { IconFileText, IconX, IconAlertTriangle, IconUpload, IconFile } from "@tabler/icons-react"
 import {
   Dialog,
   DialogContent,
@@ -39,6 +39,7 @@ import {
   type LabOrderWithRelations,
   type ResultTemplate,
   type ResultFlag,
+  type AttachmentType,
   RESULT_FLAGS,
 } from "@/types/lab"
 import {
@@ -52,6 +53,12 @@ import {
   createParameterKey,
 } from "@/types/lab-result-form"
 import { CreateLabResultInput, ParameterResultInput } from "@/lib/lab"
+import {
+  uploadLabAttachment,
+  getAllowedMimeTypes,
+  getAttachmentType,
+  formatFileSize,
+} from "@/lib/utils/file-upload"
 
 interface ResultEntryDialogProps {
   order: LabOrderWithRelations
@@ -191,6 +198,9 @@ function convertFormDataToResultInput(
 export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDialogProps) {
   const [open, setOpen] = useState(false)
   const [showCriticalWarning, setShowCriticalWarning] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const template = order.test?.resultTemplate || null
   const formSchema = createFormSchema(template)
@@ -212,12 +222,81 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
       }
       setOpen(false)
       form.reset()
+      setSelectedFile(null)
+      setUploadError(null)
       onSuccess?.()
     },
   })
 
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setUploadError(null)
+
+    if (!file) {
+      setSelectedFile(null)
+      return
+    }
+
+    // Validate file type
+    const attachmentType = getAttachmentType(file)
+    if (!attachmentType) {
+      setUploadError(
+        "Tipe file tidak didukung. Hanya PDF, JPEG, PNG, dan DICOM yang diperbolehkan."
+      )
+      setSelectedFile(null)
+      return
+    }
+
+    // Validate file size
+    const maxSizeMB = attachmentType === "PDF" || attachmentType === "DICOM" ? 50 : 10
+    const maxSizeBytes = maxSizeMB * 1024 * 1024
+
+    if (file.size > maxSizeBytes) {
+      setUploadError(`Ukuran file melebihi batas maksimal ${maxSizeMB}MB`)
+      setSelectedFile(null)
+      return
+    }
+
+    setSelectedFile(file)
+  }
+
+  // Remove selected file
+  const handleRemoveFile = () => {
+    setSelectedFile(null)
+    setUploadError(null)
+  }
+
   const onSubmit = async (data: FormData) => {
+    setUploadError(null)
+    let attachmentUrl: string | undefined
+    let attachmentType: AttachmentType | undefined
+
+    // Upload file if selected
+    if (selectedFile) {
+      setIsUploading(true)
+      const uploadResult = await uploadLabAttachment(selectedFile, order.id)
+
+      if ("error" in uploadResult) {
+        setUploadError(uploadResult.error)
+        setIsUploading(false)
+        return
+      }
+
+      attachmentUrl = uploadResult.url
+      attachmentType = uploadResult.type as AttachmentType
+      setIsUploading(false)
+    }
+
+    // Create result with attachment URL if available
     const resultInput = convertFormDataToResultInput(order.id, data as ResultFormData, template)
+
+    // Add attachment info if file was uploaded
+    if (attachmentUrl && attachmentType) {
+      resultInput.attachmentUrl = attachmentUrl
+      resultInput.attachmentType = attachmentType
+    }
+
     await createResult(resultInput)
   }
 
@@ -497,19 +576,75 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
               </Field>
             )}
 
+            {/* File Upload Section */}
+            <Field>
+              <FieldLabel htmlFor="attachment">Lampiran File</FieldLabel>
+              <FieldDescription>
+                Upload file PDF, gambar (JPEG/PNG), atau DICOM. Maksimal{" "}
+                {order.test?.department === "RAD" ? "50MB" : "10MB"}
+              </FieldDescription>
+
+              {!selectedFile ? (
+                <div className="border-muted-foreground/25 hover:border-primary/50 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 transition-colors">
+                  <label
+                    htmlFor="file-upload"
+                    className="flex cursor-pointer flex-col items-center"
+                  >
+                    <IconUpload className="text-muted-foreground mb-2 h-8 w-8" />
+                    <span className="text-muted-foreground mb-1 text-sm font-medium">
+                      Klik untuk upload file
+                    </span>
+                    <span className="text-muted-foreground text-xs">
+                      PDF, JPEG, PNG, atau DICOM
+                    </span>
+                  </label>
+                  <input
+                    id="file-upload"
+                    type="file"
+                    className="hidden"
+                    accept={getAllowedMimeTypes().join(",")}
+                    onChange={handleFileChange}
+                  />
+                </div>
+              ) : (
+                <div className="bg-muted/50 flex items-center justify-between rounded-lg border p-3">
+                  <div className="flex items-center gap-3">
+                    <IconFile className="text-primary h-8 w-8" />
+                    <div>
+                      <p className="text-sm font-medium">{selectedFile.name}</p>
+                      <p className="text-muted-foreground text-xs">
+                        {formatFileSize(selectedFile.size)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRemoveFile}
+                    disabled={isUploading || isCreating}
+                  >
+                    <IconX className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+
+              {uploadError && <FieldError>{uploadError}</FieldError>}
+            </Field>
+
             <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
-                disabled={isCreating}
+                disabled={isCreating || isUploading}
               >
                 <IconX className="mr-2 h-4 w-4" />
                 Batal
               </Button>
-              <Button type="submit" disabled={isCreating}>
+              <Button type="submit" disabled={isCreating || isUploading}>
                 <IconFileText className="mr-2 h-4 w-4" />
-                {isCreating ? "Menyimpan..." : "Simpan Hasil"}
+                {isUploading ? "Mengupload file..." : isCreating ? "Menyimpan..." : "Simpan Hasil"}
               </Button>
             </DialogFooter>
           </form>

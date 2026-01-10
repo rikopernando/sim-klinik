@@ -154,6 +154,99 @@ export async function updateLabTest(testId: string, data: UpdateLabTestInput) {
 }
 
 // ============================================================================
+// LAB TEST PANEL SERVICES
+// ============================================================================
+
+/**
+ * Get list of lab test panels with their tests
+ */
+export async function getLabTestPanels(filters: { isActive?: boolean } = {}) {
+  const conditions = []
+
+  // Active filter (default to true)
+  if (filters.isActive !== undefined) {
+    conditions.push(eq(labTestPanels.isActive, filters.isActive))
+  } else {
+    conditions.push(eq(labTestPanels.isActive, true))
+  }
+
+  // Fetch panels
+  const panels = await db
+    .select()
+    .from(labTestPanels)
+    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .orderBy(labTestPanels.name)
+
+  return panels
+}
+
+/**
+ * Get single lab test panel with its included tests
+ */
+export async function getLabTestPanelById(panelId: string) {
+  // Get panel
+  const [panel] = await db
+    .select()
+    .from(labTestPanels)
+    .where(eq(labTestPanels.id, panelId))
+    .limit(1)
+
+  if (!panel) {
+    return null
+  }
+
+  // Get panel items with test details
+  const { labTestPanelItems } = await import("@/db/schema/laboratory")
+
+  const panelItems = await db
+    .select({
+      test: labTests,
+    })
+    .from(labTestPanelItems)
+    .innerJoin(labTests, eq(labTestPanelItems.testId, labTests.id))
+    .where(eq(labTestPanelItems.panelId, panelId))
+
+  const tests = panelItems.map((item) => item.test)
+
+  return {
+    ...panel,
+    tests,
+  }
+}
+
+/**
+ * Get all panels with their included tests
+ */
+export async function getLabTestPanelsWithTests(filters: { isActive?: boolean } = {}) {
+  // Get panels
+  const panels = await getLabTestPanels(filters)
+
+  // Fetch tests for each panel
+  const { labTestPanelItems } = await import("@/db/schema/laboratory")
+
+  const panelsWithTests = await Promise.all(
+    panels.map(async (panel) => {
+      const panelItems = await db
+        .select({
+          test: labTests,
+        })
+        .from(labTestPanelItems)
+        .innerJoin(labTests, eq(labTestPanelItems.testId, labTests.id))
+        .where(eq(labTestPanelItems.panelId, panel.id))
+
+      const tests = panelItems.map((item) => item.test)
+
+      return {
+        ...panel,
+        tests,
+      }
+    })
+  )
+
+  return panelsWithTests
+}
+
+// ============================================================================
 // LAB ORDER SERVICES
 // ============================================================================
 
