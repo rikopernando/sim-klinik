@@ -5,7 +5,7 @@ import { eq, and, sql, gte } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { DoctorStats } from "@/types/dashboard"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/dashboard/doctor/stats
@@ -33,7 +33,7 @@ export const GET = withRBAC(
       const inProgressCount = todayVisits.filter((v) => v.status === "in_examination").length
 
       const completedCount = todayVisits.filter(
-        (v) => v.status === "completed" || v.status === "ready_for_billing"
+        (v) => v.status === "completed" || v.status === "ready_for_billing" || v.status === "billed"
       ).length
 
       // Get unlocked medical records for this doctor
@@ -43,7 +43,7 @@ export const GET = withRBAC(
           visitId: medicalRecords.visitId,
         })
         .from(medicalRecords)
-        .where(and(eq(medicalRecords.doctorId, user.id), eq(medicalRecords.isLocked, false)))
+        .where(and(eq(medicalRecords.authorId, user.id), eq(medicalRecords.isLocked, false)))
 
       // Get total patients seen (all time)
       const totalPatientsResult = await db

@@ -6,7 +6,7 @@ import { visits, patients, polis, medicalRecords } from "@/db/schema"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { QueueItem } from "@/types/dashboard"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/dashboard/doctor/queue

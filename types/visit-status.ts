@@ -102,8 +102,8 @@ export const VISIT_STATUS_INFO: Record<
 export const VISIT_STATUS_TRANSITIONS: Record<VisitStatus, VisitStatus[]> = {
   registered: ["waiting", "in_examination", "cancelled"], // Can go directly to in_examination when doctor starts
   waiting: ["in_examination", "cancelled"],
-  in_examination: ["examined", "ready_for_billing", "waiting", "cancelled"], // Can go directly to ready_for_billing when locking, or examined as intermediate
-  examined: ["ready_for_billing", "in_examination", "cancelled"], // Can go back to examination if needed
+  in_examination: ["examined", "ready_for_billing", "billed", "waiting", "cancelled"], // Can go directly to ready_for_billing when locking, or examined as intermediate
+  examined: ["ready_for_billing", "billed", "in_examination", "cancelled"], // Can go back to examination if needed
   ready_for_billing: ["billed", "cancelled"],
   billed: ["paid", "cancelled"],
   paid: ["completed"],
@@ -202,4 +202,8 @@ export function canCreateMedicalRecord(status: VisitStatus): boolean {
 export function canLockMedicalRecord(status: VisitStatus): boolean {
   // Can lock when examined but not yet ready for billing
   return status === "examined"
+}
+
+export function canFinishInpatient(status: VisitStatus) {
+  return status === "ready_for_billing"
 }

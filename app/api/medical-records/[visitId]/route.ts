@@ -12,9 +12,10 @@ import {
   user,
   services,
 } from "@/db/schema"
+import { labOrders, labTests } from "@/db/schema/laboratory"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { MedicalRecord, MedicalRecordData } from "@/types/medical-record"
 import z from "zod"
 
@@ -24,9 +25,9 @@ import z from "zod"
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
-  async (_request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (_request: NextRequest, context: { params: { visitId: string } }) => {
     try {
-      const { visitId } = await context.params
+      const { visitId } = context.params
 
       if (!visitId) {
         const response: ResponseError<unknown> = {
@@ -128,6 +129,24 @@ export const GET = withRBAC(
         .where(eq(visits.id, record.visitId))
         .limit(1)
 
+      // Get lab orders for this visit (only verified ones for billing preview)
+      const labOrdersList = await db
+        .select({
+          id: labOrders.id,
+          orderNumber: labOrders.orderNumber,
+          price: labOrders.price,
+          status: labOrders.status,
+          urgency: labOrders.urgency,
+          clinicalIndication: labOrders.clinicalIndication,
+          orderedAt: labOrders.orderedAt,
+          testId: labOrders.testId,
+          testName: labTests.name,
+          testCode: labTests.code,
+        })
+        .from(labOrders)
+        .leftJoin(labTests, eq(labOrders.testId, labTests.id))
+        .where(eq(labOrders.visitId, visitId))
+
       const response: ResponseApi<MedicalRecordData> = {
         message: "Medical record fetched successfully",
         data: {
@@ -135,6 +154,7 @@ export const GET = withRBAC(
           diagnoses: diagnosisList,
           procedures: proceduresList,
           prescriptions: prescriptionsList,
+          labOrders: labOrdersList,
           visit: visitInfo,
         },
         status: HTTP_STATUS_CODES.OK,
@@ -179,9 +199,9 @@ const medicalRecordSchema = z.object({
  * Requires: medical_records:write permission
  */
 export const PATCH = withRBAC(
-  async (request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (request: NextRequest, context: { params: { visitId: string } }) => {
     try {
-      const { visitId } = await context.params
+      const { visitId } = context.params
       const body = await request.json()
       const validatedData = medicalRecordSchema.parse(body)
 

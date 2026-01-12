@@ -41,6 +41,10 @@ export function BillingPreviewSection({
           <span className="text-muted-foreground">Subtotal Tindakan</span>
           <span>{formatCurrency(billingPreview.proceduresSubtotal)}</span>
         </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Subtotal Laboratorium</span>
+          <span>{formatCurrency(billingPreview.labOrdersSubtotal)}</span>
+        </div>
         <Separator className="my-2" />
         <div className="flex justify-between font-semibold">
           <span>Subtotal Awal</span>

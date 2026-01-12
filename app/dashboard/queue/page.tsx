@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Loader2 } from "lucide-react"
-import { getPolis, type Poli } from "@/lib/services/poli.service"
+import { getPolis } from "@/lib/services/poli.service"
+import { Poli } from "@/types/poli"
 
 export default function QueuePage() {
   const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined)
@@ -69,7 +70,7 @@ export default function QueuePage() {
                   }
                   disabled={isLoadingPolis}
                 >
-                  <SelectTrigger id="poli-filter">
+                  <SelectTrigger className="w-[200px]" id="poli-filter">
                     {isLoadingPolis ? (
                       <div className="flex items-center gap-2">
                         <Loader2 className="h-4 w-4 animate-spin" />

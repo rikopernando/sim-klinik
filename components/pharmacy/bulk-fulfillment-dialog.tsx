@@ -33,7 +33,7 @@ interface BulkFulfillmentDialogProps {
     }[]
   ) => Promise<void>
   onPrescriptionAdded?: () => void // Callback when prescription is added
-  medicalRecordId?: string // Medical record ID for adding prescriptions
+  medicalRecordId?: string | null // Medical record ID for adding prescriptions
 }
 
 export function BulkFulfillmentDialog({

@@ -5,7 +5,7 @@ import { bulkFulfillPrescriptions } from "@/lib/pharmacy/api-service"
 import { bulkPrescriptionFulfillmentSchema } from "@/lib/pharmacy/validation"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * POST /api/pharmacy/fulfillment/bulk

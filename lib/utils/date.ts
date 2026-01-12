@@ -2,6 +2,9 @@
  * Date utility functions for the application
  */
 
+import { format } from "date-fns"
+import { id as localeId } from "date-fns/locale"
+
 /**
  * Calculate age from date of birth
  * @param dateOfBirth - Date of birth as string or Date object
@@ -47,6 +50,19 @@ export function formatDate(dateString: string | Date | null | undefined): string
   } catch {
     return "-"
   }
+}
+
+/**
+ * Format date to Indonesian locale
+ * @param dateString - Date string to format
+ * @returns Formatted date string (e.g., "31 Desember 2023, 14:58")
+ */
+export function formatDateTime(dateString: string | Date | null | undefined): string {
+  if (!dateString) return "-"
+
+  return format(new Date(dateString), "dd MMMM yyyy, HH:mm", {
+    locale: localeId,
+  })
 }
 
 /**

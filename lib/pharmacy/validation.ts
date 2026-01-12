@@ -22,7 +22,7 @@ export const drugSchema = z.object({
  * Drug Update Schema
  */
 export const drugUpdateSchema = z.object({
-  id: z.number().int().positive("Drug ID harus valid"),
+  id: z.string().min(1, "Drug ID harus valid"),
   name: z.string().optional(),
   genericName: z.string().optional(),
   category: z.string().optional(),

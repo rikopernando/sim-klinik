@@ -49,6 +49,7 @@ export default function MedicalRecordPage() {
       return {
         drugsSubtotal: 0,
         proceduresSubtotal: 0,
+        labOrdersSubtotal: 0,
         subtotal: 0,
       }
     }
@@ -88,7 +89,7 @@ export default function MedicalRecordPage() {
 
   // Handle lock action
   const handleLock = async (billingAdjustment?: number, adjustmentNote?: string) => {
-    await lockRecord(recordData.medicalRecord.doctorId, billingAdjustment, adjustmentNote)
+    await lockRecord(billingAdjustment, adjustmentNote)
   }
 
   return (

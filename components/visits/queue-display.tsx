@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { Loader2, RefreshCw, Clock, User } from "lucide-react"
+
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, RefreshCw, Clock, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status"
 
@@ -45,7 +46,7 @@ export function QueueDisplay({
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
-  const fetchQueue = async () => {
+  const fetchQueue = useCallback(async () => {
     try {
       // Get visits that are waiting in queue
       // Include: registered, waiting, in_examination
@@ -79,7 +80,7 @@ export function QueueDisplay({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [poliId, visitType])
 
   useEffect(() => {
     fetchQueue()
@@ -88,7 +89,7 @@ export function QueueDisplay({
       const interval = setInterval(fetchQueue, refreshInterval)
       return () => clearInterval(interval)
     }
-  }, [poliId, visitType, autoRefresh, refreshInterval])
+  }, [poliId, visitType, autoRefresh, refreshInterval, fetchQueue])
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString("id-ID", {

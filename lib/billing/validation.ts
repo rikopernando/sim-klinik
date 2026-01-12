@@ -36,7 +36,7 @@ export const serviceUpdateSchema = z.object({
  */
 export const billingItemSchema = z.object({
   itemType: z.enum(["service", "drug", "material", "room"], {
-    required_error: "Tipe item wajib dipilih",
+    message: "Tipe item wajib dipilih",
   }),
   itemId: z.number().int().optional(),
   itemName: z.string().min(1, "Nama item wajib diisi"),
@@ -60,19 +60,84 @@ export const createBillingSchema = z.object({
 })
 
 /**
- * Payment Schema
+ * Payment Schema (legacy - kept for backward compatibility)
  */
 export const paymentSchema = z.object({
   billingId: z.number().int().positive("Billing ID harus valid"),
   amount: z.string().min(1, "Jumlah pembayaran wajib diisi"),
   paymentMethod: z.enum(["cash", "transfer", "card", "insurance"], {
-    required_error: "Metode pembayaran wajib dipilih",
+    message: "Metode pembayaran wajib dipilih",
   }),
   paymentReference: z.string().optional(),
   amountReceived: z.string().optional(),
   receivedBy: z.string().min(1, "Received by is required"),
   notes: z.string().optional(),
 })
+
+/**
+ * Merged Payment Processing Schema
+ * Handles discount and payment in a single transaction
+ */
+export const processPaymentSchema = z
+  .object({
+    billingId: z.string().min(1, "Billing ID harus valid"),
+
+    // Discount and insurance fields (optional)
+    discount: z.string().optional(),
+    discountPercentage: z.string().optional(),
+    insuranceCoverage: z.string().optional(),
+
+    // Payment fields (required)
+    amount: z.string().min(1, "Jumlah pembayaran wajib diisi"),
+    paymentMethod: z.enum(["cash", "transfer", "card", "insurance"], {
+      message: "Metode pembayaran wajib dipilih",
+    }),
+    paymentReference: z.string().optional(),
+    amountReceived: z.string().optional(), // For cash payments (to calculate change)
+    receivedBy: z.string().min(1, "Petugas penerima wajib diisi"),
+    notes: z.string().optional(),
+  })
+  .refine(
+    (data) => {
+      // Only one of discount or discountPercentage should be provided
+      if (data.discount && data.discountPercentage) {
+        return false
+      }
+      return true
+    },
+    {
+      message: "Hanya boleh mengisi salah satu: diskon nominal atau persentase",
+      path: ["discount"],
+    }
+  )
+  .refine(
+    (data) => {
+      // For cash payments, amountReceived is required
+      if (data.paymentMethod === "cash" && !data.amountReceived) {
+        return false
+      }
+      return true
+    },
+    {
+      message: "Jumlah uang diterima wajib diisi untuk pembayaran tunai",
+      path: ["amountReceived"],
+    }
+  )
+  .refine(
+    (data) => {
+      // For cash payments, amountReceived must be >= amount
+      if (data.paymentMethod === "cash" && data.amountReceived) {
+        const received = parseFloat(data.amountReceived)
+        const amount = parseFloat(data.amount)
+        return received >= amount
+      }
+      return true
+    },
+    {
+      message: "Jumlah uang diterima harus lebih besar atau sama dengan jumlah pembayaran",
+      path: ["amountReceived"],
+    }
+  )
 
 /**
  * Discharge Summary Schema
@@ -100,4 +165,5 @@ export type ServiceUpdateInput = z.infer<typeof serviceUpdateSchema>
 export type BillingItemInput = z.infer<typeof billingItemSchema>
 export type CreateBillingInput = z.infer<typeof createBillingSchema>
 export type PaymentInput = z.infer<typeof paymentSchema>
+export type ProcessPaymentInput = z.infer<typeof processPaymentSchema>
 export type DischargeSummaryInput = z.infer<typeof dischargeSummarySchema>

@@ -8,7 +8,7 @@ import { ZodError } from "zod"
 
 import { getPaginatedDrugInventory, addDrugInventory } from "@/lib/pharmacy/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { DrugInventoryWithDetails } from "@/types/pharmacy"
 import { drugInventorySchema, inventoryQuerySchema } from "@/lib/pharmacy/validation"
 

@@ -3,13 +3,13 @@
  * GET /api/medical-staff - Get all doctors and nurses
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 import { db } from "@/db"
 import { user } from "@/db/schema/auth"
 import { userRoles, roles } from "@/db/schema/roles"
-import { eq, inArray, or } from "drizzle-orm"
+import { eq, or } from "drizzle-orm"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get all users with doctor or nurse roles
     const medicalStaff = await db

@@ -17,8 +17,7 @@ export const patientFormSchema = z
       .regex(/^\d+$/, "NIK hanya boleh angka"),
     name: z.string().min(2, "Nama minimal 2 karakter").max(255),
     dateOfBirth: z.date({
-      required_error: "Tanggal lahir wajib diisi",
-      invalid_type_error: "Tanggal lahir tidak valid",
+      message: "Tanggal lahir wajib diisi",
     }),
     gender: z.enum(["male", "female"], {
       message: "Pilih jenis kelamin",
@@ -52,7 +51,7 @@ export const patientFormSchema = z
 /**
  * Visit Registration Form Validation Schema
  * - Outpatient: Poli and Doctor are required
- * - Inpatient: Room is required
+ * - Inpatient: No additional fields required (bed assignment done separately)
  * - Emergency: Chief complaint is required
  */
 export const visitFormSchema = z
@@ -89,19 +88,6 @@ export const visitFormSchema = z
     {
       message: "Dokter wajib dipilih untuk rawat jalan",
       path: ["doctorId"],
-    }
-  )
-  .refine(
-    (data) => {
-      // Inpatient: roomId is required
-      if (data.visitType === "inpatient") {
-        return !!data.roomId && data.roomId.trim().length > 0
-      }
-      return true
-    },
-    {
-      message: "Kamar wajib dipilih untuk rawat inap",
-      path: ["roomId"],
     }
   )
   .refine(

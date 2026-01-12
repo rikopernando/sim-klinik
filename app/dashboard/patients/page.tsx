@@ -15,13 +15,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Spinner } from "@/components/ui/spinner"
 import { usePatients } from "@/hooks/use-patients"
 import { PatientsTable } from "@/components/patients/patients-table"
 import { PatientsPagination } from "@/components/patients/patients-pagination"
+import Loader from "@/components/loader"
 
 export default function PatientsPage() {
   const router = useRouter()
@@ -75,16 +74,7 @@ export default function PatientsPage() {
           </CardAction>
         </CardHeader>
         {patients.length === 0 && loading ? (
-          <div className="mx-auto flex w-full max-w-xs flex-col gap-4 [--radius:1rem]">
-            <Item variant="outline">
-              <ItemMedia>
-                <Spinner />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle className="line-clamp-1">Memuat data pasien...</ItemTitle>
-              </ItemContent>
-            </Item>
-          </div>
+          <Loader message="Memuat data pasien..." />
         ) : (
           <CardContent>
             <PatientsTable patients={patients} onEditPatient={handleEditPatient} />

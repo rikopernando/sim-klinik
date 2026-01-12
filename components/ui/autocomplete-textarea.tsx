@@ -4,7 +4,11 @@ import * as React from "react"
 import { Textarea } from "@/components/ui/textarea"
 import { SuggestionItem } from "@/components/ui/suggestion-item"
 import { useAutocomplete } from "@/hooks/use-autocomplete"
-import { insertSuggestionAtLine, AUTOCOMPLETE_CONSTANTS } from "@/lib/utils/autocomplete"
+import {
+  insertSuggestionAtLine,
+  insertSuggestionMultiValue,
+  AUTOCOMPLETE_CONSTANTS,
+} from "@/lib/utils/autocomplete"
 
 export interface Suggestion {
   value: string
@@ -15,6 +19,16 @@ export interface Suggestion {
 interface AutocompleteTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   suggestions?: Suggestion[]
   onSuggestionSelect?: (suggestion: Suggestion) => void
+  /**
+   * Enable multi-value mode - allows multiple values separated by delimiter
+   * @default false
+   */
+  multiValue?: boolean
+  /**
+   * Delimiter to use when separating multiple values
+   * @default ", "
+   */
+  delimiter?: string
 }
 
 export const AutocompleteTextarea = React.forwardRef<
@@ -22,7 +36,17 @@ export const AutocompleteTextarea = React.forwardRef<
   AutocompleteTextareaProps
 >(
   (
-    { className, suggestions = [], onSuggestionSelect, onChange, onFocus, onKeyDown, ...props },
+    {
+      className,
+      suggestions = [],
+      onSuggestionSelect,
+      multiValue = false,
+      delimiter = ", ",
+      onChange,
+      onFocus,
+      onKeyDown,
+      ...props
+    },
     ref
   ) => {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -43,7 +67,7 @@ export const AutocompleteTextarea = React.forwardRef<
       selectSuggestion,
       navigateDown,
       navigateUp,
-    } = useAutocomplete({ suggestions, onSuggestionSelect })
+    } = useAutocomplete({ suggestions, onSuggestionSelect, multiValue, delimiter })
 
     // Handle input change
     const handleInputChange = React.useCallback(
@@ -67,11 +91,11 @@ export const AutocompleteTextarea = React.forwardRef<
         if (!textareaRef.current) return
 
         const value = textareaRef.current.value
-        const { newValue, newCursorPos } = insertSuggestionAtLine(
-          value,
-          cursorPosition,
-          suggestion.value
-        )
+
+        // Use appropriate insertion method based on multiValue prop
+        const { newValue, newCursorPos } = multiValue
+          ? insertSuggestionMultiValue(value, cursorPosition, suggestion.value, delimiter)
+          : insertSuggestionAtLine(value, cursorPosition, suggestion.value)
 
         // Update textarea
         textareaRef.current.value = newValue
@@ -92,7 +116,7 @@ export const AutocompleteTextarea = React.forwardRef<
         selectSuggestion(suggestion)
         textareaRef.current.focus()
       },
-      [cursorPosition, onChange, selectSuggestion]
+      [cursorPosition, onChange, selectSuggestion, multiValue, delimiter]
     )
 
     // Handle keyboard navigation

@@ -19,6 +19,8 @@ import {
   IconUsers,
   IconSettings,
   IconUser,
+  IconDatabase,
+  IconFlask,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -83,7 +85,7 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Rekam Medis",
           url: "/dashboard/medical-records",
-          icon: IconStethoscope,
+          icon: IconReportMedical,
         },
         {
           title: "UGD",
@@ -94,6 +96,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
           icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+            {
+              title: "Manajemen Kamar",
+              url: "/dashboard/inpatient/rooms",
+            },
+          ],
         },
       ],
     },
@@ -109,6 +121,26 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
+        },
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+      ],
+    },
+    {
+      label: "Master Data",
+      items: [
+        {
+          title: "Data Kamar",
+          url: "/dashboard/master-data/rooms",
+          icon: IconDatabase,
         },
       ],
     },
@@ -188,6 +220,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
           icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+            {
+              title: "Manajemen Kamar",
+              url: "/dashboard/inpatient/rooms",
+            },
+          ],
         },
       ],
     },
@@ -203,6 +245,26 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
+        },
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+      ],
+    },
+    {
+      label: "Master Data",
+      items: [
+        {
+          title: "Data Kamar",
+          url: "/dashboard/master-data/rooms",
+          icon: IconDatabase,
         },
       ],
     },
@@ -260,7 +322,7 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Rekam Medis",
           url: "/dashboard/medical-records",
-          icon: IconReportMedical,
+          icon: IconStethoscope,
         },
         {
           title: "UGD",
@@ -271,6 +333,17 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Pasien Pulang",
           url: "/dashboard/discharge",
           icon: IconUserCheck,
+        },
+        {
+          title: "Rawat Inap",
+          url: "/dashboard/inpatient",
+          icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+          ],
         },
       ],
     },
@@ -309,6 +382,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
           icon: IconBed,
+          items: [
+            {
+              title: "Daftar Pasien",
+              url: "/dashboard/inpatient/patients",
+            },
+            {
+              title: "Manajemen Kamar",
+              url: "/dashboard/inpatient/rooms",
+            },
+          ],
         },
         {
           title: "UGD",
@@ -398,6 +481,95 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+        },
+      ],
+    },
+  ],
+
+  lab_technician: [
+    {
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
+    },
+    {
+      label: "Laboratorium",
+      items: [
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
+        },
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+      ],
+    },
+  ],
+
+  lab_supervisor: [
+    {
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
+    },
+    {
+      label: "Laboratorium",
+      items: [
+        {
+          title: "Antrian Laboratorium",
+          url: "/dashboard/laboratory/queue",
+          icon: IconFlask,
+        },
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+        {
+          title: "Laporan",
+          url: "/dashboard/reports",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+  ],
+
+  radiologist: [
+    {
+      label: "Beranda",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/dashboard",
+          icon: IconDashboard,
+        },
+      ],
+    },
+    {
+      label: "Radiologi",
+      items: [
+        {
+          title: "Laboratorium & Radiologi",
+          url: "/dashboard/laboratory",
+          icon: IconStethoscope,
+        },
+        {
+          title: "Laporan",
+          url: "/dashboard/reports",
+          icon: IconReportMedical,
         },
       ],
     },

@@ -17,11 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Field, FieldLabel, FieldError } from "@/components/ui/field"
-import { DrugSearch } from "./drug-search"
 import { MEDICATION_ROUTES } from "@/types/medical-record"
 import { FREQUENCY_OPTIONS } from "@/lib/utils/prescription"
 import { type Drug } from "@/hooks/use-drug-search"
 import { PrescriptionFormBulkData } from "@/lib/validations/medical-record"
+
+import { DrugSearch } from "./drug-search"
 
 interface PrescriptionItemProps {
   index: number

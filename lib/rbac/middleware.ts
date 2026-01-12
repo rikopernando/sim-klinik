@@ -11,7 +11,6 @@ import {
   hasPermission,
   hasAnyPermission,
   hasAllPermissions,
-  hasRole,
   hasAnyRole,
 } from "./session"
 
@@ -62,7 +61,7 @@ export async function requireRole(roleRequired: UserRole) {
     return authCheck
   }
 
-  const userRole = await getUserRole(authCheck.user.id)
+  const userRole = await getUserRole(authCheck?.user?.id ?? "")
 
   if (!userRole) {
     return {
@@ -95,7 +94,7 @@ export async function requireAnyRole(rolesRequired: UserRole[]) {
     return authCheck
   }
 
-  const userRole = await getUserRole(authCheck.user.id)
+  const userRole = await getUserRole(authCheck.user?.id || "")
 
   if (!userRole) {
     return {
@@ -104,7 +103,7 @@ export async function requireAnyRole(rolesRequired: UserRole[]) {
     }
   }
 
-  const hasRequiredRole = await hasAnyRole(authCheck.user.id, rolesRequired)
+  const hasRequiredRole = await hasAnyRole(authCheck?.user?.id || "", rolesRequired)
 
   if (!hasRequiredRole) {
     return {
@@ -130,7 +129,7 @@ export async function requirePermission(permissionRequired: Permission) {
     return authCheck
   }
 
-  const hasRequiredPermission = await hasPermission(authCheck.user.id, permissionRequired)
+  const hasRequiredPermission = await hasPermission(authCheck?.user?.id || "", permissionRequired)
 
   if (!hasRequiredPermission) {
     return {
@@ -139,7 +138,7 @@ export async function requirePermission(permissionRequired: Permission) {
     }
   }
 
-  const userRole = await getUserRole(authCheck.user.id)
+  const userRole = await getUserRole(authCheck?.user?.id || "")
 
   return {
     authorized: true,
@@ -158,7 +157,10 @@ export async function requireAnyPermission(permissionsRequired: Permission[]) {
     return authCheck
   }
 
-  const hasRequiredPermission = await hasAnyPermission(authCheck.user.id, permissionsRequired)
+  const hasRequiredPermission = await hasAnyPermission(
+    authCheck?.user?.id || "",
+    permissionsRequired
+  )
 
   if (!hasRequiredPermission) {
     return {
@@ -167,7 +169,7 @@ export async function requireAnyPermission(permissionsRequired: Permission[]) {
     }
   }
 
-  const userRole = await getUserRole(authCheck.user.id)
+  const userRole = await getUserRole(authCheck?.user?.id || "")
 
   return {
     authorized: true,
@@ -186,7 +188,10 @@ export async function requireAllPermissions(permissionsRequired: Permission[]) {
     return authCheck
   }
 
-  const hasRequiredPermissions = await hasAllPermissions(authCheck.user.id, permissionsRequired)
+  const hasRequiredPermissions = await hasAllPermissions(
+    authCheck?.user?.id || "",
+    permissionsRequired
+  )
 
   if (!hasRequiredPermissions) {
     return {
@@ -195,7 +200,7 @@ export async function requireAllPermissions(permissionsRequired: Permission[]) {
     }
   }
 
-  const userRole = await getUserRole(authCheck.user.id)
+  const userRole = await getUserRole(authCheck?.user?.id || "")
 
   return {
     authorized: true,
@@ -218,6 +223,8 @@ export async function requireAllPermissions(permissionsRequired: Permission[]) {
  * );
  * ```
  */
+export type User = { id: string; email: string; name: string }
+
 export function withRBAC<TParams = Record<string, string | string[]>>(
   handler: (
     req: NextRequest,
@@ -233,7 +240,7 @@ export function withRBAC<TParams = Record<string, string | string[]>>(
     requireAll?: boolean // For permissions, require all or any (default: any)
   } = {}
 ) {
-  return async (req: NextRequest, context: { params: TParams }) => {
+  return async (req: NextRequest, context: { params: Promise<TParams> }) => {
     // Check authentication
     const authCheck = await requireAuth()
     if (!authCheck.authorized) {
@@ -262,7 +269,14 @@ export function withRBAC<TParams = Record<string, string | string[]>>(
       }
     }
 
+    // Await params (Next.js 15+ always passes params as Promise)
+    const params = await context.params
+
     // Call the actual handler with user context
-    return handler(req, { params: context.params, user: authCheck.user, role: userRole })
+    // Ensure authCheck.user is not undefined before passing it
+    if (!authCheck.user) {
+      return NextResponse.json(RBAC_ERRORS.UNAUTHORIZED, { status: 401 })
+    }
+    return handler(req, { params, user: authCheck.user, role: userRole })
   }
 }

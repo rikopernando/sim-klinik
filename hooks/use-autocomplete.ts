@@ -5,11 +5,13 @@
 
 import { useState, useMemo, useCallback } from "react"
 import { Suggestion } from "@/components/ui/autocomplete-textarea"
-import { filterSuggestions, getCurrentLine } from "@/lib/utils/autocomplete"
+import { filterSuggestions, getCurrentLine, getCurrentSearchTerm } from "@/lib/utils/autocomplete"
 
 interface UseAutocompleteOptions {
   suggestions: Suggestion[]
   onSuggestionSelect?: (suggestion: Suggestion) => void
+  multiValue?: boolean
+  delimiter?: string
 }
 
 interface UseAutocompleteReturn {
@@ -33,6 +35,8 @@ interface UseAutocompleteReturn {
 export function useAutocomplete({
   suggestions,
   onSuggestionSelect,
+  multiValue = false,
+  delimiter = ", ",
 }: UseAutocompleteOptions): UseAutocompleteReturn {
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -45,20 +49,28 @@ export function useAutocomplete({
   }, [suggestions, currentSearchTerm])
 
   // Update suggestions based on current input
-  const updateSuggestions = useCallback((value: string, cursorPos: number) => {
-    setCursorPosition(cursorPos)
+  const updateSuggestions = useCallback(
+    (value: string, cursorPos: number) => {
+      setCursorPosition(cursorPos)
 
-    const currentLine = getCurrentLine(value, cursorPos)
-    setCurrentSearchTerm(currentLine)
+      // In multi-value mode, only get text after last delimiter
+      // In single-value mode, get the entire current line
+      const searchTerm = multiValue
+        ? getCurrentSearchTerm(value, cursorPos, delimiter)
+        : getCurrentLine(value, cursorPos)
 
-    if (currentLine.trim().length > 0) {
-      const filtered = filterSuggestions(suggestions, currentLine)
-      setShowSuggestions(filtered.length > 0)
-      setSelectedIndex(0)
-    } else {
-      setShowSuggestions(false)
-    }
-  }, [suggestions])
+      setCurrentSearchTerm(searchTerm)
+
+      if (searchTerm.trim().length > 0) {
+        const filtered = filterSuggestions(suggestions, searchTerm)
+        setShowSuggestions(filtered.length > 0)
+        setSelectedIndex(0)
+      } else {
+        setShowSuggestions(false)
+      }
+    },
+    [suggestions, multiValue, delimiter]
+  )
 
   // Select a suggestion
   const selectSuggestion = useCallback(

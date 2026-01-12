@@ -36,6 +36,7 @@ export interface TableWidgetProps<T> {
   onRowClick?: (row: T) => void
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function TableWidget<T extends Record<string, any>>({
   title,
   description,

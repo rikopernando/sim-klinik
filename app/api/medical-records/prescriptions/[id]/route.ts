@@ -6,7 +6,7 @@ import { db } from "@/db"
 import { prescriptions, medicalRecords } from "@/db/schema"
 import { prescriptionFormSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * PATCH /api/medical-records/prescriptions/[id]

@@ -9,7 +9,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
 import { isValidStatusTransition, VisitStatus } from "@/types/visit-status"
 import { lockSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { createBillingFromMedicalRecord, recalculateBilling } from "@/lib/billing/api-service"
 
 /**
@@ -75,13 +75,13 @@ export const POST = withRBAC(
 
       // Validate visit status transition to ready_for_billing
       const currentStatus = visit.status as VisitStatus
-      const finalStatus: VisitStatus = "ready_for_billing"
+      const finalStatus: VisitStatus = "billed"
 
       // Can transition from in_examination or examined directly to ready_for_billing
       if (!isValidStatusTransition(currentStatus, finalStatus)) {
         const response: ResponseError<unknown> = {
           error: "Cannot lock medical record",
-          message: `Visit status "${currentStatus}" cannot transition to "ready_for_billing". Visit must be in "in_examination" or "examined" status.`,
+          message: `Visit status "${currentStatus}" cannot transition to "${finalStatus}". Visit must be in "in_examination" or "examined" status.`,
           status: HTTP_STATUS_CODES.BAD_REQUEST,
         }
         return NextResponse.json(response, {

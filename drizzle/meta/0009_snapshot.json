@@ -1,5 +1,5 @@
 {
-  "id": "ab1d7955-c3ca-4bd4-b3ab-44549f09a260",
+  "id": "d3ebebdf-ed84-468d-ae0d-1aec5da72d81",
   "prevId": "33250791-9bea-4470-a46c-880e89d5905c",
   "version": "7",
   "dialect": "postgresql",
@@ -1950,7 +1950,19 @@
           "name": "medical_record_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "visit_id": {
+          "name": "visit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cppt_id": {
+          "name": "cppt_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "service_id": {
           "name": "service_id",
@@ -1962,13 +1974,38 @@
           "name": "icd9_code",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "description": {
           "name": "description",
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "ordered_by": {
+          "name": "ordered_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ordered_at": {
+          "name": "ordered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scheduled_at": {
+          "name": "scheduled_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'ordered'"
         },
         "performed_by": {
           "name": "performed_by",
@@ -1978,10 +2015,9 @@
         },
         "performed_at": {
           "name": "performed_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
+          "notNull": false
         },
         "notes": {
           "name": "notes",
@@ -1991,7 +2027,14 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2012,12 +2055,51 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "procedures_visit_id_visits_id_fk": {
+          "name": "procedures_visit_id_visits_id_fk",
+          "tableFrom": "procedures",
+          "tableTo": "visits",
+          "columnsFrom": [
+            "visit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "procedures_cppt_id_cppt_id_fk": {
+          "name": "procedures_cppt_id_cppt_id_fk",
+          "tableFrom": "procedures",
+          "tableTo": "cppt",
+          "columnsFrom": [
+            "cppt_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "procedures_service_id_services_id_fk": {
           "name": "procedures_service_id_services_id_fk",
           "tableFrom": "procedures",
           "tableTo": "services",
           "columnsFrom": [
             "service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "procedures_ordered_by_user_id_fk": {
+          "name": "procedures_ordered_by_user_id_fk",
+          "tableFrom": "procedures",
+          "tableTo": "user",
+          "columnsFrom": [
+            "ordered_by"
           ],
           "columnsTo": [
             "id"
@@ -2158,6 +2240,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "item_type": {
+          "name": "item_type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'drug'"
+        },
         "category": {
           "name": "category",
           "type": "varchar(100)",
@@ -2176,6 +2265,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "general_price": {
+          "name": "general_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
         "minimum_stock": {
           "name": "minimum_stock",
           "type": "integer",
@@ -2188,6 +2283,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "requires_prescription": {
+          "name": "requires_prescription",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
         },
         "is_active": {
           "name": "is_active",
@@ -2233,7 +2335,19 @@
           "name": "medical_record_id",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
+        },
+        "visit_id": {
+          "name": "visit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cppt_id": {
+          "name": "cppt_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
         },
         "drug_id": {
           "name": "drug_id",
@@ -2277,6 +2391,50 @@
           "primaryKey": false,
           "notNull": false
         },
+        "is_recurring": {
+          "name": "is_recurring",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "start_date": {
+          "name": "start_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "end_date": {
+          "name": "end_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "administration_schedule": {
+          "name": "administration_schedule",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_administered": {
+          "name": "is_administered",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "administered_by": {
+          "name": "administered_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "administered_at": {
+          "name": "administered_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
         "is_fulfilled": {
           "name": "is_fulfilled",
           "type": "boolean",
@@ -2292,7 +2450,7 @@
         },
         "fulfilled_at": {
           "name": "fulfilled_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -2329,7 +2487,7 @@
         },
         "approved_at": {
           "name": "approved_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -2347,14 +2505,14 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2375,12 +2533,51 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
+        "prescriptions_visit_id_visits_id_fk": {
+          "name": "prescriptions_visit_id_visits_id_fk",
+          "tableFrom": "prescriptions",
+          "tableTo": "visits",
+          "columnsFrom": [
+            "visit_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "prescriptions_cppt_id_cppt_id_fk": {
+          "name": "prescriptions_cppt_id_cppt_id_fk",
+          "tableFrom": "prescriptions",
+          "tableTo": "cppt",
+          "columnsFrom": [
+            "cppt_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "prescriptions_drug_id_drugs_id_fk": {
           "name": "prescriptions_drug_id_drugs_id_fk",
           "tableFrom": "prescriptions",
           "tableTo": "drugs",
           "columnsFrom": [
             "drug_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "prescriptions_administered_by_user_id_fk": {
+          "name": "prescriptions_administered_by_user_id_fk",
+          "tableFrom": "prescriptions",
+          "tableTo": "user",
+          "columnsFrom": [
+            "administered_by"
           ],
           "columnsTo": [
             "id"
@@ -2566,14 +2763,14 @@
         },
         "assigned_at": {
           "name": "assigned_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "discharged_at": {
           "name": "discharged_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -2591,7 +2788,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2661,26 +2858,38 @@
           "primaryKey": false,
           "notNull": true
         },
+        "item_id": {
+          "name": "item_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "service_id": {
+          "name": "service_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "material_name": {
           "name": "material_name",
           "type": "varchar(255)",
           "primaryKey": false,
-          "notNull": true
-        },
-        "quantity": {
-          "name": "quantity",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "unit": {
           "name": "unit",
           "type": "varchar(50)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "unit_price": {
           "name": "unit_price",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "quantity": {
+          "name": "quantity",
           "type": "numeric(10, 2)",
           "primaryKey": false,
           "notNull": true
@@ -2691,6 +2900,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "stock_movement_id": {
+          "name": "stock_movement_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "used_by": {
           "name": "used_by",
           "type": "text",
@@ -2699,7 +2914,7 @@
         },
         "used_at": {
           "name": "used_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2712,7 +2927,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2731,6 +2946,45 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "material_usage_item_id_drugs_id_fk": {
+          "name": "material_usage_item_id_drugs_id_fk",
+          "tableFrom": "material_usage",
+          "tableTo": "drugs",
+          "columnsFrom": [
+            "item_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "material_usage_service_id_services_id_fk": {
+          "name": "material_usage_service_id_services_id_fk",
+          "tableFrom": "material_usage",
+          "tableTo": "services",
+          "columnsFrom": [
+            "service_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "material_usage_stock_movement_id_stock_movements_id_fk": {
+          "name": "material_usage_stock_movement_id_stock_movements_id_fk",
+          "tableFrom": "material_usage",
+          "tableTo": "stock_movements",
+          "columnsFrom": [
+            "stock_movement_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         },
         "material_usage_used_by_user_id_fk": {
@@ -2835,14 +3089,14 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
         },
         "updated_at": {
           "name": "updated_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2954,7 +3208,7 @@
         },
         "recorded_at": {
           "name": "recorded_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
@@ -2967,7 +3221,7 @@
         },
         "created_at": {
           "name": "created_at",
-          "type": "timestamp",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
           "default": "now()"

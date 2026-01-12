@@ -69,7 +69,6 @@ export function VisitRegistrationForm({
 
     try {
       const visit = await registerVisit(patient.id, data)
-      console.log({ visit })
       onSuccess?.(visit)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
@@ -120,7 +119,7 @@ export function VisitRegistrationForm({
                 <EmergencyFields register={register} errors={errors} setValue={setValue} />
               )}
 
-              {visitType === "inpatient" && <InpatientFields errors={errors} setValue={setValue} />}
+              {visitType === "inpatient" && <InpatientFields />}
 
               {/* Common Notes Field */}
               <FieldGroup>

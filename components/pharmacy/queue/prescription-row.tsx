@@ -21,14 +21,38 @@ export const PrescriptionRow = memo(function PrescriptionRow({
   index,
   onProcess,
 }: PrescriptionRowProps) {
+  const isInpatient = item.visit.visitType === "inpatient"
+  const visitTypeBadgeVariant =
+    item.visit.visitType === "outpatient"
+      ? "default"
+      : item.visit.visitType === "inpatient"
+        ? "secondary"
+        : "destructive"
+
   return (
     <TableRow>
       <TableCell className="font-medium">{index + 1}</TableCell>
       <TableCell>
-        <div>
-          <p className="font-medium">{item.patient.name}</p>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <p className="font-medium">{item.patient.name}</p>
+            <Badge variant={visitTypeBadgeVariant} className="text-xs">
+              {item.visit.visitType === "outpatient"
+                ? "Rawat Jalan"
+                : item.visit.visitType === "inpatient"
+                  ? "Rawat Inap"
+                  : "UGD"}
+            </Badge>
+          </div>
           <p className="text-muted-foreground text-xs">MR: {item.patient.mrNumber}</p>
           <p className="text-muted-foreground text-xs">Kunjungan: {item.visit.visitNumber}</p>
+          {/* Show room and bed info for inpatient */}
+          {isInpatient && item.room && (
+            <p className="text-muted-foreground text-xs">
+              📍 {item.room.roomNumber} ({item.room.roomType})
+              {item.bedAssignment && ` • Bed ${item.bedAssignment.bedNumber}`}
+            </p>
+          )}
         </div>
       </TableCell>
       <TableCell>

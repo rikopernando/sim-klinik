@@ -5,7 +5,7 @@
  * Displays pending prescriptions and expiring drugs with optimized performance
  */
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard"
@@ -18,6 +18,15 @@ import { BulkFulfillmentDialog } from "@/components/pharmacy/bulk-fulfillment-di
 import { bulkFulfillPrescriptions } from "@/lib/services/pharmacy.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { PrescriptionFulfillmentInput, PrescriptionQueueItem } from "@/types/pharmacy"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+
+type VisitTypeFilter = "all" | "outpatient" | "inpatient"
 
 export default function PharmacyDashboard() {
   const {
@@ -33,6 +42,13 @@ export default function PharmacyDashboard() {
 
   const [selectedGroup, setSelectedGroup] = useState<PrescriptionQueueItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [visitTypeFilter, setVisitTypeFilter] = useState<VisitTypeFilter>("all")
+
+  // Filter queue by visit type
+  const filteredQueue = useMemo(() => {
+    if (visitTypeFilter === "all") return queue
+    return queue.filter((item) => item.visit.visitType === visitTypeFilter)
+  }, [queue, visitTypeFilter])
 
   // Memoize handlers to prevent unnecessary re-renders
   const handleBulkFulfill = useCallback(
@@ -74,19 +90,45 @@ export default function PharmacyDashboard() {
       <PharmacyHeader lastRefresh={lastRefresh} onRefresh={refresh} />
 
       {/* Statistics Cards */}
-      <PharmacyStatsCards queueCount={queue.length} expiringDrugs={expiringDrugs} />
+      <PharmacyStatsCards queueCount={filteredQueue.length} expiringDrugs={expiringDrugs} />
 
       {/* Main Content */}
       <Tabs defaultValue="queue" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="queue">Antrian Resep ({queue.length})</TabsTrigger>
+          <TabsTrigger value="queue">Antrian Resep ({filteredQueue.length})</TabsTrigger>
           <TabsTrigger value="expiring">Obat Kadaluarsa ({expiringDrugs.all.length})</TabsTrigger>
         </TabsList>
 
         {/* Prescription Queue Tab */}
         <TabsContent value="queue" className="space-y-4">
+          {/* Visit Type Filter */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-medium">Filter Tipe Kunjungan:</label>
+              <Select
+                value={visitTypeFilter}
+                onValueChange={(value) => setVisitTypeFilter(value as VisitTypeFilter)}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua ({queue.length})</SelectItem>
+                  <SelectItem value="outpatient">
+                    Rawat Jalan (
+                    {queue.filter((item) => item.visit.visitType === "outpatient").length})
+                  </SelectItem>
+                  <SelectItem value="inpatient">
+                    Rawat Inap (
+                    {queue.filter((item) => item.visit.visitType === "inpatient").length})
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <PrescriptionQueueTable
-            queue={queue}
+            queue={filteredQueue}
             isLoading={queueLoading}
             error={queueError}
             onProcess={handleProcessGroup}

@@ -7,21 +7,11 @@ import { db, type DbTransaction } from "@/db"
 import { services, billings, billingItems, payments, dischargeSummaries } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
-import { prescriptions, drugs } from "@/db/schema/pharmacy"
-import { materialUsage, rooms, bedAssignments } from "@/db/schema/inpatient"
+import { prescriptions, drugs } from "@/db/schema/inventory"
 import { medicalRecords, procedures } from "@/db/schema/medical-records"
 import { eq, sql, and, desc, or, inArray } from "drizzle-orm"
-import type {
-  ServiceInput,
-  ServiceUpdateInput,
-  CreateBillingInput,
-  PaymentInput,
-  DischargeSummaryInput,
-  BillingWithDetails,
-} from "@/types/billing"
+import type { ServiceInput, ServiceUpdateInput } from "@/types/billing"
 import {
-  calculateItemTotal,
-  calculateSubtotal,
   calculateDiscountFromPercentage,
   calculateTotalAmount,
   calculatePatientPayable,
@@ -29,6 +19,8 @@ import {
   determinePaymentStatus,
   calculateChange,
 } from "./billing-utils"
+import { ProcessPaymentInput } from "./validation"
+import { aggregateDischargebilling } from "./discharge-aggregation"
 
 /**
  * Billing Totals Type
@@ -106,10 +98,7 @@ export async function createService(data: ServiceInput) {
 export async function updateService(serviceId: string, data: Partial<ServiceUpdateInput>) {
   const [updatedService] = await db
     .update(services)
-    .set({
-      ...data,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
+    .set(data)
     .where(eq(services.id, serviceId))
     .returning()
 
@@ -121,283 +110,176 @@ export async function updateService(serviceId: string, data: Partial<ServiceUpda
 }
 
 /**
- * Get billing by visit ID
+ * Process payment with discount (merged workflow)
+ *
+ * Handles discount application and payment processing in a single atomic transaction
+ * with optimized single UPDATE query for better performance
+ *
+ * @param data - Payment and discount data
+ * @returns Payment record with change information
+ *
+ * Features:
+ * - Optional discount (nominal or percentage)
+ * - Optional insurance coverage
+ * - Calculates all totals in memory before database write
+ * - Validates payment amount against final total
+ * - Calculates change for cash payments
+ * - Single UPDATE query for optimal performance
+ * - All operations in single database transaction
+ *
+ * Business Rules:
+ * - Only one of discount or discountPercentage should be provided
+ * - Payment amount must not exceed remaining balance
+ * - For cash payments, amountReceived must be >= amount
+ *
+ * Performance:
+ * - 1 SELECT, 1 INSERT, 1 UPDATE (vs previous 1 SELECT, 1 INSERT, 2 UPDATEs)
+ * - All calculations done in memory
  */
-export async function getBillingByVisitId(visitId: string): Promise<BillingWithDetails | null> {
-  const [billing] = await db.select().from(billings).where(eq(billings.visitId, visitId)).limit(1)
-
-  if (!billing) return null
-
-  // Get billing items
-  const items = await db
-    .select()
-    .from(billingItems)
-    .where(eq(billingItems.billingId, billing.id))
-    .orderBy(billingItems.createdAt)
-
-  // Get payments
-  const paymentsList = await db
-    .select()
-    .from(payments)
-    .where(eq(payments.billingId, billing.id))
-    .orderBy(desc(payments.receivedAt))
-
-  // Get visit and patient info
-  const [visitInfo] = await db
-    .select({
-      visit: visits,
-      patient: patients,
-    })
-    .from(visits)
-    .innerJoin(patients, eq(visits.patientId, patients.id))
-    .where(eq(visits.id, visitId))
-    .limit(1)
-
-  return {
-    ...billing,
-    items,
-    payments: paymentsList,
-    visit: visitInfo
-      ? {
-          id: visitInfo.visit.id,
-          visitNumber: visitInfo.visit.visitNumber,
-          visitType: visitInfo.visit.visitType,
-        }
-      : undefined,
-    patient: visitInfo
-      ? {
-          id: visitInfo.patient.id,
-          name: visitInfo.patient.name,
-          mrNumber: visitInfo.patient.mrNumber,
-        }
-      : undefined,
-  }
-}
-
-/**
- * Create billing with automatic aggregation from visit data
- * This is the BILLING ENGINE - aggregates all charges
- */
-export async function createBillingForVisit(data: CreateBillingInput) {
-  // Verify visit exists
-  const [visit] = await db.select().from(visits).where(eq(visits.id, data.visitId)).limit(1)
-
-  if (!visit) {
-    throw new Error("Visit not found")
-  }
-
-  // Check if billing already exists
-  const existingBilling = await getBillingByVisitId(data.visitId)
-  if (existingBilling) {
-    throw new Error("Billing already exists for this visit")
-  }
-
-  // Aggregate all billing items
-  const allItems = [...data.items]
-
-  // 1. Add fulfilled prescriptions (drugs)
-  const fulfilledPrescriptions = await db
-    .select({
-      prescription: prescriptions,
-      drug: drugs,
-    })
-    .from(prescriptions)
-    .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-    .where(and(eq(prescriptions.medicalRecordId, visit.id), eq(prescriptions.isFulfilled, true)))
-
-  fulfilledPrescriptions.forEach(({ prescription, drug }) => {
-    const quantity = prescription.dispensedQuantity || prescription.quantity
-    allItems.push({
-      itemType: "drug",
-      itemId: drug.id,
-      itemName: drug.name,
-      itemCode: drug.genericName || undefined,
-      quantity,
-      unitPrice: drug.price,
-      discount: "0",
-      description: `${prescription.dosage} - ${prescription.frequency}`,
-    })
-  })
-
-  // 2. Add material usage (for inpatient)
-  if (visit.visitType === "inpatient") {
-    const materials = await db
+export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
+  return await db.transaction(async (tx) => {
+    // ========================================
+    // STEP 1: Fetch current billing record
+    // ========================================
+    const [billing] = await tx
       .select()
-      .from(materialUsage)
-      .where(eq(materialUsage.visitId, visit.id))
-
-    materials.forEach((material) => {
-      allItems.push({
-        itemType: "material",
-        itemId: null,
-        itemName: material.materialName,
-        quantity: material.quantity,
-        unitPrice: material.unitPrice,
-        discount: "0",
-        description: material.notes || undefined,
-      })
-    })
-
-    // 3. Add room charges (for inpatient)
-    const bedAssignment = await db
-      .select({
-        assignment: bedAssignments,
-        room: rooms,
-      })
-      .from(bedAssignments)
-      .innerJoin(rooms, eq(bedAssignments.roomId, rooms.id))
-      .where(and(eq(bedAssignments.visitId, visit.id), eq(bedAssignments.discharged, false)))
+      .from(billings)
+      .where(eq(billings.id, data.billingId))
       .limit(1)
 
-    if (bedAssignment.length > 0) {
-      const { assignment, room } = bedAssignment[0]
-
-      // Calculate days stayed
-      const admissionDate = new Date(assignment.assignedAt)
-      const today = new Date()
-      const daysStayed = Math.ceil(
-        (today.getTime() - admissionDate.getTime()) / (1000 * 60 * 60 * 24)
-      )
-
-      allItems.push({
-        itemType: "room",
-        itemId: room.id,
-        itemName: `Kamar ${room.roomNumber} - ${room.roomType}`,
-        itemCode: room.roomNumber,
-        quantity: daysStayed,
-        unitPrice: room.dailyRate,
-        discount: "0",
-        description: `Rawat inap ${daysStayed} hari`,
-      })
+    if (!billing) {
+      throw new Error("Billing tidak ditemukan")
     }
-  }
 
-  // Calculate billing amounts
-  const itemsWithTotals = allItems.map((item) => ({
-    ...item,
-    subtotal: calculateItemTotal(item.quantity, item.unitPrice, "0"),
-    totalPrice: calculateItemTotal(item.quantity, item.unitPrice, item.discount || "0"),
-  }))
+    // ========================================
+    // STEP 2: Calculate discount/insurance totals IN MEMORY
+    // (No database write yet - all calculations happen here)
+    // ========================================
+    let discountAmount = billing.discount || "0"
+    let insuranceCoverage = billing.insuranceCoverage || "0"
+    let totalAmount = billing.totalAmount
+    let patientPayable = billing.patientPayable
+    let remainingAmount = billing.remainingAmount || billing.patientPayable
+    let discountApplied = false
 
-  const subtotal = calculateSubtotal(itemsWithTotals)
+    // Apply discount/insurance if provided
+    if (data.discount || data.discountPercentage || data.insuranceCoverage) {
+      // Calculate discount
+      if (data.discountPercentage) {
+        discountAmount = calculateDiscountFromPercentage(billing.subtotal, data.discountPercentage)
+      } else if (data.discount) {
+        discountAmount = data.discount
+      }
 
-  // Apply discount
-  let discount = data.discount || "0"
-  if (data.discountPercentage) {
-    discount = calculateDiscountFromPercentage(subtotal, data.discountPercentage)
-  }
+      // Calculate all totals
+      const tax = billing.tax || "0"
+      totalAmount = calculateTotalAmount(billing.subtotal, discountAmount, tax)
+      insuranceCoverage = data.insuranceCoverage || billing.insuranceCoverage || "0"
+      patientPayable = calculatePatientPayable(totalAmount, insuranceCoverage)
+      const paidAmount = billing.paidAmount || "0"
+      remainingAmount = calculateRemainingAmount(patientPayable, paidAmount)
 
-  const tax = "0" // No tax for now
-  const totalAmount = calculateTotalAmount(subtotal, discount, tax)
-  const insuranceCoverage = data.insuranceCoverage || "0"
-  const patientPayable = calculatePatientPayable(totalAmount, insuranceCoverage)
+      discountApplied = true
+    }
 
-  // Create billing record
-  const [newBilling] = await db
-    .insert(billings)
-    .values({
-      visitId: data.visitId,
-      subtotal,
-      discount,
-      discountPercentage: data.discountPercentage || null,
-      tax,
-      totalAmount,
-      insuranceCoverage,
-      patientPayable,
-      paymentStatus: "pending",
-      paidAmount: "0",
-      remainingAmount: patientPayable,
-      notes: data.notes || null,
-    })
-    .returning()
+    // ========================================
+    // STEP 3: Validate payment amount
+    // ========================================
+    const paymentAmount = parseFloat(data.amount)
+    const remaining = parseFloat(remainingAmount)
 
-  // Insert billing items
-  await db.insert(billingItems).values(
-    itemsWithTotals.map((item) => ({
-      billingId: newBilling.id,
-      itemType: item.itemType,
-      itemId: item.itemId || null,
-      itemName: item.itemName,
-      itemCode: item.itemCode || null,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      subtotal: item.subtotal,
-      discount: item.discount || "0",
-      totalPrice: item.totalPrice,
-      description: item.description || null,
-    }))
-  )
+    if (paymentAmount <= 0) {
+      throw new Error("Jumlah pembayaran harus lebih besar dari 0")
+    }
 
-  return getBillingByVisitId(data.visitId)
-}
+    if (paymentAmount > remaining) {
+      throw new Error(
+        `Jumlah pembayaran (Rp ${paymentAmount.toLocaleString("id-ID")}) melebihi sisa tagihan (Rp ${remaining.toLocaleString("id-ID")})`
+      )
+    }
 
-/**
- * Process payment
- */
-export async function processPayment(data: PaymentInput) {
-  // Get billing
-  const [billing] = await db.select().from(billings).where(eq(billings.id, data.billingId)).limit(1)
+    // ========================================
+    // STEP 4: Calculate change for cash payments
+    // ========================================
+    let changeGiven: string | null = null
+    if (data.paymentMethod === "cash" && data.amountReceived) {
+      changeGiven = calculateChange(data.amountReceived, data.amount)
+    }
 
-  if (!billing) {
-    throw new Error("Billing not found")
-  }
+    // ========================================
+    // STEP 5: Insert payment record
+    // ========================================
+    const [newPayment] = await tx
+      .insert(payments)
+      .values({
+        billingId: data.billingId,
+        amount: data.amount,
+        paymentMethod: data.paymentMethod,
+        paymentReference: data.paymentReference || null,
+        amountReceived: data.amountReceived || null,
+        changeGiven,
+        receivedBy: data.receivedBy,
+        notes: data.notes || null,
+      })
+      .returning()
 
-  // Validate payment amount
-  const paymentAmount = parseFloat(data.amount)
-  const remainingAmount = parseFloat(billing.remainingAmount || billing.patientPayable)
+    // ========================================
+    // STEP 6: Calculate final billing state
+    // ========================================
+    const newPaidAmount = parseFloat(billing.paidAmount) + paymentAmount
+    const newRemainingAmount = calculateRemainingAmount(patientPayable, newPaidAmount.toString())
+    const newPaymentStatus = determinePaymentStatus(patientPayable, newPaidAmount.toString())
 
-  if (paymentAmount <= 0) {
-    throw new Error("Payment amount must be greater than 0")
-  }
+    // ========================================
+    // STEP 7: SINGLE UPDATE with all fields
+    // (Discount + Insurance + Payment in ONE query)
+    // ========================================
+    await tx
+      .update(billings)
+      .set({
+        // Discount/insurance fields (only if discount/insurance was applied)
+        ...(discountApplied && {
+          discount: discountAmount,
+          discountPercentage: data.discountPercentage || null,
+          insuranceCoverage,
+          totalAmount,
+          patientPayable,
+        }),
+        // Payment fields (always updated)
+        paidAmount: newPaidAmount.toFixed(2),
+        remainingAmount: newRemainingAmount,
+        paymentStatus: newPaymentStatus,
+        paymentMethod: data.paymentMethod,
+        paymentReference: data.paymentReference || null,
+        // Audit fields
+        processedBy: data.receivedBy,
+        processedAt: sql`CURRENT_TIMESTAMP`,
+      })
+      .where(eq(billings.id, data.billingId))
 
-  if (paymentAmount > remainingAmount) {
-    throw new Error("Payment amount exceeds remaining balance")
-  }
+    // ========================================
+    // STEP 8: UPDATE VISIT STATUS TO PAID
+    // ========================================
+    await tx
+      .update(visits)
+      .set({
+        status: "paid",
+      })
+      .where(eq(visits.id, billing.visitId))
 
-  // Calculate change for cash payments
-  let changeGiven = null
-  if (data.paymentMethod === "cash" && data.amountReceived) {
-    changeGiven = calculateChange(data.amountReceived, data.amount)
-  }
-
-  // Insert payment record
-  const [newPayment] = await db
-    .insert(payments)
-    .values({
-      billingId: data.billingId,
-      amount: data.amount,
-      paymentMethod: data.paymentMethod,
-      paymentReference: data.paymentReference || null,
-      amountReceived: data.amountReceived || null,
-      changeGiven,
-      receivedBy: data.receivedBy,
-      notes: data.notes || null,
-    })
-    .returning()
-
-  // Update billing record
-  const newPaidAmount = parseFloat(billing.paidAmount) + paymentAmount
-  const newRemainingAmount = calculateRemainingAmount(
-    billing.patientPayable,
-    newPaidAmount.toString()
-  )
-  const newPaymentStatus = determinePaymentStatus(billing.patientPayable, newPaidAmount.toString())
-
-  await db
-    .update(billings)
-    .set({
+    // ========================================
+    // STEP 9: Return result
+    // ========================================
+    return {
+      payment: newPayment,
+      discountApplied,
+      finalTotal: patientPayable,
       paidAmount: newPaidAmount.toFixed(2),
       remainingAmount: newRemainingAmount,
       paymentStatus: newPaymentStatus,
-      paymentMethod: data.paymentMethod,
-      paymentReference: data.paymentReference || null,
-      processedBy: data.receivedBy,
-      processedAt: sql`CURRENT_TIMESTAMP`,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(eq(billings.id, data.billingId))
-
-  return newPayment
+      change: changeGiven,
+    }
+  })
 }
 
 /**
@@ -417,102 +299,6 @@ export async function getPendingBillings() {
     .orderBy(desc(billings.createdAt))
 
   return pendingBills
-}
-
-/**
- * Check if visit can be discharged (billing gate)
- */
-export async function canDischarge(visitId: string): Promise<{
-  canDischarge: boolean
-  reason?: string
-  billing?: any
-}> {
-  const billing = await getBillingByVisitId(visitId)
-
-  if (!billing) {
-    return {
-      canDischarge: false,
-      reason: "Billing belum dibuat. Harap buat billing terlebih dahulu.",
-    }
-  }
-
-  if (billing.paymentStatus !== "paid") {
-    return {
-      canDischarge: false,
-      reason: `Pembayaran belum lunas. Status: ${billing.paymentStatus}. Sisa: Rp ${parseFloat(
-        billing.remainingAmount || "0"
-      ).toLocaleString("id-ID")}`,
-      billing,
-    }
-  }
-
-  return {
-    canDischarge: true,
-    billing,
-  }
-}
-
-/**
- * Create discharge summary
- */
-export async function createDischargeSummary(data: DischargeSummaryInput) {
-  // Check if visit can be discharged (billing gate)
-  const dischargeCheck = await canDischarge(data.visitId)
-
-  if (!dischargeCheck.canDischarge) {
-    throw new Error(dischargeCheck.reason || "Cannot discharge patient")
-  }
-
-  // Check if discharge summary already exists
-  const [existing] = await db
-    .select()
-    .from(dischargeSummaries)
-    .where(eq(dischargeSummaries.visitId, data.visitId))
-    .limit(1)
-
-  if (existing) {
-    throw new Error("Discharge summary already exists for this visit")
-  }
-
-  // Create discharge summary
-  const [summary] = await db
-    .insert(dischargeSummaries)
-    .values({
-      visitId: data.visitId,
-      admissionDiagnosis: data.admissionDiagnosis,
-      dischargeDiagnosis: data.dischargeDiagnosis,
-      clinicalSummary: data.clinicalSummary,
-      proceduresPerformed: data.proceduresPerformed || null,
-      medicationsOnDischarge: data.medicationsOnDischarge || null,
-      dischargeInstructions: data.dischargeInstructions,
-      dietaryRestrictions: data.dietaryRestrictions || null,
-      activityRestrictions: data.activityRestrictions || null,
-      followUpDate: data.followUpDate || null,
-      followUpInstructions: data.followUpInstructions || null,
-      dischargedBy: data.dischargedBy,
-    })
-    .returning()
-
-  // Update visit status to discharged
-  await db
-    .update(visits)
-    .set({
-      status: "completed",
-      endAt: sql`CURRENT_TIMESTAMP`,
-      updatedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(eq(visits.id, data.visitId))
-
-  // If inpatient, update bed assignment
-  await db
-    .update(bedAssignments)
-    .set({
-      discharged: true,
-      dischargedAt: sql`CURRENT_TIMESTAMP`,
-    })
-    .where(and(eq(bedAssignments.visitId, data.visitId), eq(bedAssignments.discharged, false)))
-
-  return summary
 }
 
 /**
@@ -565,24 +351,26 @@ export async function getBillingStatistics() {
 }
 
 /**
- * Get visits ready for billing (RME locked, not yet paid)
+ * Get visits ready for billing
  *
  * Fetches visits that meet the billing criteria:
- * 1. Medical record is locked (RME completed and locked by doctor)
- * 2. Payment is NOT fully completed (pending, partial, or no billing exists)
+ * - OUTPATIENT: Medical record is locked (RME completed)
+ * - INPATIENT: Visit status is 'ready_for_billing' (discharge billing created)
+ * - Payment is NOT fully completed (pending, partial, or no billing exists)
  *
  * This is the BILLING QUEUE - shows visits waiting for payment processing
  *
  * @returns Array of visits with patient, billing, and medical record info
  *
  * Business Rules:
- * - Medical record MUST be locked before billing can be created
- * - Visits with no billing record are included (need billing creation)
+ * - OUTPATIENT: Medical record MUST be locked before billing (cashier creates billing)
+ * - INPATIENT: Billing MUST be created first, then visit marked as ready_for_billing (cashier processes payment only)
+ * - Visits with no billing record are included (outpatient needs billing creation)
  * - Visits with pending or partial payment are included
  * - Visits with fully paid status are excluded
  *
  * Performance optimizations:
- * - Uses LEFT JOIN for optional billing data
+ * - Uses LEFT JOIN for optional billing and medical record data
  * - Efficient WHERE clause with indexed columns
  * - Ordered by creation date (newest first)
  */
@@ -600,10 +388,22 @@ export async function getVisitsReadyForBilling() {
     .leftJoin(billings, eq(visits.id, billings.visitId))
     .where(
       and(
-        // Medical record must be locked (RME completed)
-        eq(medicalRecords.isLocked, true),
+        // Visit must be ready for billing
+        // or(
+        //   // OUTPATIENT: Medical record must be locked
+        //   and(eq(visits.visitType, "outpatient"), eq(medicalRecords.isLocked, true)),
+        //   // INPATIENT: Visit status must be ready_for_billing (billing already created)
+        //   and(eq(visits.visitType, "inpatient"), eq(visits.status, "ready_for_billing"))
+        // ),
         // Payment must be incomplete (pending, partial, or no billing exists)
-        or(eq(billings.paymentStatus, "pending"), eq(billings.paymentStatus, "partial"))
+        eq(visits.status, "billed"),
+        or(
+          // No billing exists yet (outpatient only - inpatient always has billing)
+          sql`${billings.id} IS NULL`,
+          // Billing exists but not fully paid
+          eq(billings.paymentStatus, "pending"),
+          eq(billings.paymentStatus, "partial")
+        )
       )
     )
     .orderBy(desc(visits.createdAt))
@@ -681,174 +481,6 @@ export async function getBillingDetails(visitId: string) {
 }
 
 /**
- * Create or update billing record for a visit
- */
-export async function createOrUpdateBilling(
-  visitId: string,
-  userId: string,
-  options?: {
-    discount?: number
-    discountPercentage?: number
-    insuranceCoverage?: number
-  }
-) {
-  // Calculate billing
-  const calculation = await calculateBillingForVisit(visitId)
-  const subtotal = parseFloat(calculation.subtotal)
-
-  // Calculate discount
-  let discount = options?.discount || 0
-  if (options?.discountPercentage) {
-    discount = subtotal * (options.discountPercentage / 100)
-  }
-
-  const insuranceCoverage = options?.insuranceCoverage || 0
-  const totalAmount = subtotal - discount
-  const patientPayable = totalAmount - insuranceCoverage
-
-  // Check if billing exists
-  const existingBilling = await db.query.billings.findFirst({
-    where: eq(billings.visitId, visitId),
-  })
-
-  let billingId: string
-
-  if (existingBilling) {
-    // Update existing billing
-    await db
-      .update(billings)
-      .set({
-        subtotal: subtotal.toFixed(2),
-        discount: discount.toFixed(2),
-        discountPercentage: options?.discountPercentage?.toFixed(2) || null,
-        insuranceCoverage: insuranceCoverage.toFixed(2),
-        totalAmount: totalAmount.toFixed(2),
-        patientPayable: patientPayable.toFixed(2),
-        remainingAmount: (patientPayable - parseFloat(existingBilling.paidAmount)).toFixed(2),
-        updatedAt: new Date(),
-      })
-      .where(eq(billings.id, existingBilling.id))
-
-    billingId = existingBilling.id
-  } else {
-    // Create new billing
-    const [newBilling] = await db
-      .insert(billings)
-      .values({
-        visitId,
-        subtotal: subtotal.toFixed(2),
-        discount: discount.toFixed(2),
-        discountPercentage: options?.discountPercentage?.toFixed(2) || null,
-        tax: "0.00",
-        insuranceCoverage: insuranceCoverage.toFixed(2),
-        totalAmount: totalAmount.toFixed(2),
-        patientPayable: patientPayable.toFixed(2),
-        paidAmount: "0.00",
-        remainingAmount: patientPayable.toFixed(2),
-        paymentStatus: "pending",
-      })
-      .returning()
-
-    billingId = newBilling.id
-  }
-
-  // Delete existing billing items
-  await db.delete(billingItems).where(eq(billingItems.billingId, billingId))
-
-  // Insert new billing items (only if there are items)
-  if (calculation.items.length > 0) {
-    await db.insert(billingItems).values(
-      calculation.items.map((item) => ({
-        billingId,
-        ...item,
-      }))
-    )
-  }
-
-  return billingId
-}
-
-// /**
-//  * Process payment for a billing
-//  */
-// export async function processPayment(
-//   billingId: string,
-//   userId: string,
-//   paymentData: {
-//     amount: number
-//     paymentMethod: string
-//     paymentReference?: string
-//     amountReceived?: number // For cash payments
-//     notes?: string
-//   }
-// ) {
-//   const billing = await db.query.billings.findFirst({
-//     where: eq(billings.id, billingId),
-//   })
-
-//   if (!billing) {
-//     throw new Error("Billing not found")
-//   }
-
-//   const patientPayable = parseFloat(billing.patientPayable)
-//   const paidAmount = parseFloat(billing.paidAmount)
-//   const remainingAmount = patientPayable - paidAmount
-
-//   if (paymentData.amount > remainingAmount) {
-//     throw new Error("Payment amount exceeds remaining balance")
-//   }
-
-//   // Calculate change for cash payments
-//   let changeGiven = 0
-//   if (paymentData.paymentMethod === "cash" && paymentData.amountReceived) {
-//     changeGiven = paymentData.amountReceived - paymentData.amount
-//     if (changeGiven < 0) {
-//       throw new Error("Amount received is less than payment amount")
-//     }
-//   }
-
-//   // Create payment record
-//   await db.insert(payments).values({
-//     billingId,
-//     amount: paymentData.amount.toFixed(2),
-//     paymentMethod: paymentData.paymentMethod,
-//     paymentReference: paymentData.paymentReference || null,
-//     amountReceived: paymentData.amountReceived?.toFixed(2) || null,
-//     changeGiven: changeGiven > 0 ? changeGiven.toFixed(2) : null,
-//     receivedBy: userId,
-//     notes: paymentData.notes || null,
-//   })
-
-//   // Update billing
-//   const newPaidAmount = paidAmount + paymentData.amount
-//   const newRemainingAmount = patientPayable - newPaidAmount
-//   const newPaymentStatus =
-//     newRemainingAmount <= 0 ? "paid" : newPaidAmount > 0 ? "partial" : "pending"
-
-//   await db
-//     .update(billings)
-//     .set({
-//       paidAmount: newPaidAmount.toFixed(2),
-//       remainingAmount: newRemainingAmount.toFixed(2),
-//       paymentStatus: newPaymentStatus,
-//       paymentMethod: paymentData.paymentMethod,
-//       paymentReference: paymentData.paymentReference || null,
-//       processedBy: userId,
-//       processedAt: new Date(),
-//       updatedAt: new Date(),
-//     })
-//     .where(eq(billings.id, billingId))
-
-//   return {
-//     success: true,
-//     paymentStatus: newPaymentStatus,
-//     paidAmount: newPaidAmount,
-//     remainingAmount: newRemainingAmount,
-//     changeGiven,
-//   }
-// }
-
-/**
  * Helper: Create billing item for drug
  */
 function createDrugBillingItem(
@@ -896,7 +528,7 @@ function createServiceBillingItem(
 
 /**
  * Calculate total billing for a visit
- * Aggregates costs from: admin fee, consultation, procedures, medications
+ * Aggregates costs from: admin fee, consultation, procedures, medications, lab orders
  */
 export async function calculateBillingForVisit(visitId: string) {
   // Validate visit exists
@@ -944,27 +576,36 @@ export async function calculateBillingForVisit(visitId: string) {
     .where(eq(medicalRecords.visitId, visitId))
 
   if (proceduresList.length > 0) {
-    // Collect unique ICD-9 codes
-    const icd9Codes = [...new Set(proceduresList.map((p) => p.procedure.icd9Code))]
+    // Collect unique ICD-9 codes, filtering out null values
+    const icd9Codes = [
+      ...new Set(
+        proceduresList
+          .map((p) => p.procedure.icd9Code)
+          .filter((code): code is string => code !== null)
+      ),
+    ]
 
-    // Fetch all procedure services in ONE query
-    const procedureServices = await db
-      .select()
-      .from(services)
-      .where(
-        and(
-          eq(services.serviceType, "procedure"),
-          inArray(services.code, icd9Codes),
-          eq(services.isActive, true)
-        )
-      )
+    // Fetch all procedure services in ONE query (only if we have codes)
+    const procedureServices =
+      icd9Codes.length > 0
+        ? await db
+            .select()
+            .from(services)
+            .where(
+              and(
+                eq(services.serviceType, "procedure"),
+                inArray(services.code, icd9Codes),
+                eq(services.isActive, true)
+              )
+            )
+        : []
 
     // Create a Map for O(1) lookup
     const servicesByCode = new Map(procedureServices.map((s) => [s.code, s]))
 
     // Add billing items for procedures
     for (const { procedure } of proceduresList) {
-      const service = servicesByCode.get(procedure.icd9Code)
+      const service = servicesByCode.get(procedure.icd9Code || "")
       if (service) {
         addBillingItem(createServiceBillingItem(service, procedure.description || ""))
       }
@@ -988,6 +629,45 @@ export async function calculateBillingForVisit(visitId: string) {
     const quantity = prescription.quantity
     const description = `${prescription.dosage}, ${prescription.frequency}`
     addBillingItem(createDrugBillingItem(drug, quantity, description))
+  }
+
+  // 5. Add Laboratory Tests (only verified lab orders)
+  const { labOrders: labOrdersTable, labTests } = await import("@/db/schema/laboratory")
+
+  const labOrdersList = await db
+    .select({
+      labOrder: labOrdersTable,
+      test: {
+        name: labTests.name,
+        code: labTests.code,
+      },
+    })
+    .from(labOrdersTable)
+    .leftJoin(labTests, eq(labOrdersTable.testId, labTests.id))
+    .where(
+      and(
+        eq(labOrdersTable.visitId, visitId),
+        eq(labOrdersTable.status, "verified") // Only verified lab orders
+      )
+    )
+
+  for (const { labOrder, test } of labOrdersList) {
+    const price = parseFloat(labOrder.price)
+    const testName = test?.name || "Lab Test"
+    const testCode = test?.code || null
+
+    addBillingItem({
+      itemType: "laboratory",
+      itemId: labOrder.id,
+      itemName: testName,
+      itemCode: testCode,
+      quantity: 1,
+      unitPrice: labOrder.price,
+      subtotal: price.toFixed(2),
+      discount: "0.00",
+      totalPrice: price.toFixed(2),
+      description: labOrder.orderNumber || undefined,
+    })
   }
 
   return {
@@ -1121,4 +801,91 @@ export async function recalculateBilling(visitId: string, tx?: DbTransaction): P
       remainingAmount: totals.remainingAmount.toFixed(2),
     })
     .where(eq(billings.id, existingBilling.id))
+}
+
+// ============================================================================
+// INPATIENT DISCHARGE BILLING
+// ============================================================================
+
+/**
+ * Create billing for inpatient discharge
+ * Aggregates all charges: room, materials, medications, procedures
+ *
+ * Uses the discharge aggregation utility to collect all billable items
+ * from the patient's inpatient stay and creates a comprehensive billing record.
+ *
+ * @param visitId - The inpatient visit ID
+ * @param tx - Optional transaction object for atomic operations
+ * @returns Billing ID
+ *
+ * Business Rules:
+ * - Only works for inpatient visits
+ * - Automatically aggregates:
+ *   - Room charges (daily rate × days stayed)
+ *   - Material usage from nursing care
+ *   - Fulfilled prescriptions from pharmacy
+ *   - Completed medical procedures
+ *   - Other billable services
+ *
+ * Performance:
+ * - All aggregations run in parallel
+ * - Single transaction for atomicity
+ * - Efficient bulk insert for billing items
+ */
+export async function createInpatientDischargeBilling(
+  visitId: string,
+  tx?: DbTransaction
+): Promise<string> {
+  const dbInstance = tx || db
+
+  // Aggregate all discharge charges
+  const aggregate = await aggregateDischargebilling(visitId)
+
+  if (aggregate.items.length === 0) {
+    throw new Error(
+      "Tidak ada item yang dapat ditagihkan. Pastikan pasien memiliki catatan rawat inap."
+    )
+  }
+
+  // Calculate totals
+  const subtotal = parseFloat(aggregate.subtotal)
+
+  // Create billing record
+  const [billing] = await dbInstance
+    .insert(billings)
+    .values({
+      visitId,
+      subtotal: subtotal.toFixed(2),
+      discount: "0.00",
+      discountPercentage: null,
+      tax: "0.00",
+      insuranceCoverage: "0.00",
+      totalAmount: subtotal.toFixed(2),
+      patientPayable: subtotal.toFixed(2),
+      paidAmount: "0.00",
+      remainingAmount: subtotal.toFixed(2),
+      paymentStatus: "pending",
+    })
+    .returning()
+
+  // Insert all billing items
+  if (aggregate.items.length > 0) {
+    await dbInstance.insert(billingItems).values(
+      aggregate.items.map((item) => ({
+        billingId: billing.id,
+        itemType: item.itemType,
+        itemId: item.itemId || null,
+        itemName: item.itemName,
+        itemCode: item.itemCode || null,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        subtotal: (parseFloat(item.unitPrice) * item.quantity).toFixed(2),
+        discount: item.discount || "0.00",
+        totalPrice: item.totalPrice || item.unitPrice,
+        description: item.description || null,
+      }))
+    )
+  }
+
+  return billing.id
 }

@@ -16,6 +16,9 @@ import { ResponseApi, ResponseError } from "@/types/api"
 import { NextRequest, NextResponse } from "next/server"
 import { createPoliSchema } from "@/lib/validations/poli.validation"
 import z from "zod"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { Poli } from "@/types/poli"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * Get all active polis

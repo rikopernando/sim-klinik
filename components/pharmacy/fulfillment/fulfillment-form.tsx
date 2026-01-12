@@ -5,11 +5,10 @@
 
 import { memo, useEffect, useState } from "react"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
 import { FormField } from "@/components/ui/form-field"
-import { getPharmacists, Pharmacist } from "@/lib/services/pharmacist.service"
+import { getPharmacists } from "@/lib/services/pharmacist.service"
 import {
   Select,
   SelectContent,
@@ -17,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { Pharmacist } from "@/types/user"
 
 interface FulfillmentFormProps {
   selectedBatch: DrugInventoryWithDetails | null
@@ -36,7 +36,6 @@ export const FulfillmentForm = memo(function FulfillmentForm({
   prescriptionQuantity,
   unit,
   dispensedQuantity,
-  fulfilledBy,
   notes,
   isSubmitting,
   onDispensedQuantityChange,
@@ -48,6 +47,8 @@ export const FulfillmentForm = memo(function FulfillmentForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [pharmacists, setPharmacists] = useState<Pharmacist[]>([])
   const [isLoading, setLoading] = useState(false)
+
+  console.log({ errorMessage })
 
   useEffect(() => {
     // Fetch doctors from API using service

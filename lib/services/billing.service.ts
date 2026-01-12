@@ -6,44 +6,15 @@
 import axios from "axios"
 
 import { ResponseApi } from "@/types/api"
-import type { BillingDetails, PaymentStatus } from "@/types/billing"
+import type {
+  BillingDetails,
+  BillingQueueItem,
+  ProcessPaymentResult,
+  DischargeBillingSummary,
+} from "@/types/billing"
 
 import { ApiServiceError, handleApiError } from "./api.service"
-
-interface Patient {
-  id: string
-  mrNumber: string
-  name: string
-  nik?: string | null
-}
-
-interface Visit {
-  id: string
-  visitNumber: string
-  visitType: string
-  status: string
-  createdAt: Date | string
-}
-
-interface Billing {
-  id: string
-  totalAmount: string
-  paidAmount: string
-  remainingAmount: string
-  paymentStatus: PaymentStatus
-}
-
-interface MedicalRecord {
-  id: string
-  isLocked: boolean
-}
-
-export interface BillingQueueItem {
-  visit: Visit
-  patient: Patient
-  billing: Billing | null
-  medicalRecord: MedicalRecord
-}
+import { ProcessPaymentInput } from "@/lib/billing/validation"
 
 /**
  * Get billing queue
@@ -79,6 +50,68 @@ export async function getBillingDetails(visitId: string): Promise<BillingDetails
     return response.data.data
   } catch (error) {
     console.error("Error in getBillingDetails service:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Process payment with optional discount
+ * Handles discount application and payment in a single transaction
+ */
+export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
+  try {
+    await axios.post<ResponseApi<ProcessPaymentResult>>("/api/billing/process-payment", data)
+  } catch (error) {
+    console.error("Error in processPaymentWithDiscount service:", error)
+    handleApiError(error)
+  }
+}
+
+// ============================================================================
+// INPATIENT DISCHARGE BILLING
+// ============================================================================
+
+/**
+ * Get discharge billing summary
+ * Fetches aggregated billing preview with itemized breakdown
+ */
+export async function getDischargeBillingSummary(
+  visitId: string
+): Promise<DischargeBillingSummary> {
+  try {
+    const response = await axios.get<ResponseApi<DischargeBillingSummary>>(
+      `/api/billing/discharge/${visitId}`
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    console.error("Error in getDischargeBillingSummary service:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Create discharge billing record
+ * Creates billing from aggregated inpatient charges with optional adjustment
+ * Called by clinical staff when completing inpatient treatment
+ */
+export async function createDischargeBilling(
+  visitId: string,
+  billingAdjustment?: number,
+  adjustmentNote?: string
+) {
+  try {
+    await axios.post("/api/billing/discharge/create", {
+      visitId,
+      billingAdjustment,
+      adjustmentNote,
+    })
+  } catch (error) {
+    console.error("Error in createDischargeBilling service:", error)
     handleApiError(error)
   }
 }

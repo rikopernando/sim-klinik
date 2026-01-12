@@ -6,7 +6,7 @@ import { db } from "@/db"
 import { diagnoses, medicalRecords } from "@/db/schema"
 import { Diagnosis } from "@/types/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { diagnosisFormSchema } from "@/lib/validations/medical-record"
 
 /**

@@ -227,6 +227,7 @@ export interface PrescriptionQueueItem {
   visit: {
     id: string
     visitNumber: string
+    visitType: "outpatient" | "inpatient" | "emergency" // Added to distinguish prescription type
   }
   patient: {
     id: string
@@ -237,7 +238,16 @@ export interface PrescriptionQueueItem {
     id: string
     name: string
   } | null
-  medicalRecordId: string
+  medicalRecordId: string | null // NULL for inpatient prescriptions
+  // Inpatient-specific fields (NULL for outpatient)
+  room: {
+    id: string
+    roomNumber: string
+    roomType: string
+  } | null
+  bedAssignment: {
+    bedNumber: string
+  } | null
   prescriptions: {
     prescription: Prescription
     drug: Drug

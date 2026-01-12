@@ -19,11 +19,14 @@ export * from "./medical-records"
 // ICD-10 Codes
 export * from "./icd10"
 
-// Pharmacy
-export * from "./pharmacy"
+// Inventory (unified drugs and materials - previously "pharmacy")
+export * from "./inventory"
 
 // Inpatient care
 export * from "./inpatient"
 
 // Billing
 export * from "./billing"
+
+// Laboratory & Radiology
+export * from "./laboratory"

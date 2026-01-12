@@ -1,4 +1,4 @@
-import { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 import { createSSEStream } from "@/lib/notifications/sse-manager"
 import { withRBAC } from "@/lib/rbac/middleware"
 
@@ -8,12 +8,12 @@ import { withRBAC } from "@/lib/rbac/middleware"
  * Requires: prescriptions:read permission (pharmacist role)
  */
 export const GET = withRBAC(
-  async (request: NextRequest, { user }) => {
+  async () => {
     // Create SSE stream for pharmacy channel
     const stream = createSSEStream("pharmacy")
 
     // Return SSE response
-    return new Response(stream, {
+    return new NextResponse(stream, {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache, no-transform",

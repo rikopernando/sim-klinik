@@ -7,7 +7,7 @@ import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { getInitialVisitStatus } from "@/types/visit-status"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { RegisteredVisit } from "@/types/visit"
 
 /**
@@ -80,17 +80,6 @@ export const POST = withRBAC(
         const response: ResponseError<unknown> = {
           error: {},
           message: "Chief complaint is required for emergency visits",
-          status: HTTP_STATUS_CODES.BAD_REQUEST,
-        }
-        return NextResponse.json(response, {
-          status: HTTP_STATUS_CODES.BAD_REQUEST,
-        })
-      }
-
-      if (validatedData.visitType === "inpatient" && !validatedData.roomId) {
-        const response: ResponseError<unknown> = {
-          error: {},
-          message: "Room ID is required for inpatient visits",
           status: HTTP_STATUS_CODES.BAD_REQUEST,
         }
         return NextResponse.json(response, {

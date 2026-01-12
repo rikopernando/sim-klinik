@@ -31,7 +31,7 @@ export const visits = pgTable("visits", {
   dischargeDate: timestamp("discharge_date"),
 
   // Common fields
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, in_progress, completed, cancelled
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, registered, waiting, in_examination, examined, ready_for_billing, billed, paid, completed, cancelled
   arrivalTime: timestamp("arrival_time").defaultNow().notNull(),
   startTime: timestamp("start_time"), // When consultation/treatment starts
   endTime: timestamp("end_time"), // When visit is completed

@@ -8,13 +8,13 @@ import { NextRequest, NextResponse } from "next/server"
 
 import { getBillingDetails } from "@/lib/billing/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 
 export const GET = withRBAC(
-  async (_request: NextRequest, context: { params: Promise<{ visitId: string }> }) => {
+  async (_request: NextRequest, context: { params: { visitId: string } }) => {
     try {
-      const { visitId } = await context.params
+      const { visitId } = context.params
 
       if (!visitId) {
         const response: ResponseError<unknown> = {
@@ -32,7 +32,7 @@ export const GET = withRBAC(
       const response: ResponseApi<typeof billingDetails> = {
         data: billingDetails,
         message: "Billing details fetched successfully",
-        status: HTTP_STATUS_CODES.CREATED,
+        status: HTTP_STATUS_CODES.OK,
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })

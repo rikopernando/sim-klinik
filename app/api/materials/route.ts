@@ -1,125 +1,174 @@
 /**
- * Medical Materials/Supplies Usage API
- * Track materials used for inpatient care (for billing purposes)
+ * Medical Materials/Supplies API
+ * - GET: Fetch available materials from unified inventory
+ * - POST: Record material usage for inpatient care
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { materialUsage } from "@/db/schema/inpatient"
-import { visits } from "@/db/schema/visits"
-import { eq, desc } from "drizzle-orm"
 import { z } from "zod"
+import { eq, and, ilike, sql } from "drizzle-orm"
+
+import { db } from "@/db"
+import { visits } from "@/db/schema/visits"
+import { inventoryItems, inventoryBatches } from "@/db/schema/inventory"
+import { materialUsageSchema } from "@/lib/inpatient/validation"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { recordMaterialUsage, checkVisitLocked } from "@/lib/inpatient/api-service"
+import { withRBAC } from "@/lib/rbac/middleware"
 
 /**
- * Material Usage Schema
+ * GET /api/materials
+ * Fetch available materials from unified inventory
+ * Query params:
+ * - search: Filter by material name (optional)
+ * - limit: Number of results (default: 50)
+ * Requires: inpatient:read permission
  */
-const materialUsageSchema = z.object({
-  visitId: z.number().int().positive("Visit ID harus valid"),
-  materialName: z.string().min(1, "Nama material wajib diisi"),
-  quantity: z.number().int().positive("Jumlah harus positif"),
-  unit: z.string().min(1, "Satuan wajib diisi"),
-  unitPrice: z.string().min(1, "Harga satuan wajib diisi"),
-  usedBy: z.string().optional(),
-  notes: z.string().optional(),
-})
+export const GET = withRBAC(
+  async (request: NextRequest) => {
+    try {
+      const { searchParams } = new URL(request.url)
+      const search = searchParams.get("search") || ""
+      const limit = parseInt(searchParams.get("limit") || "50")
+
+      // Build query conditions
+      const conditions = [
+        eq(inventoryItems.itemType, "material"),
+        eq(inventoryItems.isActive, true),
+      ]
+
+      if (search) {
+        conditions.push(ilike(inventoryItems.name, `%${search}%`))
+      }
+
+      // Fetch materials with stock information
+      const materials = await db
+        .select({
+          id: inventoryItems.id,
+          name: inventoryItems.name,
+          category: inventoryItems.category,
+          unit: inventoryItems.unit,
+          price: inventoryItems.price,
+          minimumStock: inventoryItems.minimumStock,
+          description: inventoryItems.description,
+          // Aggregate stock from all batches
+          totalStock: sql<number>`COALESCE(SUM(${inventoryBatches.stockQuantity}), 0)`.as(
+            "total_stock"
+          ),
+        })
+        .from(inventoryItems)
+        .leftJoin(
+          inventoryBatches,
+          and(
+            eq(inventoryBatches.drugId, inventoryItems.id),
+            sql`${inventoryBatches.expiryDate} >= NOW()` // Only count unexpired stock
+          )
+        )
+        .where(and(...conditions))
+        .groupBy(inventoryItems.id)
+        .orderBy(inventoryItems.name)
+        .limit(limit)
+
+      const response: ResponseApi<typeof materials> = {
+        data: materials,
+        message: "Materials fetched successfully",
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to fetch materials"
+      const response: ResponseError<unknown> = {
+        error: errorMessage,
+        message: errorMessage,
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
+    }
+  },
+  { permissions: ["inpatient:read"] }
+)
 
 /**
  * POST /api/materials
  * Record material usage
+ * Requires: inpatient:write permission
  */
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
+export const POST = withRBAC(
+  async (request: NextRequest) => {
+    try {
+      const body = await request.json()
 
-    // Validate input
-    const validatedData = materialUsageSchema.parse(body)
+      // Validate input
+      const validatedData = materialUsageSchema.parse(body)
 
-    // Check if visit exists
-    const visit = await db
-      .select()
-      .from(visits)
-      .where(eq(visits.id, validatedData.visitId))
-      .limit(1)
+      // Check if visit exists
+      const visit = await db
+        .select()
+        .from(visits)
+        .where(eq(visits.id, validatedData.visitId))
+        .limit(1)
 
-    if (visit.length === 0) {
-      return NextResponse.json({ error: "Visit not found" }, { status: 404 })
-    }
+      if (visit.length === 0) {
+        const response: ResponseError<unknown> = {
+          error: {},
+          message: "Associated visit not found",
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        }
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
+      }
 
-    // Calculate total price
-    const unitPrice = parseFloat(validatedData.unitPrice)
-    const totalPrice = (unitPrice * validatedData.quantity).toFixed(2)
+      // Check if visit is locked
+      const lockError = await checkVisitLocked(validatedData.visitId)
+      if (lockError) {
+        const response: ResponseError<unknown> = {
+          error: "Visit locked",
+          status: HTTP_STATUS_CODES.FORBIDDEN,
+          message: lockError,
+        }
+        return NextResponse.json(response, { status: HTTP_STATUS_CODES.FORBIDDEN })
+      }
 
-    // Create material usage record
-    const newMaterialUsage = await db
-      .insert(materialUsage)
-      .values({
-        visitId: validatedData.visitId,
-        materialName: validatedData.materialName,
-        quantity: validatedData.quantity,
-        unit: validatedData.unit,
-        unitPrice: validatedData.unitPrice,
-        totalPrice,
-        usedBy: validatedData.usedBy || null,
-        usedAt: new Date(),
-        notes: validatedData.notes || null,
-        createdAt: new Date(),
-      })
-      .returning()
+      await recordMaterialUsage(validatedData)
 
-    return NextResponse.json(
-      {
-        success: true,
+      const response: ResponseApi = {
         message: "Material usage recorded successfully",
-        data: newMaterialUsage[0],
-      },
-      { status: 201 }
-    )
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 }
-      )
+        status: HTTP_STATUS_CODES.CREATED,
+      }
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.CREATED })
+    } catch (error) {
+      console.error("Error recording material usage:", error)
+      if (error instanceof z.ZodError) {
+        const response: ResponseError<unknown> = {
+          error: error.issues,
+          message: "Validation error",
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        })
+      }
+
+      // Handle business logic errors
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to record material usage"
+      const response: ResponseError<unknown> = {
+        error: errorMessage,
+        message: errorMessage,
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
-
-    console.error("Material usage creation error:", error)
-    return NextResponse.json({ error: "Failed to record material usage" }, { status: 500 })
-  }
-}
-
-/**
- * GET /api/materials?visitId=X
- * Get material usage for a visit
- */
-export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams
-    const visitId = searchParams.get("visitId")
-
-    if (!visitId) {
-      return NextResponse.json({ error: "Visit ID is required" }, { status: 400 })
-    }
-
-    // Get material usage records
-    const materials = await db
-      .select()
-      .from(materialUsage)
-      .where(eq(materialUsage.visitId, parseInt(visitId, 10)))
-      .orderBy(desc(materialUsage.usedAt))
-
-    // Calculate total cost
-    const totalCost = materials.reduce((sum, item) => {
-      return sum + parseFloat(item.totalPrice || "0")
-    }, 0)
-
-    return NextResponse.json({
-      success: true,
-      data: materials,
-      count: materials.length,
-      totalCost: totalCost.toFixed(2),
-    })
-  } catch (error) {
-    console.error("Material usage fetch error:", error)
-    return NextResponse.json({ error: "Failed to fetch material usage" }, { status: 500 })
-  }
-}
+  },
+  { permissions: ["inpatient:write"] }
+)

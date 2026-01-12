@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 
 interface Procedure {
   id: string
-  icd9Code: string
+  icd9Code: string | null
   description: string
 }
 

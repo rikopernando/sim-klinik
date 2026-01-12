@@ -1,4 +1,4 @@
-# Codeguide Starter Fullstack
+# Klinik Bumi Andalas
 
 A modern web application starter template built with Next.js 15, featuring authentication, database integration, and dark mode support.
 

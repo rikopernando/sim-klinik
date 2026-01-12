@@ -4,7 +4,7 @@
  */
 
 import { useRef } from "react"
-import { User, RefreshCw, CreditCard, Percent, Printer } from "lucide-react"
+import { User, RefreshCw, CreditCard, Printer } from "lucide-react"
 
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
@@ -21,8 +21,7 @@ interface BillingDetailsPanelProps {
   billingDetails: BillingDetails | null
   isLoading: boolean
   onRefresh: () => void
-  onProcessPayment: () => void
-  onApplyDiscount?: () => void
+  onProcessPaymentWithDiscount: () => void
   isSubmitting?: boolean
 }
 
@@ -31,8 +30,7 @@ export function BillingDetailsPanel({
   billingDetails,
   isLoading,
   onRefresh,
-  onProcessPayment,
-  onApplyDiscount,
+  onProcessPaymentWithDiscount,
   isSubmitting = false,
 }: BillingDetailsPanelProps) {
   const printRef = useRef<HTMLDivElement>(null)
@@ -97,23 +95,16 @@ export function BillingDetailsPanel({
 
           {/* Action Buttons */}
           {!isPaid ? (
-            <>
-              {/* Payment Button */}
-              <div className="flex justify-end gap-3">
-                <Button onClick={onApplyDiscount} variant="outline" size="lg">
-                  <Percent className="mr-2 h-5 w-5" />
-                  Terapkan Diskon / Jaminan
-                </Button>
-                <Button onClick={onProcessPayment} size="lg" disabled={isSubmitting}>
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                </Button>
-              </div>
-            </>
+            <div className="flex justify-end">
+              <Button onClick={onProcessPaymentWithDiscount} size="lg" disabled={isSubmitting}>
+                <CreditCard className="mr-2 h-5 w-5" />
+                {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+              </Button>
+            </div>
           ) : (
             /* Print Receipt Button */
             <Card className="border-green-500 bg-green-50">
-              <CardContent className="pt-6">
+              <CardContent className="pt-0">
                 <Button
                   onClick={handlePrint}
                   variant="outline"

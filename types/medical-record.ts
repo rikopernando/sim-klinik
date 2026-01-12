@@ -8,7 +8,7 @@ import { Patient } from "./registration"
 export interface MedicalRecord {
   id: string
   visitId: string
-  doctorId: string
+  authorId: string
   soapSubjective: string | null
   soapObjective: string | null
   soapAssessment: string | null
@@ -35,22 +35,25 @@ export interface Diagnosis {
 
 export interface Procedure {
   id: string
-  medicalRecordId: string
+  medicalRecordId?: string | null
   serviceId: string | null
   serviceName: string | null
   servicePrice: string | null
-  icd9Code: string
+  icd9Code: string | null
   description: string
   performedBy: string | null
   performedByName: string | null
-  performedAt: Date
+  performedAt: Date | null
   notes: string | null
   createdAt: Date
 }
 
 export interface Prescription {
   id: string
-  medicalRecordId: string
+  medicalRecordId?: string | null
+  drugId: string
+  drugName?: string
+  drugPrice?: string
   dosage: string | null
   frequency: string
   duration: string | null
@@ -66,6 +69,7 @@ export interface Prescription {
   // Pharmacist-added prescription fields
   addedByPharmacist: boolean
   addedByPharmacistId: string | null
+  addedByPharmacistName?: string | null
   approvedBy: string | null
   approvedAt: Date | null
   pharmacistNote: string | null
@@ -93,11 +97,25 @@ export interface Visit {
   updatedAt: Date
 }
 
+export interface MedicalRecordLabOrder {
+  id: string
+  orderNumber: string | null
+  price: string
+  status: string | null
+  urgency: string | null
+  clinicalIndication: string | null
+  orderedAt: Date
+  testId: string | null
+  testName: string | null
+  testCode: string | null
+}
+
 export interface MedicalRecordData {
   medicalRecord: MedicalRecord
   diagnoses: Diagnosis[]
   procedures: Procedure[]
   prescriptions: Prescription[]
+  labOrders: MedicalRecordLabOrder[]
   visit: Visit
 }
 

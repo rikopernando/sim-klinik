@@ -7,7 +7,7 @@ import { z } from "zod"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { VisitStatus } from "@/types/visit-status"
 import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 const unlockSchema = z.object({
   id: z.string(),

@@ -67,7 +67,7 @@ export default function DoctorDashboard() {
           open={showHistory}
           onOpenChange={handleCloseHistory}
           patientId={selectedPatient.id}
-          patientName={selectedPatient.name}
+          // patientName={selectedPatient.name}
         />
       )}
     </div>

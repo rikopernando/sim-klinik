@@ -22,6 +22,30 @@ export function getCurrentLine(value: string, cursorPos: number): string {
 }
 
 /**
+ * Extract current search term in multi-value mode
+ * Gets text after the last delimiter for autocomplete filtering
+ */
+export function getCurrentSearchTerm(
+  value: string,
+  cursorPos: number,
+  delimiter: string = ", "
+): string {
+  const currentLine = getCurrentLine(value, cursorPos)
+
+  // Find the last delimiter position
+  const lastDelimiterIndex = Math.max(
+    currentLine.lastIndexOf(delimiter.trim()),
+    currentLine.lastIndexOf(",")
+  )
+
+  // Get text after last delimiter (or entire line if no delimiter)
+  const searchTerm =
+    lastDelimiterIndex === -1 ? currentLine : currentLine.substring(lastDelimiterIndex + 1)
+
+  return searchTerm.trim()
+}
+
+/**
  * Filter suggestions based on search term using fuzzy word matching
  * Searches across label, value, and category fields
  */
@@ -63,6 +87,62 @@ export function insertSuggestionAtLine(
   // Build new value
   const newValue = beforeCurrentLine + suggestionValue + textAfterCursor
   const newCursorPos = currentLineStart + suggestionValue.length
+
+  return { newValue, newCursorPos }
+}
+
+/**
+ * Build new text value with suggestion appended (multi-value mode)
+ * Appends suggestion with delimiter, allowing multiple values on the same line
+ */
+export function insertSuggestionMultiValue(
+  value: string,
+  cursorPosition: number,
+  suggestionValue: string,
+  delimiter: string = ", "
+): { newValue: string; newCursorPos: number } {
+  const textBeforeCursor = value.substring(0, cursorPosition)
+  const textAfterCursor = value.substring(cursorPosition)
+
+  // Get current line
+  const lines = textBeforeCursor.split("\n")
+  const currentLine = lines[lines.length - 1]
+
+  // Find the start of the current search term
+  // Look for delimiter or start of line
+  const lastDelimiterIndex = Math.max(
+    currentLine.lastIndexOf(delimiter.trim()),
+    currentLine.lastIndexOf(","),
+    -1
+  )
+
+  // Calculate where to insert (after the last delimiter or at the start of the line)
+  const insertStartPos = lastDelimiterIndex === -1 ? 0 : lastDelimiterIndex + 1
+  const currentLineStartInText = textBeforeCursor.lastIndexOf("\n") + 1
+  const absoluteInsertPos = currentLineStartInText + insertStartPos
+
+  // Get text before insertion point and after cursor
+  const beforeInsert = value.substring(0, absoluteInsertPos)
+  const afterCursor = value.substring(cursorPosition)
+
+  // Trim any whitespace at insertion point
+  const trimmedBeforeInsert = beforeInsert.trimEnd()
+
+  // Determine if we need to add delimiter before the new value
+  const needsDelimiterBefore =
+    trimmedBeforeInsert.length > 0 &&
+    !trimmedBeforeInsert.endsWith(delimiter.trim()) &&
+    !trimmedBeforeInsert.endsWith(",") &&
+    trimmedBeforeInsert.split("\n").pop()!.trim().length > 0
+
+  // Build the insertion text
+  const insertionText = needsDelimiterBefore
+    ? `${delimiter}${suggestionValue}${delimiter}`
+    : `${suggestionValue}${delimiter}`
+
+  // Build new value
+  const newValue = trimmedBeforeInsert + insertionText + afterCursor
+  const newCursorPos = trimmedBeforeInsert.length + insertionText.length
 
   return { newValue, newCursorPos }
 }

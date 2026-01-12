@@ -44,7 +44,7 @@ export type ServiceType =
 /**
  * Billing Item Type
  */
-export type BillingItemType = "service" | "drug" | "material" | "room"
+export type BillingItemType = "service" | "drug" | "material" | "room" | "laboratory"
 
 /**
  * Service Entity (Master Data)
@@ -194,13 +194,14 @@ export interface ServiceUpdateInput {
  */
 export interface BillingItemInput {
   itemType: BillingItemType
-  itemId?: number
+  itemId?: string
   itemName: string
   itemCode?: string
   quantity: number
   unitPrice: string
   discount?: string
   description?: string
+  totalPrice?: string
 }
 
 /**
@@ -225,6 +226,22 @@ export interface PaymentInput {
   paymentReference?: string
   amountReceived?: string // For cash payments
   receivedBy: string
+  notes?: string
+}
+
+/**
+ * Process Payment Data (Merged Workflow)
+ * Used for the unified discount + payment dialog
+ */
+export interface ProcessPaymentData {
+  discountType: string
+  discountPercentage?: string
+  discount?: string
+  insuranceCoverage?: string
+  paymentMethod: PaymentMethod
+  amountReceived?: string
+  amount: string
+  paymentReference?: string
   notes?: string
 }
 
@@ -328,4 +345,61 @@ export interface BillingDetails {
     visitNumber: string
     createdAt: Date | string
   }
+}
+
+export interface ProcessPaymentResult {
+  payment: {
+    id: string
+    amount: string
+    paymentMethod: string
+    changeGiven: string | null
+  }
+  discountApplied: boolean
+  finalTotal: string
+  paidAmount: string
+  remainingAmount: string
+  paymentStatus: PaymentStatus
+  change: string | null
+}
+
+/**
+ * Discharge Billing Summary
+ * Aggregated billing preview for inpatient discharge
+ */
+export interface DischargeBillingSummary {
+  visitId: string
+  breakdown: {
+    roomCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+    materialCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+    medicationCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+    procedureCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+    laboratoryCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+    serviceCharges: {
+      label: string
+      amount: string
+      count: number
+    }
+  }
+  subtotal: string
+  totalItems: number
 }

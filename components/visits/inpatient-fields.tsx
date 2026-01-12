@@ -1,52 +1,27 @@
 /**
  * Inpatient Fields Component
- * Form fields specific to inpatient visits (Room selection)
+ * Information display for inpatient visits
+ * Note: Bed assignment is done separately after registration
  */
 
-import { FieldErrors, UseFormSetValue } from "react-hook-form"
-import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { type VisitFormData } from "@/lib/validations/registration"
+import { Info } from "lucide-react"
 
-interface InpatientFieldsProps {
-  errors: FieldErrors<VisitFormData>
-  setValue: UseFormSetValue<VisitFormData>
-}
-
-// TODO: Replace with dynamic room data from API
-const AVAILABLE_ROOMS = [
-  { id: "1", name: "Kamar VIP 101" },
-  { id: "2", name: "Kamar Kelas 1 - 201" },
-  { id: "3", name: "Kamar Kelas 2 - 301" },
-] as const
-
-export function InpatientFields({ errors, setValue }: InpatientFieldsProps) {
+export function InpatientFields() {
   return (
-    <FieldGroup>
-      <Field className="gap-2">
-        <FieldLabel htmlFor="roomId">
-          Kamar <span className="text-destructive">*</span>
-        </FieldLabel>
-        <Select onValueChange={(value) => setValue("roomId", value)}>
-          <SelectTrigger className={errors.roomId ? "border-destructive w-full" : "w-full"}>
-            <SelectValue placeholder="Pilih kamar" />
-          </SelectTrigger>
-          <SelectContent>
-            {AVAILABLE_ROOMS.map((room) => (
-              <SelectItem key={room.id} value={room.id}>
-                {room.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {errors.roomId && <FieldError>{errors.roomId.message}</FieldError>}
-      </Field>
-    </FieldGroup>
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-950/20">
+      <div className="flex items-start gap-3">
+        <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+        <div className="space-y-2">
+          <p className="text-sm font-medium text-blue-900 dark:text-blue-100">Pasien Rawat Inap</p>
+          <p className="text-sm text-blue-700 dark:text-blue-300">
+            Setelah pendaftaran selesai, Anda akan diarahkan untuk mengalokasikan kamar dan bed
+            untuk pasien ini.
+          </p>
+          <p className="text-xs text-blue-600 dark:text-blue-400">
+            💡 Alokasi bed dapat dilakukan nanti jika belum ada kamar yang tersedia
+          </p>
+        </div>
+      </div>
+    </div>
   )
 }

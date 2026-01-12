@@ -88,7 +88,7 @@ export function AddPrescriptionDialog({
           : { prescriptions: [DEFAULT_PRESCRIPTION_ITEM] }
 
       form.reset(initialData)
-      setDrugSearches(isEditMode && prescription ? { 0: prescription.drugName } : {})
+      setDrugSearches(isEditMode && prescription ? { 0: prescription.drugName || "" } : {})
       setError(null)
     }
   }, [open, prescription, isEditMode, form])

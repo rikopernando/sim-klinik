@@ -185,13 +185,6 @@ export function getPaymentMethodLabel(method: string): string {
 }
 
 /**
- * Check if billing can be discharged (billing gate)
- */
-export function canDischarge(paymentStatus: PaymentStatus): boolean {
-  return paymentStatus === "paid"
-}
-
-/**
  * Format date for display
  */
 export function formatDate(dateString: string | null): string {

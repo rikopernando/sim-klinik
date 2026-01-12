@@ -4,11 +4,12 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
-import { zodResolver } from "@hookform/resolvers/zod"
+import { Loader2, Eye, EyeOff } from "lucide-react"
 import { z } from "zod"
+
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Card,
   CardContent,
@@ -27,7 +28,6 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { signUp } from "@/lib/auth-client"
-import { Loader2, Eye, EyeOff } from "lucide-react"
 
 const signUpSchema = z
   .object({
@@ -82,6 +82,7 @@ export default function SignUpPage() {
       } else {
         router.push("/dashboard")
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       setError("An unexpected error occurred")
     } finally {

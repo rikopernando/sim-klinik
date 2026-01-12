@@ -51,6 +51,19 @@ export default function RegistrationPage() {
     setStep("search")
   }
 
+  const handleAssignBed = () => {
+    const paramsObj = {
+      mrNumber: registeredVisit?.patient?.mrNumber || "",
+      visitNumber: registeredVisit?.visit?.visitNumber || "",
+      assignBed: registeredVisit?.visit?.id || "",
+      patientName: registeredVisit?.patient?.name || "",
+    }
+
+    const queryString = new URLSearchParams(paramsObj).toString()
+
+    router.push(`/dashboard/inpatient/rooms?${queryString}`)
+  }
+
   return (
     <div className="container mx-auto max-w-4xl space-y-6 p-6">
       {/* Header */}
@@ -186,19 +199,31 @@ export default function RegistrationPage() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              {/* Bed Assignment Button (Inpatient only) */}
+              {registeredVisit.visit?.visitType === "inpatient" && (
+                <Button onClick={handleAssignBed} size="lg" variant="secondary" className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Alokasi Bed Sekarang
+                </Button>
+              )}
+
               <Button onClick={handleNewRegistration} size="lg" className="gap-2">
                 <UserPlus className="h-4 w-4" />
                 Daftar Pasien Lain
               </Button>
-              <Button
-                onClick={() => router.push("/dashboard/queue")}
-                variant="outline"
-                size="lg"
-                className="gap-2"
-              >
-                <Eye className="h-4 w-4" />
-                Lihat Antrian
-              </Button>
+
+              {registeredVisit.visit?.visitType === "outpatient" && (
+                <Button
+                  onClick={() => router.push("/dashboard/queue")}
+                  variant="outline"
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Eye className="h-4 w-4" />
+                  Lihat Antrian
+                </Button>
+              )}
+
               <Button
                 onClick={() => router.push("/dashboard/patients")}
                 variant="outline"

@@ -4,13 +4,11 @@
  */
 
 import { useState } from "react"
-import {
-  fulfillPrescription as fulfillPrescriptionService,
-  type PrescriptionFulfillmentData,
-} from "@/lib/services/pharmacy.service"
+import { fulfillPrescription as fulfillPrescriptionService } from "@/lib/services/pharmacy.service"
+import { PrescriptionFulfillmentInput } from "@/types/pharmacy"
 
 interface UsePrescriptionFulfillmentReturn {
-  fulfillPrescription: (data: PrescriptionFulfillmentData) => Promise<boolean>
+  fulfillPrescription: (data: PrescriptionFulfillmentInput) => Promise<boolean>
   isSubmitting: boolean
   error: string | null
   success: boolean
@@ -21,17 +19,13 @@ export function usePrescriptionFulfillment(): UsePrescriptionFulfillmentReturn {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const fulfillPrescription = async (data: PrescriptionFulfillmentData): Promise<boolean> => {
+  const fulfillPrescription = async (data: PrescriptionFulfillmentInput): Promise<boolean> => {
     try {
       setIsSubmitting(true)
       setError(null)
       setSuccess(false)
 
-      const result = await fulfillPrescriptionService(data)
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to fulfill prescription")
-      }
+      await fulfillPrescriptionService(data)
 
       setSuccess(true)
       return true

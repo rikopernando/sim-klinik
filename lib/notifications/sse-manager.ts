@@ -204,6 +204,7 @@ export function createSSEStream(channel: string) {
         try {
           const heartbeat = encoder.encode(`: heartbeat\n\n`)
           controller.enqueue(heartbeat)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
           clearInterval(heartbeatInterval)
           sseManager.removeConnection(channel, controller)

@@ -7,7 +7,7 @@ import { FormField } from "@/components/ui/form-field"
 import { cn } from "@/lib/utils"
 
 interface DatePickerFieldProps {
-  label: string
+  label?: string
   value?: Date
   onChange: (date: Date | undefined) => void
   required?: boolean
@@ -16,6 +16,7 @@ interface DatePickerFieldProps {
   endMonth?: Date
   startMonth?: Date
   disabled?: boolean
+  dateFormat?: string
 }
 
 export function DatePickerField({
@@ -27,6 +28,7 @@ export function DatePickerField({
   disabled = false,
   placeholder = "Pilih tanggal",
   startMonth = new Date("1900-01-01"),
+  dateFormat = "dd MMMM yyyy",
   endMonth,
 }: DatePickerFieldProps) {
   return (
@@ -42,7 +44,7 @@ export function DatePickerField({
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {value ? format(value, "dd MMMM yyyy") : placeholder}
+            {value ? format(value, dateFormat) : placeholder}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

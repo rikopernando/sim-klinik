@@ -5,6 +5,7 @@
 
 import { memo } from "react"
 import { FileText, Stethoscope, Pill, ClipboardList } from "lucide-react"
+import { IconFlask } from "@tabler/icons-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type MedicalRecordData } from "@/types/medical-record"
 
@@ -12,6 +13,7 @@ import { SoapForm } from "./soap-form"
 import { DiagnosisTab } from "./diagnosis-tab"
 import { PrescriptionTab } from "./prescription-tab"
 import { ProcedureTab } from "./procedure-tab"
+import { LabOrdersTab } from "./lab-orders-tab"
 
 interface MedicalRecordTabsProps {
   recordData: MedicalRecordData
@@ -121,6 +123,23 @@ const ProcedureTabContent = memo(function ProcedureTabContent({
   )
 })
 
+// Memoized Lab Orders tab
+const LabOrdersTabContent = memo(function LabOrdersTabContent({
+  visitId,
+  patientId,
+  onUpdate,
+  isLocked,
+}: {
+  visitId: string
+  patientId: string
+  onUpdate: () => Promise<void>
+  isLocked: boolean
+}) {
+  return (
+    <LabOrdersTab visitId={visitId} patientId={patientId} onUpdate={onUpdate} isLocked={isLocked} />
+  )
+})
+
 export function MedicalRecordTabs({
   recordData,
   activeTab,
@@ -132,7 +151,7 @@ export function MedicalRecordTabs({
 }: MedicalRecordTabsProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
-      <TabsList className="grid w-full grid-cols-4">
+      <TabsList className="grid w-full grid-cols-5">
         <TabsTrigger value="soap" className="gap-2">
           <FileText className="h-4 w-4" />
           SOAP
@@ -148,6 +167,10 @@ export function MedicalRecordTabs({
         <TabsTrigger value="procedure" className="gap-2">
           <ClipboardList className="h-4 w-4" />
           Tindakan
+        </TabsTrigger>
+        <TabsTrigger value="lab-orders" className="gap-2">
+          <IconFlask className="h-4 w-4" />
+          Lab
         </TabsTrigger>
       </TabsList>
 
@@ -182,6 +205,15 @@ export function MedicalRecordTabs({
         <ProcedureTabContent
           medicalRecordId={recordData.medicalRecord.id}
           procedures={recordData.procedures}
+          onUpdate={onUpdate}
+          isLocked={isLocked}
+        />
+      </TabsContent>
+
+      <TabsContent value="lab-orders" className="mt-6">
+        <LabOrdersTabContent
+          visitId={recordData.visit.id}
+          patientId={recordData.visit.patientId}
           onUpdate={onUpdate}
           isLocked={isLocked}
         />

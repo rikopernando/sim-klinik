@@ -31,15 +31,11 @@ const patientUpdateSchema = z.object({
  * Requires: patients:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (_request: NextRequest, { params }: { params: { id: string } }) => {
     try {
-      const patientId = parseInt(params.id, 10)
+      const { id } = params
 
-      if (isNaN(patientId)) {
-        return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 })
-      }
-
-      const patient = await db.select().from(patients).where(eq(patients.id, patientId)).limit(1)
+      const patient = await db.select().from(patients).where(eq(patients.id, id)).limit(1)
 
       if (patient.length === 0) {
         return NextResponse.json({ error: "Patient not found" }, { status: 404 })
@@ -65,12 +61,7 @@ export const GET = withRBAC(
 export const PATCH = withRBAC(
   async (request: NextRequest, { params }: { params: { id: string } }) => {
     try {
-      const patientId = parseInt(params.id, 10)
-
-      if (isNaN(patientId)) {
-        return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 })
-      }
-
+      const { id } = params
       const body = await request.json()
 
       // Validate update data
@@ -91,7 +82,7 @@ export const PATCH = withRBAC(
       const updatedPatient = await db
         .update(patients)
         .set(updateObject)
-        .where(eq(patients.id, patientId))
+        .where(eq(patients.id, id))
         .returning()
 
       if (updatedPatient.length === 0) {
@@ -124,20 +115,12 @@ export const PATCH = withRBAC(
  * Requires: patients:delete permission
  */
 export const DELETE = withRBAC(
-  async (request: NextRequest, { params }: { params: { id: string } }) => {
+  async (_request: NextRequest, { params }: { params: { id: string } }) => {
     try {
-      const patientId = parseInt(params.id, 10)
-
-      if (isNaN(patientId)) {
-        return NextResponse.json({ error: "Invalid patient ID" }, { status: 400 })
-      }
+      const { id } = params
 
       // Check if patient exists
-      const existingPatient = await db
-        .select()
-        .from(patients)
-        .where(eq(patients.id, patientId))
-        .limit(1)
+      const existingPatient = await db.select().from(patients).where(eq(patients.id, id)).limit(1)
 
       if (existingPatient.length === 0) {
         return NextResponse.json({ error: "Patient not found" }, { status: 404 })
@@ -145,7 +128,7 @@ export const DELETE = withRBAC(
 
       // For now, we'll do a hard delete
       // In production, you might want to soft delete instead
-      await db.delete(patients).where(eq(patients.id, patientId))
+      await db.delete(patients).where(eq(patients.id, id))
 
       return NextResponse.json({
         success: true,

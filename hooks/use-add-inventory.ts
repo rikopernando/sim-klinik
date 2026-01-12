@@ -25,11 +25,7 @@ export function useAddInventory(): UseAddInventoryReturn {
       setError(null)
       setSuccess(false)
 
-      const result = await addInventory(data)
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to add inventory")
-      }
+      await addInventory(data)
 
       setSuccess(true)
       return true
