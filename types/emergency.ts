@@ -54,7 +54,7 @@ export interface CompleteRegistrationData {
   birthDate: string
   gender: "male" | "female"
   phone?: string
-  insuranceType: "bpjs" | "insurance" | "general"
+  insuranceType: "BPJS" | "Asuransi Swasta" | "Umum"
   insuranceNumber?: string
 }
 
@@ -104,7 +104,7 @@ export interface Patient {
   birthDate: string | null
   phone: string | null
   address: string | null
-  insuranceType: string
+  insuranceType: "BPJS" | "Asuransi Swasta" | "Umum"
   insuranceNumber: string | null
 }
 

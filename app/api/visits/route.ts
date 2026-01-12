@@ -5,7 +5,6 @@ import { eq, and, gte, lt } from "drizzle-orm"
 import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
-import { getInitialVisitStatus } from "@/types/visit-status"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { RegisteredVisit } from "@/types/visit"
@@ -88,7 +87,7 @@ export const POST = withRBAC(
       }
 
       // Get initial status based on visit type
-      const initialStatus = getInitialVisitStatus(validatedData.visitType)
+      const initialStatus = "registered"
 
       // Create visit
       const newVisit = await db

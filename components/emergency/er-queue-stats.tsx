@@ -15,7 +15,7 @@ export function ERQueueStats({ statistics }: ERQueueStatsProps) {
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {/* Total Queue */}
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-0">
           <CardTitle className="text-sm font-medium">Total Antrian</CardTitle>
         </CardHeader>
         <CardContent>
@@ -26,7 +26,7 @@ export function ERQueueStats({ statistics }: ERQueueStatsProps) {
 
       {/* Red - Critical */}
       <Card className="border-red-200 bg-red-50">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-0">
           <CardTitle className="text-sm font-medium text-red-700">
             🔴 Merah (Gawat Darurat)
           </CardTitle>
@@ -39,7 +39,7 @@ export function ERQueueStats({ statistics }: ERQueueStatsProps) {
 
       {/* Yellow - Urgent */}
       <Card className="border-yellow-200 bg-yellow-50">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-0">
           <CardTitle className="text-sm font-medium text-yellow-700">🟡 Kuning (Urgent)</CardTitle>
         </CardHeader>
         <CardContent>
@@ -50,7 +50,7 @@ export function ERQueueStats({ statistics }: ERQueueStatsProps) {
 
       {/* Green - Non-Urgent */}
       <Card className="border-green-200 bg-green-50">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-0">
           <CardTitle className="text-sm font-medium text-green-700">
             🟢 Hijau (Non-Urgent)
           </CardTitle>

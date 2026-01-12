@@ -21,7 +21,7 @@ const patientSchema = z.object({
   address: z.string().optional(),
   phone: z.string().max(20).optional(),
   email: z.union([z.string().email({ message: "Invalid email format" }), z.literal("")]).optional(),
-  insuranceType: z.string().max(50).optional(),
+  insuranceType: z.enum(["BPJS", "Asuransi Swasta", "Umum"]).optional(),
   insuranceNumber: z.string().max(50).optional(),
   emergencyContact: z.string().max(255).optional(),
   emergencyPhone: z.string().max(20).optional(),

@@ -2,9 +2,11 @@
  * ER Queue Item Component
  * Individual patient card in the ER queue
  * H.1.3: Added handover functionality
+ *
+ * Optimized with React.memo to prevent unnecessary re-renders
  */
 
-import { useState } from "react"
+import { useState, memo } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -26,7 +28,7 @@ interface ERQueueItemProps {
   onHandoverSuccess?: () => void
 }
 
-export function ERQueueItemCard({
+function ERQueueItemCardComponent({
   item,
   index,
   onStartExamination,
@@ -130,3 +132,9 @@ export function ERQueueItemCard({
     </>
   )
 }
+
+/**
+ * Memoized version to prevent unnecessary re-renders
+ * Re-renders only when item, index, or callbacks change
+ */
+export const ERQueueItemCard = memo(ERQueueItemCardComponent)

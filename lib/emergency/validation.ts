@@ -33,7 +33,7 @@ export const completeRegistrationSchema = z.object({
     message: "Jenis kelamin wajib dipilih",
   }),
   phone: z.string().optional(),
-  insuranceType: z.enum(["bpjs", "insurance", "general"], {
+  insuranceType: z.enum(["BPJS", "Asuransi Swasta", "Umum"], {
     message: "Jenis jaminan wajib dipilih",
   }),
   insuranceNumber: z.string().optional(),

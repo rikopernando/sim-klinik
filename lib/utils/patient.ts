@@ -31,6 +31,6 @@ export function getInsuranceBadgeVariant(
   insuranceType: string | null
 ): "default" | "secondary" | "outline" {
   if (!insuranceType) return "outline"
-  if (insuranceType.toLowerCase().includes("bpjs")) return "default"
+  if (insuranceType.toLowerCase().includes("BPJS")) return "default"
   return "secondary"
 }

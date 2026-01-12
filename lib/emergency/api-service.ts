@@ -29,7 +29,7 @@ export async function createQuickERRegistration(data: QuickERRegistrationInput) 
       gender: data.gender || null,
       dateOfBirth: data.birthDate ? new Date(data.birthDate) : null,
       address: null,
-      insuranceType: "general",
+      insuranceType: "Umum",
       insuranceNumber: null,
     })
     .returning()

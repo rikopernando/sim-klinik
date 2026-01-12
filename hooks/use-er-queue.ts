@@ -3,9 +3,11 @@
  * Manages ER queue data fetching and real-time updates
  */
 
-import { useState, useEffect, useCallback } from "react"
-import { ERQueueItem, TriageStatistics, APIResponse } from "@/types/emergency"
+import { useState, useEffect, useCallback, useMemo } from "react"
+import { ERQueueItem, TriageStatistics } from "@/types/emergency"
 import { sortByTriagePriority } from "@/lib/emergency/triage-utils"
+import { getERQueue } from "@/lib/services/emergency.service"
+import { ApiServiceError } from "@/lib/services/api.service"
 
 interface UseERQueueOptions {
   autoRefresh?: boolean
@@ -39,18 +41,16 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch("/api/visits?visitType=emergency&status=pending")
-      const data: APIResponse<ERQueueItem[]> = await response.json()
+      const data = await getERQueue("registered")
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to fetch ER queue")
-      }
-
-      setQueue(data.data || [])
+      setQueue(data)
       setLastRefresh(new Date())
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to fetch ER queue"
-      setError(errorMessage)
+      if (err instanceof ApiServiceError) {
+        setError(err.message)
+      } else {
+        setError("Gagal memuat antrian UGD")
+      }
       console.error("ER Queue fetch error:", err)
     } finally {
       setIsLoading(false)
@@ -65,20 +65,23 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
   }, [fetchQueue])
 
   /**
-   * Calculate statistics from queue
+   * Calculate statistics from queue (memoized for performance)
    */
-  const statistics: TriageStatistics = {
-    total: queue.length,
-    red: queue.filter((item) => item.visit.triageStatus === "red").length,
-    yellow: queue.filter((item) => item.visit.triageStatus === "yellow").length,
-    green: queue.filter((item) => item.visit.triageStatus === "green").length,
-    untriaged: queue.filter((item) => !item.visit.triageStatus).length,
-  }
+  const statistics: TriageStatistics = useMemo(
+    () => ({
+      total: queue.length,
+      red: queue.filter((item) => item.visit.triageStatus === "red").length,
+      yellow: queue.filter((item) => item.visit.triageStatus === "yellow").length,
+      green: queue.filter((item) => item.visit.triageStatus === "green").length,
+      untriaged: queue.filter((item) => !item.visit.triageStatus).length,
+    }),
+    [queue]
+  )
 
   /**
-   * Sort queue by triage priority
+   * Sort queue by triage priority (memoized for performance)
    */
-  const sortedQueue = sortByTriagePriority(queue)
+  const sortedQueue = useMemo(() => sortByTriagePriority(queue), [queue])
 
   /**
    * Initial fetch
