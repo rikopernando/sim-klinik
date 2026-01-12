@@ -129,6 +129,7 @@ export interface LabOrder {
   patientId: string
   testId: string | null
   panelId: string | null
+  parentOrderId: string | null // For panel expansion (child orders)
   orderNumber: string | null
   urgency: OrderUrgency | null
   clinicalIndication: string | null

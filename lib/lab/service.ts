@@ -3,7 +3,7 @@
  * Business logic for lab operations
  */
 
-import { and, eq, desc, or, ilike, inArray } from "drizzle-orm"
+import { and, eq, desc, or, ilike, inArray, isNotNull } from "drizzle-orm"
 import { db } from "@/db"
 import {
   labTests,
@@ -275,6 +275,13 @@ export async function getLabOrders(
     }
   }
 
+  // IMPORTANT: Exclude parent panel orders from lab queue
+  // Parent orders are for billing/tracking only, not for lab workflow
+  // We only show child test orders (which are actionable)
+  // Parent orders have: panelId IS NOT NULL AND testId IS NULL
+  // We filter them out by checking testId IS NOT NULL
+  conditions.push(isNotNull(labOrders.testId))
+
   const result = await db
     .select({
       id: labOrders.id,
@@ -282,6 +289,7 @@ export async function getLabOrders(
       patientId: labOrders.patientId,
       testId: labOrders.testId,
       panelId: labOrders.panelId,
+      parentOrderId: labOrders.parentOrderId,
       orderNumber: labOrders.orderNumber,
       urgency: labOrders.urgency,
       clinicalIndication: labOrders.clinicalIndication,
@@ -311,6 +319,14 @@ export async function getLabOrders(
         category: labTests.category,
         department: labTests.department,
         resultTemplate: labTests.resultTemplate,
+        tatHours: labTests.tatHours,
+      },
+      panel: {
+        id: labTestPanels.id,
+        code: labTestPanels.code,
+        name: labTestPanels.name,
+        description: labTestPanels.description,
+        price: labTestPanels.price,
       },
       patient: {
         id: patients.id,
@@ -337,6 +353,7 @@ export async function getLabOrders(
     })
     .from(labOrders)
     .leftJoin(labTests, eq(labOrders.testId, labTests.id))
+    .leftJoin(labTestPanels, eq(labOrders.panelId, labTestPanels.id))
     .leftJoin(patients, eq(labOrders.patientId, patients.id))
     .leftJoin(user, eq(labOrders.orderedBy, user.id))
     .leftJoin(labResults, eq(labOrders.id, labResults.orderId))
@@ -406,6 +423,7 @@ export async function getLabOrderById(orderId: string) {
       patientId: labOrders.patientId,
       testId: labOrders.testId,
       panelId: labOrders.panelId,
+      parentOrderId: labOrders.parentOrderId,
       orderNumber: labOrders.orderNumber,
       urgency: labOrders.urgency,
       clinicalIndication: labOrders.clinicalIndication,
@@ -438,6 +456,13 @@ export async function getLabOrderById(orderId: string) {
         specimenContainer: labTests.specimenContainer,
         resultTemplate: labTests.resultTemplate,
       },
+      panel: {
+        id: labTestPanels.id,
+        code: labTestPanels.code,
+        name: labTestPanels.name,
+        description: labTestPanels.description,
+        price: labTestPanels.price,
+      },
       patient: {
         id: patients.id,
         name: patients.name,
@@ -451,6 +476,7 @@ export async function getLabOrderById(orderId: string) {
     })
     .from(labOrders)
     .leftJoin(labTests, eq(labOrders.testId, labTests.id))
+    .leftJoin(labTestPanels, eq(labOrders.panelId, labTestPanels.id))
     .leftJoin(patients, eq(labOrders.patientId, patients.id))
     .leftJoin(user, eq(labOrders.orderedBy, user.id))
     .where(eq(labOrders.id, orderId))
@@ -505,50 +531,131 @@ export async function getLabOrderById(orderId: string) {
 
 /**
  * Create new lab order
+ * Implements Option A: Panel Expansion
+ * - If testId: Creates single test order
+ * - If panelId: Creates parent panel order + child test orders for each test in panel
  */
 export async function createLabOrder(data: CreateLabOrderInput, userId: string): Promise<LabOrder> {
-  // Get test or panel price
-  let price = "0"
+  // Case 1: Individual test order (simple case)
   if (data.testId) {
     const test = await getLabTestById(data.testId)
     if (!test) {
       throw new Error("Lab test not found")
     }
-    price = test.price
-  } else if (data.panelId) {
-    const [panel] = await db
-      .select()
-      .from(labTestPanels)
-      .where(eq(labTestPanels.id, data.panelId))
-      .limit(1)
-    if (!panel) {
-      throw new Error("Lab test panel not found")
-    }
-    price = panel.price
+
+    const orderNumber = await generateLabOrderNumber()
+
+    const [newOrder] = await db
+      .insert(labOrders)
+      .values({
+        visitId: data.visitId,
+        patientId: data.patientId,
+        testId: data.testId,
+        panelId: null,
+        parentOrderId: null,
+        orderNumber,
+        urgency: data.urgency || "routine",
+        clinicalIndication: data.clinicalIndication,
+        notes: data.notes,
+        orderedBy: userId,
+        price: test.price,
+        status: "ordered",
+      })
+      .returning()
+
+    return newOrder as LabOrder
   }
 
-  // Generate order number
-  const orderNumber = await generateLabOrderNumber()
+  // Case 2: Panel order (expansion case)
+  if (data.panelId) {
+    // Get panel with included tests
+    const panelWithTests = await getLabTestPanelById(data.panelId)
+    if (!panelWithTests) {
+      throw new Error("Lab test panel not found")
+    }
 
-  // Insert order
-  const [newOrder] = await db
-    .insert(labOrders)
-    .values({
-      visitId: data.visitId,
-      patientId: data.patientId,
-      testId: data.testId,
-      panelId: data.panelId,
-      orderNumber,
-      urgency: data.urgency || "routine",
-      clinicalIndication: data.clinicalIndication,
-      notes: data.notes,
-      orderedBy: userId,
-      price,
-      status: "ordered",
+    if (!panelWithTests.tests || panelWithTests.tests.length === 0) {
+      throw new Error("Panel has no tests configured")
+    }
+
+    // Generate order number for parent
+    const parentOrderNumber = await generateLabOrderNumber()
+
+    // Step 1: Create parent panel order (for billing and tracking)
+    const [parentOrder] = await db
+      .insert(labOrders)
+      .values({
+        visitId: data.visitId,
+        patientId: data.patientId,
+        testId: null,
+        panelId: data.panelId,
+        parentOrderId: null, // Parent has no parent
+        orderNumber: parentOrderNumber,
+        urgency: data.urgency || "routine",
+        clinicalIndication: data.clinicalIndication,
+        notes: data.notes,
+        orderedBy: userId,
+        price: panelWithTests.price, // Panel discounted price (for billing)
+        status: "ordered",
+      })
+      .returning()
+
+    // Step 2: Create child test orders for each test in panel
+    // These are for individual result entry, with price = 0 to prevent double billing
+
+    // SOLUTION: Use parent order number + suffix for children to avoid race conditions
+    // Example: Parent = LAB-20260112-0001
+    //          Child 1 = LAB-20260112-0001-A
+    //          Child 2 = LAB-20260112-0001-B
+    // This guarantees uniqueness without calling generateLabOrderNumber() multiple times
+
+    const suffixes = [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J",
+      "K",
+      "L",
+      "M",
+      "N",
+      "O",
+      "P",
+    ]
+
+    // Now insert all child orders in parallel with derived unique numbers
+    const childOrderPromises = panelWithTests.tests.map((test, index) => {
+      const childOrderNumber = `${parentOrderNumber}-${suffixes[index]}` // Derived from parent
+
+      return db.insert(labOrders).values({
+        visitId: data.visitId,
+        patientId: data.patientId,
+        testId: test.id,
+        panelId: null,
+        parentOrderId: parentOrder.id, // Link to parent panel order
+        orderNumber: childOrderNumber, // Unique by using parent number + suffix
+        urgency: data.urgency || "routine",
+        clinicalIndication: data.clinicalIndication,
+        notes: `[Panel: ${panelWithTests.name}] ${data.notes || ""}`,
+        orderedBy: userId,
+        price: "0", // Price is 0 to prevent double billing (parent holds the price)
+        status: "ordered",
+      })
     })
-    .returning()
 
-  return newOrder as LabOrder
+    // Insert all child orders
+    await Promise.all(childOrderPromises)
+
+    // Return the parent order
+    return parentOrder as LabOrder
+  }
+
+  throw new Error("Either testId or panelId must be provided")
 }
 
 /**

@@ -123,6 +123,13 @@ export const labOrders = pgTable("lab_orders", {
   testId: text("test_id").references(() => labTests.id),
   panelId: text("panel_id").references(() => labTestPanels.id),
 
+  // Panel expansion support (Option A implementation)
+  // When a panel is ordered, we create a parent order (with panelId) and child orders (with testId)
+  parentOrderId: text("parent_order_id"), // Self-reference to lab_orders.id
+  // If this is set, this order is a child test of a panel order
+  // The parent order holds the panel info and billing
+  // Child orders are for individual test result entry (price = 0 to prevent double billing)
+
   // Order details
   orderNumber: varchar("order_number", { length: 50 }).unique(), // Auto-generated: LAB-2025-0001
   urgency: varchar("urgency", { length: 20 }).default("routine"), // "routine", "urgent", "stat"

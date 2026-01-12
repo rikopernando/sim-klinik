@@ -16,11 +16,14 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { useCreateLabOrder } from "@/hooks/use-create-lab-order"
-import type { LabTest, CreateLabOrderInput } from "@/types/lab"
+import { useLabTestPanels } from "@/hooks/use-lab-test-panels"
+import type { LabTest, LabTestPanelWithTests, CreateLabOrderInput } from "@/types/lab"
 
 import { LabTestCatalog } from "./lab-test-catalog"
 import { LabOrderForm } from "./lab-order-form"
+import { LabPanelCard } from "./lab-panel-card"
 
 interface CreateLabOrderDialogProps {
   visitId: string
@@ -38,22 +41,32 @@ export function CreateLabOrderDialog({
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<1 | 2>(1)
   const [selectedTest, setSelectedTest] = useState<LabTest | null>(null)
+  const [selectedPanel, setSelectedPanel] = useState<LabTestPanelWithTests | null>(null)
+
+  const { panels, loading: panelsLoading } = useLabTestPanels()
 
   const { isCreating, createOrder } = useCreateLabOrder({
     onSuccess: () => {
       setOpen(false)
       setStep(1)
       setSelectedTest(null)
+      setSelectedPanel(null)
       onSuccess?.()
     },
   })
 
   const handleSelectTest = (test: LabTest) => {
     setSelectedTest(test)
+    setSelectedPanel(null) // Clear panel selection when test is selected
+  }
+
+  const handleSelectPanel = (panel: LabTestPanelWithTests) => {
+    setSelectedPanel(panel)
+    setSelectedTest(null) // Clear test selection when panel is selected
   }
 
   const handleContinue = () => {
-    if (selectedTest) {
+    if (selectedTest || selectedPanel) {
       setStep(2)
     }
   }
@@ -76,6 +89,7 @@ export function CreateLabOrderDialog({
       // Reset form when closing
       setStep(1)
       setSelectedTest(null)
+      setSelectedPanel(null)
     }
   }
 
@@ -137,11 +151,43 @@ export function CreateLabOrderDialog({
         {/* Step Content */}
         <div className="min-h-[400px]">
           {step === 1 ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Quick Panels Section */}
+              {!panelsLoading && panels.length > 0 && (
+                <div className="space-y-3">
+                  <div>
+                    <h3 className="text-sm font-semibold">Panel Pemeriksaan</h3>
+                    <p className="text-muted-foreground text-xs">
+                      Paket pemeriksaan dengan harga lebih hemat
+                    </p>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {panels.map((panel) => (
+                      <LabPanelCard
+                        key={panel.id}
+                        panel={panel}
+                        selected={selectedPanel?.id === panel.id}
+                        onSelect={handleSelectPanel}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Separator between panels and individual tests */}
+              {!panelsLoading && panels.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <Separator className="flex-1" />
+                  <span className="text-muted-foreground text-xs">atau pilih tes individual</span>
+                  <Separator className="flex-1" />
+                </div>
+              )}
+
+              {/* Individual Tests Catalog */}
               <LabTestCatalog onSelectTest={handleSelectTest} selectedTestId={selectedTest?.id} />
 
               {/* Continue Button */}
-              {selectedTest && (
+              {(selectedTest || selectedPanel) && (
                 <div
                   style={{ width: "calc(100% + 48px)" }}
                   className="bg-background sticky -bottom-6 -mb-6 -ml-6 p-4"
@@ -156,6 +202,7 @@ export function CreateLabOrderDialog({
           ) : (
             <LabOrderForm
               selectedTest={selectedTest}
+              selectedPanel={selectedPanel}
               onSubmit={handleSubmit}
               onBack={handleBack}
               isSubmitting={isCreating}

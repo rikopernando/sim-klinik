@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { FieldGroup, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field"
 import { createLabOrderSchema } from "@/lib/lab/validation"
-import type { LabTest } from "@/types/lab"
+import type { LabTest, LabTestPanelWithTests } from "@/types/lab"
 import { formatCurrency } from "@/lib/utils/billing"
 import { Input } from "@/components/ui/input"
 
@@ -32,17 +32,25 @@ const formSchema = createLabOrderSchema.omit({ visitId: true, patientId: true })
 type LabOrderFormData = z.infer<typeof formSchema>
 
 interface LabOrderFormProps {
-  selectedTest: LabTest | null
+  selectedTest?: LabTest | null
+  selectedPanel?: LabTestPanelWithTests | null
   onSubmit: (data: LabOrderFormData) => void
   onBack: () => void
   isSubmitting: boolean
 }
 
-export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: LabOrderFormProps) {
+export function LabOrderForm({
+  selectedTest,
+  selectedPanel,
+  onSubmit,
+  onBack,
+  isSubmitting,
+}: LabOrderFormProps) {
   const form = useForm<LabOrderFormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       testId: selectedTest?.id,
+      panelId: selectedPanel?.id,
       urgency: "routine",
       clinicalIndication: "",
       notes: "",
@@ -53,47 +61,73 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
     onSubmit(data)
   }
 
-  if (!selectedTest) {
+  if (!selectedTest && !selectedPanel) {
     return (
       <Card className="p-8 text-center">
         <IconFlask className="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-50" />
-        <p className="text-muted-foreground text-sm">Pilih tes laboratorium terlebih dahulu</p>
+        <p className="text-muted-foreground text-sm">
+          Pilih tes atau panel laboratorium terlebih dahulu
+        </p>
       </Card>
     )
   }
 
+  const isPanel = !!selectedPanel
+  const displayName = isPanel ? selectedPanel.name : selectedTest?.name || ""
+  const displayPrice = isPanel ? selectedPanel.price : selectedTest?.price || "0"
+  const displayCode = isPanel ? selectedPanel.code : selectedTest?.code || ""
+
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-      {/* Selected Test Info */}
+      {/* Selected Test/Panel Info */}
       <Card className="bg-accent/50 p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <IconFlask className="text-primary h-4 w-4" />
-              <h4 className="font-semibold">{selectedTest.name}</h4>
+              <h4 className="font-semibold">{displayName}</h4>
+              {isPanel && (
+                <Badge variant="secondary" className="text-xs">
+                  Panel
+                </Badge>
+              )}
             </div>
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <span className="font-mono">{selectedTest.code}</span>
-              <span>•</span>
-              <Badge variant="outline" className="text-xs">
-                {selectedTest.category}
-              </Badge>
-              <span>•</span>
-              <Badge
-                variant={selectedTest.department === "LAB" ? "secondary" : "default"}
-                className="text-xs"
-              >
-                {selectedTest.department === "LAB" ? "Laboratorium" : "Radiologi"}
-              </Badge>
+              <span className="font-mono">{displayCode}</span>
+              {!isPanel && selectedTest?.category && (
+                <>
+                  <span>•</span>
+                  <Badge variant="outline" className="text-xs">
+                    {selectedTest.category}
+                  </Badge>
+                </>
+              )}
+              {isPanel && selectedPanel && (
+                <>
+                  <span>•</span>
+                  <span className="text-xs">{selectedPanel.tests.length} tes</span>
+                </>
+              )}
+              {!isPanel && selectedTest?.department && (
+                <>
+                  <span>•</span>
+                  <Badge
+                    variant={selectedTest.department === "LAB" ? "secondary" : "default"}
+                    className="text-xs"
+                  >
+                    {selectedTest.department === "LAB" ? "Laboratorium" : "Radiologi"}
+                  </Badge>
+                </>
+              )}
             </div>
-            {selectedTest.specimenType && (
+            {!isPanel && selectedTest?.specimenType && (
               <p className="text-muted-foreground text-xs">
                 <span className="font-medium">Spesimen:</span> {selectedTest.specimenType}
                 {selectedTest.specimenVolume && ` (${selectedTest.specimenVolume})`}
                 {selectedTest.specimenContainer && ` • Wadah: ${selectedTest.specimenContainer}`}
               </p>
             )}
-            {selectedTest.instructions && (
+            {!isPanel && selectedTest?.instructions && (
               <div className="mt-2 rounded-md border border-blue-200 bg-blue-50 p-2 dark:border-blue-900 dark:bg-blue-950/20">
                 <div className="flex gap-2">
                   <IconInfoCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
@@ -106,21 +140,42 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
           </div>
           <div className="text-right">
             <p className="text-primary text-lg font-semibold">
-              {formatCurrency(parseFloat(selectedTest.price))}
+              {formatCurrency(parseFloat(displayPrice))}
             </p>
-            {selectedTest.tatHours && (
+            {!isPanel && selectedTest?.tatHours && (
               <p className="text-muted-foreground text-xs">Estimasi: {selectedTest.tatHours} jam</p>
             )}
           </div>
         </div>
+
+        {/* Show included tests for panel */}
+        {isPanel && selectedPanel && (
+          <div className="mt-3 space-y-1 border-t pt-3">
+            <p className="text-muted-foreground text-xs font-medium">Termasuk pemeriksaan:</p>
+            <ul className="text-muted-foreground space-y-0.5 text-xs">
+              {selectedPanel.tests.map((test) => (
+                <li key={test.id}>• {test.name}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </Card>
 
       <Separator />
 
-      <FieldGroup>
-        <FieldLabel>Deskripsi</FieldLabel>
-        <Input readOnly disabled name="description" value={selectedTest.description || ""} />
-      </FieldGroup>
+      {!isPanel && (
+        <FieldGroup>
+          <FieldLabel>Deskripsi</FieldLabel>
+          <Input readOnly disabled name="description" value={selectedTest?.description || ""} />
+        </FieldGroup>
+      )}
+
+      {isPanel && selectedPanel?.description && (
+        <FieldGroup>
+          <FieldLabel>Deskripsi Panel</FieldLabel>
+          <Input readOnly disabled name="description" value={selectedPanel.description} />
+        </FieldGroup>
+      )}
 
       {/* Urgency */}
       <FieldGroup>

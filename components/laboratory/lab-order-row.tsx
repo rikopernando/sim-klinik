@@ -138,18 +138,36 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
     }
   }
 
+  // Determine if this is a panel parent or child order
+  const isPanel = !!order.panel
+  const isPanelChild = !!order.parentOrderId
+  const displayName = isPanel
+    ? order.panel?.name
+    : order.test?.name || (isPanelChild ? "Panel Test" : "Unknown")
+  const displayDepartment = order.test?.department || (isPanel ? "LAB" : "Unknown")
+
   return (
     <TableRow>
       <TableCell className="font-mono text-sm">{index + 1}</TableCell>
       <TableCell>
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold">{order.test?.name || "Test Unknown"}</h4>
+            <h4 className="font-semibold">{displayName}</h4>
+            {isPanel && (
+              <Badge variant="outline" className="border-primary text-primary text-xs">
+                Panel
+              </Badge>
+            )}
+            {isPanelChild && (
+              <Badge variant="outline" className="text-xs">
+                Panel Test
+              </Badge>
+            )}
             <Badge
-              variant={order.test?.department === "LAB" ? "secondary" : "default"}
+              variant={displayDepartment === "LAB" ? "secondary" : "default"}
               className="text-xs"
             >
-              {order.test?.department}
+              {displayDepartment}
             </Badge>
             {order.urgency && order.urgency !== "routine" && (
               <Badge
