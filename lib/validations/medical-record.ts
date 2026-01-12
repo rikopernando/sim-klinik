@@ -20,10 +20,7 @@ export type SoapFormData = z.infer<typeof soapFormSchema>
  * Diagnosis Form Schema
  */
 export const diagnosisFormSchema = z.object({
-  icd10Code: z
-    .string()
-    .min(1, "Kode ICD-10 wajib diisi")
-    .max(10, "Kode ICD-10 maksimal 10 karakter"),
+  icd10Code: z.string().optional(),
   description: z
     .string()
     .min(1, "Deskripsi diagnosis wajib diisi")

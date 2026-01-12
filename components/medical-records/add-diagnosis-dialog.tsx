@@ -73,7 +73,7 @@ export function AddDiagnosisDialog({
           ? {
               diagnoses: [
                 {
-                  icd10Code: diagnosis.icd10Code,
+                  icd10Code: diagnosis.icd10Code || undefined,
                   description: diagnosis.description,
                   diagnosisType: diagnosis.diagnosisType,
                 },
@@ -113,7 +113,7 @@ export function AddDiagnosisDialog({
 
         if (isEditMode && diagnosis) {
           // Edit mode: Check for duplicate (excluding current diagnosis)
-          const formattedCode = formatIcdCode(data.diagnoses[0].icd10Code)
+          const formattedCode = formatIcdCode(data.diagnoses[0].icd10Code || "")
           const duplicate = findDuplicateDiagnosis(formattedCode, existingDiagnoses, diagnosis.id)
 
           if (duplicate) {
@@ -132,7 +132,7 @@ export function AddDiagnosisDialog({
         } else {
           // Add mode: Check for duplicates
           for (const diagnosisItem of data.diagnoses) {
-            const formattedCode = formatIcdCode(diagnosisItem.icd10Code)
+            const formattedCode = formatIcdCode(diagnosisItem.icd10Code || "")
             const duplicate = findDuplicateDiagnosis(formattedCode, existingDiagnoses)
 
             if (duplicate) {
@@ -145,7 +145,7 @@ export function AddDiagnosisDialog({
           for (const diagnosisItem of data.diagnoses) {
             await addDiagnosis({
               medicalRecordId,
-              icd10Code: formatIcdCode(diagnosisItem.icd10Code),
+              icd10Code: formatIcdCode(diagnosisItem.icd10Code || ""),
               description: diagnosisItem.description,
               diagnosisType: diagnosisItem.diagnosisType as "primary" | "secondary",
             })

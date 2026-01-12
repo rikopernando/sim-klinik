@@ -27,7 +27,7 @@ export interface MedicalRecord {
 export interface Diagnosis {
   id: string
   medicalRecordId: string
-  icd10Code: string
+  icd10Code?: string | null
   description: string
   diagnosisType: string | "primary" | "secondary"
   createdAt: Date

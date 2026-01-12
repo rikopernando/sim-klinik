@@ -69,7 +69,7 @@ export const diagnoses = pgTable("diagnoses", {
   medicalRecordId: text("medical_record_id")
     .notNull()
     .references(() => medicalRecords.id, { onDelete: "cascade" }),
-  icd10Code: text("icd10_code").notNull(), // ICD-10 code
+  icd10Code: text("icd10_code"), // ICD-10 code
   description: text("description").notNull(), // Diagnosis description
   diagnosisType: text("diagnosis_type").notNull().default("primary"), // primary, secondary
   createdAt: timestamp("created_at").defaultNow().notNull(),

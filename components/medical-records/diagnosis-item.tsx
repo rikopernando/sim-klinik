@@ -69,7 +69,6 @@ export function DiagnosisItem({
           }}
           label="ICD-10"
           placeholder="Ketik kode atau nama penyakit..."
-          required
         />
         <FieldError>{form.formState.errors.diagnoses?.[index]?.icd10Code?.message}</FieldError>
       </Field>
