@@ -5,7 +5,7 @@
 
 "use client"
 
-import { memo, useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { IconPill, IconTrash, IconCheck, IconClock } from "@tabler/icons-react"
 import { toast } from "sonner"
 
@@ -13,20 +13,22 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { InpatientPrescription } from "@/types/inpatient"
 import { formatDateTime } from "@/lib/utils/date"
+import { formatCurrency } from "@/lib/utils/billing"
 import {
   administerPrescription,
   deleteInpatientPrescription,
 } from "@/lib/services/inpatient.service"
 import { useSession } from "@/lib/auth-client"
-import { Spinner } from "../ui/spinner"
 
 interface PrescriptionsListProps {
   prescriptions: InpatientPrescription[]
@@ -71,6 +73,12 @@ const PrescriptionRow = memo(function PrescriptionRow({
       </TableCell>
       <TableCell>{prescription.route || "-"}</TableCell>
       <TableCell className="text-right">{prescription.quantity}</TableCell>
+      <TableCell className="text-right">
+        {formatCurrency(parseFloat(prescription.drugPrice || "0"))}
+      </TableCell>
+      <TableCell className="text-right font-medium">
+        {formatCurrency(parseFloat(prescription.drugPrice || "0") * prescription.quantity)}
+      </TableCell>
       <TableCell>
         {prescription.isRecurring ? (
           <Badge variant="default">Rutin</Badge>
@@ -157,6 +165,17 @@ export const PrescriptionsList = memo(function PrescriptionsList({
   const isNurse = session?.user?.role === "nurse"
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState("")
 
+  // Calculate subtotal of all prescriptions
+  const subtotal = useMemo(() => {
+    return prescriptions.reduce((total, prescription) => {
+      if (prescription.drugPrice) {
+        const quantity = prescription.dispensedQuantity || prescription.quantity
+        return total + parseFloat(prescription.drugPrice) * quantity
+      }
+      return total
+    }, 0)
+  }, [prescriptions])
+
   const handleAdminister = async (prescriptionId: string) => {
     if (!session?.user.id) {
       toast.error("Tidak dapat menentukan user ID")
@@ -209,9 +228,11 @@ export const PrescriptionsList = memo(function PrescriptionsList({
         <TableHeader>
           <TableRow>
             <TableHead>Obat</TableHead>
-            <TableHead>Dosis & Frekuensi</TableHead>
+            <TableHead>Frekuensi</TableHead>
             <TableHead>Rute</TableHead>
             <TableHead className="text-right">Jumlah</TableHead>
+            <TableHead className="text-right">Harga Satuan</TableHead>
+            <TableHead className="text-right">Total Harga</TableHead>
             <TableHead>Jenis</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Waktu</TableHead>
@@ -232,6 +253,18 @@ export const PrescriptionsList = memo(function PrescriptionsList({
             />
           ))}
         </TableBody>
+
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={5} className="text-right font-semibold">
+              Total Biaya
+            </TableCell>
+            <TableCell className="text-right text-lg font-bold">
+              {formatCurrency(subtotal)}
+            </TableCell>
+            <TableCell colSpan={5} />
+          </TableRow>
+        </TableFooter>
       </Table>
     </div>
   )

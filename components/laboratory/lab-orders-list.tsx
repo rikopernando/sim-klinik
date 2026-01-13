@@ -187,9 +187,7 @@ export function LabOrdersList({ visitId, showSubtotal }: LabOrdersListProps) {
       {showSubtotal && (
         <div className="mt-4 flex items-center justify-between border-t pt-3">
           <span className="text-sm font-semibold">Subtotal Lab</span>
-          <span className="text-primary text-lg font-bold">
-            Rp {subtotal.toLocaleString("id-ID")}
-          </span>
+          <span className="text-primary text-lg font-bold">{formatCurrency(subtotal)}</span>
         </div>
       )}
     </div>

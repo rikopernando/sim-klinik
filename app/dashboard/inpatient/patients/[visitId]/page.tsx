@@ -325,7 +325,7 @@ export default function PatientDetailPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <LabOrdersList visitId={visitId} />
+            <LabOrdersList showSubtotal visitId={visitId} />
           </CardContent>
         </Card>
 

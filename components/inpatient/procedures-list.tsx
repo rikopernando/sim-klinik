@@ -5,7 +5,7 @@
 
 "use client"
 
-import { memo, useState } from "react"
+import { memo, useMemo, useState } from "react"
 import { IconStethoscope, IconTrash, IconCheck, IconLoader, IconClock } from "@tabler/icons-react"
 import { toast } from "sonner"
 
@@ -13,6 +13,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/select"
 import { Spinner } from "@/components/ui/spinner"
 import { formatDateTime } from "@/lib/utils/date"
+import { formatCurrency } from "@/lib/utils/billing"
 import { useSession } from "@/lib/auth-client"
 import { InpatientProcedure, PROCEDURE_STATUS, ProcedureStatus } from "@/types/inpatient"
 import { updateProcedureStatus, deleteInpatientProcedure } from "@/lib/services/inpatient.service"
@@ -96,6 +98,9 @@ const ProcedureRow = memo(function ProcedureRow({
           {statusConfig.label}
         </Badge>
       </TableCell>
+      <TableCell className="text-right">
+        {formatCurrency(parseFloat(procedure.servicePrice || "0"))}
+      </TableCell>
       <TableCell className="text-muted-foreground text-sm">
         {procedure.orderedByName || "-"}
       </TableCell>
@@ -158,6 +163,16 @@ export const ProceduresList = memo(function ProceduresList({
   const isNurse = session?.user?.role === "nurse"
   const canChangeStatus = isDoctor || isNurse
 
+  // Calculate subtotal of all procedures
+  const subtotal = useMemo(() => {
+    return procedures.reduce((total, procedure) => {
+      if (procedure.servicePrice) {
+        return total + parseFloat(procedure.servicePrice)
+      }
+      return total
+    }, 0)
+  }, [procedures])
+
   const handleStatusChange = async (procedureId: string, status: ProcedureStatus) => {
     if (!session?.user.id) {
       toast.error("Tidak dapat menentukan user ID")
@@ -213,6 +228,7 @@ export const ProceduresList = memo(function ProceduresList({
             <TableHead>Nama Tindakan</TableHead>
             <TableHead>Jadwal</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Harga</TableHead>
             <TableHead>Dipesan Oleh</TableHead>
             <TableHead>Dikerjakan Oleh</TableHead>
             <TableHead>Waktu Pengerjaan</TableHead>
@@ -233,6 +249,18 @@ export const ProceduresList = memo(function ProceduresList({
             />
           ))}
         </TableBody>
+
+        <TableFooter>
+          <TableRow>
+            <TableCell colSpan={3} className="text-right font-semibold">
+              Total Biaya
+            </TableCell>
+            <TableCell className="text-right text-lg font-bold">
+              {formatCurrency(subtotal)}
+            </TableCell>
+            <TableCell colSpan={5} />
+          </TableRow>
+        </TableFooter>
       </Table>
     </div>
   )
