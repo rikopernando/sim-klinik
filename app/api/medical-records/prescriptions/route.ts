@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     const [newPrescription] = await db
       .insert(prescriptions)
       .values({
+        visitId: validatedData.visitId,
         medicalRecordId: validatedData.medicalRecordId,
         drugId: validatedData.drugId,
         dosage: validatedData.dosage,

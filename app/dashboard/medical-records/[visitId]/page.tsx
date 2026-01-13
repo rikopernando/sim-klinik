@@ -7,7 +7,7 @@
 
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
@@ -19,7 +19,6 @@ import { useMedicalRecord } from "@/hooks/use-medical-record"
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header"
 import { MedicalRecordActions } from "@/components/medical-records/medical-record-actions"
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
-import { calculateBillingPreview } from "@/lib/utils/billing"
 
 export default function MedicalRecordPage() {
   const { visitId } = useParams<{ visitId: string }>()
@@ -42,19 +41,6 @@ export default function MedicalRecordPage() {
     unlockRecord,
     updateRecord,
   } = useMedicalRecord({ visitId })
-
-  // Calculate billing preview from recordData (memoized for performance)
-  const billingPreview = useMemo(() => {
-    if (!recordData) {
-      return {
-        drugsSubtotal: 0,
-        proceduresSubtotal: 0,
-        labOrdersSubtotal: 0,
-        subtotal: 0,
-      }
-    }
-    return calculateBillingPreview(recordData)
-  }, [recordData])
 
   // Loading state
   if (isLoading) {
@@ -118,7 +104,6 @@ export default function MedicalRecordPage() {
               isLocked={isLocked}
               isSaving={isSaving}
               isLocking={isLocking}
-              billingPreview={billingPreview}
               onSave={saveDraft}
               onLock={handleLock}
               onUnlock={unlockRecord}

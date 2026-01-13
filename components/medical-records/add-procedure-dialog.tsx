@@ -5,6 +5,7 @@ import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -49,6 +50,7 @@ export function AddProcedureDialog({
   procedure,
   existingProcedures = [],
 }: AddProcedureDialogProps) {
+  const { visitId } = useParams<{ visitId: string }>()
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [medicalStaff, setMedicalStaff] = useState<MedicalStaff[]>([])
@@ -198,6 +200,7 @@ export function AddProcedureDialog({
           for (const procedureItem of data.procedures) {
             await addProcedure({
               medicalRecordId,
+              visitId,
               serviceId: procedureItem.serviceId,
               serviceName: procedureItem.serviceName,
               icd9Code: formatIcdCode(procedureItem.icd9Code),
@@ -220,7 +223,7 @@ export function AddProcedureDialog({
         setIsSaving(false)
       }
     },
-    [isEditMode, procedure, existingProcedures, medicalRecordId, handleClose, onSuccess]
+    [isEditMode, procedure, handleClose, onSuccess, existingProcedures, medicalRecordId, visitId]
   )
 
   return (

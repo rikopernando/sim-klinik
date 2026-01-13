@@ -29,7 +29,7 @@ export function BillingAdjustmentForm({
     <>
       {/* Adjustment Type */}
       <div className="space-y-2">
-        <Label>Penyesuaian Billing (Opsional)</Label>
+        <Label>Penyesuaian Biaya (Opsional)</Label>
         <RadioGroup value={adjustmentType} onValueChange={onAdjustmentTypeChange}>
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="none" id="adj-none" />

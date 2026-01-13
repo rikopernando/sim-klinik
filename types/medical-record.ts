@@ -115,7 +115,6 @@ export interface MedicalRecordData {
   diagnoses: Diagnosis[]
   procedures: Procedure[]
   prescriptions: Prescription[]
-  labOrders: MedicalRecordLabOrder[]
   visit: Visit
 }
 

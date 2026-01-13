@@ -4,6 +4,8 @@
  * Allows doctor to add billing adjustment when locking
  */
 
+import { toast } from "sonner"
+import { useParams } from "next/navigation"
 import { useState, useCallback } from "react"
 import { Loader2, Save, Lock, Unlock } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -18,15 +20,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { BillingPreview } from "@/lib/utils/billing"
-import { BillingPreviewSection } from "./billing-preview-section"
+import { DischargeBillingSummary } from "@/types/billing"
+import { getDischargeBillingSummary } from "@/lib/services/billing.service"
+import { getErrorMessage } from "@/lib/utils/error"
+import { DischargeBillingPreviewSection } from "@/components/inpatient/discharge-billing-preview-section"
+
 import { BillingAdjustmentForm } from "./billing-adjustment-form"
 
 interface MedicalRecordActionsProps {
   isLocked: boolean
   isSaving: boolean
   isLocking: boolean
-  billingPreview: BillingPreview
   onSave: () => Promise<void>
   onLock: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   onUnlock?: () => Promise<void>
@@ -36,16 +40,18 @@ export function MedicalRecordActions({
   isLocked,
   isSaving,
   isLocking,
-  billingPreview,
   onSave,
   onLock,
   onUnlock,
 }: MedicalRecordActionsProps) {
+  const { visitId } = useParams<{ visitId: string }>()
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false)
   const [adjustmentType, setAdjustmentType] = useState<"none" | "discount" | "surcharge">("none")
   const [adjustmentAmount, setAdjustmentAmount] = useState("")
   const [adjustmentNote, setAdjustmentNote] = useState("")
+  const [summary, setSummary] = useState<DischargeBillingSummary | null>(null)
+  const [isFetching, setIsFetching] = useState(false)
 
   // Reset adjustment form
   const resetAdjustmentForm = useCallback(() => {
@@ -91,6 +97,24 @@ export function MedicalRecordActions({
   const handleAdjustmentNoteChange = useCallback((note: string) => {
     setAdjustmentNote(note)
   }, [])
+
+  /**
+   * Fetch discharge billing summary
+   */
+  const handleOpenDialogLock = useCallback(async () => {
+    setIsFetching(true)
+    setLockDialogOpen(true)
+
+    try {
+      const response = await getDischargeBillingSummary(visitId)
+      setSummary(response)
+    } catch (err) {
+      toast.error(getErrorMessage(err))
+      console.error("Discharge billing summary fetch error:", err)
+    } finally {
+      setIsFetching(false)
+    }
+  }, [visitId])
 
   if (isLocked) {
     return (
@@ -153,7 +177,7 @@ export function MedicalRecordActions({
             </>
           )}
         </Button>
-        <Button onClick={() => setLockDialogOpen(true)} disabled={isSaving || isLocking}>
+        <Button onClick={handleOpenDialogLock} disabled={isSaving || isLocking}>
           {isLocking ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -181,8 +205,9 @@ export function MedicalRecordActions({
 
           <div className="my-4 space-y-4">
             {/* Billing Preview */}
-            <BillingPreviewSection
-              billingPreview={billingPreview}
+            <DischargeBillingPreviewSection
+              summary={summary}
+              isLoading={isFetching}
               adjustmentType={adjustmentType}
               adjustmentAmount={adjustmentAmount}
             />

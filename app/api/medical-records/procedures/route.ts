@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     await db
       .insert(procedures)
       .values({
+        visitId: validatedData.visitId,
         medicalRecordId: validatedData.medicalRecordId,
         serviceId: validatedData.serviceId || null,
         icd9Code: validatedData.icd9Code,

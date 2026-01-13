@@ -5,6 +5,7 @@ import { useForm, useFieldArray } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Plus, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import { useParams } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -49,6 +50,7 @@ export function AddPrescriptionDialog({
   prescription,
   existingPrescriptions = [],
 }: AddPrescriptionDialogProps) {
+  const { visitId } = useParams<{ visitId: string }>()
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [drugSearches, setDrugSearches] = useState<Record<number, string>>({})
@@ -151,6 +153,7 @@ export function AddPrescriptionDialog({
 
           await updatePrescription(prescription.id, {
             medicalRecordId,
+            visitId,
             drugId: data.prescriptions[0].drugId,
             dosage: data.prescriptions[0].dosage || undefined,
             frequency: data.prescriptions[0].frequency,
@@ -180,6 +183,7 @@ export function AddPrescriptionDialog({
           for (const prescriptionItem of data.prescriptions) {
             await addPrescription({
               medicalRecordId,
+              visitId,
               drugId: prescriptionItem.drugId,
               dosage: prescriptionItem.dosage || undefined,
               frequency: prescriptionItem.frequency,
@@ -202,7 +206,15 @@ export function AddPrescriptionDialog({
         setIsSaving(false)
       }
     },
-    [isEditMode, prescription, existingPrescriptions, medicalRecordId, handleClose, onSuccess]
+    [
+      isEditMode,
+      prescription,
+      handleClose,
+      onSuccess,
+      existingPrescriptions,
+      medicalRecordId,
+      visitId,
+    ]
   )
 
   return (

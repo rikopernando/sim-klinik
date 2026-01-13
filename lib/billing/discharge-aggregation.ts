@@ -18,31 +18,40 @@ import { prescriptions, inventoryItems } from "@/db/schema/inventory"
 import { procedures } from "@/db/schema/medical-records"
 import { services } from "@/db/schema/billing"
 import { labOrders, labTests } from "@/db/schema/laboratory"
-import type { BillingItemInput, DischargeBillingSummary } from "@/types/billing"
+import type {
+  BillingItemInput,
+  DischargeBillingBreakdown,
+  DischargeBillingSummary,
+} from "@/types/billing"
 import { visits } from "@/db/schema"
+
+export interface Breakdown {
+  roomCharges?: string
+  materialCharges?: string
+  medicationCharges: string
+  procedureCharges: string
+  laboratoryCharges: string
+  serviceCharges: string
+}
+
+export interface Counts {
+  roomCount?: number
+  materialCount?: number
+  medicationCount: number
+  procedureCount: number
+  laboratoryCount: number
+  serviceCount: number
+}
 
 /**
  * Aggregated discharge billing summary
  */
 export interface DischargeBillingAggregate {
   visitId: string
+  visitType: string
   items: BillingItemInput[]
-  breakdown: {
-    roomCharges: string
-    materialCharges: string
-    medicationCharges: string
-    procedureCharges: string
-    laboratoryCharges: string
-    serviceCharges: string
-  }
-  counts: {
-    roomCount: number
-    materialCount: number
-    medicationCount: number
-    procedureCount: number
-    laboratoryCount: number
-    serviceCount: number
-  }
+  breakdown: Breakdown
+  counts: Counts
   subtotal: string
   itemCount: number
 }
@@ -133,7 +142,16 @@ async function aggregateMaterialCharges(visitId: string): Promise<BillingItemInp
  * Aggregate medication charges from fulfilled prescriptions
  * Only includes prescriptions that have been dispensed by pharmacy
  */
-async function aggregateMedicationCharges(visitId: string): Promise<BillingItemInput[]> {
+async function aggregateMedicationCharges(
+  visitId: string,
+  visitType: string
+): Promise<BillingItemInput[]> {
+  const conditions = [eq(prescriptions.visitId, visitId)]
+
+  if (visitType === "inpatient") {
+    conditions.push(eq(prescriptions.isFulfilled, true)) // Only fulfilled prescriptions
+  }
+
   const medications = await db
     .select({
       id: prescriptions.id,
@@ -146,12 +164,7 @@ async function aggregateMedicationCharges(visitId: string): Promise<BillingItemI
     })
     .from(prescriptions)
     .innerJoin(inventoryItems, eq(prescriptions.drugId, inventoryItems.id))
-    .where(
-      and(
-        eq(prescriptions.visitId, visitId),
-        eq(prescriptions.isFulfilled, true) // Only fulfilled prescriptions
-      )
-    )
+    .where(and(...conditions))
 
   return medications.map((med) => {
     const quantityDispensed = med.dispensedQuantity || med.quantity
@@ -175,7 +188,16 @@ async function aggregateMedicationCharges(visitId: string): Promise<BillingItemI
  * Aggregate procedure charges
  * Only includes completed procedures
  */
-async function aggregateProcedureCharges(visitId: string): Promise<BillingItemInput[]> {
+async function aggregateProcedureCharges(
+  visitId: string,
+  visitType: string
+): Promise<BillingItemInput[]> {
+  const conditions = [eq(procedures.visitId, visitId)]
+
+  if (visitType === "inpatient") {
+    conditions.push(eq(procedures.status, "completed")) // Only completed procedures
+  }
+
   const procedureList = await db
     .select({
       id: procedures.id,
@@ -189,12 +211,7 @@ async function aggregateProcedureCharges(visitId: string): Promise<BillingItemIn
     })
     .from(procedures)
     .leftJoin(services, eq(procedures.serviceId, services.id))
-    .where(
-      and(
-        eq(procedures.visitId, visitId),
-        eq(procedures.status, "completed") // Only completed procedures
-      )
-    )
+    .where(and(...conditions))
 
   return procedureList.map((proc) => ({
     itemType: "service" as const,
@@ -326,57 +343,66 @@ export async function aggregateDischargebilling(
     throw new Error(`Visit not found: ${visitId}`)
   }
 
-  if (visit.visitType !== "inpatient") {
-    throw new Error(`Visit ${visitId} is not an inpatient visit`)
-  }
-
-  // Aggregate all charges in parallel for performance
-  const [roomItems, materialItems, medicationItems, procedureItems, labOrderItems, serviceItems] =
-    await Promise.all([
-      aggregateRoomCharges(visitId),
-      aggregateMaterialCharges(visitId),
-      aggregateMedicationCharges(visitId),
-      aggregateProcedureCharges(visitId),
-      aggregateLabOrderCharges(visitId),
-      aggregateServiceCharges(),
-    ])
-
-  // Combine all items
-  const allItems = [
-    ...roomItems,
-    ...materialItems,
-    ...medicationItems,
-    ...procedureItems,
-    ...labOrderItems,
-    ...serviceItems,
-  ]
-
   // Calculate breakdown totals
   const calculateTotal = (items: BillingItemInput[]) =>
     items.reduce((sum, item) => sum + parseFloat(item.totalPrice || "0"), 0).toFixed(2)
 
-  const breakdown = {
-    roomCharges: calculateTotal(roomItems),
-    materialCharges: calculateTotal(materialItems),
+  const aggregatesData = [
+    aggregateMedicationCharges(visitId, visit.visitType),
+    aggregateProcedureCharges(visitId, visit.visitType),
+    aggregateLabOrderCharges(visitId),
+    aggregateServiceCharges(),
+  ]
+
+  if (visit.visitType === "inpatient") {
+    aggregatesData.push(aggregateRoomCharges(visitId))
+    aggregatesData.push(aggregateMaterialCharges(visitId))
+  }
+
+  // Aggregate all charges in parallel for performance
+  const [medicationItems, procedureItems, labOrderItems, serviceItems] =
+    await Promise.all(aggregatesData)
+
+  // Combine all items
+  let allItems = [...medicationItems, ...procedureItems, ...labOrderItems, ...serviceItems]
+
+  let breakdown: Breakdown = {
     medicationCharges: calculateTotal(medicationItems),
     procedureCharges: calculateTotal(procedureItems),
     laboratoryCharges: calculateTotal(labOrderItems),
     serviceCharges: calculateTotal(serviceItems),
   }
 
-  const counts = {
-    roomCount: roomItems.length,
-    materialCount: materialItems.length,
+  let counts: Counts = {
     medicationCount: medicationItems.length,
     procedureCount: procedureItems.length,
     laboratoryCount: labOrderItems.length,
     serviceCount: serviceItems.length,
   }
 
+  if (visit.visitType === "inpatient") {
+    const roomItems = await aggregateRoomCharges(visitId)
+    const materialItems = await aggregateMaterialCharges(visitId)
+
+    allItems = [...allItems, ...roomItems, ...materialItems]
+    breakdown = {
+      ...breakdown,
+      roomCharges: calculateTotal(roomItems),
+      materialCharges: calculateTotal(materialItems),
+    }
+
+    counts = {
+      ...counts,
+      roomCount: roomItems.length,
+      materialCount: materialItems.length,
+    }
+  }
+
   const subtotal = calculateTotal(allItems)
 
   return {
     visitId,
+    visitType: visit.visitType,
     items: allItems,
     breakdown,
     counts,
@@ -394,9 +420,11 @@ export async function getDischargeBillingSummary(
 ): Promise<DischargeBillingSummary> {
   const aggregate = await aggregateDischargebilling(visitId)
 
-  return {
-    visitId: aggregate.visitId,
-    breakdown: {
+  let breakdown: Partial<DischargeBillingBreakdown> = {}
+
+  if (aggregate.visitType === "inpatient") {
+    breakdown = {
+      ...breakdown,
       roomCharges: {
         label: "Biaya Kamar & Rawat Inap",
         amount: aggregate.breakdown.roomCharges,
@@ -407,27 +435,36 @@ export async function getDischargeBillingSummary(
         amount: aggregate.breakdown.materialCharges,
         count: aggregate.counts.materialCount,
       },
-      medicationCharges: {
-        label: "Obat-obatan",
-        amount: aggregate.breakdown.medicationCharges,
-        count: aggregate.counts.medicationCount,
-      },
-      procedureCharges: {
-        label: "Tindakan Medis",
-        amount: aggregate.breakdown.procedureCharges,
-        count: aggregate.counts.procedureCount,
-      },
-      laboratoryCharges: {
-        label: "Pemeriksaan Laboratorium",
-        amount: aggregate.breakdown.laboratoryCharges,
-        count: aggregate.counts.laboratoryCount,
-      },
-      serviceCharges: {
-        label: "Administrasi & Konsultasi",
-        amount: aggregate.breakdown.serviceCharges,
-        count: aggregate.counts.serviceCount,
-      },
+    }
+  }
+
+  breakdown = {
+    ...breakdown,
+    medicationCharges: {
+      label: "Obat-obatan",
+      amount: aggregate.breakdown.medicationCharges,
+      count: aggregate.counts.medicationCount,
     },
+    procedureCharges: {
+      label: "Tindakan Medis",
+      amount: aggregate.breakdown.procedureCharges,
+      count: aggregate.counts.procedureCount,
+    },
+    laboratoryCharges: {
+      label: "Pemeriksaan Laboratorium",
+      amount: aggregate.breakdown.laboratoryCharges,
+      count: aggregate.counts.laboratoryCount,
+    },
+    serviceCharges: {
+      label: "Administrasi & Konsultasi",
+      amount: aggregate.breakdown.serviceCharges,
+      count: aggregate.counts.serviceCount,
+    },
+  }
+
+  return {
+    breakdown: breakdown as DischargeBillingBreakdown,
+    visitId: aggregate.visitId,
     subtotal: aggregate.subtotal,
     totalItems: aggregate.itemCount,
   }

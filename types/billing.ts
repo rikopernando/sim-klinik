@@ -362,44 +362,47 @@ export interface ProcessPaymentResult {
   change: string | null
 }
 
+export interface DischargeBillingBreakdown {
+  roomCharges?: Partial<{
+    label: string
+    amount: string
+    count: number
+  }>
+  materialCharges?: Partial<{
+    label: string
+    amount: string
+    count: number
+  }>
+  medicationCharges: {
+    label: string
+    amount: string
+    count: number
+  }
+  procedureCharges: {
+    label: string
+    amount: string
+    count: number
+  }
+  laboratoryCharges: {
+    label: string
+    amount: string
+    count: number
+  }
+  serviceCharges: {
+    label: string
+    amount: string
+    count: number
+  }
+}
+
 /**
  * Discharge Billing Summary
  * Aggregated billing preview for inpatient discharge
  */
 export interface DischargeBillingSummary {
-  visitId: string
-  breakdown: {
-    roomCharges: {
-      label: string
-      amount: string
-      count: number
-    }
-    materialCharges: {
-      label: string
-      amount: string
-      count: number
-    }
-    medicationCharges: {
-      label: string
-      amount: string
-      count: number
-    }
-    procedureCharges: {
-      label: string
-      amount: string
-      count: number
-    }
-    laboratoryCharges: {
-      label: string
-      amount: string
-      count: number
-    }
-    serviceCharges: {
-      label: string
-      amount: string
-      count: number
-    }
-  }
+  visitId?: string
+  medicalRecordId?: string
+  breakdown: DischargeBillingBreakdown
   subtotal: string
   totalItems: number
 }

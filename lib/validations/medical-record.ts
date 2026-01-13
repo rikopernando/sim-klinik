@@ -66,6 +66,7 @@ export const prescriptionFormSchema = z.object({
 export const createPrescriptionFormSchema = z.object({
   ...prescriptionFormSchema.shape,
   medicalRecordId: z.string(),
+  visitId: z.string(),
 })
 
 // Schema for the entire form with array of prescriptions
@@ -96,6 +97,7 @@ export const procedureFormBulkSchema = z.object({
 export const createProcedureFormSchema = z.object({
   ...procedureItemSchema.shape,
   medicalRecordId: z.string(),
+  visitId: z.string(),
 })
 
 export type CreateProcedureFormData = z.infer<typeof createProcedureFormSchema>

@@ -53,18 +53,24 @@ export function DischargeBillingPreviewSection({
       <h4 className="mb-3 text-sm font-semibold">Rincian Biaya</h4>
       <div className="space-y-1.5 text-sm">
         {/* Room Charges */}
-        {parseFloat(summary.breakdown.roomCharges.amount) > 0 && (
+        {parseFloat(summary?.breakdown?.roomCharges?.amount || "0") > 0 && (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{summary.breakdown.roomCharges.label}</span>
-            <span>{formatCurrency(parseFloat(summary.breakdown.roomCharges.amount))}</span>
+            <span className="text-muted-foreground">{summary?.breakdown?.roomCharges?.label}</span>
+            <span>
+              {formatCurrency(parseFloat(summary?.breakdown?.roomCharges?.amount || "0"))}
+            </span>
           </div>
         )}
 
         {/* Material Charges */}
-        {parseFloat(summary.breakdown.materialCharges.amount) > 0 && (
+        {parseFloat(summary?.breakdown?.materialCharges?.amount || "0") > 0 && (
           <div className="flex justify-between">
-            <span className="text-muted-foreground">{summary.breakdown.materialCharges.label}</span>
-            <span>{formatCurrency(parseFloat(summary.breakdown.materialCharges.amount))}</span>
+            <span className="text-muted-foreground">
+              {summary?.breakdown?.materialCharges?.label}
+            </span>
+            <span>
+              {formatCurrency(parseFloat(summary?.breakdown?.materialCharges?.amount || "0"))}
+            </span>
           </div>
         )}
 
