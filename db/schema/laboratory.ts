@@ -247,6 +247,7 @@ export const labResultParameters = pgTable("lab_result_parameters", {
   parameterValue: text("parameter_value").notNull(), // "8.5", "4.2M", etc.
   unit: varchar("unit", { length: 50 }), // "10^3/uL", "g/dL", etc.
 
+  referenceValue: text("reference_value"),
   referenceMin: decimal("reference_min", { precision: 10, scale: 2 }),
   referenceMax: decimal("reference_max", { precision: 10, scale: 2 }),
   flag: varchar("flag", { length: 20 }), // "normal", "high", "low", "critical_high", "critical_low"

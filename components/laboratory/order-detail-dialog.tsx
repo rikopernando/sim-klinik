@@ -6,9 +6,8 @@
 
 "use client"
 
-import { formatDistanceToNow, format } from "date-fns"
+import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
-import Image from "next/image"
 import { useState, useEffect, useMemo, memo } from "react"
 import {
   IconEye,
@@ -19,9 +18,6 @@ import {
   IconDroplet,
   IconFileText,
   IconUser,
-  IconPaperclip,
-  IconDownload,
-  IconFile,
 } from "@tabler/icons-react"
 import {
   Dialog,
@@ -40,6 +36,8 @@ import { useLabOrder } from "@/hooks/use-lab-order"
 import type { LabOrderWithRelations } from "@/types/lab"
 
 import { ResultDisplay } from "./result-display"
+import AttachmentSection from "./lab-attachment"
+import { formatDateTime } from "@/lib/utils/date"
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -53,7 +51,7 @@ const StatusBadge = memo(({ status }: StatusBadgeProps) => {
   switch (status) {
     case "verified":
       return (
-        <Badge variant="default" className="bg-green-600">
+        <Badge variant="default">
           <IconCheck className="mr-1 h-3 w-3" />
           Verified
         </Badge>
@@ -124,7 +122,7 @@ const OrderTimeline = memo(({ order }: OrderTimelineProps) => (
       <TimelineItem
         icon={<IconClock className="h-4 w-4" />}
         title="Order Dibuat"
-        subtitle={`${format(new Date(order.orderedAt), "dd MMM yyyy, HH:mm", { locale: idLocale })} • ${order.orderedByUser.name}`}
+        subtitle={`${formatDateTime(order.orderedAt)}  • ${order.orderedByUser.name}`}
       />
 
       {order.status !== "ordered" && (
@@ -139,7 +137,7 @@ const OrderTimeline = memo(({ order }: OrderTimelineProps) => (
         <TimelineItem
           icon={<IconFileText className="h-4 w-4" />}
           title="Hasil Diinput"
-          subtitle={`${format(new Date(order.result.enteredAt), "dd MMM yyyy, HH:mm", { locale: idLocale })} • ${order.result.enteredBy}`}
+          subtitle={`${formatDateTime(order.result.enteredAt)} • ${order.result.enteredByUser?.name}`}
         />
       )}
 
@@ -147,7 +145,7 @@ const OrderTimeline = memo(({ order }: OrderTimelineProps) => (
         <TimelineItem
           icon={<IconCheck className="h-4 w-4" />}
           title="Hasil Diverifikasi"
-          subtitle={`${format(new Date(order.result.verifiedAt), "dd MMM yyyy, HH:mm", { locale: idLocale })} • ${order.result.verifiedBy || "Unknown"}`}
+          subtitle={`${formatDateTime(order.result.verifiedAt)} • ${order.result.verifiedByUser?.name}`}
         />
       )}
     </div>
@@ -348,28 +346,20 @@ export function OrderDetailDialog({
                     <p className="text-muted-foreground text-xs">Diinput oleh</p>
                     <p className="flex items-center gap-1 font-medium">
                       <IconUser className="h-3 w-3" />
-                      {order.result.enteredBy}
+                      {order.result?.enteredByUser?.name}
                     </p>
-                    <p className="text-xs">
-                      {format(new Date(order.result.enteredAt), "dd MMM yyyy, HH:mm", {
-                        locale: idLocale,
-                      })}
-                    </p>
+                    <p className="text-xs">{formatDateTime(order.result.enteredAt)}</p>
                   </div>
 
-                  {order.result.isVerified && order.result.verifiedBy && (
+                  {order.result.isVerified && order.result.verifiedByUser?.name && (
                     <div className="rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-900 dark:bg-green-950">
                       <p className="text-muted-foreground text-xs">Diverifikasi oleh</p>
                       <p className="flex items-center gap-1 font-medium">
                         <IconCheck className="h-3 w-3" />
-                        {order.result.verifiedBy}
+                        {order.result.verifiedByUser?.name}
                       </p>
                       {order.result.verifiedAt && (
-                        <p className="text-xs">
-                          {format(new Date(order.result.verifiedAt), "dd MMM yyyy, HH:mm", {
-                            locale: idLocale,
-                          })}
-                        </p>
+                        <p className="text-xs">{formatDateTime(order.result.verifiedAt)}</p>
                       )}
                     </div>
                   )}
@@ -384,68 +374,11 @@ export function OrderDetailDialog({
 
                 {/* Attachment Display */}
                 {order.result.attachmentUrl && (
-                  <div className="rounded-md border p-3">
-                    <div className="mb-2 flex items-center gap-2">
-                      <IconPaperclip className="text-primary h-4 w-4" />
-                      <p className="text-muted-foreground text-xs font-medium">Lampiran File</p>
-                      <Badge variant="secondary" className="text-xs">
-                        {order.result.attachmentType}
-                      </Badge>
-                    </div>
-
-                    {/* Image Preview for JPEG/PNG */}
-                    {(order.result.attachmentType === "JPEG" ||
-                      order.result.attachmentType === "PNG") && (
-                      <div className="mb-3 overflow-hidden rounded-md border">
-                        <Image
-                          src={order.result.attachmentUrl}
-                          alt="Lab result attachment"
-                          className="h-auto w-full object-contain"
-                          style={{ maxHeight: "400px" }}
-                        />
-                      </div>
-                    )}
-
-                    {/* File Icon for PDF/DICOM */}
-                    {(order.result.attachmentType === "PDF" ||
-                      order.result.attachmentType === "DICOM") && (
-                      <div className="bg-muted/30 mb-3 flex items-center justify-center rounded-md border py-8">
-                        <div className="text-muted-foreground text-center">
-                          <IconFile className="mx-auto mb-2 h-12 w-12" />
-                          <p className="text-sm font-medium">{order.result.attachmentType} File</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Download/View Button */}
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => window.open(order.result!.attachmentUrl!, "_blank")}
-                      >
-                        <IconEye className="mr-2 h-4 w-4" />
-                        Lihat File
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => {
-                          const link = document.createElement("a")
-                          link.href = order.result!.attachmentUrl!
-                          link.download = `lab-result-${order.orderNumber}`
-                          document.body.appendChild(link)
-                          link.click()
-                          document.body.removeChild(link)
-                        }}
-                      >
-                        <IconDownload className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
-                    </div>
-                  </div>
+                  <AttachmentSection
+                    attachmentUrl={order.result.attachmentUrl}
+                    attachmentType={order.result.attachmentType}
+                    orderNumber={order.orderNumber}
+                  />
                 )}
               </div>
             )}

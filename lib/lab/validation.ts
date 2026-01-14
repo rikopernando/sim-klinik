@@ -121,6 +121,7 @@ export const labResultParameterSchema = z.object({
   name: z.string().min(1, "Parameter name is required").max(100),
   value: z.string().min(1, "Parameter value is required"),
   unit: z.string().max(50).optional(),
+  referenceValue: z.string().optional(),
   referenceRange: z
     .object({
       min: z.number(),

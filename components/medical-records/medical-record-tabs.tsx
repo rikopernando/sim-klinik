@@ -170,7 +170,7 @@ export function MedicalRecordTabs({
         </TabsTrigger>
         <TabsTrigger value="lab-orders" className="gap-2">
           <IconFlask className="h-4 w-4" />
-          Lab
+          Pemeriksaan Penunjang
         </TabsTrigger>
       </TabsList>
 

@@ -4,6 +4,7 @@
  */
 
 import { ResultData } from "@/lib/lab"
+import { User } from "better-auth"
 
 // ============================================================================
 // ENUMS & CONSTANTS
@@ -164,6 +165,8 @@ export interface LabResult {
   verifiedBy: string | null
   verifiedAt: Date | null
   enteredBy: string
+  enteredByUser: Partial<User> | null
+  verifiedByUser: Partial<User> | null
   enteredAt: Date
   createdAt: Date
   updatedAt: Date
@@ -218,6 +221,7 @@ export interface MultiParameterResultTemplate {
   parameters: Array<{
     name: string
     unit: string
+    referenceValue: string
     referenceRange: {
       min: number
       max: number
@@ -246,6 +250,7 @@ export interface MultiParameterResultData {
     name: string
     value: number
     unit: string
+    referenceValue: string
     referenceRange: {
       min: number
       max: number

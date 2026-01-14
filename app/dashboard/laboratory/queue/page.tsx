@@ -41,7 +41,7 @@ export default function LabTechnicianQueuePage() {
         <div>
           <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
             <IconFlask className="h-8 w-8" />
-            Antrian Laboratorium
+            Antrian Pemeriksaan Penunjang
           </h1>
           <p className="text-muted-foreground mt-1">
             Worklist untuk teknisi laboratorium - Proses order sesuai prioritas

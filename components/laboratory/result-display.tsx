@@ -78,6 +78,7 @@ export function MultiParameterResultDisplay({ data }: MultiParameterResultDispla
       {data.parameters.map((param, index) => {
         const isAbnormal = isAbnormalFlag(param.flag)
         const isCritical = isCriticalFlag(param.flag)
+        const hasReferenceRange = param.referenceRange.min > 0 || param.referenceRange.max > 0
 
         return (
           <div
@@ -99,9 +100,12 @@ export function MultiParameterResultDisplay({ data }: MultiParameterResultDispla
                     {param.unit}
                   </span>
                 </p>
-                {param.referenceRange && (
+                {(hasReferenceRange || param.referenceValue) && (
                   <p className="text-muted-foreground mt-1 text-xs">
-                    Rujukan: {param.referenceRange.min} - {param.referenceRange.max} {param.unit}
+                    Rujukan:{" "}
+                    {hasReferenceRange
+                      ? `${param.referenceRange.min} - ${param.referenceRange.max} ${param.unit}`
+                      : param.referenceValue}
                   </p>
                 )}
               </div>

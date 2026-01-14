@@ -123,12 +123,15 @@ function convertFormDataToResultInput(
     let flag: ResultFlag = RESULT_FLAGS.NORMAL
     const criticalThreshold = 2 // 2x or 0.5x is considered critical
 
-    if (value < min * (1 / criticalThreshold) || value > max * criticalThreshold) {
-      flag = value < min ? RESULT_FLAGS.CRITICAL_LOW : RESULT_FLAGS.CRITICAL_HIGH
-    } else if (value < min) {
-      flag = RESULT_FLAGS.LOW
-    } else if (value > max) {
-      flag = RESULT_FLAGS.HIGH
+    const hasReferenceRange = min > 0 || max > 0
+    if (hasReferenceRange) {
+      if (value < min * (1 / criticalThreshold) || value > max * criticalThreshold) {
+        flag = value < min ? RESULT_FLAGS.CRITICAL_LOW : RESULT_FLAGS.CRITICAL_HIGH
+      } else if (value < min) {
+        flag = RESULT_FLAGS.LOW
+      } else if (value > max) {
+        flag = RESULT_FLAGS.HIGH
+      }
     }
 
     resultData = {
@@ -142,25 +145,29 @@ function convertFormDataToResultInput(
 
     const parameters: ParameterResultInput[] = template.parameters.map((param, index) => {
       const paramKey = createParameterKey(index)
-      const value = parseFloat(data[paramKey]) || 0
       const { min, max } = param.referenceRange
 
       // Calculate flag based on reference range
       let flag: ResultFlag = RESULT_FLAGS.NORMAL
       const criticalThreshold = 2 // 2x or 0.5x is considered critical
 
-      if (value < min * (1 / criticalThreshold) || value > max * criticalThreshold) {
-        flag = value < min ? RESULT_FLAGS.CRITICAL_LOW : RESULT_FLAGS.CRITICAL_HIGH
-      } else if (value < min) {
-        flag = RESULT_FLAGS.LOW
-      } else if (value > max) {
-        flag = RESULT_FLAGS.HIGH
+      const hasReferenceRange = min > 0 || max > 0
+      if (hasReferenceRange) {
+        const value = parseFloat(data[paramKey]) || 0
+        if (value < min * (1 / criticalThreshold) || value > max * criticalThreshold) {
+          flag = value < min ? RESULT_FLAGS.CRITICAL_LOW : RESULT_FLAGS.CRITICAL_HIGH
+        } else if (value < min) {
+          flag = RESULT_FLAGS.LOW
+        } else if (value > max) {
+          flag = RESULT_FLAGS.HIGH
+        }
       }
 
       return {
         name: param.name,
-        value: value.toString(),
+        value: data[paramKey],
         unit: param.unit,
+        referenceValue: param.referenceValue,
         referenceRange: {
           min: param.referenceRange.min,
           max: param.referenceRange.max,
@@ -324,8 +331,8 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
                         <>
                           <Input
                             id={paramKey}
-                            type={param.unit ? "number" : "text"}
-                            step={param.unit ? "any" : undefined}
+                            type={hasReferenceRange ? "number" : "text"}
+                            step={hasReferenceRange ? "any" : undefined}
                             autoComplete="off"
                             placeholder={`Masukkan nilai ${param.name} ${
                               param.unit ? `(${param.unit})` : ""
@@ -339,10 +346,12 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
                         </>
                       )}
                     />
-                    {hasReferenceRange && (
+                    {(hasReferenceRange || param.referenceValue) && (
                       <FieldDescription>
-                        Rujukan: {param.referenceRange.min} - {param.referenceRange.max}{" "}
-                        {param.unit}
+                        Rujukan:{" "}
+                        {hasReferenceRange
+                          ? `${param.referenceRange.min} - ${param.referenceRange.max} ${param.unit}`
+                          : param.referenceValue}
                       </FieldDescription>
                     )}
                   </Field>

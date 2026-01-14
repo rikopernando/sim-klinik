@@ -20,8 +20,9 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { useVerifyLabResult } from "@/hooks/use-verify-lab-result"
-import { ResultDisplay } from "./result-display"
 import type { LabOrderWithRelations } from "@/types/lab"
+import { ResultDisplay } from "./result-display"
+import AttachmentSection from "./lab-attachment"
 
 interface VerifyResultDialogProps {
   order: LabOrderWithRelations
@@ -61,7 +62,7 @@ export function VerifyResultDialog({ order, onSuccess, trigger }: VerifyResultDi
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[500px]">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconShieldCheck className="h-5 w-5" />
@@ -71,7 +72,6 @@ export function VerifyResultDialog({ order, onSuccess, trigger }: VerifyResultDi
             Verifikasi hasil pemeriksaan laboratorium sebelum dikirim ke dokter
           </DialogDescription>
         </DialogHeader>
-
         <div className="space-y-4">
           {/* Order Info */}
           <div className="bg-muted/50 rounded-lg border p-4">
@@ -127,6 +127,15 @@ export function VerifyResultDialog({ order, onSuccess, trigger }: VerifyResultDi
               <p className="text-muted-foreground mb-1 text-xs">Catatan Teknisi</p>
               <p className="text-sm">{order.result.resultNotes}</p>
             </div>
+          )}
+
+          {/* Attachment Display */}
+          {order.result.attachmentUrl && (
+            <AttachmentSection
+              attachmentUrl={order.result.attachmentUrl}
+              attachmentType={order.result.attachmentType}
+              orderNumber={order.orderNumber}
+            />
           )}
 
           {/* Confirmation Message */}

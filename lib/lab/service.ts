@@ -3,6 +3,7 @@
  * Business logic for lab operations
  */
 
+import { alias } from "drizzle-orm/pg-core"
 import { and, eq, desc, or, ilike, inArray } from "drizzle-orm"
 import { db } from "@/db"
 import {
@@ -36,6 +37,9 @@ import {
   LabOrderFilters,
   UpdateLabTestInput,
 } from "./validation"
+
+const enteredByUser = alias(user, "entered_by_user")
+const verifiedByUser = alias(user, "verified_by_user")
 
 // ============================================================================
 // LAB TEST SERVICES
@@ -472,12 +476,20 @@ export async function getLabOrderById(orderId: string) {
       resultNotes: labResults.resultNotes,
       criticalValue: labResults.criticalValue,
       isVerified: labResults.isVerified,
-      verifiedBy: labResults.verifiedBy,
       verifiedAt: labResults.verifiedAt,
-      enteredBy: labResults.enteredBy,
       enteredAt: labResults.enteredAt,
+      verifiedByUser: {
+        id: verifiedByUser.id,
+        name: verifiedByUser.name,
+      },
+      enteredByUser: {
+        id: enteredByUser.id,
+        name: enteredByUser.name,
+      },
     })
     .from(labResults)
+    .leftJoin(verifiedByUser, eq(labResults.enteredBy, verifiedByUser.id))
+    .leftJoin(enteredByUser, eq(labResults.enteredBy, enteredByUser.id))
     .where(eq(labResults.orderId, orderId))
     .limit(1)
 
@@ -692,6 +704,7 @@ export async function createLabResult(
           parameterName: param.name,
           parameterValue: param.value,
           unit: param.unit,
+          referenceValue: param.referenceValue,
           referenceMin: param.referenceRange?.min?.toString(),
           referenceMax: param.referenceRange?.max?.toString(),
           flag: param.flag,

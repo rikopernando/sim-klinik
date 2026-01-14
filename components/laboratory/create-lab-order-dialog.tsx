@@ -84,7 +84,7 @@ export function CreateLabOrderDialog({
       <DialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
-          Order Laboratorium
+          Order
         </Button>
       </DialogTrigger>
 

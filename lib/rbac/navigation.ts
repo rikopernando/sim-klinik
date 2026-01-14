@@ -123,14 +123,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           icon: IconCash,
         },
         {
-          title: "Antrian Laboratorium",
-          url: "/dashboard/laboratory/queue",
-          icon: IconFlask,
-        },
-        {
-          title: "Laboratorium & Radiologi",
+          title: "Pemeriksaan Penunjang",
           url: "/dashboard/laboratory",
-          icon: IconStethoscope,
+          icon: IconFlask,
+          items: [
+            {
+              title: "Daftar Pemeriksaan",
+              url: "/dashboard/laboratory/list",
+            },
+            {
+              title: "Antrian Pemeriksaan",
+              url: "/dashboard/laboratory/queue",
+            },
+          ],
         },
       ],
     },
@@ -241,14 +246,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           icon: IconCash,
         },
         {
-          title: "Antrian Laboratorium",
-          url: "/dashboard/laboratory/queue",
-          icon: IconFlask,
-        },
-        {
-          title: "Laboratorium & Radiologi",
+          title: "Pemeriksaan Penunjang",
           url: "/dashboard/laboratory",
-          icon: IconStethoscope,
+          icon: IconFlask,
+          items: [
+            {
+              title: "Daftar Pemeriksaan",
+              url: "/dashboard/laboratory/list",
+            },
+            {
+              title: "Antrian Pemeriksaan",
+              url: "/dashboard/laboratory/queue",
+            },
+          ],
         },
       ],
     },
