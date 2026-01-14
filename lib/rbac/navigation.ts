@@ -153,11 +153,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Administrasi",
       items: [
         {
-          title: "Pasien Pulang",
-          url: "/dashboard/discharge",
-          icon: IconUserCheck,
-        },
-        {
           title: "Laporan",
           url: "/dashboard/reports",
           icon: IconReportMedical,
@@ -168,8 +163,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           icon: IconUsers,
         },
         {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
+        },
+        {
           title: "Pengaturan",
           url: "/dashboard/settings",
+          icon: IconSettings,
+        },
+
+        {
+          title: "Poli",
+          url: "/dashboard/polis",
           icon: IconSettings,
         },
       ],
