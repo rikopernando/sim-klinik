@@ -9,18 +9,8 @@ import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { useSession } from "@/lib/auth-client"
-import {
-  IconHelp,
-  IconSearch,
-  IconSettings,
-  IconDatabase,
-  IconReport,
-  IconFileWord,
-} from "@tabler/icons-react"
 
-import { NavDocuments } from "@/components/nav-documents"
 import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
   Sidebar,
@@ -35,42 +25,6 @@ import { getNavigationGroupsForRole } from "@/lib/rbac/navigation"
 import type { UserRole } from "@/types/rbac"
 import { ROLE_INFO } from "@/types/rbac"
 import { Badge } from "@/components/ui/badge"
-
-const staticSecondaryNav = [
-  {
-    title: "Settings",
-    url: "#",
-    icon: IconSettings,
-  },
-  {
-    title: "Get Help",
-    url: "#",
-    icon: IconHelp,
-  },
-  {
-    title: "Search",
-    url: "#",
-    icon: IconSearch,
-  },
-]
-
-const staticDocuments = [
-  {
-    name: "Data Library",
-    url: "#",
-    icon: IconDatabase,
-  },
-  {
-    name: "Reports",
-    url: "#",
-    icon: IconReport,
-  },
-  {
-    name: "Word Assistant",
-    url: "#",
-    icon: IconFileWord,
-  },
-]
 
 export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
@@ -173,10 +127,10 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
         {navigationGroups.length > 0 && <NavMain groups={navigationGroups} />}
 
         {/* Static Documents - Only for admin */}
-        {userRole === "admin" && <NavDocuments items={staticDocuments} />}
+        {/* {userRole === "admin" && <NavDocuments items={staticDocuments} />} */}
 
         {/* Secondary Navigation */}
-        <NavSecondary items={staticSecondaryNav} className="mt-auto" />
+        {/* <NavSecondary items={staticSecondaryNav} className="mt-auto" /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
