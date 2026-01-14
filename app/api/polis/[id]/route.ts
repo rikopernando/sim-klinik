@@ -11,7 +11,7 @@ import { db } from "@/db"
 import { polis } from "@/db/schema/visits"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { PayloadPoli } from "@/types/poli"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { updatePoliSchema } from "@/lib/validations/poli.validation"
 
 type Params = {
