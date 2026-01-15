@@ -11,6 +11,15 @@ export interface Patient {
   phone: string | null
   email: string | null
   address: string | null
+  // Hierarchical address fields
+  provinceId: string | null
+  provinceName: string | null
+  cityId: string | null
+  cityName: string | null
+  subdistrictId: string | null
+  subdistrictName: string | null
+  villageId: string | null
+  villageName: string | null
   emergencyContact: string | null
   emergencyPhone: string | null
   insuranceType: string | null
@@ -28,6 +37,15 @@ export interface PatientFormData {
   bloodType?: string
   phone?: string
   address?: string
+  // Hierarchical address fields
+  provinceId?: string
+  provinceName?: string
+  cityId?: string
+  cityName?: string
+  subdistrictId?: string
+  subdistrictName?: string
+  villageId?: string
+  villageName?: string
   email?: string
   emergencyContact?: string
   emergencyPhone?: string

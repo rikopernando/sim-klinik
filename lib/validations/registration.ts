@@ -26,7 +26,20 @@ export const patientFormSchema = z
 
     // Step 2: Contact & Insurance
     phone: z.string().max(20).optional(),
+
+    // Hierarchical address fields
+    provinceId: z.string().max(10).optional(),
+    provinceName: z.string().max(100).optional(),
+    cityId: z.string().max(10).optional(),
+    cityName: z.string().max(100).optional(),
+    subdistrictId: z.string().max(10).optional(),
+    subdistrictName: z.string().max(100).optional(),
+    villageId: z.string().max(15).optional(),
+    villageName: z.string().max(100).optional(),
+
+    // Street address (Jalan, RT/RW, No. Rumah)
     address: z.string().optional(),
+
     email: z.string().email("Email tidak valid").optional().or(z.literal("")),
     emergencyContact: z.string().max(255).optional(),
     emergencyPhone: z.string().max(20).optional(),

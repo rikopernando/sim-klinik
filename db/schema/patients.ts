@@ -15,7 +15,18 @@ export const patients = pgTable(
     name: varchar("name", { length: 255 }).notNull(),
     dateOfBirth: timestamp("date_of_birth"),
     gender: varchar("gender", { length: 10 }), // male, female, other
-    address: text("address"),
+    address: text("address"), // Street address details (Jalan, RT/RW, No. Rumah)
+
+    // Hierarchical address fields (Indonesian administrative divisions)
+    provinceId: varchar("province_id", { length: 10 }),
+    provinceName: varchar("province_name", { length: 100 }),
+    cityId: varchar("city_id", { length: 10 }),
+    cityName: varchar("city_name", { length: 100 }),
+    subdistrictId: varchar("subdistrict_id", { length: 10 }),
+    subdistrictName: varchar("subdistrict_name", { length: 100 }),
+    villageId: varchar("village_id", { length: 15 }),
+    villageName: varchar("village_name", { length: 100 }),
+
     phone: varchar("phone", { length: 20 }),
     email: varchar("email", { length: 255 }),
     insuranceType: varchar("insurance_type", { length: 50 }), // BPJS, Asuransi Swasta, Umum/Cash

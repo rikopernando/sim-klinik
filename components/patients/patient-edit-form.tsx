@@ -46,6 +46,15 @@ export function PatientEditForm({ patient, onSuccess, onCancel }: PatientEditFor
       gender: patient.gender as "male" | "female" | undefined,
       bloodType: patient.bloodType || "",
       phone: patient.phone || "",
+      // Hierarchical address fields
+      provinceId: patient.provinceId || "",
+      provinceName: patient.provinceName || "",
+      cityId: patient.cityId || "",
+      cityName: patient.cityName || "",
+      subdistrictId: patient.subdistrictId || "",
+      subdistrictName: patient.subdistrictName || "",
+      villageId: patient.villageId || "",
+      villageName: patient.villageName || "",
       address: patient.address || "",
       email: patient.email || "",
       emergencyContact: patient.emergencyContact || "",
@@ -62,6 +71,7 @@ export function PatientEditForm({ patient, onSuccess, onCancel }: PatientEditFor
     control,
     watch,
     trigger,
+    setValue,
     formState: { errors },
   } = form
 
@@ -140,6 +150,7 @@ export function PatientEditForm({ patient, onSuccess, onCancel }: PatientEditFor
           register={register}
           control={control}
           errors={errors}
+          setValue={setValue}
           insuranceType={insuranceType}
         />
       )}

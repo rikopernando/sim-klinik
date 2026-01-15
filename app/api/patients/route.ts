@@ -18,10 +18,20 @@ const patientSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(255),
   dateOfBirth: z.string().optional(), // ISO date string
   gender: z.enum(["male", "female"]).optional(),
+  // Hierarchical address fields
+  provinceId: z.string().max(10).optional(),
+  provinceName: z.string().max(100).optional(),
+  cityId: z.string().max(10).optional(),
+  cityName: z.string().max(100).optional(),
+  subdistrictId: z.string().max(10).optional(),
+  subdistrictName: z.string().max(100).optional(),
+  villageId: z.string().max(15).optional(),
+  villageName: z.string().max(100).optional(),
+  // Street address details
   address: z.string().optional(),
   phone: z.string().max(20).optional(),
   email: z.union([z.string().email({ message: "Invalid email format" }), z.literal("")]).optional(),
-  insuranceType: z.enum(["BPJS", "Asuransi Swasta", "Umum"]).optional(),
+  insuranceType: z.enum(["", "BPJS", "Asuransi Swasta", "Umum"]).optional(),
   insuranceNumber: z.string().max(50).optional(),
   emergencyContact: z.string().max(255).optional(),
   emergencyPhone: z.string().max(20).optional(),
@@ -74,6 +84,16 @@ export const POST = withRBAC(
           name: validatedData.name,
           dateOfBirth: validatedData.dateOfBirth ? new Date(validatedData.dateOfBirth) : null,
           gender: validatedData.gender || null,
+          // Hierarchical address fields
+          provinceId: validatedData.provinceId || null,
+          provinceName: validatedData.provinceName || null,
+          cityId: validatedData.cityId || null,
+          cityName: validatedData.cityName || null,
+          subdistrictId: validatedData.subdistrictId || null,
+          subdistrictName: validatedData.subdistrictName || null,
+          villageId: validatedData.villageId || null,
+          villageName: validatedData.villageName || null,
+          // Street address
           address: validatedData.address || null,
           phone: validatedData.phone || null,
           email: validatedData.email || null,

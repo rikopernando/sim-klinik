@@ -14,6 +14,16 @@ const patientUpdateSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(255).optional(),
   dateOfBirth: z.string().optional(), // ISO date string
   gender: z.enum(["male", "female", "other"]).optional(),
+  // Hierarchical address fields
+  provinceId: z.string().max(10).optional(),
+  provinceName: z.string().max(100).optional(),
+  cityId: z.string().max(10).optional(),
+  cityName: z.string().max(100).optional(),
+  subdistrictId: z.string().max(10).optional(),
+  subdistrictName: z.string().max(100).optional(),
+  villageId: z.string().max(15).optional(),
+  villageName: z.string().max(100).optional(),
+  // Street address
   address: z.string().optional(),
   phone: z.string().max(20).optional(),
   email: z.string().email().optional().or(z.literal("")),

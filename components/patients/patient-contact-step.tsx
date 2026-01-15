@@ -3,9 +3,10 @@
  * Step 2: Contact information and insurance details
  */
 
-import { Control, FieldErrors, UseFormRegister, Controller } from "react-hook-form"
+import { Control, FieldErrors, UseFormRegister, Controller, UseFormSetValue } from "react-hook-form"
 
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field"
+import { AddressSelectFields } from "@/components/address/address-select-fields"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import {
@@ -24,13 +25,18 @@ interface PatientContactStepProps {
   register: UseFormRegister<PatientFormData>
   control: Control<PatientFormData>
   errors: FieldErrors<PatientFormData>
+  setValue: UseFormSetValue<PatientFormData>
   insuranceType?: string
 }
+
+const INITIAL_VALUE_PROVINCE_ID = process.env.NEXT_PUBLIC_ADDRESS_INITIAL_VALUE_PROVINCE_ID
+const INITIAL_VALUE_CITY_ID = process.env.NEXT_PUBLIC_ADDRESS_INITIAL_VALUE_CITY_ID
 
 export function PatientContactStep({
   register,
   control,
   errors,
+  setValue,
   insuranceType,
 }: PatientContactStepProps) {
   return (
@@ -77,15 +83,24 @@ export function PatientContactStep({
             </Field>
           </FieldGroup>
 
-          {/* Address */}
+          {/* Address Selection */}
+          <AddressSelectFields
+            setValue={setValue}
+            initialValues={{
+              provinceId: INITIAL_VALUE_PROVINCE_ID,
+              cityId: INITIAL_VALUE_CITY_ID,
+            }}
+          />
+
+          {/* Street Address Details */}
           <FieldGroup>
             <Field className="gap-2">
-              <FieldLabel htmlFor="address">Alamat</FieldLabel>
+              <FieldLabel htmlFor="address">Detail Alamat (Jalan, RT/RW, No. Rumah)</FieldLabel>
               <Textarea
                 id="address"
                 {...register("address")}
-                placeholder="Masukkan alamat lengkap"
-                rows={3}
+                placeholder="Contoh: Jl. Merdeka No. 123, RT 01/RW 02"
+                rows={2}
               />
             </Field>
           </FieldGroup>
