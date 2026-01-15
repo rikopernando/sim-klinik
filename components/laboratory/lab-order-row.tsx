@@ -26,6 +26,7 @@ import { CollectSpecimenDialog } from "./collect-specimen-dialog"
 import { ResultEntryDialog } from "./result-entry-dialog"
 import { OrderDetailDialog } from "./order-detail-dialog"
 import { VerifyResultDialog } from "./verify-result-dialog"
+import LabBadge from "./lab-badge"
 
 interface LabOrderRowProps {
   order: LabOrderWithRelations
@@ -124,7 +125,7 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
         // Show Verify button for lab supervisors, otherwise show detail
         if (hasPermission("lab:write") && order.result && !order.result.isVerified) {
           return (
-            <div className="flex gap-2">
+            <div className="flex justify-end gap-2">
               <VerifyResultDialog order={order} onSuccess={onSuccess} />
               <OrderDetailDialog orderId={order.id} />
             </div>
@@ -145,12 +146,7 @@ export function LabOrderRow({ order, index, onSuccess }: LabOrderRowProps) {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <h4 className="font-semibold">{order.test?.name || "Test Unknown"}</h4>
-            <Badge
-              variant={order.test?.department === "LAB" ? "secondary" : "default"}
-              className="text-xs"
-            >
-              {order.test?.department}
-            </Badge>
+            <LabBadge departement={order.test?.department || "LAB"} />
             {order.urgency && order.urgency !== "routine" && (
               <Badge
                 variant={order.urgency === "stat" ? "destructive" : "default"}

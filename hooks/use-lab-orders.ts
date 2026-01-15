@@ -6,7 +6,12 @@
 import { toast } from "sonner"
 import { useState, useEffect, useCallback } from "react"
 import { fetchLabOrders } from "@/lib/services/lab.service"
-import type { LabOrderWithRelations, LabOrderFilters, OrderStatus } from "@/types/lab"
+import type {
+  LabOrderWithRelations,
+  LabOrderFilters,
+  OrderStatus,
+  LAB_DEPARTMENTS,
+} from "@/types/lab"
 import { getErrorMessage } from "@/lib/utils/error"
 
 interface UseLabOrdersOptions {
@@ -21,7 +26,7 @@ interface UseLabOrdersReturn {
   setVisitId: (visitId: string | undefined) => void
   setPatientId: (patientId: string | undefined) => void
   setStatus: (status: OrderStatus | OrderStatus[] | undefined) => void
-  setDepartment: (department: "LAB" | "RAD" | undefined) => void
+  setDepartment: (department: keyof typeof LAB_DEPARTMENTS | undefined) => void
   refetch: () => void
 }
 
@@ -67,9 +72,12 @@ export function useLabOrders(options: UseLabOrdersOptions = {}): UseLabOrdersRet
     setFilters((prev) => ({ ...prev, status }))
   }, [])
 
-  const setDepartment = useCallback((department: "LAB" | "RAD" | undefined) => {
-    setFilters((prev) => ({ ...prev, department }))
-  }, [])
+  const setDepartment = useCallback(
+    (department: keyof typeof LAB_DEPARTMENTS | undefined | undefined) => {
+      setFilters((prev) => ({ ...prev, department }))
+    },
+    []
+  )
 
   return {
     orders,

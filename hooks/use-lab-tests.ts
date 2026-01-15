@@ -7,7 +7,7 @@ import { toast } from "sonner"
 import { useState, useEffect, useCallback } from "react"
 import { useDebounce } from "@/hooks/use-debounce"
 import { fetchLabTests } from "@/lib/services/lab.service"
-import type { LabTest, LabTestFilters } from "@/types/lab"
+import type { LAB_DEPARTMENTS, LabTest, LabTestFilters } from "@/types/lab"
 import { getErrorMessage } from "@/lib/utils/error"
 
 interface UseLabTestsOptions {
@@ -21,7 +21,7 @@ interface UseLabTestsReturn {
   filters: LabTestFilters
   setSearch: (search: string) => void
   setCategory: (category: string | undefined) => void
-  setDepartment: (department: "LAB" | "RAD" | undefined) => void
+  setDepartment: (department: keyof typeof LAB_DEPARTMENTS | undefined) => void
   setIsActive: (isActive: boolean | undefined) => void
   refetch: () => void
 }
@@ -77,7 +77,7 @@ export function useLabTests(options: UseLabTestsOptions = {}): UseLabTestsReturn
     setFilters((prev) => ({ ...prev, category }))
   }, [])
 
-  const setDepartment = useCallback((department: "LAB" | "RAD" | undefined) => {
+  const setDepartment = useCallback((department: keyof typeof LAB_DEPARTMENTS | undefined) => {
     setFilters((prev) => ({ ...prev, department }))
   }, [])
 

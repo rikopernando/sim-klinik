@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLabOrders } from "@/hooks/use-lab-orders"
-import type { OrderStatus } from "@/types/lab"
+import type { LAB_DEPARTMENTS, OrderStatus } from "@/types/lab"
 
 import { LabOrderRow } from "./lab-order-row"
 
@@ -28,7 +28,7 @@ interface LabOrderQueueTableProps {
 }
 
 type UrgencyFilter = "all" | "urgent" | "stat"
-type DepartmentFilter = "all" | "LAB" | "RAD"
+type DepartmentFilter = "all" | keyof typeof LAB_DEPARTMENTS | undefined
 
 export function LabOrderQueueTable({ defaultStatus, showFilters = true }: LabOrderQueueTableProps) {
   const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilter>("all")
@@ -41,7 +41,7 @@ export function LabOrderQueueTable({ defaultStatus, showFilters = true }: LabOrd
 
   const handleDepartmentChange = (value: string) => {
     setDepartmentFilter(value as DepartmentFilter)
-    setDepartment(value === "all" ? undefined : (value as "LAB" | "RAD"))
+    setDepartment(value === "all" ? undefined : (value as keyof typeof LAB_DEPARTMENTS | undefined))
   }
 
   // Filter by urgency (client-side for now)
@@ -89,6 +89,7 @@ export function LabOrderQueueTable({ defaultStatus, showFilters = true }: LabOrd
                 <SelectItem value="all">Semua Departemen</SelectItem>
                 <SelectItem value="LAB">Laboratorium</SelectItem>
                 <SelectItem value="RAD">Radiologi</SelectItem>
+                <SelectItem value="EKG">EKG</SelectItem>
               </SelectContent>
             </Select>
 

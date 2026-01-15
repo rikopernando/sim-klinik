@@ -59,6 +59,9 @@ import {
   getAttachmentType,
   formatFileSize,
 } from "@/lib/utils/file-upload"
+import { toTitleCaseMap } from "@/lib/utils/string"
+
+import LabBadge from "./lab-badge"
 
 interface ResultEntryDialogProps {
   order: LabOrderWithRelations
@@ -89,12 +92,15 @@ function createFormSchema(template: ResultTemplate | null) {
   }
 
   if (isDescriptiveTemplate(template)) {
-    return z.object({
-      ...baseSchema,
-      findings: z.string().min(1, "Temuan harus diisi"),
-      interpretation: z.string().optional(),
-      impression: z.string().optional(),
-    })
+    // Build parameter fields dynamically
+    const parameterFields = template.fields.reduce(
+      (acc, field) => {
+        acc[field] = z.string().min(1, `${toTitleCaseMap(field, "_")} harus diisi`)
+        return acc
+      },
+      {} as Record<string, z.ZodString>
+    )
+    return z.object({ ...baseSchema, ...parameterFields })
   }
 
   // Numeric or default
@@ -181,9 +187,17 @@ function convertFormDataToResultInput(
     }
   } else if (isDescriptiveTemplate(template)) {
     const data = formData as DescriptiveResultFormData
+    let fieldValues = {}
+    for (let index = 0; index < template.fields.length; index++) {
+      const field = template.fields[index]
+      fieldValues = {
+        ...fieldValues,
+        [field]: data[field],
+      }
+    }
+
     resultData = {
-      findings: data.findings,
-      interpretation: data.interpretation || "",
+      ...fieldValues,
     }
   } else {
     // Fallback to descriptive format
@@ -368,71 +382,34 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
         <FieldGroup>
           <FieldSet>
             <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="findings">
-                  Temuan / Findings <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Controller
-                  control={form.control}
-                  name={"findings" as keyof FormData}
-                  render={({ field, fieldState }) => (
-                    <>
-                      <Textarea
-                        id="findings"
-                        placeholder="Deskripsikan temuan pemeriksaan..."
-                        rows={4}
-                        value={field.value as string}
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
-                      {fieldState?.error?.message && (
-                        <FieldError>{fieldState.error.message}</FieldError>
+              {template?.fields?.map((fieldName, index) => {
+                return (
+                  <Field key={`${fieldName}-${index}}`}>
+                    <FieldLabel htmlFor={fieldName}>
+                      {toTitleCaseMap(fieldName, "_")} <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Controller
+                      control={form.control}
+                      name={fieldName as keyof FormData}
+                      render={({ field, fieldState }) => (
+                        <>
+                          <Textarea
+                            id={fieldName}
+                            placeholder={`Masukkan ${toTitleCaseMap(fieldName, "_")}...`}
+                            rows={1}
+                            value={field.value as string}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="min-h-9"
+                          />
+                          {fieldState?.error?.message && (
+                            <FieldError>{fieldState.error.message}</FieldError>
+                          )}
+                        </>
                       )}
-                    </>
-                  )}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="interpretation">Interpretasi / Interpretation</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name={"interpretation" as keyof FormData}
-                  render={({ field, fieldState }) => (
-                    <>
-                      <Textarea
-                        id="interpretation"
-                        placeholder="Berikan interpretasi hasil..."
-                        rows={4}
-                        value={field.value as string}
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
-                      {fieldState?.error?.message && (
-                        <FieldError>{fieldState.error.message}</FieldError>
-                      )}
-                    </>
-                  )}
-                />
-              </Field>
-              <Field>
-                <FieldLabel htmlFor="impression">Kesan / Impression</FieldLabel>
-                <Controller
-                  control={form.control}
-                  name={"impression" as keyof FormData}
-                  render={({ field, fieldState }) => (
-                    <>
-                      <Textarea
-                        id="impression"
-                        placeholder="Kesimpulan atau kesan..."
-                        rows={4}
-                        value={field.value as string}
-                        onChange={(e) => field.onChange(e.target.value)}
-                      />
-                      {fieldState?.error?.message && (
-                        <FieldError>{fieldState.error.message}</FieldError>
-                      )}
-                    </>
-                  )}
-                />
-              </Field>
+                    />
+                  </Field>
+                )
+              })}
             </FieldGroup>
           </FieldSet>
         </FieldGroup>
@@ -459,7 +436,7 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
 
         <FieldGroup>
           <Field>
-            <FieldLabel htmlFor="findings">
+            <FieldLabel htmlFor="resultValue">
               Nilai Hasil {template?.unit && `(${template.unit})`}{" "}
               <span className="text-destructive">*</span>
             </FieldLabel>
@@ -517,9 +494,7 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <h4 className="font-semibold">{order.test?.name || "Test Unknown"}</h4>
-                  <Badge variant="secondary" className="text-xs">
-                    {order.test?.department}
-                  </Badge>
+                  <LabBadge departement={order.test?.department || "LAB"} />
                   {order.urgency && order.urgency !== "routine" && (
                     <Badge
                       variant={order.urgency === "stat" ? "destructive" : "default"}

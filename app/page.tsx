@@ -1,8 +1,9 @@
 "use client"
 
+import Image from "next/image"
+
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AuthButtons, HeroAuthButtons } from "@/components/auth-buttons"
-import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function Home() {

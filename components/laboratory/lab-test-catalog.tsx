@@ -20,8 +20,9 @@ import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useLabTests } from "@/hooks/use-lab-tests"
-import type { LabTest } from "@/types/lab"
+import type { LAB_DEPARTMENTS, LabTest } from "@/types/lab"
 import { formatCurrency } from "@/lib/utils/billing"
+import LabBadge from "./lab-badge"
 
 interface LabTestCatalogProps {
   onSelectTest: (test: LabTest) => void
@@ -83,7 +84,9 @@ export function LabTestCatalog({ onSelectTest, selectedTestId }: LabTestCatalogP
                 <Select
                   value={filters.department || "all"}
                   onValueChange={(value) =>
-                    setDepartment(value === "all" ? undefined : (value as "LAB" | "RAD"))
+                    setDepartment(
+                      value === "all" ? undefined : (value as keyof typeof LAB_DEPARTMENTS)
+                    )
                   }
                 >
                   <SelectTrigger>
@@ -93,6 +96,7 @@ export function LabTestCatalog({ onSelectTest, selectedTestId }: LabTestCatalogP
                     <SelectItem value="all">Semua Departemen</SelectItem>
                     <SelectItem value="LAB">Laboratorium</SelectItem>
                     <SelectItem value="RAD">Radiologi</SelectItem>
+                    <SelectItem value="EKG">EKG</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -109,6 +113,7 @@ export function LabTestCatalog({ onSelectTest, selectedTestId }: LabTestCatalogP
                   <SelectContent>
                     <SelectItem value="all">Semua Kategori</SelectItem>
                     <SelectItem value="Hematology">Hematologi</SelectItem>
+                    <SelectItem value="Cardiology">Cardiology</SelectItem>
                     <SelectItem value="Chemistry">Kimia Klinik</SelectItem>
                     <SelectItem value="Immunology">Imunologi</SelectItem>
                     <SelectItem value="Microbiology">Mikrobiologi</SelectItem>
@@ -185,12 +190,7 @@ export function LabTestCatalog({ onSelectTest, selectedTestId }: LabTestCatalogP
                       {test.category}
                     </Badge>
                     <span>•</span>
-                    <Badge
-                      variant={test.department === "LAB" ? "secondary" : "default"}
-                      className="text-xs"
-                    >
-                      {test.department === "LAB" ? "Laboratorium" : "Radiologi"}
-                    </Badge>
+                    <LabBadge departement={test.department} />
                   </div>
                   {test.specimenType && (
                     <p className="text-muted-foreground text-xs">

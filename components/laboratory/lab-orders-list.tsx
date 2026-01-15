@@ -15,7 +15,9 @@ import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLabOrders } from "@/hooks/use-lab-orders"
 import { formatCurrency } from "@/lib/utils/billing"
+
 import { OrderDetailDialog } from "./order-detail-dialog"
+import LabBadge from "./lab-badge"
 
 interface LabOrdersListProps {
   visitId: string
@@ -121,12 +123,7 @@ export function LabOrdersList({ visitId, showSubtotal }: LabOrdersListProps) {
             <div className="flex-1 space-y-2">
               <div className="flex items-center gap-2">
                 <h4 className="font-semibold">{order.test?.name || "Test Unknown"}</h4>
-                <Badge
-                  variant={order.test?.department === "LAB" ? "secondary" : "default"}
-                  className="text-xs"
-                >
-                  {order.test?.department}
-                </Badge>
+                <LabBadge departement={order.test?.department || "LAB"} />
                 {order.urgency && order.urgency !== "routine" && (
                   <Badge
                     variant={order.urgency === "stat" ? "destructive" : "default"}

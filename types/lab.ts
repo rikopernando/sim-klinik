@@ -13,6 +13,7 @@ import { User } from "better-auth"
 export const LAB_DEPARTMENTS = {
   LAB: "LAB",
   RAD: "RAD",
+  EKG: "EKG",
 } as const
 
 export type LabDepartment = (typeof LAB_DEPARTMENTS)[keyof typeof LAB_DEPARTMENTS]
@@ -29,6 +30,7 @@ export const LAB_CATEGORIES = {
   CT_SCAN: "CT Scan",
   MRI: "MRI",
   ULTRASOUND: "Ultrasound",
+  CARDIOLOGY: "Cardiology",
 } as const
 
 export type LabCategory = (typeof LAB_CATEGORIES)[keyof typeof LAB_CATEGORIES]
@@ -259,17 +261,7 @@ export interface MultiParameterResultData {
   }>
 }
 
-export interface DescriptiveResultData {
-  findings: string
-  interpretation: string
-}
-
-export interface RadiologyResultData {
-  findings: string
-  impression: string
-  technique?: string
-  comparison?: string
-}
+export type DescriptiveResultData = Record<string, string>
 
 // ============================================================================
 // API REQUEST/RESPONSE TYPES

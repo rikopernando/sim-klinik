@@ -35,6 +35,7 @@ import {
   CreateLabResultInput,
   CreateLabTestInput,
   LabOrderFilters,
+  ParameterResultInput,
   UpdateLabTestInput,
 } from "./validation"
 
@@ -695,11 +696,15 @@ export async function createLabResult(
 
   // Insert parameters if provided
   // resultData can be labParameterSchema which contains parameters
-  if ("parameters" in data.resultData && data.resultData.parameters) {
+  if (
+    "parameters" in data.resultData &&
+    data.resultData.parameters &&
+    Array.isArray(data.resultData.parameters)
+  ) {
     const params = data.resultData.parameters
     if (params.length > 0) {
       await db.insert(labResultParameters).values(
-        params.map((param) => ({
+        params.map((param: ParameterResultInput) => ({
           resultId: newResult.id,
           parameterName: param.name,
           parameterValue: param.value,

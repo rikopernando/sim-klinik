@@ -26,6 +26,7 @@ import { createLabOrderSchema } from "@/lib/lab/validation"
 import type { LabTest } from "@/types/lab"
 import { formatCurrency } from "@/lib/utils/billing"
 import { Input } from "@/components/ui/input"
+import LabBadge from "./lab-badge"
 
 const formSchema = createLabOrderSchema.omit({ visitId: true, patientId: true })
 
@@ -79,12 +80,7 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
                 {selectedTest.category}
               </Badge>
               <span>•</span>
-              <Badge
-                variant={selectedTest.department === "LAB" ? "secondary" : "default"}
-                className="text-xs"
-              >
-                {selectedTest.department === "LAB" ? "Laboratorium" : "Radiologi"}
-              </Badge>
+              <LabBadge departement={selectedTest.department} />
             </div>
             {selectedTest.specimenType && (
               <p className="text-muted-foreground text-xs">

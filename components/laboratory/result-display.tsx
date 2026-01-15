@@ -5,11 +5,11 @@
 
 import { Badge } from "@/components/ui/badge"
 import type { ResultData } from "@/lib/lab"
+import { toTitleCaseMap } from "@/lib/utils/string"
 import type {
   NumericResultData,
   MultiParameterResultData,
   DescriptiveResultData,
-  RadiologyResultData,
 } from "@/types/lab"
 
 // ============================================================================
@@ -26,10 +26,6 @@ export function isMultiParameterResult(data: ResultData): boolean {
 
 export function isDescriptiveResult(data: ResultData): boolean {
   return "findings" in data && !("impression" in data)
-}
-
-export function isRadiologyResult(data: ResultData): boolean {
-  return "findings" in data && "impression" in data
 }
 
 // ============================================================================
@@ -75,52 +71,54 @@ export function MultiParameterResultDisplay({ data }: MultiParameterResultDispla
   return (
     <div className="space-y-3">
       <p className="text-muted-foreground text-xs">Parameter Pemeriksaan</p>
-      {data.parameters.map((param, index) => {
-        const isAbnormal = isAbnormalFlag(param.flag)
-        const isCritical = isCriticalFlag(param.flag)
-        const hasReferenceRange = param.referenceRange.min > 0 || param.referenceRange.max > 0
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {data.parameters.map((param, index) => {
+          const isAbnormal = isAbnormalFlag(param.flag)
+          const isCritical = isCriticalFlag(param.flag)
+          const hasReferenceRange = param.referenceRange.min > 0 || param.referenceRange.max > 0
 
-        return (
-          <div
-            key={index}
-            className={`rounded-lg border p-4 ${
-              isCritical
-                ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950"
-                : isAbnormal
-                  ? "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950"
-                  : "bg-blue-50 dark:bg-blue-950"
-            }`}
-          >
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <p className="text-sm font-semibold">{param.name}</p>
-                <p className="mt-1 text-2xl font-bold">
-                  {param.value}
-                  <span className="text-muted-foreground ml-2 text-base font-normal">
-                    {param.unit}
-                  </span>
-                </p>
-                {(hasReferenceRange || param.referenceValue) && (
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Rujukan:{" "}
-                    {hasReferenceRange
-                      ? `${param.referenceRange.min} - ${param.referenceRange.max} ${param.unit}`
-                      : param.referenceValue}
+          return (
+            <div
+              key={index}
+              className={`col-span-1 rounded-lg border p-4 ${
+                isCritical
+                  ? "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950"
+                  : isAbnormal
+                    ? "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950"
+                    : "bg-blue-50 dark:bg-blue-950"
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{param.name}</p>
+                  <p className="mt-1 text-2xl font-bold">
+                    {param.value}
+                    <span className="text-muted-foreground ml-2 text-base font-normal">
+                      {param.unit}
+                    </span>
                   </p>
+                  {(hasReferenceRange || param.referenceValue) && (
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Rujukan:{" "}
+                      {hasReferenceRange
+                        ? `${param.referenceRange.min} - ${param.referenceRange.max} ${param.unit}`
+                        : param.referenceValue}
+                    </p>
+                  )}
+                </div>
+                {isAbnormal && (
+                  <Badge
+                    variant={isCritical ? "destructive" : "default"}
+                    className={isCritical ? "" : "bg-orange-500 hover:bg-orange-600"}
+                  >
+                    {getFlagLabel(param.flag)}
+                  </Badge>
                 )}
               </div>
-              {isAbnormal && (
-                <Badge
-                  variant={isCritical ? "destructive" : "default"}
-                  className={isCritical ? "" : "bg-orange-500 hover:bg-orange-600"}
-                >
-                  {getFlagLabel(param.flag)}
-                </Badge>
-              )}
             </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -160,51 +158,19 @@ export function NumericResultDisplay({ data }: NumericResultDisplayProps) {
 }
 
 interface DescriptiveResultDisplayProps {
-  data: DescriptiveResultData | RadiologyResultData
+  data: DescriptiveResultData
 }
 
 export function DescriptiveResultDisplay({ data }: DescriptiveResultDisplayProps) {
-  const isRadiology = isRadiologyResult(data as ResultData)
-
   return (
     <div className="rounded-lg border bg-blue-50 p-4 dark:bg-blue-950">
-      <div className="space-y-3">
-        <div>
-          <p className="text-muted-foreground mb-1 text-xs">Temuan</p>
-          <p className="text-sm">{data.findings}</p>
-        </div>
-
-        {"interpretation" in data && data.interpretation && (
-          <div>
-            <p className="text-muted-foreground mb-1 text-xs">Interpretasi</p>
-            <p className="text-sm">{data.interpretation}</p>
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {Object.keys(data).map((key, index) => (
+          <div className="col-span-1" key={`${key}-${index}`}>
+            <p className="text-muted-foreground mb-1 text-xs">{toTitleCaseMap(key, "_")}</p>
+            <p className="text-sm">{data[key]}</p>
           </div>
-        )}
-
-        {isRadiology && (
-          <>
-            {"impression" in data && data.impression && (
-              <div>
-                <p className="text-muted-foreground mb-1 text-xs">Kesan</p>
-                <p className="text-sm">{data.impression}</p>
-              </div>
-            )}
-
-            {"technique" in data && data.technique && (
-              <div>
-                <p className="text-muted-foreground mb-1 text-xs">Teknik</p>
-                <p className="text-sm">{data.technique}</p>
-              </div>
-            )}
-
-            {"comparison" in data && data.comparison && (
-              <div>
-                <p className="text-muted-foreground mb-1 text-xs">Perbandingan</p>
-                <p className="text-sm">{data.comparison}</p>
-              </div>
-            )}
-          </>
-        )}
+        ))}
       </div>
     </div>
   )
@@ -227,13 +193,5 @@ export function ResultDisplay({ resultData }: ResultDisplayProps) {
     return <NumericResultDisplay data={resultData as NumericResultData} />
   }
 
-  if (isRadiologyResult(resultData)) {
-    return <DescriptiveResultDisplay data={resultData as RadiologyResultData} />
-  }
-
-  if (isDescriptiveResult(resultData)) {
-    return <DescriptiveResultDisplay data={resultData as DescriptiveResultData} />
-  }
-
-  return <p className="text-sm">Hasil tersedia</p>
+  return <DescriptiveResultDisplay data={resultData as DescriptiveResultData} />
 }

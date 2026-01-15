@@ -105,17 +105,7 @@ export const numericResultDataSchema = z.object({
   interpretation: z.string().optional(),
 })
 
-export const descriptiveResultDataSchema = z.object({
-  findings: z.string().min(1, "Findings are required"),
-  interpretation: z.string().min(1, "Interpretation is required"),
-})
-
-export const radiologyResultDataSchema = z.object({
-  findings: z.string().min(1, "Findings are required"),
-  impression: z.string().min(1, "Impression is required"),
-  technique: z.string().optional(),
-  comparison: z.string().optional(),
-})
+export const descriptiveResultDataSchema = z.record(z.string(), z.string())
 
 export const labResultParameterSchema = z.object({
   name: z.string().min(1, "Parameter name is required").max(100),
@@ -146,7 +136,6 @@ export const labParameterSchema = z.object({
 export const resultDataSchema = z.union([
   numericResultDataSchema,
   descriptiveResultDataSchema,
-  radiologyResultDataSchema,
   labParameterSchema,
 ])
 
@@ -177,7 +166,7 @@ export const verifyLabResultSchema = z.object({
 export const labTestFiltersSchema = z.object({
   search: z.string().optional(),
   category: z.string().optional(),
-  department: z.enum([LAB_DEPARTMENTS.LAB, LAB_DEPARTMENTS.RAD]).optional(),
+  department: z.enum([LAB_DEPARTMENTS.LAB, LAB_DEPARTMENTS.RAD, LAB_DEPARTMENTS.EKG]).optional(),
   isActive: z
     .string()
     .transform((val) => val === "true")
