@@ -5,6 +5,9 @@
 "use client"
 
 import { useState } from "react"
+import { toast } from "sonner"
+import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
+
 import {
   Card,
   CardAction,
@@ -27,13 +30,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
-import { PolisTable } from "@/components/polis/polis-table"
-import { toast } from "sonner"
-import { usePoli } from "@/hooks/use-poli"
-import { ResultPoli, PayloadPoli } from "@/types/poli"
 import { EditPolisDialog } from "@/components/polis/edit-polis-dialog"
 import { CreatePolisDialog } from "@/components/polis/create-polis-dialog"
+import { PolisTable } from "@/components/polis/polis-table"
+import { usePoli } from "@/hooks/use-poli"
+import { ResultPoli, PayloadPoli } from "@/types/poli"
 
 export default function UsersPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -134,7 +135,7 @@ export default function UsersPage() {
 
         <CardContent>
           {isLoading && polis.length === 0 ? (
-            <div className="text-muted-foreground py-12 text-center">Memuat data polis...</div>
+            <div className="text-muted-foreground py-12 text-center">Memuat data poli...</div>
           ) : (
             <PolisTable polis={polis} onEdit={handleEdit} onDelete={handleDelete} />
           )}

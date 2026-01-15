@@ -1,7 +1,7 @@
 /**
  * Polis API Route - Single Item Operations
- * PATCH /api/polis/[id] - Update a poli
- * DELETE /api/polis/[id] - Delete a poli
+ * PATCH /api/master-data/polis/[id] - Update a poli
+ * DELETE /api/master-data/polis/[id] - Delete a poli
  */
 
 import { NextResponse } from "next/server"
@@ -11,8 +11,8 @@ import { db } from "@/db"
 import { polis } from "@/db/schema/visits"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { PayloadPoli } from "@/types/poli"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
 import { updatePoliSchema } from "@/lib/validations/poli.validation"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 type Params = {
   params: Promise<{

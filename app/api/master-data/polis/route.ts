@@ -1,23 +1,21 @@
 /**
  * Polis API Route
- * GET /api/polis - Get all active polis/departments
- * POST /api/polis - Create a new poli
- * PATCH /api/polis/[id] - Update a poli
- * DELETE /api/polis/[id] - Delete a poli
+ * GET /api/master-data/polis - Get all active polis/departments
+ * POST /api/master-data/polis - Create a new poli
+ * PATCH /api/master-data/polis/[id] - Update a poli
+ * DELETE /api/master-data/polis/[id] - Delete a poli
  */
 
-import { db } from "@/db"
+import z from "zod"
 import { eq } from "drizzle-orm"
+import { count, and, or, ilike } from "drizzle-orm"
+import { NextRequest, NextResponse } from "next/server"
+
+import { db } from "@/db"
 import { ResultPoli } from "@/types/poli"
 import { polis } from "@/db/schema/visits"
-import { count, and, or, ilike } from "drizzle-orm"
-import HTTP_STATUS_CODES from "@/lib/constans/http"
-import { ResponseApi, ResponseError } from "@/types/api"
-import { NextRequest, NextResponse } from "next/server"
 import { createPoliSchema } from "@/lib/validations/poli.validation"
-import z from "zod"
 import { ResponseApi, ResponseError } from "@/types/api"
-import { Poli } from "@/types/poli"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**

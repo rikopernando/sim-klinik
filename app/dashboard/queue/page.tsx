@@ -1,6 +1,8 @@
 "use client"
 
+import { Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
+
 import { QueueDisplay } from "@/components/visits/queue-display"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -12,9 +14,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { Loader2 } from "lucide-react"
-import { getPolis } from "@/lib/services/poli.service"
 import { Poli } from "@/types/poli"
+import { getPolisRequest } from "@/lib/services/poli.service"
 
 export default function QueuePage() {
   const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined)
@@ -25,8 +26,8 @@ export default function QueuePage() {
   useEffect(() => {
     const fetchPolis = async () => {
       try {
-        const polisList = await getPolis()
-        setPolis(polisList)
+        const response = await getPolisRequest()
+        setPolis(response?.data || [])
       } catch (error) {
         console.error("Error fetching polis:", error)
       } finally {

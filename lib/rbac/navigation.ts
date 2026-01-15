@@ -21,6 +21,7 @@ import {
   IconUser,
   IconDatabase,
   IconFlask,
+  IconCirclePlus2,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -147,6 +148,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard/master-data/rooms",
           icon: IconDatabase,
         },
+        {
+          title: "Poli",
+          url: "/dashboard/master-data/polis",
+          icon: IconCirclePlus2,
+        },
       ],
     },
     {
@@ -170,12 +176,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Pengaturan",
           url: "/dashboard/settings",
-          icon: IconSettings,
-        },
-
-        {
-          title: "Poli",
-          url: "/dashboard/polis",
           icon: IconSettings,
         },
       ],
