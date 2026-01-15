@@ -1,7 +1,11 @@
-export interface Poli {
-  id: string
+export interface PayloadPoli {
   name: string
   code: string
-  description: string | null
+  description?: string
   isActive: string
+}
+
+export interface ResultPoli extends PayloadPoli {
+  id: string
+  createdAt: Date
 }

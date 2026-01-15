@@ -1,0 +1,1 @@
+ALTER TABLE "polis" ADD COLUMN "update_at" timestamp DEFAULT now() NOT NULL;

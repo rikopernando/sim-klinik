@@ -59,10 +59,17 @@
       "breakpoints": true
     },
     {
-      "idx": 8,
+      "idx": 9,
       "version": "7",
-      "when": 1764820335966,
-      "tag": "0008_new_cerise",
+      "when": 1765375747547,
+      "tag": "0009_faithful_stark_industries",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1765547344775,
+      "tag": "0010_smart_invaders",
       "breakpoints": true
     },
     {
