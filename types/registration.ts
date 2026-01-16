@@ -62,6 +62,17 @@ export interface VisitFormData {
   chiefComplaint?: string
   roomId?: string
   notes?: string
+  // Vital Signs (all optional)
+  temperature?: string
+  bloodPressureSystolic?: number
+  bloodPressureDiastolic?: number
+  pulse?: number
+  respiratoryRate?: number
+  oxygenSaturation?: string
+  weight?: string
+  height?: string
+  painScale?: number
+  consciousness?: string
 }
 
 export type RegisteredPatient = Patient

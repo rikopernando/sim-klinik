@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { visits, patients } from "@/db/schema"
+import { visits, patients, vitalsHistory } from "@/db/schema"
 import { eq, and, gte, lt } from "drizzle-orm"
 import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
-import { RegisteredVisit } from "@/types/visit"
+import { calculateBMI } from "@/lib/inpatient/vitals-utils"
+import { RegisteredVisit } from "@/types/registration"
 
 /**
  * Visit Registration Schema
@@ -21,7 +22,36 @@ const visitSchema = z.object({
   chiefComplaint: z.string().optional(),
   roomId: z.string().optional(),
   notes: z.string().optional(),
+  // Vital Signs (all optional)
+  temperature: z.string().optional(),
+  bloodPressureSystolic: z.number().int().optional(),
+  bloodPressureDiastolic: z.number().int().optional(),
+  pulse: z.number().int().optional(),
+  respiratoryRate: z.number().int().optional(),
+  oxygenSaturation: z.string().optional(),
+  weight: z.string().optional(),
+  height: z.string().optional(),
+  painScale: z.number().int().optional(),
+  consciousness: z.string().optional(),
 })
+
+/**
+ * Check if any vital signs are provided
+ */
+function hasVitalSigns(data: z.infer<typeof visitSchema>): boolean {
+  return !!(
+    data.temperature ||
+    data.bloodPressureSystolic ||
+    data.bloodPressureDiastolic ||
+    data.pulse ||
+    data.respiratoryRate ||
+    data.oxygenSaturation ||
+    data.weight ||
+    data.height ||
+    data.painScale ||
+    data.consciousness
+  )
+}
 
 /**
  * POST /api/visits
@@ -29,7 +59,7 @@ const visitSchema = z.object({
  * Requires: visits:write permission
  */
 export const POST = withRBAC(
-  async (request: NextRequest) => {
+  async (request: NextRequest, context) => {
     try {
       const body = await request.json()
 
@@ -90,7 +120,7 @@ export const POST = withRBAC(
       const initialStatus = "registered"
 
       // Create visit
-      const newVisit = await db
+      const [newVisit] = await db
         .insert(visits)
         .values({
           patientId: validatedData.patientId,
@@ -108,46 +138,63 @@ export const POST = withRBAC(
         })
         .returning()
 
+      // Save vital signs if any are provided
+      if (hasVitalSigns(validatedData)) {
+        const bmi = calculateBMI(validatedData.weight || "0", validatedData.height || "0")
+        await db.insert(vitalsHistory).values({
+          visitId: newVisit.id,
+          temperature: validatedData.temperature || null,
+          bloodPressureSystolic: validatedData.bloodPressureSystolic || null,
+          bloodPressureDiastolic: validatedData.bloodPressureDiastolic || null,
+          pulse: validatedData.pulse || null,
+          respiratoryRate: validatedData.respiratoryRate || null,
+          oxygenSaturation: validatedData.oxygenSaturation || null,
+          weight: validatedData.weight || null,
+          height: validatedData.height || null,
+          bmi,
+          painScale: validatedData.painScale || null,
+          consciousness: validatedData.consciousness || null,
+          recordedBy: context.user.id,
+          notes: validatedData.notes || null,
+        })
+      }
+
       // Fetch complete visit with patient data
       const [completeVisit] = await db
         .select({
-          visit: visits,
-          patient: patients,
+          visit: {
+            id: visits.id,
+            visitNumber: visits.visitNumber,
+            queueNumber: visits.queueNumber,
+            visitType: visits.visitType,
+            arrivalTime: visits.arrivalTime,
+          },
+          patient: {
+            id: patients.id,
+            mrNumber: patients.mrNumber,
+            name: patients.name,
+          },
         })
         .from(visits)
         .leftJoin(patients, eq(visits.patientId, patients.id))
-        .where(eq(visits.id, newVisit[0].id))
+        .where(eq(visits.id, newVisit.id))
         .limit(1)
 
       const response: ResponseApi<RegisteredVisit> = {
         message: "Visit registered successfully",
         data: {
           visit: {
-            ...completeVisit.visit,
-            admissionDate: completeVisit.visit.admissionDate
-              ? completeVisit.visit.admissionDate.toISOString()
-              : null,
-            dischargeDate: completeVisit.visit.dischargeDate
-              ? completeVisit.visit.dischargeDate.toISOString()
-              : null,
-            startTime: completeVisit.visit.startTime
-              ? completeVisit.visit.startTime.toISOString()
-              : null,
-            endTime: completeVisit.visit.endTime ? completeVisit.visit.endTime.toISOString() : null,
+            id: completeVisit.visit.id,
+            visitNumber: completeVisit.visit.visitNumber,
+            queueNumber: completeVisit.visit.queueNumber || "",
+            visitType: completeVisit.visit.visitType,
             arrivalTime: completeVisit.visit.arrivalTime.toISOString(),
-            createdAt: completeVisit.visit.createdAt.toISOString(),
-            updatedAt: completeVisit.visit.updatedAt.toISOString(),
           },
-          patient: completeVisit.patient
-            ? {
-                ...completeVisit.patient,
-                dateOfBirth: completeVisit.patient.dateOfBirth
-                  ? completeVisit.patient.dateOfBirth.toISOString()
-                  : null,
-                createdAt: completeVisit.patient.createdAt?.toISOString(),
-                updatedAt: completeVisit.patient.updatedAt?.toISOString(),
-              }
-            : null,
+          patient: {
+            id: completeVisit?.patient?.id || "",
+            mrNumber: completeVisit?.patient?.mrNumber || "",
+            name: completeVisit?.patient?.name || "",
+          },
         },
         status: HTTP_STATUS_CODES.CREATED,
       }

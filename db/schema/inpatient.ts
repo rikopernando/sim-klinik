@@ -62,6 +62,7 @@ export const vitalsHistory = pgTable("vitals_history", {
   notes: text("notes"),
 
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -84,6 +85,7 @@ export const bedAssignments = pgTable("bed_assignments", {
   assignedBy: text("assigned_by").references(() => user.id),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -122,4 +124,5 @@ export const materialUsage = pgTable("material_usage", {
   usedAt: timestamp("used_at", { withTimezone: true }).defaultNow().notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })

@@ -6,9 +6,10 @@ import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { useDoctorStats } from "@/hooks/use-doctor-stats"
 import { useDoctorQueue } from "@/hooks/use-doctor-queue"
-import { createMedicalRecord } from "@/lib/services/medical-record.service"
 import { updateVisitStatus } from "@/lib/services/visit.service"
 import { QueuePatient } from "@/types/dashboard"
+import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/utils/error"
 
 export function useDoctorDashboard() {
   const router = useRouter()
@@ -68,26 +69,12 @@ export function useDoctorDashboard() {
         setStartingExamination(visitId)
         setError(null)
 
-        // Step 1: Create medical record for this visit
-        await createMedicalRecord({
-          visitId,
-          isDraft: true,
-        })
-
-        // Step 2: Update visit status to "in_examination"
         await updateVisitStatus(visitId, "in_examination")
 
-        // Step 3: Navigate to medical record page
         router.push(`/dashboard/medical-records/${visitId}`)
       } catch (error: unknown) {
-        // If medical record already exists, just navigate to it
-        const errorResponse = error as { response?: { data?: { error?: string } } }
-        if (errorResponse.response?.data?.error?.includes("already exists")) {
-          router.push(`/dashboard/medical-records/${visitId}`)
-        } else {
-          setError(errorResponse.response?.data?.error || "Gagal memulai pemeriksaan")
-          console.error("Failed to start examination:", error)
-        }
+        console.error("Failed to start examination:", error)
+        toast.error(`Gagal memulai pemeriksaan: ${getErrorMessage(error)}`)
       } finally {
         setStartingExamination(null)
       }

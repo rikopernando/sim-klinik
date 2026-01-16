@@ -69,16 +69,13 @@ export const POST = withRBAC(
         })
       }
 
-      // Determine author role from authenticated user's role, default to "doctor"
-      const authorRole = role === "doctor" ? ("doctor" as const) : ("doctor" as const)
-
       // Create medical record with authenticated user as doctor
       const newRecord = await db
         .insert(medicalRecords)
         .values({
           visitId: validatedData.visitId,
           authorId: user.id,
-          authorRole: authorRole,
+          authorRole: role || "doctor",
           soapSubjective: validatedData.soapSubjective || null,
           soapObjective: validatedData.soapObjective || null,
           soapAssessment: validatedData.soapAssessment || null,

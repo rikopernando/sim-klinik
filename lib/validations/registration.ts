@@ -76,7 +76,109 @@ export const visitFormSchema = z
     chiefComplaint: z.string().optional(),
     roomId: z.string().optional(),
     notes: z.string().optional(),
+
+    // Vital Signs (all optional)
+    temperature: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true
+          const temp = parseFloat(val)
+          return !isNaN(temp) && temp >= 35 && temp <= 42
+        },
+        { message: "Suhu harus antara 35-42°C" }
+      ),
+    bloodPressureSystolic: z
+      .number()
+      .int()
+      .min(60, "Tekanan darah sistolik minimal 60 mmHg")
+      .max(250, "Tekanan darah sistolik maksimal 250 mmHg")
+      .optional(),
+    bloodPressureDiastolic: z
+      .number()
+      .int()
+      .min(40, "Tekanan darah diastolik minimal 40 mmHg")
+      .max(150, "Tekanan darah diastolik maksimal 150 mmHg")
+      .optional(),
+    pulse: z
+      .number()
+      .int()
+      .min(30, "Denyut nadi minimal 30 bpm")
+      .max(200, "Denyut nadi maksimal 200 bpm")
+      .optional(),
+    respiratoryRate: z
+      .number()
+      .int()
+      .min(8, "Laju napas minimal 8 per menit")
+      .max(40, "Laju napas maksimal 40 per menit")
+      .optional(),
+    oxygenSaturation: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true
+          const o2 = parseFloat(val)
+          return !isNaN(o2) && o2 >= 70 && o2 <= 100
+        },
+        { message: "Saturasi oksigen harus antara 70-100%" }
+      ),
+    weight: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true
+          const w = parseFloat(val)
+          return !isNaN(w) && w >= 0.5 && w <= 300
+        },
+        { message: "Berat badan harus antara 0.5-300 kg" }
+      ),
+    height: z
+      .string()
+      .optional()
+      .refine(
+        (val) => {
+          if (!val) return true
+          const h = parseFloat(val)
+          return !isNaN(h) && h >= 30 && h <= 250
+        },
+        { message: "Tinggi badan harus antara 30-250 cm" }
+      ),
+    painScale: z.number().int().min(0).max(10).optional(),
+    consciousness: z.string().optional(),
   })
+  .refine(
+    (data) => {
+      // If systolic is provided, diastolic should also be provided
+      if (data.bloodPressureSystolic && !data.bloodPressureDiastolic) {
+        return false
+      }
+      if (data.bloodPressureDiastolic && !data.bloodPressureSystolic) {
+        return false
+      }
+      return true
+    },
+    {
+      message: "Tekanan darah sistolik dan diastolik harus diisi bersamaan",
+      path: ["bloodPressureSystolic"],
+    }
+  )
+  .refine(
+    (data) => {
+      // Systolic must be greater than diastolic
+      if (data.bloodPressureSystolic && data.bloodPressureDiastolic) {
+        return data.bloodPressureSystolic > data.bloodPressureDiastolic
+      }
+      return true
+    },
+    {
+      message: "Tekanan darah sistolik harus lebih besar dari diastolik",
+      path: ["bloodPressureSystolic"],
+    }
+  )
+
   .refine(
     (data) => {
       // Outpatient: poliId is required
