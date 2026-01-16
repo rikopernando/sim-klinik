@@ -3,6 +3,8 @@ import { db } from "@/db"
 import { visits, patients } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { ResponseApi, ResponseError } from "@/types/api"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 /**
  * GET /api/visits/[visitId]
@@ -10,7 +12,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
  * Requires: visits:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest, { params }: { params: { visitId: string } }) => {
+  async (_request: NextRequest, { params }: { params: { visitId: string } }) => {
     try {
       const { visitId } = params
 
@@ -24,6 +26,7 @@ export const GET = withRBAC(
           status: visits.status,
           triageStatus: visits.triageStatus,
           chiefComplaint: visits.chiefComplaint,
+          disposition: visits.disposition,
           arrivalTime: visits.arrivalTime,
           startTime: visits.startTime,
           endTime: visits.endTime,
@@ -103,25 +106,26 @@ export const PATCH = withRBAC(
         return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
       }
 
-      const [updatedVisit] = await db
-        .update(visits)
-        .set({
-          ...updateData,
-          updatedAt: new Date(),
-        })
-        .where(eq(visits.id, visitId))
-        .returning()
+      await db.update(visits).set(updateData).where(eq(visits.id, visitId)).returning()
 
-      return NextResponse.json(
-        {
-          message: "Visit updated successfully",
-          data: updatedVisit,
-        },
-        { status: 200 }
-      )
+      const response: ResponseApi = {
+        message: "Visit updated successfully",
+        status: HTTP_STATUS_CODES.OK,
+      }
+
+      return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })
     } catch (error) {
       console.error("Visit update error:", error)
-      return NextResponse.json({ error: "Failed to update visit" }, { status: 500 })
+
+      const response: ResponseError<unknown> = {
+        error,
+        message: "Failed to update visit",
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      }
+
+      return NextResponse.json(response, {
+        status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+      })
     }
   },
   { permissions: ["visits:write"] }

@@ -12,6 +12,7 @@ import { ApiServiceError } from "@/lib/services/api.service"
 interface UseERQueueOptions {
   autoRefresh?: boolean
   refreshInterval?: number // in milliseconds
+  status?: string // Filter by status ("all" fetches all statuses)
 }
 
 interface UseERQueueReturn {
@@ -26,7 +27,7 @@ interface UseERQueueReturn {
 }
 
 export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
-  const { autoRefresh = true, refreshInterval = 30000 } = options
+  const { autoRefresh = true, refreshInterval = 30000, status = "registered" } = options
 
   const [queue, setQueue] = useState<ERQueueItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -41,7 +42,8 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
       setIsLoading(true)
       setError(null)
 
-      const data = await getERQueue("registered")
+      // If status is "all", fetch without status filter, otherwise filter by status
+      const data = await getERQueue(status === "all" ? undefined : status)
 
       setQueue(data)
       setLastRefresh(new Date())
@@ -55,7 +57,7 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [status])
 
   /**
    * Manual refresh

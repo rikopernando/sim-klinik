@@ -24,7 +24,7 @@ import { HandoverDialog } from "./handover-dialog"
 interface ERQueueItemProps {
   item: ERQueueItem
   index: number
-  onStartExamination?: (visitId: string) => void
+  onStartExamination?: (visitId: string, visitStatus: string) => void
   onHandoverSuccess?: () => void
 }
 
@@ -97,20 +97,27 @@ function ERQueueItemCardComponent({
                 </span>
               </div>
 
-              <div className="flex gap-2">
-                {onStartExamination && (
-                  <Button size="sm" onClick={() => onStartExamination(item.visit.id)}>
-                    <User className="mr-2 h-4 w-4" />
-                    Mulai Pemeriksaan
+              {(item.visit.status === "in_examination" || item.visit.status === "registered") && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => onStartExamination?.(item.visit.id, item.visit.status)}
+                  >
+                    {item.visit.status === "registered" ? (
+                      <User className="mr-2 h-4 w-4" />
+                    ) : (
+                      <ArrowRight className="mr-2 h-4 w-4" />
+                    )}
+                    {item.visit.status === "registered" ? "Mulai Pemeriksaan" : "Lanjutkan"}
                   </Button>
-                )}
 
-                {/* Handover Button (H.1.3) */}
-                <Button size="sm" variant="outline" onClick={() => setShowHandoverDialog(true)}>
-                  <ArrowRight className="mr-2 h-4 w-4" />
-                  Handover
-                </Button>
-              </div>
+                  {/* Handover Button (H.1.3) */}
+                  <Button size="sm" variant="outline" onClick={() => setShowHandoverDialog(true)}>
+                    <ArrowRight className="mr-2 h-4 w-4" />
+                    Handover
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>

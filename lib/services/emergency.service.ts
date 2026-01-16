@@ -11,17 +11,21 @@ import type { ERQueueItem } from "@/types/emergency"
 /**
  * Get ER Queue
  * Fetches all emergency visits with patient data
- * @param status - Optional visit status filter (default: "registered")
+ * @param status - Optional visit status filter (if undefined, fetches all statuses)
  * @returns Array of ER queue items
  */
-export async function getERQueue(status: string = "registered"): Promise<ERQueueItem[]> {
+export async function getERQueue(status?: string): Promise<ERQueueItem[]> {
   try {
-    const response = await axios.get<ResponseApi<ERQueueItem[]>>("/api/visits", {
-      params: {
-        visitType: "emergency",
-        status,
-      },
-    })
+    const params: Record<string, string> = {
+      visitType: "emergency",
+    }
+
+    // Only add status filter if provided
+    if (status) {
+      params.status = status
+    }
+
+    const response = await axios.get<ResponseApi<ERQueueItem[]>>("/api/visits", { params })
 
     return response.data.data || []
   } catch (error) {
@@ -124,6 +128,23 @@ export interface HandoverData {
 export async function performHandover(data: HandoverData): Promise<void> {
   try {
     await axios.post("/api/emergency/handover", data)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Update Visit Disposition
+ * Updates the disposition field for an ER visit
+ * @param visitId - Visit ID
+ * @param disposition - Disposition type
+ */
+export async function updateVisitDisposition(
+  visitId: string,
+  disposition: "discharged" | "admitted" | "referred" | "observation"
+): Promise<void> {
+  try {
+    await axios.patch(`/api/visits/${visitId}`, { disposition })
   } catch (error) {
     handleApiError(error)
   }

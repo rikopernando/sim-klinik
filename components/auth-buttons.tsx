@@ -139,7 +139,7 @@ export function HeroAuthButtons() {
       <Button asChild variant="outline" size="lg" className="px-8 py-3 text-base">
         <Link href="/sign-in">
           <LogIn className="mr-2 h-5 w-5" />
-          Sign In
+          Log In
         </Link>
       </Button>
     </div>

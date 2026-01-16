@@ -12,10 +12,14 @@
  * - Patient handover functionality
  */
 
+import { toast } from "sonner"
 import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
+import { AlertCircle, Clock, RefreshCw } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+
 import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Dialog,
   DialogContent,
@@ -23,16 +27,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { AlertCircle, Clock, RefreshCw } from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { id as idLocale } from "date-fns/locale"
 
 // Hooks
 import { useERQueue } from "@/hooks/use-er-queue"
 
 // Services
 import { updateVisitStatus } from "@/lib/services/visits.service"
-import { ApiServiceError } from "@/lib/services/api.service"
 
 // Components
 import { QuickRegistrationForm } from "@/components/emergency/quick-registration-form"
@@ -40,17 +40,30 @@ import { ERQueueStats } from "@/components/emergency/er-queue-stats"
 import { ERQueueItemCard } from "@/components/emergency/er-queue-item"
 import { ERQueueEmpty } from "@/components/emergency/er-queue-empty"
 import { ERQueueLoading } from "@/components/emergency/er-queue-loading"
+import { ERQueueTabs } from "@/components/emergency/er-queue-tabs"
+import { getErrorMessage } from "@/lib/utils/error"
 
 export default function EmergencyQueuePage() {
   const router = useRouter()
   const [showQuickRegister, setShowQuickRegister] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [activeStatus, setActiveStatus] = useState("registered")
 
-  // Use ER Queue hook with auto-refresh
-  const { sortedQueue, statistics, isLoading, lastRefresh, refresh } = useERQueue({
+  // Use ER Queue hook with auto-refresh and status filter
+  const { sortedQueue, queue, statistics, isLoading, lastRefresh, refresh } = useERQueue({
     autoRefresh: true,
     refreshInterval: 30000, // 30 seconds
+    status: activeStatus,
   })
+
+  /**
+   * Calculate status counts for tabs
+   */
+  const statusCounts = {
+    all: queue.length,
+    registered: queue.filter((item) => item.visit.status === "registered").length,
+    in_examination: queue.filter((item) => item.visit.status === "in_examination").length,
+    examined: queue.filter((item) => item.visit.status === "examined").length,
+  }
 
   /**
    * Handle quick registration success
@@ -58,7 +71,7 @@ export default function EmergencyQueuePage() {
    */
   const handleQuickRegisterSuccess = useCallback(() => {
     setShowQuickRegister(false)
-    setError(null)
+    setActiveStatus("registered") // Reset to registered tab
     refresh()
   }, [refresh])
 
@@ -68,33 +81,22 @@ export default function EmergencyQueuePage() {
    * Falls back to navigation even if status update fails
    */
   const handleStartExamination = useCallback(
-    async (visitId: string) => {
-      try {
-        setError(null)
-
-        // Update visit status to IN_EXAMINATION using service
-        await updateVisitStatus(visitId, "in_examination")
-
-        // Navigate to ER medical record page
+    async (visitId: string, visitStatus: string) => {
+      if (visitStatus === "in_examination") {
         router.push(`/dashboard/emergency/${visitId}`)
-      } catch (err) {
-        let errorMessage = "Terjadi kesalahan"
+      } else {
+        try {
+          // Update visit status to IN_EXAMINATION using service
+          await updateVisitStatus(visitId, "in_examination")
 
-        if (err instanceof ApiServiceError) {
-          errorMessage = err.message
-        } else if (err instanceof Error) {
-          errorMessage = err.message
-        }
-
-        console.error("Error starting examination:", err)
-
-        // Show error but still navigate (degraded functionality)
-        setError(errorMessage)
-
-        // Still navigate after a brief delay to show error
-        setTimeout(() => {
+          // Navigate to ER medical record page
           router.push(`/dashboard/emergency/${visitId}`)
-        }, 1500)
+        } catch (err) {
+          console.error("Error starting examination:", err)
+
+          // Show error but still navigate (degraded functionality)
+          toast.error(getErrorMessage(err))
+        }
       }
     },
     [router]
@@ -102,14 +104,6 @@ export default function EmergencyQueuePage() {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
-
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -146,6 +140,13 @@ export default function EmergencyQueuePage() {
 
       {/* Statistics */}
       <ERQueueStats statistics={statistics} />
+
+      {/* Status Tabs Filter */}
+      <ERQueueTabs
+        activeStatus={activeStatus}
+        onStatusChange={setActiveStatus}
+        counts={statusCounts}
+      />
 
       {/* Last Refresh Info */}
       {lastRefresh && (

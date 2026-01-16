@@ -8,6 +8,11 @@ import { type ResponseApi } from "@/types/api"
 import { handleApiError } from "./api.service"
 
 /**
+ * Disposition type for ER visits
+ */
+export type DispositionType = "discharged" | "admitted" | "referred" | "observation"
+
+/**
  * Visit with patient data
  */
 export interface Visit {
@@ -17,6 +22,7 @@ export interface Visit {
   triageStatus: "red" | "yellow" | "green" | null
   chiefComplaint: string | null
   status: string
+  disposition: DispositionType | null
   arrivalTime: Date
   startTime: Date | null
   endTime: Date | null
