@@ -106,10 +106,15 @@ export const PATCH = withRBAC(
         return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
       }
 
-      await db.update(visits).set(updateData).where(eq(visits.id, visitId)).returning()
+      const [updatedVisit] = await db
+        .update(visits)
+        .set(updateData)
+        .where(eq(visits.id, visitId))
+        .returning()
 
-      const response: ResponseApi = {
+      const response: ResponseApi<typeof updatedVisit> = {
         message: "Visit updated successfully",
+        data: updatedVisit,
         status: HTTP_STATUS_CODES.OK,
       }
 

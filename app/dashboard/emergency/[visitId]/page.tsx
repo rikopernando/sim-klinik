@@ -29,6 +29,7 @@ import { ERVisitHeader } from "@/components/emergency/er-visit-header"
 import { ERMedicalRecordActions } from "@/components/emergency/er-medical-record-actions"
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
 import type { DispositionType } from "@/types/emergency"
+import { getErrorMessage } from "@/lib/utils/error"
 
 export default function ERMedicalRecordPage() {
   const { visitId } = useParams<{ visitId: string }>()
@@ -86,8 +87,8 @@ export default function ERMedicalRecordPage() {
         setTimeout(() => {
           handleBack()
         }, 1000)
-      } catch {
-        toast.error("Gagal mengunci rekam medis")
+      } catch (error) {
+        toast.error(getErrorMessage(error))
       }
     },
     [updateVisit, lockRecord, handleBack]
