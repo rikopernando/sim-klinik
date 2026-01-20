@@ -43,7 +43,7 @@ export function VitalSignsFields({ control, errors }: VitalSignsFieldsProps) {
             control={control}
             name="temperature"
             render={({ field }) => (
-              <Input id="temperature" {...field} placeholder="36.5" type="text" />
+              <Input id="temperature" {...field} placeholder="36.5" type="number" />
             )}
           />
           <FieldError errors={[errors.temperature]} />
@@ -140,7 +140,7 @@ export function VitalSignsFields({ control, errors }: VitalSignsFieldsProps) {
             control={control}
             name="oxygenSaturation"
             render={({ field }) => (
-              <Input id="oxygenSaturation" {...field} placeholder="98" type="text" />
+              <Input id="oxygenSaturation" {...field} placeholder="98" type="number" />
             )}
           />
           <FieldError errors={[errors.oxygenSaturation]} />
@@ -152,7 +152,7 @@ export function VitalSignsFields({ control, errors }: VitalSignsFieldsProps) {
           <Controller
             control={control}
             name="weight"
-            render={({ field }) => <Input id="weight" {...field} placeholder="70" type="text" />}
+            render={({ field }) => <Input id="weight" {...field} placeholder="70" type="number" />}
           />
           <FieldError errors={[errors.weight]} />
         </Field>
@@ -163,7 +163,7 @@ export function VitalSignsFields({ control, errors }: VitalSignsFieldsProps) {
           <Controller
             control={control}
             name="height"
-            render={({ field }) => <Input id="height" {...field} placeholder="170" type="text" />}
+            render={({ field }) => <Input id="height" {...field} placeholder="170" type="number" />}
           />
           <FieldError errors={[errors.height]} />
         </Field>

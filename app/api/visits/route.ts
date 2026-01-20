@@ -119,46 +119,49 @@ export const POST = withRBAC(
       // Get initial status based on visit type
       const initialStatus = "registered"
 
-      // Create visit
-      const [newVisit] = await db
-        .insert(visits)
-        .values({
-          patientId: validatedData.patientId,
-          visitType: validatedData.visitType,
-          visitNumber,
-          poliId: validatedData.poliId || null,
-          doctorId: validatedData.doctorId || null,
-          queueNumber,
-          triageStatus: validatedData.triageStatus || null,
-          chiefComplaint: validatedData.chiefComplaint || null,
-          roomId: validatedData.roomId || null,
-          admissionDate: validatedData.visitType === "inpatient" ? new Date() : null,
-          status: initialStatus,
-          notes: validatedData.notes || null,
-        })
-        .returning()
+      const newVisit = await db.transaction(async (tx) => {
+        // Create visit
+        const [createdVisit] = await tx
+          .insert(visits)
+          .values({
+            patientId: validatedData.patientId,
+            visitType: validatedData.visitType,
+            visitNumber,
+            poliId: validatedData.poliId || null,
+            doctorId: validatedData.doctorId || null,
+            queueNumber,
+            triageStatus: validatedData.triageStatus || null,
+            chiefComplaint: validatedData.chiefComplaint || null,
+            roomId: validatedData.roomId || null,
+            admissionDate: validatedData.visitType === "inpatient" ? new Date() : null,
+            status: initialStatus,
+            notes: validatedData.notes || null,
+          })
+          .returning()
 
-      // Save vital signs if any are provided
-      if (hasVitalSigns(validatedData)) {
-        const bmi = calculateBMI(validatedData.weight || "0", validatedData.height || "0")
-        await db.insert(vitalsHistory).values({
-          visitId: newVisit.id,
-          temperature: validatedData.temperature || null,
-          bloodPressureSystolic: validatedData.bloodPressureSystolic || null,
-          bloodPressureDiastolic: validatedData.bloodPressureDiastolic || null,
-          pulse: validatedData.pulse || null,
-          respiratoryRate: validatedData.respiratoryRate || null,
-          oxygenSaturation: validatedData.oxygenSaturation || null,
-          weight: validatedData.weight || null,
-          height: validatedData.height || null,
-          bmi,
-          painScale: validatedData.painScale || null,
-          consciousness: validatedData.consciousness || null,
-          recordedBy: context.user.id,
-          notes: validatedData.notes || null,
-        })
-      }
+        // Save vital signs if any are provided
+        if (hasVitalSigns(validatedData)) {
+          const bmi = calculateBMI(validatedData.weight || "0", validatedData.height || "0")
+          await tx.insert(vitalsHistory).values({
+            visitId: createdVisit.id,
+            temperature: validatedData.temperature || null,
+            bloodPressureSystolic: validatedData.bloodPressureSystolic || null,
+            bloodPressureDiastolic: validatedData.bloodPressureDiastolic || null,
+            pulse: validatedData.pulse || null,
+            respiratoryRate: validatedData.respiratoryRate || null,
+            oxygenSaturation: validatedData.oxygenSaturation || null,
+            weight: validatedData.weight || null,
+            height: validatedData.height || null,
+            bmi,
+            painScale: validatedData.painScale || null,
+            consciousness: validatedData.consciousness || null,
+            recordedBy: context.user.id,
+            notes: validatedData.notes || null,
+          })
+        }
 
+        return createdVisit
+      })
       // Fetch complete visit with patient data
       const [completeVisit] = await db
         .select({
