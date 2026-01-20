@@ -29,87 +29,97 @@ import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } fro
 
 /**
  * Get all drugs with total stock calculation
+ * Optimized: Single query with LEFT JOIN and GROUP BY instead of N+1 queries
  */
 export async function getAllDrugsWithStock(): Promise<DrugWithStock[]> {
-  const allDrugs = await db.select().from(drugs).orderBy(drugs.name)
-
-  const drugsWithStock: DrugWithStock[] = await Promise.all(
-    allDrugs.map(async (drug) => {
-      // Calculate total stock across all batches
-      const inventories = await db
-        .select()
-        .from(drugInventory)
-        .where(eq(drugInventory.drugId, drug.id))
-
-      const totalStock = inventories.reduce((sum, inv) => sum + inv.stockQuantity, 0)
-
-      const stockAlertLevel = getStockAlertLevel(totalStock, drug.minimumStock)
-
-      return {
-        ...drug,
-        totalStock,
-        stockAlertLevel,
-      }
+  // Single query with aggregation - avoids N+1 problem
+  const results = await db
+    .select({
+      drug: drugs,
+      totalStock: sql<number>`COALESCE(SUM(${drugInventory.stockQuantity}), 0)::int`.as(
+        "total_stock"
+      ),
     })
-  )
+    .from(drugs)
+    .leftJoin(drugInventory, eq(drugs.id, drugInventory.drugId))
+    .groupBy(drugs.id)
+    .orderBy(drugs.name)
+
+  const drugsWithStock: DrugWithStock[] = results.map(({ drug, totalStock }) => {
+    const stockAlertLevel = getStockAlertLevel(totalStock, drug.minimumStock)
+    return {
+      ...drug,
+      totalStock,
+      stockAlertLevel,
+    }
+  })
 
   return drugsWithStock
 }
 
 /**
  * Get drug by ID with stock info
+ * Optimized: Single query with LEFT JOIN and GROUP BY
  */
 export async function getDrugById(drugId: string): Promise<DrugWithStock | null> {
-  const drug = await db.select().from(drugs).where(eq(drugs.id, drugId)).limit(1)
+  const [result] = await db
+    .select({
+      drug: drugs,
+      totalStock: sql<number>`COALESCE(SUM(${drugInventory.stockQuantity}), 0)::int`.as(
+        "total_stock"
+      ),
+    })
+    .from(drugs)
+    .leftJoin(drugInventory, eq(drugs.id, drugInventory.drugId))
+    .where(eq(drugs.id, drugId))
+    .groupBy(drugs.id)
+    .limit(1)
 
-  if (drug.length === 0) return null
+  if (!result) return null
 
-  const inventories = await db.select().from(drugInventory).where(eq(drugInventory.drugId, drugId))
-
-  const totalStock = inventories.reduce((sum, inv) => sum + inv.stockQuantity, 0)
-  const stockAlertLevel = getStockAlertLevel(totalStock, drug[0].minimumStock)
+  const stockAlertLevel = getStockAlertLevel(result.totalStock, result.drug.minimumStock)
 
   return {
-    ...drug[0],
-    totalStock,
+    ...result.drug,
+    totalStock: result.totalStock,
     stockAlertLevel,
   }
 }
 
 /**
  * Search drugs by name or generic name
+ * Optimized: Single query with LEFT JOIN and GROUP BY instead of N+1 queries
  */
 export async function searchDrugs(query: string): Promise<DrugWithStock[]> {
   const searchPattern = `%${query}%`
+
+  // Single query with aggregation - avoids N+1 problem
   const results = await db
-    .select()
+    .select({
+      drug: drugs,
+      totalStock: sql<number>`COALESCE(SUM(${drugInventory.stockQuantity}), 0)::int`.as(
+        "total_stock"
+      ),
+    })
     .from(drugs)
+    .leftJoin(drugInventory, eq(drugs.id, drugInventory.drugId))
     .where(
       and(
         or(ilike(drugs.name, searchPattern), ilike(drugs.genericName, searchPattern)),
         eq(drugs.isActive, true)
       )
     )
+    .groupBy(drugs.id)
     .limit(20)
 
-  const drugsWithStock: DrugWithStock[] = await Promise.all(
-    results.map(async (drug) => {
-      const inventories = await db
-        .select()
-        .from(drugInventory)
-        .where(eq(drugInventory.drugId, drug.id))
-
-      const totalStock = inventories.reduce((sum, inv) => sum + inv.stockQuantity, 0)
-
-      const stockAlertLevel = getStockAlertLevel(totalStock, drug.minimumStock)
-
-      return {
-        ...drug,
-        totalStock,
-        stockAlertLevel,
-      }
-    })
-  )
+  const drugsWithStock: DrugWithStock[] = results.map(({ drug, totalStock }) => {
+    const stockAlertLevel = getStockAlertLevel(totalStock, drug.minimumStock)
+    return {
+      ...drug,
+      totalStock,
+      stockAlertLevel,
+    }
+  })
 
   return drugsWithStock
 }

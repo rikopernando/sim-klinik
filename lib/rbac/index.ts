@@ -14,6 +14,9 @@ export {
   hasAllPermissions,
   hasRole,
   hasAnyRole,
+  // Cache management
+  invalidateRoleCache,
+  clearRoleCache,
 } from "./session"
 
 // Middleware
