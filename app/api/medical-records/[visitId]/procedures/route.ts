@@ -9,10 +9,10 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 interface ProcedureWithDetails {
   id: string
-  medicalRecordId: string
+  medicalRecordId: string | null
   serviceId: string | null
   serviceName: string | null
-  servicePrice: number | null
+  servicePrice: string | null
   icd9Code: string | null
   description: string | null
   performedBy: string | null

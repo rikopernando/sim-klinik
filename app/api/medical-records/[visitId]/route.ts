@@ -33,11 +33,7 @@ export const GET = withRBAC(
 
       // Get medical record and visit info in parallel
       const [[record], [visitInfo]] = await Promise.all([
-        db
-          .select()
-          .from(medicalRecords)
-          .where(eq(medicalRecords.visitId, visitId))
-          .limit(1),
+        db.select().from(medicalRecords).where(eq(medicalRecords.visitId, visitId)).limit(1),
         db.select().from(visits).where(eq(visits.id, visitId)).limit(1),
       ])
 

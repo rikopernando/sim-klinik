@@ -9,10 +9,10 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 
 interface PrescriptionWithDetails {
   id: string
-  medicalRecordId: string
+  medicalRecordId: string | null
   drugId: string
   drugName: string
-  drugPrice: number | null
+  drugPrice: string | null
   dosage: string | null
   frequency: string | null
   duration: string | null
