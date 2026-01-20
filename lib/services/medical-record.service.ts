@@ -7,10 +7,12 @@ import axios from "axios"
 
 import { ResponseApi } from "@/types/api"
 import {
-  MedicalRecordData,
+  MedicalRecordCoreData,
   MedicalRecordFormData,
   MedicalRecord,
   Diagnosis,
+  Procedure,
+  Prescription,
   MedicalRecordHistoryData,
 } from "@/types/medical-record"
 import {
@@ -23,16 +25,73 @@ import {
 } from "@/lib/validations/medical-record"
 import { ApiServiceError, handleApiError } from "@/lib/services/api.service"
 /**
- * Get medical record by visit ID
+ * Get core medical record and visit info by visit ID
  */
-export async function getMedicalRecordByVisit(visitId: string): Promise<MedicalRecordData> {
+export async function getMedicalRecordByVisit(visitId: string): Promise<MedicalRecordCoreData> {
   try {
-    const response = await axios.get<ResponseApi<MedicalRecordData>>(
+    const response = await axios.get<ResponseApi<MedicalRecordCoreData>>(
       `/api/medical-records/${visitId}`
     )
 
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing medical record data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get diagnoses for a medical record by visit ID
+ */
+export async function getDiagnosesByVisit(visitId: string): Promise<Diagnosis[]> {
+  try {
+    const response = await axios.get<ResponseApi<Diagnosis[]>>(
+      `/api/medical-records/${visitId}/diagnoses`
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing diagnoses data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get procedures for a medical record by visit ID
+ */
+export async function getProceduresByVisit(visitId: string): Promise<Procedure[]> {
+  try {
+    const response = await axios.get<ResponseApi<Procedure[]>>(
+      `/api/medical-records/${visitId}/procedures`
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing procedures data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get prescriptions for a medical record by visit ID
+ */
+export async function getPrescriptionsByVisit(visitId: string): Promise<Prescription[]> {
+  try {
+    const response = await axios.get<ResponseApi<Prescription[]>>(
+      `/api/medical-records/${visitId}/prescriptions`
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing prescriptions data")
     }
 
     return response.data.data

@@ -110,12 +110,15 @@ export interface MedicalRecordLabOrder {
   testCode: string | null
 }
 
-export interface MedicalRecordData {
+export interface MedicalRecordCoreData {
   medicalRecord: MedicalRecord
+  visit: Visit
+}
+
+export interface MedicalRecordData extends MedicalRecordCoreData {
   diagnoses: Diagnosis[]
   procedures: Procedure[]
   prescriptions: Prescription[]
-  visit: Visit
 }
 
 export interface MedicalRecordFormData {
