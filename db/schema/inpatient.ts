@@ -48,7 +48,7 @@ export const vitalsHistory = pgTable("vitals_history", {
   oxygenSaturation: decimal("oxygen_saturation", { precision: 5, scale: 2 }), // SpO2 percentage
   weight: decimal("weight", { precision: 5, scale: 2 }), // kg
   height: decimal("height", { precision: 5, scale: 2 }), // cm
-  bmi: decimal("bmi", { precision: 5, scale: 2 }), // Body Mass Index (calculated)
+  bmi: decimal("bmi", { precision: 8, scale: 2 }), // Body Mass Index (calculated)
 
   // Additional measurements
   painScale: integer("pain_scale"), // 0-10 pain scale
