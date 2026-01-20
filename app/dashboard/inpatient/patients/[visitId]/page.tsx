@@ -380,7 +380,7 @@ export default function PatientDetailPage() {
 
         {/* Final Discharge Section */}
         {patientDetail.dischargeSummary &&
-          patientDetail.patient.status === "billed" &&
+          patientDetail.patient.status === "paid" &&
           hasPermission("discharge:write") && (
             <>
               <Separator />
