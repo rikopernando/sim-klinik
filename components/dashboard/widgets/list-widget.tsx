@@ -103,7 +103,6 @@ export function ListWidget({
                     )}
                     {item.action && (
                       <Button
-                        size="sm"
                         variant="ghost"
                         onClick={(e) => {
                           e.stopPropagation()

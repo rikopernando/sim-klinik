@@ -1,13 +1,14 @@
 /**
  * Medical Record Tabs Component
  * Optimized tab rendering with React.memo to prevent unnecessary re-renders
+ * Each tab now fetches its own data lazily when activated
  */
 
 import { memo } from "react"
 import { FileText, Stethoscope, Pill, ClipboardList } from "lucide-react"
 import { IconFlask } from "@tabler/icons-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { type MedicalRecordData } from "@/types/medical-record"
+import { type MedicalRecordCoreData } from "@/types/medical-record"
 
 import { SoapForm } from "./soap-form"
 import { DiagnosisTab } from "./diagnosis-tab"
@@ -16,12 +17,11 @@ import { ProcedureTab } from "./procedure-tab"
 import { LabOrdersTab } from "./lab-orders-tab"
 
 interface MedicalRecordTabsProps {
-  recordData: MedicalRecordData
+  coreData: MedicalRecordCoreData
   activeTab: string
   isLocked: boolean
   onTabChange: (value: string) => void
-  onUpdate: () => Promise<void>
-  onUpdateRecord: (updates: Partial<MedicalRecordData["medicalRecord"]>) => void
+  onUpdateRecord: (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => void
   onSaveSOAP: (soapData: {
     soapSubjective?: string
     soapObjective?: string
@@ -37,8 +37,8 @@ const SOAPTabContent = memo(function SOAPTabContent({
   onSave,
   isLocked,
 }: {
-  medicalRecord: MedicalRecordData["medicalRecord"]
-  onUpdate: (updates: Partial<MedicalRecordData["medicalRecord"]>) => void
+  medicalRecord: MedicalRecordCoreData["medicalRecord"]
+  onUpdate: (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => void
   onSave: (soapData: {
     soapSubjective?: string
     soapObjective?: string
@@ -57,98 +57,68 @@ const SOAPTabContent = memo(function SOAPTabContent({
   )
 })
 
-// Memoized Diagnosis tab
+// Memoized Diagnosis tab - now fetches its own data
 const DiagnosisTabContent = memo(function DiagnosisTabContent({
+  visitId,
   medicalRecordId,
-  diagnoses,
-  onUpdate,
   isLocked,
 }: {
+  visitId: string
   medicalRecordId: string
-  diagnoses: MedicalRecordData["diagnoses"]
-  onUpdate: () => Promise<void>
   isLocked: boolean
 }) {
-  return (
-    <DiagnosisTab
-      medicalRecordId={medicalRecordId}
-      diagnoses={diagnoses}
-      onUpdate={onUpdate}
-      isLocked={isLocked}
-    />
-  )
+  return <DiagnosisTab visitId={visitId} medicalRecordId={medicalRecordId} isLocked={isLocked} />
 })
 
-// Memoized Prescription tab
+// Memoized Prescription tab - now fetches its own data
 const PrescriptionTabContent = memo(function PrescriptionTabContent({
+  visitId,
   medicalRecordId,
-  prescriptions,
-  onUpdate,
   isLocked,
 }: {
+  visitId: string
   medicalRecordId: string
-  prescriptions: MedicalRecordData["prescriptions"]
-  onUpdate: () => Promise<void>
   isLocked: boolean
 }) {
-  return (
-    <PrescriptionTab
-      medicalRecordId={medicalRecordId}
-      prescriptions={prescriptions}
-      onUpdate={onUpdate}
-      isLocked={isLocked}
-    />
-  )
+  return <PrescriptionTab visitId={visitId} medicalRecordId={medicalRecordId} isLocked={isLocked} />
 })
 
-// Memoized Procedure tab
+// Memoized Procedure tab - now fetches its own data
 const ProcedureTabContent = memo(function ProcedureTabContent({
+  visitId,
   medicalRecordId,
-  procedures,
-  onUpdate,
   isLocked,
 }: {
+  visitId: string
   medicalRecordId: string
-  procedures: MedicalRecordData["procedures"]
-  onUpdate: () => Promise<void>
   isLocked: boolean
 }) {
-  return (
-    <ProcedureTab
-      medicalRecordId={medicalRecordId}
-      procedures={procedures}
-      onUpdate={onUpdate}
-      isLocked={isLocked}
-    />
-  )
+  return <ProcedureTab visitId={visitId} medicalRecordId={medicalRecordId} isLocked={isLocked} />
 })
 
 // Memoized Lab Orders tab
 const LabOrdersTabContent = memo(function LabOrdersTabContent({
   visitId,
   patientId,
-  onUpdate,
   isLocked,
 }: {
   visitId: string
   patientId: string
-  onUpdate: () => Promise<void>
   isLocked: boolean
 }) {
-  return (
-    <LabOrdersTab visitId={visitId} patientId={patientId} onUpdate={onUpdate} isLocked={isLocked} />
-  )
+  return <LabOrdersTab visitId={visitId} patientId={patientId} isLocked={isLocked} />
 })
 
 export function MedicalRecordTabs({
-  recordData,
+  coreData,
   activeTab,
   isLocked,
   onTabChange,
-  onUpdate,
   onUpdateRecord,
   onSaveSOAP,
 }: MedicalRecordTabsProps) {
+  const { medicalRecord, visit } = coreData
+
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
       <TabsList className="grid w-full grid-cols-5">
@@ -176,7 +146,7 @@ export function MedicalRecordTabs({
 
       <TabsContent value="soap" className="mt-6">
         <SOAPTabContent
-          medicalRecord={recordData.medicalRecord}
+          medicalRecord={medicalRecord}
           onUpdate={onUpdateRecord}
           onSave={onSaveSOAP}
           isLocked={isLocked}
@@ -185,38 +155,30 @@ export function MedicalRecordTabs({
 
       <TabsContent value="diagnosis" className="mt-6">
         <DiagnosisTabContent
-          medicalRecordId={recordData.medicalRecord.id}
-          diagnoses={recordData.diagnoses}
-          onUpdate={onUpdate}
+          visitId={visit.id}
+          medicalRecordId={medicalRecord.id}
           isLocked={isLocked}
         />
       </TabsContent>
 
       <TabsContent value="prescription" className="mt-6">
         <PrescriptionTabContent
-          medicalRecordId={recordData.medicalRecord.id}
-          prescriptions={recordData.prescriptions}
-          onUpdate={onUpdate}
+          visitId={visit.id}
+          medicalRecordId={medicalRecord.id}
           isLocked={isLocked}
         />
       </TabsContent>
 
       <TabsContent value="procedure" className="mt-6">
         <ProcedureTabContent
-          medicalRecordId={recordData.medicalRecord.id}
-          procedures={recordData.procedures}
-          onUpdate={onUpdate}
+          visitId={visit.id}
+          medicalRecordId={medicalRecord.id}
           isLocked={isLocked}
         />
       </TabsContent>
 
       <TabsContent value="lab-orders" className="mt-6">
-        <LabOrdersTabContent
-          visitId={recordData.visit.id}
-          patientId={recordData.visit.patientId}
-          onUpdate={onUpdate}
-          isLocked={isLocked}
-        />
+        <LabOrdersTabContent visitId={visit.id} patientId={visit.patientId} isLocked={isLocked} />
       </TabsContent>
     </Tabs>
   )

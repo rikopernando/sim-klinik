@@ -1,8 +1,16 @@
 /**
- * Custom hook for managing medical record data and operations
+ * Custom hook for managing core medical record data and operations
+ * Uses React Query for efficient data fetching and caching
+ *
+ * Note: Diagnoses, procedures, and prescriptions are now fetched lazily
+ * by their respective tab components using separate hooks:
+ * - useDiagnoses
+ * - useProcedures
+ * - usePrescriptions
  */
 
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   getMedicalRecordByVisit,
   updateMedicalRecordByVisit,
@@ -10,8 +18,14 @@ import {
   unlockMedicalRecord,
 } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
-import { type MedicalRecordData } from "@/types/medical-record"
+import { type MedicalRecordCoreData } from "@/types/medical-record"
 import { toast } from "sonner"
+
+// Query keys for cache management
+export const medicalRecordKeys = {
+  all: ["medical-records"] as const,
+  core: (visitId: string) => [...medicalRecordKeys.all, "core", visitId] as const,
+}
 
 interface UseMedicalRecordOptions {
   visitId: string
@@ -19,7 +33,7 @@ interface UseMedicalRecordOptions {
 
 interface UseMedicalRecordReturn {
   // Data
-  recordData: MedicalRecordData | null
+  coreData: MedicalRecordCoreData | null
   isLocked: boolean
   isDraft: boolean
 
@@ -33,7 +47,7 @@ interface UseMedicalRecordReturn {
   clearError: () => void
 
   // Operations
-  loadMedicalRecord: () => Promise<void>
+  refetch: () => Promise<void>
   saveSOAP: (soapData: {
     soapSubjective?: string
     soapObjective?: string
@@ -43,132 +57,78 @@ interface UseMedicalRecordReturn {
   saveDraft: () => Promise<void>
   lockRecord: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   unlockRecord: () => Promise<void>
-  updateRecord: (updates: Partial<MedicalRecordData["medicalRecord"]>) => void
+  updateRecord: (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => void
 }
 
 export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedicalRecordReturn {
-  const [recordData, setRecordData] = useState<MedicalRecordData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLocking, setIsLocking] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  // Ref to prevent double execution
-  const isInitializedRef = useRef(false)
+  // Fetch core medical record and visit info only
+  const coreQuery = useQuery({
+    queryKey: medicalRecordKeys.core(visitId),
+    queryFn: () => getMedicalRecordByVisit(visitId),
+    enabled: !!visitId,
+  })
 
-  // Internal function to fetch data
-  const fetchMedicalRecord = useCallback(async () => {
-    try {
-      setError(null)
-      setIsLoading(true)
-      const data = await getMedicalRecordByVisit(visitId)
-      setRecordData(data)
-      return data
-    } catch (err) {
-      setError(getErrorMessage(err))
-      throw err
-    } finally {
-      setIsLoading(false)
-    }
-  }, [visitId])
+  // Error handling
+  const error = coreQuery.error ? getErrorMessage(coreQuery.error) : null
 
-  // Initial load with guard against double execution
-  const loadMedicalRecord = useCallback(async () => {
-    // Prevent double execution in React StrictMode
-    if (isInitializedRef.current) {
-      return
-    }
+  // Refetch core data
+  const refetch = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: medicalRecordKeys.core(visitId) })
+  }, [queryClient, visitId])
 
-    await fetchMedicalRecord()
-    isInitializedRef.current = true
-  }, [fetchMedicalRecord])
-
-  // Reload function for updates
-  const reloadMedicalRecord = useCallback(async () => {
-    await fetchMedicalRecord()
-  }, [fetchMedicalRecord])
-
-  useEffect(() => {
-    loadMedicalRecord()
-  }, [loadMedicalRecord])
-
+  // Save draft
   const saveDraft = useCallback(async () => {
-    if (!recordData) return
+    if (!coreQuery.data) return
 
     try {
-      setIsSaving(true)
-      setError(null)
-
-      await updateMedicalRecordByVisit(visitId, {
-        isDraft: true,
-      })
-
-      // Reload to get updated data
-      await reloadMedicalRecord()
-
-      // Show success toast
+      await updateMedicalRecordByVisit(visitId, { isDraft: true })
+      await refetch()
       toast.success("Draft berhasil disimpan!")
     } catch (err) {
       const errorMessage = getErrorMessage(err)
-      setError(errorMessage)
-
-      // Show error toast
       toast.error(`Gagal menyimpan draft: ${errorMessage}`)
-
       throw err
-    } finally {
-      setIsSaving(false)
     }
-  }, [visitId, recordData, reloadMedicalRecord])
+  }, [visitId, coreQuery.data, refetch])
 
+  // Lock record
   const lockRecord = useCallback(
     async (billingAdjustment?: number, adjustmentNote?: string) => {
-      if (!recordData) return
+      if (!coreQuery.data) return
 
       try {
-        setIsLocking(true)
-        setError(null)
-
         await lockMedicalRecord({
-          id: recordData.medicalRecord.id,
+          id: coreQuery.data.medicalRecord.id,
           billingAdjustment,
           adjustmentNote,
         })
-
-        // Reload to get updated data
-        await reloadMedicalRecord()
-        // Show success toast
+        await refetch()
         toast.success("Rekam medis berhasil dikunci!")
       } catch (err) {
-        setError(getErrorMessage(err))
-        // Show error toast
-        toast.error(`Gagal mengunci rekam medis`)
-      } finally {
-        setIsLocking(false)
+        toast.error("Gagal mengunci rekam medis")
+        throw err
       }
     },
-    [recordData, reloadMedicalRecord]
+    [coreQuery.data, refetch]
   )
 
+  // Unlock record
   const unlockRecord = useCallback(async () => {
-    if (!recordData) return
+    if (!coreQuery.data) return
 
     try {
-      setIsLocking(true)
-      setError(null)
-
-      await unlockMedicalRecord(recordData.medicalRecord.id)
-
-      // Reload to get updated data
-      await reloadMedicalRecord()
+      await unlockMedicalRecord(coreQuery.data.medicalRecord.id)
+      await refetch()
+      toast.success("Rekam medis berhasil dibuka!")
     } catch (err) {
-      setError(getErrorMessage(err))
+      toast.error("Gagal membuka kunci rekam medis")
       throw err
-    } finally {
-      setIsLocking(false)
     }
-  }, [recordData, reloadMedicalRecord])
+  }, [coreQuery.data, refetch])
 
+  // Save SOAP
   const saveSOAP = useCallback(
     async (soapData: {
       soapSubjective?: string
@@ -176,61 +136,58 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       soapAssessment?: string
       soapPlan?: string
     }) => {
-      if (!recordData) return
+      if (!coreQuery.data) return
 
       try {
-        setError(null)
         await updateMedicalRecordByVisit(visitId, soapData)
-        // Show success toast
+        await refetch()
         toast.success("SOAP berhasil disimpan!")
-        await reloadMedicalRecord()
       } catch (err) {
         const errorMessage = getErrorMessage(err)
-        setError(errorMessage)
-        // Show error toast
-        toast.error(`Gagal menyimpan draft: ${errorMessage}`)
+        toast.error(`Gagal menyimpan SOAP: ${errorMessage}`)
         throw err
       }
     },
-    [visitId, recordData, reloadMedicalRecord]
+    [visitId, coreQuery.data, refetch]
   )
 
+  // Optimistic update for record
   const updateRecord = useCallback(
-    (updates: Partial<MedicalRecordData["medicalRecord"]>) => {
-      if (!recordData) return
+    (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => {
+      if (!coreQuery.data) return
 
-      setRecordData({
-        ...recordData,
+      queryClient.setQueryData(medicalRecordKeys.core(visitId), {
+        ...coreQuery.data,
         medicalRecord: {
-          ...recordData.medicalRecord,
+          ...coreQuery.data.medicalRecord,
           ...updates,
         },
       })
     },
-    [recordData]
+    [coreQuery.data, queryClient, visitId]
   )
 
   const clearError = useCallback(() => {
-    setError(null)
+    // Errors are managed by React Query, this is a no-op for compatibility
   }, [])
 
   return {
     // Data
-    recordData,
-    isLocked: recordData?.medicalRecord.isLocked ?? false,
-    isDraft: recordData?.medicalRecord.isDraft ?? true,
+    coreData: coreQuery.data ?? null,
+    isLocked: coreQuery.data?.medicalRecord.isLocked ?? false,
+    isDraft: coreQuery.data?.medicalRecord.isDraft ?? true,
 
     // Loading states
-    isLoading,
-    isSaving,
-    isLocking,
+    isLoading: coreQuery.isLoading,
+    isSaving: false, // Managed by mutations in the future
+    isLocking: false, // Managed by mutations in the future
 
     // Error handling
     error,
     clearError,
 
     // Operations
-    loadMedicalRecord: reloadMedicalRecord, // Expose reload for tabs to use
+    refetch,
     saveSOAP,
     saveDraft,
     lockRecord,

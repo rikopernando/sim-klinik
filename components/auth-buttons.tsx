@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { LogIn, LogOut, User, UserPlus } from "lucide-react"
+import { LogIn, LogOut, User } from "lucide-react"
 import { useSession, signOut } from "@/lib/auth-client"
 import { Button } from "@/components/ui/button"
 import {
@@ -89,13 +89,7 @@ export function AuthButtons() {
       <Button asChild variant="ghost" size="sm">
         <Link href="/sign-in">
           <LogIn className="mr-2 h-4 w-4" />
-          Sign In
-        </Link>
-      </Button>
-      <Button asChild size="sm">
-        <Link href="/sign-up">
-          <UserPlus className="mr-2 h-4 w-4" />
-          Sign Up
+          Log In
         </Link>
       </Button>
     </div>
@@ -130,12 +124,6 @@ export function HeroAuthButtons() {
 
   return (
     <div className="flex flex-col justify-center gap-4 sm:flex-row">
-      <Button asChild size="lg" className="px-8 py-3 text-base">
-        <Link href="/sign-up">
-          <UserPlus className="mr-2 h-5 w-5" />
-          Get Started
-        </Link>
-      </Button>
       <Button asChild variant="outline" size="lg" className="px-8 py-3 text-base">
         <Link href="/sign-in">
           <LogIn className="mr-2 h-5 w-5" />
