@@ -3,6 +3,7 @@
  * Main page for viewing and editing electronic medical records
  *
  * Refactored for better readability, modularity, and performance
+ * Each tab now fetches its own data lazily when activated
  */
 
 "use client"
@@ -25,16 +26,16 @@ export default function MedicalRecordPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("soap")
 
-  // Use custom hook for all medical record operations
+  // Use custom hook for core medical record operations
+  // Diagnoses, procedures, and prescriptions are fetched lazily by their respective tabs
   const {
-    recordData,
+    coreData,
     isLocked,
     isDraft,
     isLoading,
     isSaving,
     isLocking,
     error,
-    loadMedicalRecord,
     saveSOAP,
     saveDraft,
     lockRecord,
@@ -55,7 +56,7 @@ export default function MedicalRecordPage() {
   }
 
   // Error state (no data loaded)
-  if (error && !recordData) {
+  if (error && !coreData) {
     return (
       <div className="container mx-auto max-w-6xl p-6">
         <Alert variant="destructive">
@@ -69,7 +70,7 @@ export default function MedicalRecordPage() {
   }
 
   // No data state
-  if (!recordData) {
+  if (!coreData) {
     return null
   }
 
@@ -81,7 +82,7 @@ export default function MedicalRecordPage() {
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
       {/* Header with visit info and status badges */}
-      <MedicalRecordHeader visit={recordData.visit} isLocked={isLocked} isDraft={isDraft} />
+      <MedicalRecordHeader visit={coreData.visit} isLocked={isLocked} isDraft={isDraft} />
 
       {/* Error Alert (shows errors during operations) */}
       {error && (
@@ -112,13 +113,12 @@ export default function MedicalRecordPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Tabs with memoized content for better performance */}
+          {/* Tabs with lazy loading - each tab fetches its own data when activated */}
           <MedicalRecordTabs
-            recordData={recordData}
+            coreData={coreData}
             activeTab={activeTab}
             isLocked={isLocked}
             onTabChange={setActiveTab}
-            onUpdate={loadMedicalRecord}
             onUpdateRecord={updateRecord}
             onSaveSOAP={saveSOAP}
           />

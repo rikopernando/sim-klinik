@@ -17,11 +17,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { deletePrescription } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { type Prescription } from "@/types/medical-record"
 import { canEditMedicalRecord, canDeletePrescription } from "@/lib/utils/medical-record"
+import { usePrescriptions } from "@/hooks/use-prescriptions"
 
 import { SectionCard } from "./section-card"
 import { ListItem } from "./list-item"
@@ -29,18 +31,14 @@ import { EmptyState } from "./empty-state"
 import { AddPrescriptionDialog } from "./add-prescription-dialog"
 
 interface PrescriptionTabProps {
+  visitId: string
   medicalRecordId: string
-  prescriptions: Prescription[]
-  onUpdate: () => void
   isLocked: boolean
 }
 
-export function PrescriptionTab({
-  medicalRecordId,
-  prescriptions,
-  onUpdate,
-  isLocked,
-}: PrescriptionTabProps) {
+export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: PrescriptionTabProps) {
+  const { prescriptions, isLoading, refetch } = usePrescriptions({ visitId })
+
   const [isDeleting, setDeleting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -85,7 +83,7 @@ export function PrescriptionTab({
       await deletePrescription(prescriptionToDelete)
       setDeleteDialogOpen(false)
       setPrescriptionToDelete(null)
-      onUpdate()
+      await refetch()
       toast.success("Resep berhasil dihapus!")
     } catch (err) {
       setError(getErrorMessage(err))
@@ -93,7 +91,17 @@ export function PrescriptionTab({
     } finally {
       setDeleting(false)
     }
-  }, [prescriptionToDelete, onUpdate])
+  }, [prescriptionToDelete, refetch])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -122,7 +130,7 @@ export function PrescriptionTab({
         >
           <div className="space-y-3">
             {prescriptions.map((prescription) => {
-              const subtotal =
+              const itemSubtotal =
                 parseFloat(prescription.drugPrice || "0") *
                 (prescription.dispensedQuantity || prescription.quantity)
               return (
@@ -181,7 +189,7 @@ export function PrescriptionTab({
                         <div className="grid grid-cols-4 md:col-span-1">
                           <span className="col-span-2 font-medium">Subtotal</span>
                           <span className="text-primary col-span-2 font-semibold">
-                            : Rp {subtotal.toLocaleString("id-ID")}
+                            : Rp {itemSubtotal.toLocaleString("id-ID")}
                           </span>
                         </div>
                       )}
@@ -222,7 +230,7 @@ export function PrescriptionTab({
         open={isDialogOpen}
         onOpenChange={handleCloseDialog}
         medicalRecordId={medicalRecordId}
-        onSuccess={onUpdate}
+        onSuccess={refetch}
         prescription={prescriptionToEdit}
         existingPrescriptions={prescriptions}
       />

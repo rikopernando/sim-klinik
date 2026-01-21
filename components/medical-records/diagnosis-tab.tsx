@@ -17,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { deleteDiagnosis } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
@@ -26,6 +27,7 @@ import {
   getDiagnosisTypeBadgeVariant,
   canEditMedicalRecord,
 } from "@/lib/utils/medical-record"
+import { useDiagnoses } from "@/hooks/use-diagnoses"
 
 import { SectionCard } from "./section-card"
 import { ListItem } from "./list-item"
@@ -33,18 +35,13 @@ import { EmptyState } from "./empty-state"
 import { AddDiagnosisDialog } from "./add-diagnosis-dialog"
 
 interface DiagnosisTabProps {
+  visitId: string
   medicalRecordId: string
-  diagnoses: Diagnosis[]
-  onUpdate: () => void
   isLocked: boolean
 }
 
-export function DiagnosisTab({
-  medicalRecordId,
-  diagnoses,
-  onUpdate,
-  isLocked,
-}: DiagnosisTabProps) {
+export function DiagnosisTab({ visitId, medicalRecordId, isLocked }: DiagnosisTabProps) {
+  const { diagnoses, isLoading, refetch } = useDiagnoses({ visitId })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [diagnosisToDelete, setDiagnosisToDelete] = useState<string | null>(null)
@@ -77,7 +74,7 @@ export function DiagnosisTab({
       setDeleting(true)
       await deleteDiagnosis(diagnosisToDelete)
       setDiagnosisToDelete(null)
-      onUpdate()
+      await refetch()
       // Show success toast
       toast.success("Diagnosis berhasil dihapus!")
     } catch (err) {
@@ -88,7 +85,17 @@ export function DiagnosisTab({
       setDeleting(false)
       setDeleteDialogOpen(false)
     }
-  }, [diagnosisToDelete, onUpdate])
+  }, [diagnosisToDelete, refetch])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -150,7 +157,7 @@ export function DiagnosisTab({
         open={isDialogOpen}
         onOpenChange={handleCloseDialog}
         medicalRecordId={medicalRecordId}
-        onSuccess={onUpdate}
+        onSuccess={refetch}
         diagnosis={diagnosisToEdit}
         existingDiagnoses={diagnoses}
       />

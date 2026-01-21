@@ -45,15 +45,15 @@ export default function ERMedicalRecordPage() {
     updateVisit,
   } = useERVisit({ visitId })
 
-  // Use medical record hook for medical record operations
+  // Use medical record hook for core medical record operations
+  // Diagnoses, procedures, and prescriptions are fetched lazily by their respective tabs
   const {
-    recordData,
+    coreData,
     isLocked,
     isLoading: isLoadingRecord,
     isSaving,
     isLocking,
     error: recordError,
-    loadMedicalRecord,
     saveSOAP,
     saveDraft,
     lockRecord,
@@ -171,7 +171,7 @@ export default function ERMedicalRecordPage() {
             </div>
 
             {/* Action Buttons with Disposition (Save Draft / Lock & Finish / Unlock) */}
-            {recordData && (
+            {coreData && (
               <ERMedicalRecordActions
                 isLocked={isLocked}
                 isSaving={isSaving}
@@ -187,13 +187,12 @@ export default function ERMedicalRecordPage() {
 
         <CardContent>
           {/* Medical Record Tabs (SOAP, Diagnosis, Prescription, Procedure, Lab Orders) */}
-          {recordData ? (
+          {coreData ? (
             <MedicalRecordTabs
-              recordData={recordData}
+              coreData={coreData}
               activeTab={activeTab}
               isLocked={isLocked}
               onTabChange={setActiveTab}
-              onUpdate={loadMedicalRecord}
               onUpdateRecord={updateRecord}
               onSaveSOAP={saveSOAP}
             />
