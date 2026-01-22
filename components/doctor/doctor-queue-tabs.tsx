@@ -55,6 +55,7 @@ export function DoctorQueueTabs({
                 disabled: startingExamination !== null,
               },
             }))}
+            className="overflow-scroll"
             emptyMessage="Tidak ada pasien dalam antrian"
             maxHeight="450px"
             onItemClick={(item) => {
@@ -85,6 +86,7 @@ export function DoctorQueueTabs({
                 onClick: () => onOpenMedicalRecord(item.visit.id),
               },
             }))}
+            className="overflow-scroll"
             emptyMessage="Tidak ada pasien yang sedang diperiksa"
             maxHeight="450px"
             onItemClick={(item) => {
@@ -115,6 +117,7 @@ export function DoctorQueueTabs({
                 onClick: () => onOpenMedicalRecord(item.visit.id),
               },
             }))}
+            className="overflow-scroll"
             emptyMessage="Semua RME sudah dikunci"
             maxHeight="450px"
             onItemClick={(item) => {

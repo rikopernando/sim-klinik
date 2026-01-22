@@ -61,8 +61,8 @@ export function ListWidget({
           {emptyMessage}
         </div>
       ) : (
-        <ScrollArea style={{ maxHeight }}>
-          <div className="space-y-2">
+        <ScrollArea className="h-full" style={{ maxHeight }}>
+          <div className="space-y-2 pb-6">
             {items.map((item) => {
               const ItemIcon = item.icon
               return (
