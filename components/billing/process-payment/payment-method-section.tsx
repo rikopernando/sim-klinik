@@ -81,16 +81,16 @@ export function PaymentMethodSection({
                   parseFloat(changeAmount) >= 0 ? "bg-blue-50" : "bg-red-50"
                 }`}
               >
-                <p className="text-sm text-blue-700">Kembalian</p>
-                <p
+                <div className="text-sm text-blue-700">Kembalian</div>
+                <div
                   className={`text-xl font-bold ${
                     parseFloat(changeAmount) >= 0 ? "text-blue-900" : "text-red-700"
                   }`}
                 >
                   {formatCurrency(changeAmount)}
-                </p>
+                </div>
                 {parseFloat(changeAmount) < 0 && (
-                  <p className="mt-1 text-xs text-red-600">Uang yang diterima kurang!</p>
+                  <div className="mt-1 text-xs text-red-600">Uang yang diterima kurang!</div>
                 )}
               </div>
             </FieldDescription>

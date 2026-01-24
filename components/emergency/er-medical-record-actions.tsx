@@ -261,6 +261,7 @@ export function ERMedicalRecordActions({
 
             {/* Billing Preview */}
             <DischargeBillingPreviewSection
+              type="UGD"
               summary={summary}
               isLoading={isFetching}
               adjustmentType={adjustmentType}
