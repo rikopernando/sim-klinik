@@ -188,7 +188,7 @@ export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
     const paymentAmount = parseFloat(data.amount)
     const remaining = parseFloat(remainingAmount)
 
-    if (paymentAmount <= 0) {
+    if (paymentAmount < 0) {
       throw new Error("Jumlah pembayaran harus lebih besar dari 0")
     }
 
