@@ -51,6 +51,30 @@ export interface ExpiringDrugAlertData {
   stockQuantity: number
 }
 
+// Emergency Room Notification Types
+export interface ERNewPatientData {
+  visitId: string
+  patientName: string
+  patientMRNumber: string
+  triageStatus: "red" | "yellow" | "green"
+  chiefComplaint: string
+  arrivalTime: Date
+}
+
+export interface ERStatusChangeData {
+  visitId: string
+  patientName: string
+  oldStatus: string
+  newStatus: string
+}
+
+export interface ERTriageChangeData {
+  visitId: string
+  patientName: string
+  oldTriage: "red" | "yellow" | "green" | null
+  newTriage: "red" | "yellow" | "green"
+}
+
 /**
  * Discriminated Union for Notification Payloads
  */
@@ -82,6 +106,25 @@ export type NotificationPayload =
   | {
       type: "expiring_drug_alert"
       data: ExpiringDrugAlertData
+      timestamp: string
+      id: string
+    }
+  // Emergency Room notification types
+  | {
+      type: "er_new_patient"
+      data: ERNewPatientData
+      timestamp: string
+      id: string
+    }
+  | {
+      type: "er_status_change"
+      data: ERStatusChangeData
+      timestamp: string
+      id: string
+    }
+  | {
+      type: "er_triage_change"
+      data: ERTriageChangeData
       timestamp: string
       id: string
     }
@@ -255,6 +298,22 @@ export function sendNotification(
   type: "expiring_drug_alert",
   data: ExpiringDrugAlertData
 ): void
+// Emergency Room notification overloads
+export function sendNotification(
+  channel: string,
+  type: "er_new_patient",
+  data: ERNewPatientData
+): void
+export function sendNotification(
+  channel: string,
+  type: "er_status_change",
+  data: ERStatusChangeData
+): void
+export function sendNotification(
+  channel: string,
+  type: "er_triage_change",
+  data: ERTriageChangeData
+): void
 export function sendNotification(
   channel: string,
   type:
@@ -262,13 +321,19 @@ export function sendNotification(
     | "prescription_updated"
     | "prescription_fulfilled"
     | "low_stock_alert"
-    | "expiring_drug_alert",
+    | "expiring_drug_alert"
+    | "er_new_patient"
+    | "er_status_change"
+    | "er_triage_change",
   data:
     | NewPrescriptionData
     | PrescriptionUpdatedData
     | PrescriptionFulfilledData
     | LowStockAlertData
     | ExpiringDrugAlertData
+    | ERNewPatientData
+    | ERStatusChangeData
+    | ERTriageChangeData
 ): void {
   const payload: NotificationPayload = {
     type,

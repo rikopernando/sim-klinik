@@ -13,13 +13,14 @@
  */
 
 import { toast } from "sonner"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { AlertCircle, Clock, RefreshCw } from "lucide-react"
+import { AlertCircle, Clock, RefreshCw, Search, Volume2, VolumeX } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -27,9 +28,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge"
 
 // Hooks
 import { useERQueue } from "@/hooks/use-er-queue"
+import {
+  useERNotifications,
+  type ERNewPatientNotification,
+} from "@/lib/notifications/use-er-notifications"
 
 // Services
 import { updateVisitStatus } from "@/lib/services/visits.service"
@@ -43,16 +49,91 @@ import { ERQueueLoading } from "@/components/emergency/er-queue-loading"
 import { ERQueueTabs } from "@/components/emergency/er-queue-tabs"
 import { getErrorMessage } from "@/lib/utils/error"
 
+// Custom hook for debouncing search input
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value)
+    }, delay)
+
+    return () => {
+      clearTimeout(timer)
+    }
+  }, [value, delay])
+
+  return debouncedValue
+}
+
 export default function EmergencyQueuePage() {
   const router = useRouter()
   const [showQuickRegister, setShowQuickRegister] = useState(false)
   const [activeStatus, setActiveStatus] = useState("registered")
+  const [searchInput, setSearchInput] = useState("")
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    // Load preference from localStorage
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("er-sound-enabled") !== "false"
+    }
+    return true
+  })
+  const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Use ER Queue hook with auto-refresh and status filter
+  // Debounce search input (300ms)
+  const debouncedSearch = useDebounce(searchInput, 300)
+
+  /**
+   * Handle new patient notification - play alert for Red triage
+   */
+  const handleNewPatient = useCallback(
+    (data: ERNewPatientNotification) => {
+      // Refresh queue when new patient arrives via SSE
+      refresh()
+
+      // Play alert sound for Red triage patients
+      if (data.triageStatus === "red" && soundEnabled && audioRef.current) {
+        audioRef.current.play().catch((err) => {
+          console.warn("Could not play alert sound:", err)
+        })
+      }
+
+      // Show toast notification
+      const triageLabel =
+        data.triageStatus === "red"
+          ? "MERAH - GAWAT"
+          : data.triageStatus === "yellow"
+            ? "KUNING"
+            : "HIJAU"
+      toast.info(`Pasien baru: ${data.patientName}`, {
+        description: `Triage: ${triageLabel} - ${data.chiefComplaint}`,
+        duration: 5000,
+      })
+    },
+    [refresh, soundEnabled]
+  )
+
+  // Use ER Notifications hook with SSE
+  const { isConnected } = useERNotifications({
+    onNewPatient: handleNewPatient,
+  })
+
+  // Toggle sound and save preference
+  const toggleSound = useCallback(() => {
+    setSoundEnabled((prev) => {
+      const newValue = !prev
+      localStorage.setItem("er-sound-enabled", String(newValue))
+      return newValue
+    })
+  }, [])
+
+  // Use ER Queue hook with auto-refresh, status filter, and search
+  // With SSE, we can reduce polling interval or even disable it
   const { sortedQueue, queue, statistics, isLoading, lastRefresh, refresh } = useERQueue({
-    autoRefresh: true,
-    refreshInterval: 30000, // 30 seconds
+    autoRefresh: !isConnected, // Only poll if SSE is not connected
+    refreshInterval: 60000, // Fallback: 60 seconds when polling
     status: activeStatus,
+    search: debouncedSearch,
   })
 
   /**
@@ -104,15 +185,34 @@ export default function EmergencyQueuePage() {
 
   return (
     <div className="space-y-6 p-6">
+      {/* Audio element for emergency alerts */}
+      <audio ref={audioRef} src="/sounds/emergency-alert.mp3" preload="auto" />
+
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard UGD</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold">Dashboard UGD</h1>
+            {/* SSE Connection Status */}
+            <Badge variant={isConnected ? "default" : "secondary"} className="text-xs">
+              {isConnected ? "Live" : "Polling"}
+            </Badge>
+          </div>
           <p className="text-muted-foreground">Antrian Unit Gawat Darurat - Real-time</p>
         </div>
 
         {/* Actions */}
         <div className="flex gap-2">
+          {/* Sound Toggle */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleSound}
+            title={soundEnabled ? "Matikan suara" : "Nyalakan suara"}
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </Button>
+
           <Button variant="outline" onClick={refresh} disabled={isLoading}>
             <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
             Refresh
@@ -136,6 +236,17 @@ export default function EmergencyQueuePage() {
             </DialogContent>
           </Dialog>
         </div>
+      </div>
+
+      {/* Search Bar */}
+      <div className="relative">
+        <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <Input
+          placeholder="Cari pasien (nama, no. MR, NIK)..."
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="pl-10"
+        />
       </div>
 
       {/* Statistics */}

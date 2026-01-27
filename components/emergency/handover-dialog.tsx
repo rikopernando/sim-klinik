@@ -3,8 +3,10 @@
 /**
  * Patient Handover Dialog
  * Transfers ER patients to other departments
+ * Includes pre-handover validation checklist
  */
 
+import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -18,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -25,11 +28,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { AlertCircle, CheckCircle2, ArrowRight } from "lucide-react"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import {
+  AlertCircle,
+  CheckCircle2,
+  ArrowRight,
+  AlertTriangle,
+  CircleCheck,
+  CircleX,
+} from "lucide-react"
 
 // Hooks
 import { useHandover } from "@/hooks/use-handover"
+
+/**
+ * Pre-handover validation requirements
+ */
+export interface HandoverValidation {
+  hasDiagnosis: boolean
+  hasVitals: boolean
+  hasChiefComplaint: boolean
+}
 
 /**
  * Form Schema
@@ -41,6 +60,7 @@ const formSchema = z.object({
   poliId: z.string().optional(),
   roomId: z.string().optional(),
   notes: z.string().optional(),
+  overrideReason: z.string().optional(),
 })
 
 type FormData = z.infer<typeof formSchema>
@@ -51,6 +71,7 @@ interface HandoverDialogProps {
   visitId: string
   patientName: string
   onSuccess?: () => void
+  validation?: HandoverValidation
 }
 
 export function HandoverDialog({
@@ -59,7 +80,10 @@ export function HandoverDialog({
   visitId,
   patientName,
   onSuccess,
+  validation,
 }: HandoverDialogProps) {
+  const [acknowledgeOverride, setAcknowledgeOverride] = useState(false)
+
   // Use handover hook
   const { handover, isSubmitting, error, success } = useHandover(() => {
     // Close dialog after success
@@ -84,19 +108,36 @@ export function HandoverDialog({
   })
 
   const newVisitType = watch("newVisitType")
+  const overrideReason = watch("overrideReason")
+
+  // Check if all validations pass
+  const validationPassed = validation
+    ? validation.hasDiagnosis && validation.hasVitals && validation.hasChiefComplaint
+    : true
+
+  // Can submit only if validation passes OR user acknowledged override with reason
+  const canSubmit =
+    validationPassed || (acknowledgeOverride && overrideReason && overrideReason.trim().length > 0)
 
   /**
    * Submit handler
    */
   const onSubmit = async (data: FormData) => {
+    // Append override reason to notes if applicable
+    let finalNotes = data.notes || ""
+    if (!validationPassed && acknowledgeOverride && data.overrideReason) {
+      finalNotes = `[OVERRIDE: ${data.overrideReason}]\n\n${finalNotes}`
+    }
+
     await handover({
       visitId,
       newVisitType: data.newVisitType,
       poliId: data.poliId ? parseInt(data.poliId) : undefined,
       roomId: data.roomId ? parseInt(data.roomId) : undefined,
-      notes: data.notes,
+      notes: finalNotes,
     })
     reset()
+    setAcknowledgeOverride(false)
   }
 
   return (
@@ -122,6 +163,51 @@ export function HandoverDialog({
           <Alert className="border-green-500 bg-green-50 text-green-700">
             <CheckCircle2 className="h-4 w-4" />
             <AlertDescription>Handover berhasil dilakukan!</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Pre-handover Validation Checklist */}
+        {validation && !validationPassed && (
+          <Alert variant="destructive" className="border-orange-300 bg-orange-50 text-orange-800">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Dokumentasi Belum Lengkap</AlertTitle>
+            <AlertDescription>
+              <p className="mb-2">
+                Beberapa dokumentasi klinis belum lengkap. Sebaiknya lengkapi sebelum handover:
+              </p>
+              <ul className="space-y-1">
+                <li className="flex items-center gap-2">
+                  {validation.hasDiagnosis ? (
+                    <CircleCheck className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <CircleX className="h-4 w-4 text-red-600" />
+                  )}
+                  <span className={validation.hasDiagnosis ? "text-green-700" : ""}>
+                    Diagnosis tercatat
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  {validation.hasVitals ? (
+                    <CircleCheck className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <CircleX className="h-4 w-4 text-red-600" />
+                  )}
+                  <span className={validation.hasVitals ? "text-green-700" : ""}>
+                    Vital signs tercatat
+                  </span>
+                </li>
+                <li className="flex items-center gap-2">
+                  {validation.hasChiefComplaint ? (
+                    <CircleCheck className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <CircleX className="h-4 w-4 text-red-600" />
+                  )}
+                  <span className={validation.hasChiefComplaint ? "text-green-700" : ""}>
+                    Keluhan utama tercatat
+                  </span>
+                </li>
+              </ul>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -202,6 +288,37 @@ export function HandoverDialog({
             />
           </div>
 
+          {/* Override Section (only shown if validation failed) */}
+          {validation && !validationPassed && (
+            <div className="space-y-3 rounded-lg border border-orange-200 bg-orange-50 p-3">
+              <div className="flex items-start gap-2">
+                <Checkbox
+                  id="acknowledgeOverride"
+                  checked={acknowledgeOverride}
+                  onCheckedChange={(checked) => setAcknowledgeOverride(checked === true)}
+                />
+                <label htmlFor="acknowledgeOverride" className="text-sm leading-tight">
+                  Saya memahami bahwa dokumentasi belum lengkap dan tetap ingin melanjutkan handover
+                  dengan alasan yang valid.
+                </label>
+              </div>
+
+              {acknowledgeOverride && (
+                <div className="space-y-2">
+                  <Label htmlFor="overrideReason">
+                    Alasan Override <span className="text-destructive">*</span>
+                  </Label>
+                  <Textarea
+                    id="overrideReason"
+                    {...register("overrideReason")}
+                    placeholder="Jelaskan alasan mengapa handover perlu dilakukan tanpa dokumentasi lengkap..."
+                    rows={2}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">
             <Button
@@ -212,7 +329,7 @@ export function HandoverDialog({
             >
               Batal
             </Button>
-            <Button type="submit" disabled={isSubmitting || !newVisitType}>
+            <Button type="submit" disabled={isSubmitting || !newVisitType || !canSubmit}>
               <ArrowRight className="mr-2 h-4 w-4" />
               {isSubmitting ? "Memproses..." : "Handover Pasien"}
             </Button>

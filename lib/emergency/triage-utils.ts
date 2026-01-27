@@ -137,3 +137,72 @@ export function sortByTriagePriority<
 export function isValidTriageStatus(status: string): status is TriageStatus {
   return status === "red" || status === "yellow" || status === "green"
 }
+
+/**
+ * Wait time thresholds by triage level (in minutes)
+ */
+export const WAIT_TIME_THRESHOLDS = {
+  red: 5, // Red triage: alert if > 5 minutes
+  yellow: 15, // Yellow triage: alert if > 15 minutes
+  green: 30, // Green triage: alert if > 30 minutes
+  untriaged: 10, // Untriaged: alert if > 10 minutes
+} as const
+
+/**
+ * Calculate wait time in minutes from arrival time
+ */
+export function calculateWaitTimeMinutes(arrivalTime: string | Date): number {
+  const arrival = new Date(arrivalTime)
+  const now = new Date()
+  return Math.floor((now.getTime() - arrival.getTime()) / (1000 * 60))
+}
+
+/**
+ * Format wait time for display
+ * Returns formatted string like "5 menit" or "1 jam 30 menit"
+ */
+export function formatWaitTime(minutes: number): string {
+  if (minutes < 60) {
+    return `${minutes} menit`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (remainingMinutes === 0) {
+    return `${hours} jam`
+  }
+  return `${hours} jam ${remainingMinutes} menit`
+}
+
+/**
+ * Check if wait time exceeds threshold for triage level
+ */
+export function isWaitTimeExceeded(
+  arrivalTime: string | Date,
+  triageStatus: TriageStatus | null
+): boolean {
+  const minutes = calculateWaitTimeMinutes(arrivalTime)
+  const key = triageStatus || "untriaged"
+  const threshold = WAIT_TIME_THRESHOLDS[key]
+  return minutes > threshold
+}
+
+/**
+ * Get wait time alert level based on triage and time
+ * Returns "critical" | "warning" | "normal"
+ */
+export function getWaitTimeAlertLevel(
+  arrivalTime: string | Date,
+  triageStatus: TriageStatus | null
+): "critical" | "warning" | "normal" {
+  const minutes = calculateWaitTimeMinutes(arrivalTime)
+  const key = triageStatus || "untriaged"
+  const threshold = WAIT_TIME_THRESHOLDS[key]
+
+  if (minutes > threshold * 2) {
+    return "critical" // More than 2x threshold
+  }
+  if (minutes > threshold) {
+    return "warning" // Exceeded threshold
+  }
+  return "normal"
+}
