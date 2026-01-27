@@ -12,11 +12,15 @@ import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical
 import { DoctorHeader } from "@/components/doctor/doctor-header"
 import { DoctorStatsSection } from "@/components/doctor/doctor-stats-section"
 import { DoctorQueueTabs } from "@/components/doctor/doctor-queue-tabs"
+import { DoctorStatsSkeleton } from "@/components/doctor/doctor-stats-skeleton"
+import { DoctorQueueSkeleton } from "@/components/doctor/doctor-queue-skeleton"
 
 export default function DoctorDashboard() {
   const {
     // State
     stats,
+    statsLoading,
+    queueLoading,
     waitingQueue,
     inProgressQueue,
     unlockedQueue,
@@ -48,18 +52,22 @@ export default function DoctorDashboard() {
       <DoctorHeader lastRefresh={lastRefresh} onRefresh={handleRefreshAll} />
 
       {/* Statistics Section */}
-      <DoctorStatsSection stats={stats} />
+      {statsLoading ? <DoctorStatsSkeleton /> : <DoctorStatsSection stats={stats} />}
 
       {/* Patient Queue Section */}
-      <DoctorQueueTabs
-        waitingQueue={waitingQueue}
-        inProgressQueue={inProgressQueue}
-        unlockedQueue={unlockedQueue}
-        startingExamination={startingExamination}
-        onStartExamination={handleStartExamination}
-        onOpenMedicalRecord={handleOpenMedicalRecord}
-        onViewHistory={handleViewHistory}
-      />
+      {queueLoading ? (
+        <DoctorQueueSkeleton />
+      ) : (
+        <DoctorQueueTabs
+          waitingQueue={waitingQueue}
+          inProgressQueue={inProgressQueue}
+          unlockedQueue={unlockedQueue}
+          startingExamination={startingExamination}
+          onStartExamination={handleStartExamination}
+          onOpenMedicalRecord={handleOpenMedicalRecord}
+          onViewHistory={handleViewHistory}
+        />
+      )}
 
       {/* Medical Record History Dialog */}
       {selectedPatient && (

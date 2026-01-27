@@ -167,4 +167,5 @@ export const MEDICATION_ROUTES = [
   { value: "inhalation", label: "Inhalasi (Hirup)" },
   { value: "rectal", label: "Rektal" },
   { value: "sublingual", label: "Sublingual" },
+  { value: "compounded", label: "Obat Racik" },
 ] as const

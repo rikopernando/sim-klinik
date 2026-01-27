@@ -1,12 +1,20 @@
 import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AppSidebarRBAC } from "@/components/app-sidebar-rbac"
 import { SiteHeader } from "@/components/site-header"
+import { getSession } from "@/lib/rbac/session"
 
 import "@/app/dashboard/theme.css"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  // Server-side auth check - redirect to sign-in if not authenticated
+  const session = await getSession()
+  if (!session?.user) {
+    redirect("/sign-in")
+  }
+
   const cookieStore = await cookies()
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true"
 

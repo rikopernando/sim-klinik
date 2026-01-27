@@ -159,8 +159,11 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   nurse: [
     "patients:read",
     "visits:read",
+    "visits:write", // Nurses can update visit vitals
     "medical_records:read",
+    "medical_records:write", // Nurses can add vitals, procedures (except diagnosis)
     "prescriptions:read",
+    "prescriptions:write", // Nurses can add prescriptions
     "inpatient:read",
     "inpatient:write",
     "inpatient:manage_beds",

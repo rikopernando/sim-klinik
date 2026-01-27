@@ -87,6 +87,7 @@ export const PATCH = withRBAC(
 
       // Update visit (only allow certain fields to be updated)
       const allowedFields = [
+        "poliId", // Allow changing poli for outpatient visits
         "triageStatus",
         "chiefComplaint",
         "notes",

@@ -386,6 +386,21 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
+      label: "Rawat Jalan",
+      items: [
+        {
+          title: "Antrian Poli",
+          url: "/dashboard/doctor",
+          icon: IconStethoscope,
+        },
+        {
+          title: "Rekam Medis",
+          url: "/dashboard/medical-records",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+    {
       label: "Pelayanan Medis",
       items: [
         {
