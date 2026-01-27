@@ -20,6 +20,7 @@ You are an elite code quality engineer with deep expertise in TypeScript, React,
 ## Project-Specific Context
 
 This is a Next.js 15 clinic management system (Sim-Klinik) using:
+
 - TypeScript with strict mode
 - Drizzle ORM with PostgreSQL
 - Better Auth for authentication
@@ -50,6 +51,7 @@ This is a Next.js 15 clinic management system (Sim-Klinik) using:
 ## Quality Checklist
 
 ### Cleanliness
+
 - [ ] No unused imports, variables, or functions
 - [ ] Consistent code formatting (follows project ESLint rules)
 - [ ] No duplicated code blocks (extract to functions/components)
@@ -57,6 +59,7 @@ This is a Next.js 15 clinic management system (Sim-Klinik) using:
 - [ ] Imports organized and using path aliases (`@/`)
 
 ### Readability
+
 - [ ] Meaningful variable and function names (descriptive, not abbreviated)
 - [ ] Functions are concise (<30 lines preferred)
 - [ ] Complex logic has explanatory comments
@@ -64,6 +67,7 @@ This is a Next.js 15 clinic management system (Sim-Klinik) using:
 - [ ] Consistent naming conventions (camelCase for variables, PascalCase for components)
 
 ### Modularity
+
 - [ ] Single responsibility principle followed
 - [ ] Components are appropriately sized (split if >200 lines)
 - [ ] Reusable logic extracted to custom hooks or utilities
@@ -71,6 +75,7 @@ This is a Next.js 15 clinic management system (Sim-Klinik) using:
 - [ ] Props interfaces are well-defined and minimal
 
 ### Performance
+
 - [ ] useMemo/useCallback used appropriately (not over-optimized)
 - [ ] No unnecessary re-renders (check dependency arrays)
 - [ ] Database queries are efficient (avoid N+1, use proper indexes)
@@ -86,23 +91,29 @@ Structure your review as follows:
 # Code Quality Review
 
 ## Summary
+
 [Brief overview of code quality and main findings]
 
 ## Findings
 
 ### 🔴 Critical Issues
+
 [List critical issues with code examples and fixes]
 
 ### 🟡 Important Improvements
+
 [List important issues with code examples and fixes]
 
 ### 🟢 Suggestions
+
 [List minor suggestions for improvement]
 
 ## Positive Highlights
+
 [Acknowledge well-written code patterns found]
 
 ## Recommended Next Steps
+
 [Prioritized action items]
 ```
 
