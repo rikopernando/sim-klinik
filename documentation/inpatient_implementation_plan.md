@@ -84,6 +84,7 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ### ✅ **Phase 1: Core Inpatient Management** (COMPLETED)
 
 **Implemented Features:**
+
 - ✅ Bed assignment/allocation dialog and API
 - ✅ Room dashboard with real-time bed availability
 - ✅ Inpatient patient list with filters and search
@@ -94,6 +95,7 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ### ✅ **Phase 2: Clinical Documentation** (COMPLETED)
 
 **Implemented Features:**
+
 - ✅ Vital signs recording with full vitals tracking
 - ✅ Vital signs history table with delete functionality (1-hour window)
 - ✅ CPPT (Integrated Progress Notes) for doctors and nurses
@@ -105,6 +107,7 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 ### ✅ **Phase 3.1: Material Usage & Additional Features** (COMPLETED)
 
 **Implemented Features:**
+
 - ✅ Material usage recording from unified inventory
 - ✅ Material usage history with cost tracking
 - ✅ Material delete functionality (1-hour window)
@@ -438,6 +441,7 @@ This document outlines the comprehensive implementation plan for the **Inpatient
 **Goal:** Seamless integration with billing system for room charges and materials
 
 **✅ COMPLETED: "Selesai Rawat Inap" - Billing Creation**
+
 - Implemented via `CompleteDischargeDialog` component
 - Location: `/components/inpatient/complete-discharge-dialog.tsx`
 - Pre-check: Discharge summary must exist
@@ -560,6 +564,7 @@ Step 4: Final Discharge
 **User Story:** "Dokter mengisi Ringkasan Medis Pulang dan instruksi kontrol"
 
 **Important Notes:**
+
 - This is a **MEDICAL DOCUMENT** for patient to take home
 - "Procedures performed" = **documentation only** (already billed during hospitalization)
 - "Medications on discharge" = **prescriptions for HOME use** (NOT what was given during hospitalization)
@@ -621,6 +626,7 @@ Step 4: Final Discharge
 **User Story:** "Pasien pulang fisik dari rumah sakit setelah billing lunas dan bed dirilis"
 
 **Important Notes:**
+
 - This is the **FINAL STEP** after payment is LUNAS
 - "Selesai Rawat Inap" (billing creation) is **ALREADY IMPLEMENTED** via `CompleteDischargeDialog`
 - This phase is about the **physical discharge** - releasing the bed and completing the visit
@@ -949,5 +955,6 @@ types/
 **Status:** Phase 4 (Discharge Process) In Progress
 
 **Change Log:**
+
 - v2.0 (2026-01-05): Updated to reflect completed Phases 1-3, clarified discharge workflow
 - v1.0 (2025-12-21): Initial implementation plan

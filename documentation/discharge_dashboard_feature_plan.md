@@ -29,12 +29,14 @@ The **Discharge Dashboard** is a centralized monitoring and management page for 
 ### Current State vs. Future State
 
 **Current State:**
+
 - ✅ Discharge Summary feature exists in patient detail page
 - ✅ Final Discharge feature exists in patient detail page
 - ✅ Navigation menu has `/dashboard/discharge` link
 - ❌ `/dashboard/discharge` page does NOT exist yet
 
 **Future State (This Document):**
+
 - ✅ Discharge Dashboard at `/dashboard/discharge`
 - ✅ Lists all patients in discharge pipeline
 - ✅ Grouped by discharge status
@@ -132,6 +134,7 @@ The dashboard MUST display patients grouped by these statuses:
 #### FR-2: Patient Information Display
 
 Each patient card MUST show:
+
 - Patient name
 - MR Number
 - Room number & bed number
@@ -146,6 +149,7 @@ Each patient card MUST show:
 #### FR-3: Quick Actions
 
 Each patient card MUST provide context-appropriate actions:
+
 - **Waiting for Discharge Summary**: "Isi Resume Medis" button → Opens discharge summary dialog OR navigates to patient detail
 - **Waiting for Billing**: "Buat Billing" button → Navigates to patient detail
 - **Waiting for Payment**: "Proses Pembayaran" button → Navigates to cashier/billing page
@@ -162,6 +166,7 @@ Each patient card MUST provide context-appropriate actions:
 #### FR-5: Metrics Dashboard (Optional - Phase 2)
 
 Display summary cards:
+
 - Total patients in discharge pipeline
 - Patients waiting for discharge summary (count)
 - Patients waiting for payment (count + total amount)
@@ -172,17 +177,20 @@ Display summary cards:
 ### Non-Functional Requirements
 
 #### NFR-1: Performance
+
 - Page load time < 2 seconds
 - Support up to 100 patients in discharge pipeline
 - Real-time or near real-time updates (refresh every 30 seconds, or manual refresh)
 
 #### NFR-2: Usability
+
 - Mobile-responsive design
 - Color-coded status groups for quick scanning
 - Clear call-to-action buttons
 - Accessible (ARIA labels, keyboard navigation)
 
 #### NFR-3: Security
+
 - Role-based access control (RBAC)
 - Doctors only see actions relevant to clinical workflow
 - Cashiers only see billing/payment-related patients
@@ -275,26 +283,26 @@ const DISCHARGE_STATUS_COLORS = {
     badge: "warning",
     border: "border-yellow-500",
     icon: "⚠️",
-    label: "Menunggu Discharge Summary"
+    label: "Menunggu Discharge Summary",
   },
   waiting_billing: {
     badge: "info",
     border: "border-blue-500",
     icon: "ℹ️",
-    label: "Menunggu Billing"
+    label: "Menunggu Billing",
   },
   waiting_payment: {
     badge: "warning",
     border: "border-orange-500",
     icon: "🟠",
-    label: "Menunggu Pembayaran"
+    label: "Menunggu Pembayaran",
   },
   ready_discharge: {
     badge: "success",
     border: "border-green-500",
     icon: "✅",
-    label: "Siap Dipulangkan"
-  }
+    label: "Siap Dipulangkan",
+  },
 }
 ```
 
@@ -338,10 +346,10 @@ types/
 // types/discharge.ts
 
 export type DischargeStage =
-  | "waiting_summary"      // No discharge summary
-  | "waiting_billing"      // Has summary, no billing
-  | "waiting_payment"      // Has billing, not paid
-  | "ready_discharge"      // Paid, ready to discharge
+  | "waiting_summary" // No discharge summary
+  | "waiting_billing" // Has summary, no billing
+  | "waiting_payment" // Has billing, not paid
+  | "ready_discharge" // Paid, ready to discharge
 
 export interface DischargePipelinePatient {
   // Visit & Patient Info
@@ -406,9 +414,9 @@ export interface DischargeDashboardData {
 }
 
 export interface DischargeFilters {
-  search?: string              // Patient name, MR, room number
-  roomType?: string | "all"    // VIP, Class 1, etc.
-  doctorId?: string | "all"    // Filter by doctor
+  search?: string // Patient name, MR, room number
+  roomType?: string | "all" // VIP, Class 1, etc.
+  doctorId?: string | "all" // Filter by doctor
   admissionDateFrom?: string
   admissionDateTo?: string
   sortBy?: "daysInHospital" | "admissionDate" | "patientName"
@@ -425,6 +433,7 @@ export interface DischargeFilters {
 **Purpose**: Fetch all patients in discharge pipeline with grouped data
 
 **Query Parameters**:
+
 ```typescript
 {
   search?: string
@@ -438,6 +447,7 @@ export interface DischargeFilters {
 ```
 
 **Response**:
+
 ```typescript
 {
   status: 200,
@@ -517,10 +527,10 @@ export async function getDischargeDashboardData(filters: DischargeFilters) {
     })
     .from(visits)
     .innerJoin(patients, eq(visits.patientId, patients.id))
-    .innerJoin(bedAssignments, and(
-      eq(bedAssignments.visitId, visits.id),
-      isNull(bedAssignments.dischargedAt)
-    ))
+    .innerJoin(
+      bedAssignments,
+      and(eq(bedAssignments.visitId, visits.id), isNull(bedAssignments.dischargedAt))
+    )
     .innerJoin(rooms, eq(bedAssignments.roomId, rooms.id))
     .leftJoin(user, eq(visits.doctorId, user.id))
     .leftJoin(dischargeSummaries, eq(dischargeSummaries.visitId, visits.id))
@@ -528,13 +538,10 @@ export async function getDischargeDashboardData(filters: DischargeFilters) {
     .where(
       and(
         eq(visits.visitType, "inpatient"),
-        isNull(visits.dischargeDate),  // Not yet discharged
+        isNull(visits.dischargeDate), // Not yet discharged
         // Visit status is either in_examination OR ready_for_billing
         // (excludes 'completed' which means already discharged)
-        or(
-          eq(visits.status, "in_examination"),
-          eq(visits.status, "ready_for_billing")
-        )
+        or(eq(visits.status, "in_examination"), eq(visits.status, "ready_for_billing"))
       )
     )
 
@@ -552,9 +559,9 @@ export async function getDischargeDashboardData(filters: DischargeFilters) {
   const results = await baseQuery
 
   // Calculate days in hospital for each patient
-  const patientsWithDays = results.map(patient => ({
+  const patientsWithDays = results.map((patient) => ({
     ...patient,
-    daysInHospital: calculateDaysInHospital(patient.admissionDate)
+    daysInHospital: calculateDaysInHospital(patient.admissionDate),
   }))
 
   // Classify patients into discharge stages
@@ -565,7 +572,7 @@ export async function getDischargeDashboardData(filters: DischargeFilters) {
 
   return {
     metrics,
-    patients: classified
+    patients: classified,
   }
 }
 
@@ -585,7 +592,7 @@ function classifyPatientsByDischargeStage(patients: any[]) {
       waitingSummary.push({
         ...patient,
         dischargeStage: "waiting_summary",
-        hasDischargeSummary: false
+        hasDischargeSummary: false,
       })
     }
     // Stage 2: Has summary, waiting for billing
@@ -593,7 +600,7 @@ function classifyPatientsByDischargeStage(patients: any[]) {
       waitingBilling.push({
         ...patient,
         dischargeStage: "waiting_billing",
-        hasDischargeSummary: true
+        hasDischargeSummary: true,
       })
     }
     // Stage 3: Has billing, waiting for payment
@@ -601,7 +608,7 @@ function classifyPatientsByDischargeStage(patients: any[]) {
       waitingPayment.push({
         ...patient,
         dischargeStage: "waiting_payment",
-        hasDischargeSummary: true
+        hasDischargeSummary: true,
       })
     }
     // Stage 4: Paid, ready for final discharge
@@ -609,7 +616,7 @@ function classifyPatientsByDischargeStage(patients: any[]) {
       readyDischarge.push({
         ...patient,
         dischargeStage: "ready_discharge",
-        hasDischargeSummary: true
+        hasDischargeSummary: true,
       })
     }
   }
@@ -618,7 +625,7 @@ function classifyPatientsByDischargeStage(patients: any[]) {
     waitingSummary,
     waitingBilling,
     waitingPayment,
-    readyDischarge
+    readyDischarge,
   }
 }
 ```
@@ -642,14 +649,12 @@ export default function DischargeDashboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Dashboard Discharge</h1>
-          <p className="text-muted-foreground">
-            Monitor semua pasien dalam proses pemulangan
-          </p>
+          <p className="text-muted-foreground">Monitor semua pasien dalam proses pemulangan</p>
         </div>
         <Button onClick={refresh} variant="outline">
           <IconRefresh className="mr-2 h-4 w-4" />
@@ -661,9 +666,7 @@ export default function DischargeDashboardPage() {
       <DischargeFilters onFilterChange={handleFilterChange} />
 
       {/* Metrics (Optional) */}
-      {hasPermission("discharge:read") && (
-        <DischargeMetrics metrics={data.metrics} />
-      )}
+      {hasPermission("discharge:read") && <DischargeMetrics metrics={data.metrics} />}
 
       {/* Status Groups */}
       <DischargeStatusGroup
@@ -786,12 +789,12 @@ export function DischargePatientCard({ patient, stage, onAction }: DischargePati
           {/* Patient Info */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <IconUser className="h-4 w-4 text-muted-foreground" />
+              <IconUser className="text-muted-foreground h-4 w-4" />
               <span className="font-semibold">{patient.patientName}</span>
               <Badge variant="outline">{patient.mrNumber}</Badge>
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-4 text-sm">
               <span className="flex items-center gap-1">
                 <IconBed className="h-4 w-4" />
                 {patient.roomNumber} • Bed {patient.bedNumber}
@@ -802,9 +805,7 @@ export function DischargePatientCard({ patient, stage, onAction }: DischargePati
                 {patient.daysInHospital} hari rawat
               </span>
 
-              {patient.doctorName && (
-                <span>Dr. {patient.doctorName}</span>
-              )}
+              {patient.doctorName && <span>Dr. {patient.doctorName}</span>}
             </div>
 
             {/* Billing Info (if applicable) */}
@@ -842,6 +843,7 @@ export function DischargePatientCard({ patient, stage, onAction }: DischargePati
 ### 1. Navigation Menu
 
 Already exists in `/lib/rbac/navigation.ts`:
+
 - Line 140-143 (super_admin)
 - Line 247-251 (admin)
 - Line 306-309 (doctor)
@@ -852,12 +854,14 @@ No changes needed.
 ### 2. Existing Discharge Features
 
 The discharge dashboard will **link to** existing features:
+
 - **Discharge Summary**: Users click patient → Navigate to patient detail page → Fill discharge summary there
 - **Final Discharge**: Dialog can be embedded in discharge dashboard OR navigate to patient detail
 
 ### 3. Real-time Updates
 
 Consider implementing:
+
 - Auto-refresh every 30 seconds
 - WebSocket/SSE for real-time status updates (future enhancement)
 - Manual refresh button (MVP)
@@ -865,6 +869,7 @@ Consider implementing:
 ### 4. Permissions
 
 Uses existing RBAC permissions:
+
 - `discharge:read` - View discharge dashboard
 - `discharge:write` - Execute final discharge
 - `inpatient:write` - Fill discharge summary (doctors only)
@@ -912,36 +917,44 @@ Uses existing RBAC permissions:
 ## Testing Scenarios
 
 ### Test Case 1: Doctor View
+
 **Given**: User logged in as doctor
 **When**: Navigate to `/dashboard/discharge`
 **Then**:
+
 - See all patients waiting for discharge summary
 - Can click "Isi Resume Medis" button
 - Can view patient details
 
 ### Test Case 2: Cashier View
+
 **Given**: User logged in as cashier
 **When**: Navigate to `/dashboard/discharge`
 **Then**:
+
 - See patients waiting for billing
 - See patients waiting for payment with amounts
 - Can click "Proses Pembayaran" button
 - See patients ready for discharge
 
 ### Test Case 3: Filter by Room Type
+
 **Given**: Multiple patients in different room types
 **When**: Filter by "VIP"
 **Then**: Only show patients in VIP rooms
 
 ### Test Case 4: Empty State
+
 **Given**: No patients in discharge pipeline
 **When**: Navigate to `/dashboard/discharge`
 **Then**: Show empty state message with helpful text
 
 ### Test Case 5: Final Discharge from Dashboard
+
 **Given**: Patient is ready for discharge (paid)
 **When**: Click "Pulangkan Pasien" button from dashboard
 **Then**:
+
 - Open final discharge dialog
 - Complete discharge
 - Patient removed from dashboard

@@ -24,8 +24,8 @@ Example: `patients/[id]/visits --methods GET,POST --permissions visits:read,visi
 ```typescript
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { /* relevant schemas */ } from "@/db/schema"
-import { /* drizzle operators */ } from "drizzle-orm"
+import {} from /* relevant schemas */ "@/db/schema"
+import {} from /* drizzle operators */ "drizzle-orm"
 import { z } from "zod"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
@@ -140,6 +140,7 @@ export const GET = withRBAC<{ id: string }>(
 ### Permission Reference
 
 Valid permissions from `types/rbac.ts`:
+
 - `patients:read`, `patients:write`, `patients:delete`
 - `visits:read`, `visits:write`, `visits:delete`
 - `medical_records:read`, `medical_records:write`, `medical_records:lock`, `medical_records:unlock`
@@ -159,16 +160,19 @@ Valid permissions from `types/rbac.ts`:
 ## Examples
 
 ### Simple GET endpoint
+
 ```
 /new-api drugs/search --methods GET --permissions pharmacy:read
 ```
 
 ### CRUD endpoint with dynamic param
+
 ```
 /new-api lab/orders/[id] --methods GET,PATCH,DELETE --permissions lab:read,lab:write
 ```
 
 ### Multiple permissions (user needs ANY of them)
+
 ```
 /new-api reports/visits --methods GET --permissions system:reports,system:admin
 ```

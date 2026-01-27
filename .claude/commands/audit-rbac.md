@@ -63,6 +63,7 @@ These permissions are defined in types/rbac.ts but not used in any route:
 4. **Detection patterns**:
 
 **Protected route** (GOOD):
+
 ```typescript
 export const GET = withRBAC(
   async (req, { user, role }) => { ... },
@@ -71,6 +72,7 @@ export const GET = withRBAC(
 ```
 
 **Unprotected route** (BAD):
+
 ```typescript
 export async function GET(req: NextRequest) {
   // No RBAC wrapper!
@@ -78,6 +80,7 @@ export async function GET(req: NextRequest) {
 ```
 
 **Partially protected** (NEEDS REVIEW):
+
 ```typescript
 // GET is protected, POST is not
 export const GET = withRBAC(handler, { permissions: [...] })

@@ -42,6 +42,7 @@ source .env && ./scripts/migrate-to-supabase.sh
 If you want to test locally before connecting to Supabase:
 
 1. Start the local PostgreSQL database:
+
    ```bash
    yarn db:dev
    ```

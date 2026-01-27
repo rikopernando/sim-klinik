@@ -113,6 +113,7 @@ export function ResultDisplay({ resultData }: ResultDisplayProps) {
 **`result-display.tsx`** exports:
 
 1. **Type Guards**
+
    ```typescript
    isNumericResult(data: ResultData): boolean
    isMultiParameterResult(data: ResultData): boolean
@@ -121,6 +122,7 @@ export function ResultDisplay({ resultData }: ResultDisplayProps) {
    ```
 
 2. **Helper Functions**
+
    ```typescript
    getFlagLabel(flag: string): string
    isCriticalFlag(flag: string): boolean
@@ -156,6 +158,7 @@ export function ResultDisplay({ resultData }: ResultDisplayProps) {
 ### Multi-Parameter Results
 
 Now displays each parameter in individual cards with:
+
 - 🔴 **Red background** → Critical values (critical_high/critical_low)
 - 🟠 **Orange background** → Abnormal values (high/low)
 - 🔵 **Blue background** → Normal values
@@ -164,6 +167,7 @@ Now displays each parameter in individual cards with:
 ### Numeric Results
 
 Now shows:
+
 - Large value display
 - Flag badge when abnormal
 - Reference range
@@ -172,6 +176,7 @@ Now shows:
 ### Descriptive/Radiology Results
 
 Structured sections for:
+
 - Temuan (Findings)
 - Interpretasi (Interpretation)
 - Kesan (Impression) - Radiology only
@@ -183,11 +188,20 @@ Structured sections for:
 ## ⚡ Performance Improvements
 
 1. **Memoization**
+
    ```typescript
-   const StatusBadge = memo(({ status }) => { /* ... */ })
-   const TimelineItem = memo(({ icon, title, subtitle }) => { /* ... */ })
-   const OrderTimeline = memo(({ order }) => { /* ... */ })
-   const urgencyBadge = useMemo(() => { /* ... */ }, [order?.urgency])
+   const StatusBadge = memo(({ status }) => {
+     /* ... */
+   })
+   const TimelineItem = memo(({ icon, title, subtitle }) => {
+     /* ... */
+   })
+   const OrderTimeline = memo(({ order }) => {
+     /* ... */
+   })
+   const urgencyBadge = useMemo(() => {
+     /* ... */
+   }, [order?.urgency])
    ```
 
 2. **Component Splitting**
@@ -206,11 +220,15 @@ Structured sections for:
 ### Eliminated All `any` Types
 
 **Before:**
+
 ```typescript
-{(order.result.resultData as any).impression}
+{
+  ;(order.result.resultData as any).impression
+}
 ```
 
 **After:**
+
 ```typescript
 {isRadiology && ("impression" in data && data.impression) && (
   <div>
@@ -238,6 +256,7 @@ if (isMultiParameterResult(resultData)) {
 ## 📊 Code Metrics
 
 ### Before Refactoring
+
 - **Lines of Code**: ~400 lines in single file
 - **Component Count**: 1 monolithic component
 - **Reusability**: None (all inline)
@@ -245,6 +264,7 @@ if (isMultiParameterResult(resultData)) {
 - **Type Safety**: ~5 `any` types
 
 ### After Refactoring
+
 - **Lines of Code**:
   - `order-detail-dialog.tsx`: ~200 lines
   - `result-display.tsx`: ~240 lines
@@ -262,12 +282,14 @@ if (isMultiParameterResult(resultData)) {
    - Easy to test and maintain
 
 2. **Memoization Pattern**
+
    ```typescript
    const Component = memo(({ prop }) => <div>{prop}</div>)
    Component.displayName = "Component"
    ```
 
 3. **Type Guards with Assertions**
+
    ```typescript
    if (isType(data)) {
      return <Component data={data as SpecificType} />
@@ -325,6 +347,7 @@ To refactor similar dialogs:
 ---
 
 **Next Steps:**
+
 - ✅ All TypeScript compilation passes
 - ✅ Component is production-ready
 - 🎯 Can be used as template for other dialog refactoring

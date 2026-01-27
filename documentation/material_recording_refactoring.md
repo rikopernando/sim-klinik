@@ -366,14 +366,14 @@ import { materialUsageSchema } from "@/lib/inpatient/validation"
 
 ### Lines of Code Reduction
 
-| Component/Hook                    | Before | After | Reduction |
-| --------------------------------- | ------ | ----- | --------- |
-| `record-material-dialog.tsx`      | 270    | 127   | -53%      |
-| `material-usage-card.tsx`         | 180    | 150   | -17%      |
-| **Total Main Components**         | 450    | 277   | -38%      |
-| **New Modular Components**        | 0      | 160   | +160      |
-| **New Hooks**                     | 0      | 200   | +200      |
-| **Net Change**                    | 450    | 637   | +42%      |
+| Component/Hook               | Before | After | Reduction |
+| ---------------------------- | ------ | ----- | --------- |
+| `record-material-dialog.tsx` | 270    | 127   | -53%      |
+| `material-usage-card.tsx`    | 180    | 150   | -17%      |
+| **Total Main Components**    | 450    | 277   | -38%      |
+| **New Modular Components**   | 0      | 160   | +160      |
+| **New Hooks**                | 0      | 200   | +200      |
+| **Net Change**               | 450    | 637   | +42%      |
 
 **Analysis**: While total lines increased by 42%, code is now:
 
@@ -500,6 +500,7 @@ This update introduces service-based material recording with proper foreign key 
 #### 1. Database Schema Enhancement
 
 **Added `serviceId` Foreign Key**:
+
 ```typescript
 // NEW: Service reference (preferred approach)
 serviceId: text("service_id").references(() => services.id),
@@ -511,6 +512,7 @@ unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
 ```
 
 **Benefits**:
+
 - ✅ Data integrity through foreign key constraints
 - ✅ Centralized service definitions in master table
 - ✅ Consistent pricing across the system
@@ -522,23 +524,25 @@ unitPrice: decimal("unit_price", { precision: 10, scale: 2 }),
 The system now supports TWO approaches for recording materials:
 
 **Approach A: Service-Based (Recommended)**
+
 ```typescript
 await recordUsage({
   visitId: "visit-123",
-  serviceId: "service-abc",  // ← References services table
+  serviceId: "service-abc", // ← References services table
   quantity: 2,
-  usedBy: "user-456"
+  usedBy: "user-456",
 })
 ```
 
 **Approach B: Legacy Direct Input (Backward Compatible)**
+
 ```typescript
 await recordUsage({
   visitId: "visit-123",
-  materialName: "Surgical Gloves",  // ← Direct input
+  materialName: "Surgical Gloves", // ← Direct input
   unit: "box",
   unitPrice: "50000",
-  quantity: 2
+  quantity: 2,
 })
 ```
 
@@ -560,11 +564,13 @@ await recordMaterialUsage(data)
 ```
 
 **New Service Functions Added**:
+
 - `recordMaterialUsage(data: MaterialUsageInput): Promise<void>`
 - `fetchMaterialUsage(visitId: string): Promise<{materials, totalCost}>`
 - `deleteMaterialUsage(materialId: string): Promise<void>`
 
 **Benefits**:
+
 - ✅ Consistent with other inpatient features (vitals, CPPT)
 - ✅ Centralized error handling via `ApiServiceError`
 - ✅ Easier to test and mock
@@ -574,12 +580,13 @@ await recordMaterialUsage(data)
 #### 4. Enhanced Validation
 
 **Updated Zod Schema**:
+
 ```typescript
 export const materialUsageSchema = z
   .object({
     visitId: z.string().min(1),
-    serviceId: z.string().optional(),      // NEW
-    materialName: z.string().optional(),   // Now optional
+    serviceId: z.string().optional(), // NEW
+    materialName: z.string().optional(), // Now optional
     unit: z.string().optional(),
     unitPrice: z.string().optional(),
     quantity: z.number().int().positive(),
@@ -587,11 +594,12 @@ export const materialUsageSchema = z
     notes: z.string().optional(),
   })
   .refine((data) => data.serviceId || data.materialName, {
-    message: "Service ID atau Nama Material harus diisi"
+    message: "Service ID atau Nama Material harus diisi",
   })
 ```
 
 **Validation Rules**:
+
 - Either `serviceId` OR `materialName` must be provided
 - If using `materialName`, then `unit` and `unitPrice` are also required
 - Full backward compatibility maintained
@@ -605,8 +613,7 @@ The API now intelligently handles both approaches:
 ```typescript
 if (validatedData.serviceId) {
   // NEW APPROACH
-  const service = await db.select().from(services)
-    .where(eq(services.id, validatedData.serviceId))
+  const service = await db.select().from(services).where(eq(services.id, validatedData.serviceId))
 
   materialName = service.name
   unitPrice = service.price
@@ -619,6 +626,7 @@ if (validatedData.serviceId) {
 ```
 
 **Features**:
+
 - ✅ Service validation (exists, active)
 - ✅ Auto-population from service data
 - ✅ Manual price override support
@@ -630,10 +638,10 @@ if (validatedData.serviceId) {
 export interface MaterialUsage {
   id: string
   visitId: string
-  serviceId: string | null        // NEW
-  materialName: string | null     // Now nullable
-  unit: string | null             // Now nullable
-  unitPrice: string | null        // Now nullable
+  serviceId: string | null // NEW
+  materialName: string | null // Now nullable
+  unit: string | null // Now nullable
+  unitPrice: string | null // Now nullable
   quantity: number
   totalPrice: string
   // ... other fields
@@ -643,15 +651,18 @@ export interface MaterialUsage {
 ### Migration Strategy
 
 **Phase 1 (Current)**: Dual Support
+
 - Both approaches fully functional
 - New features should use `serviceId`
 - Legacy code continues working
 
 **Phase 2 (Future)**: Data Migration
+
 - Migrate existing `materialName` records to `serviceId`
 - Update UI to use service selector
 
 **Phase 3 (Future)**: Deprecation
+
 - Remove legacy fields from schema
 - Require `serviceId` in validation
 
@@ -728,6 +739,7 @@ This update completes the service integration by updating the UI components to p
 #### 1. Updated `useMaterialForm` Hook
 
 **Added serviceId support:**
+
 ```typescript
 // Form schema now includes serviceId
 const materialUsageFormSchema = z.object({
@@ -741,6 +753,7 @@ const materialUsageFormSchema = z.object({
 ```
 
 **handleMaterialSelect now stores serviceId:**
+
 ```typescript
 const handleMaterialSelect = useCallback(
   (material: Service) => {
@@ -755,6 +768,7 @@ const handleMaterialSelect = useCallback(
 ```
 
 **handleSubmit sends serviceId to API:**
+
 ```typescript
 await recordUsage({
   visitId,
@@ -770,21 +784,27 @@ await recordUsage({
 #### 2. Enhanced `MaterialSearchField` Component
 
 **Added visual feedback for service selection:**
+
 ```tsx
-{/* Service Selected Notice */}
-{selectedMaterial && form.watch("serviceId") && (
-  <div className="bg-primary/10 border-primary/30 rounded-md border p-3">
-    <p className="text-primary text-sm font-medium">
-      ✓ Material dari Master Data: {selectedMaterial.name}
-    </p>
-    <p className="text-muted-foreground text-xs mt-1">
-      Kode: {selectedMaterial.code} • Harga dan satuan otomatis terisi
-    </p>
-  </div>
-)}
+{
+  /* Service Selected Notice */
+}
+{
+  selectedMaterial && form.watch("serviceId") && (
+    <div className="bg-primary/10 border-primary/30 rounded-md border p-3">
+      <p className="text-primary text-sm font-medium">
+        ✓ Material dari Master Data: {selectedMaterial.name}
+      </p>
+      <p className="text-muted-foreground mt-1 text-xs">
+        Kode: {selectedMaterial.code} • Harga dan satuan otomatis terisi
+      </p>
+    </div>
+  )
+}
 ```
 
 **Benefits:**
+
 - Clear indication when material is from master data
 - Shows service code for reference
 - Visual confirmation of auto-filled price
@@ -792,6 +812,7 @@ await recordUsage({
 #### 3. Enhanced `PriceFields` Component
 
 **Added `isFromService` prop:**
+
 ```typescript
 interface PriceFieldsProps {
   form: UseFormReturn<MaterialFormData>
@@ -801,22 +822,26 @@ interface PriceFieldsProps {
 ```
 
 **Read-only price when from service:**
+
 ```tsx
-<Input
+;<Input
   id="unitPrice"
   type="number"
   {...form.register("unitPrice")}
   className={isFromService ? "bg-muted font-medium" : ""}
   readOnly={isFromService}
 />
-{isFromService && unitPrice && (
-  <p className="text-muted-foreground text-xs mt-1">
-    Harga otomatis dari master data (Rp {parseFloat(unitPrice).toLocaleString("id-ID")})
-  </p>
-)}
+{
+  isFromService && unitPrice && (
+    <p className="text-muted-foreground mt-1 text-xs">
+      Harga otomatis dari master data (Rp {parseFloat(unitPrice).toLocaleString("id-ID")})
+    </p>
+  )
+}
 ```
 
 **Benefits:**
+
 - Prevents accidental price modifications
 - Clearly shows price source
 - Matches ProcedureItem UX pattern
@@ -824,23 +849,22 @@ interface PriceFieldsProps {
 #### 4. Updated `RecordMaterialDialog`
 
 **Passes isFromService to PriceFields:**
+
 ```tsx
-<PriceFields
-  form={form}
-  totalPrice={totalPrice}
-  isFromService={!!selectedMaterial}
-/>
+<PriceFields form={form} totalPrice={totalPrice} isFromService={!!selectedMaterial} />
 ```
 
 ### UI/UX Improvements
 
 #### Before (Version 2.1)
+
 - Material search worked but didn't store `serviceId`
 - No visual indication of service selection
 - Price field always editable (risk of accidental changes)
 - API received `materialName` instead of `serviceId`
 
 #### After (Version 2.2)
+
 - ✅ Material search stores both `serviceId` AND `materialName`
 - ✅ Clear visual feedback when service is selected (green border box)
 - ✅ Price field read-only when from master data
@@ -871,6 +895,7 @@ interface PriceFieldsProps {
    - Consistent pricing from master data
 
 **Alternative Flow (Manual Entry):**
+
 1. User types material name not in master data
 2. Dashed border notice appears: "Material tidak ditemukan? Anda dapat mengisi manual"
 3. User fills unit and price manually
@@ -880,14 +905,14 @@ interface PriceFieldsProps {
 
 This update ensures Material Recording follows the **exact same pattern** as Procedure Recording:
 
-| Feature | ProcedureItem | MaterialFormFields |
-|---------|---------------|-------------------|
-| Service Search | ✅ ServiceSearch component | ✅ ServiceSearch component |
-| Store serviceId | ✅ Yes | ✅ Yes |
-| Auto-fill price | ✅ Yes (read-only) | ✅ Yes (read-only) |
-| Visual feedback | ✅ Service selected notice | ✅ Service selected notice |
-| Manual entry fallback | ❌ Not supported | ✅ Supported |
-| Send to API | ✅ serviceId + serviceName | ✅ serviceId + materialName |
+| Feature               | ProcedureItem              | MaterialFormFields          |
+| --------------------- | -------------------------- | --------------------------- |
+| Service Search        | ✅ ServiceSearch component | ✅ ServiceSearch component  |
+| Store serviceId       | ✅ Yes                     | ✅ Yes                      |
+| Auto-fill price       | ✅ Yes (read-only)         | ✅ Yes (read-only)          |
+| Visual feedback       | ✅ Service selected notice | ✅ Service selected notice  |
+| Manual entry fallback | ❌ Not supported           | ✅ Supported                |
+| Send to API           | ✅ serviceId + serviceName | ✅ serviceId + materialName |
 
 ### Files Modified
 
@@ -898,6 +923,7 @@ This update ensures Material Recording follows the **exact same pattern** as Pro
 ### Testing Checklist
 
 **Service-Based Recording:**
+
 - ✅ Search for material in master data
 - ✅ Select material from dropdown
 - ✅ Verify green confirmation box appears
@@ -908,6 +934,7 @@ This update ensures Material Recording follows the **exact same pattern** as Pro
 - ✅ Verify database record has serviceId populated
 
 **Manual Entry (Legacy):**
+
 - ✅ Type material name not in master data
 - ✅ Verify dashed border notice appears
 - ✅ Manually enter unit and price
@@ -963,16 +990,18 @@ Major refactoring to integrate with unified inventory system and improve code mo
 **Purpose**: Centralized business logic for inventory operations
 
 **Functions Created**:
+
 ```typescript
-findAvailableBatch(itemId, quantityNeeded)    // FIFO batch selection
+findAvailableBatch(itemId, quantityNeeded) // FIFO batch selection
 validateBatch(batchId, itemId, quantityNeeded) // Batch validation
-getMaterialById(itemId)                         // Fetch material
-deductStock(batchId, quantity)                  // Stock deduction
-createStockMovement(params)                     // Movement tracking
-checkStockAvailability(itemId)                  // Stock check
+getMaterialById(itemId) // Fetch material
+deductStock(batchId, quantity) // Stock deduction
+createStockMovement(params) // Movement tracking
+checkStockAvailability(itemId) // Stock check
 ```
 
 **Benefits**:
+
 - ✅ Single Responsibility Principle applied
 - ✅ Reusable across modules (pharmacy, inpatient, etc.)
 - ✅ Easy to test in isolation
@@ -981,6 +1010,7 @@ checkStockAvailability(itemId)                  // Stock check
 #### 2. **Shared Type Definitions** (`types/material.ts`)
 
 **Created centralized types**:
+
 ```typescript
 interface Material                   // Base material interface
 interface MaterialBatch              // Batch details
@@ -991,6 +1021,7 @@ function getMaterialStockStatus()    // Helper function
 ```
 
 **Impact**:
+
 - ✅ Single source of truth
 - ✅ Eliminated duplicate definitions (used in 5 files)
 - ✅ Type safety across codebase
@@ -999,18 +1030,16 @@ function getMaterialStockStatus()    // Helper function
 #### 3. **Material List Item Component** (`components/inpatient/material-list-item.tsx`)
 
 **Extracted from search component**:
+
 ```typescript
-export const MaterialListItem = memo(function MaterialListItem({
-  material,
-  isActive,
-  onClick,
-}) {
+export const MaterialListItem = memo(function MaterialListItem({ material, isActive, onClick }) {
   // Stock status logic
   // Rendering logic
 })
 ```
 
 **Benefits**:
+
 - ✅ 70% reduction in MaterialSearch component size
 - ✅ Reusable component (memoized)
 - ✅ Better performance
@@ -1019,6 +1048,7 @@ export const MaterialListItem = memo(function MaterialListItem({
 ### Code Quality Improvements
 
 #### Before Refactoring:
+
 ```typescript
 // 108 lines of complex logic
 export async function recordMaterialUsage(data) {
@@ -1042,6 +1072,7 @@ export async function recordMaterialUsage(data) {
 ```
 
 #### After Refactoring:
+
 ```typescript
 // 37 lines - clean and readable
 export async function recordMaterialUsage(data) {
@@ -1069,18 +1100,19 @@ export async function recordMaterialUsage(data) {
 
 ### Metrics Comparison
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| **recordMaterialUsage lines** | 108 | 37 | -66% |
-| **Cyclomatic Complexity** | 15+ | 3-5 | -67% |
-| **MaterialSearch lines** | 210 | 150 | -29% |
-| **Type Duplications** | 3 files | 1 file | -67% |
-| **Testable Functions** | 1 | 6 | +500% |
-| **Reusable Components** | 0 | 3 | +300% |
+| Metric                        | Before  | After  | Improvement |
+| ----------------------------- | ------- | ------ | ----------- |
+| **recordMaterialUsage lines** | 108     | 37     | -66%        |
+| **Cyclomatic Complexity**     | 15+     | 3-5    | -67%        |
+| **MaterialSearch lines**      | 210     | 150    | -29%        |
+| **Type Duplications**         | 3 files | 1 file | -67%        |
+| **Testable Functions**        | 1       | 6      | +500%       |
+| **Reusable Components**       | 0       | 3      | +300%       |
 
 ### Performance Optimizations
 
 #### 1. **Component Memoization**
+
 ```typescript
 // MaterialListItem prevents unnecessary re-renders
 export const MaterialListItem = memo(...)
@@ -1089,12 +1121,14 @@ export const MaterialListItem = memo(...)
 ```
 
 #### 2. **Lazy Module Loading**
+
 ```typescript
 // Inventory service loaded only when needed
 const { getMaterialById } = await import("@/lib/inventory/inventory-service")
 ```
 
 #### 3. **Optimized Queries**
+
 ```typescript
 // Single query with proper WHERE clause
 const batch = await findAvailableBatch(itemId, quantityNeeded)
@@ -1104,6 +1138,7 @@ const batch = await findAvailableBatch(itemId, quantityNeeded)
 ### Migration from Service-Based to Inventory-Based
 
 #### Database Schema Changes:
+
 ```sql
 -- Changed from serviceId to itemId
 ALTER TABLE material_usage
@@ -1115,6 +1150,7 @@ ALTER TABLE material_usage
 ```
 
 #### Validation Schema Update:
+
 ```typescript
 // BEFORE (Service-based)
 const materialUsageSchema = z.object({
@@ -1133,6 +1169,7 @@ const materialUsageSchema = z.object({
 ```
 
 #### Hook Updates:
+
 ```typescript
 // BEFORE
 import type { Service } from "@/hooks/use-service-search"
@@ -1147,6 +1184,7 @@ form.setValue("availableStock", material.totalStock)
 ### New Features Added
 
 #### 1. **Real-Time Stock Display**
+
 ```typescript
 // Material search shows live stock
 {
@@ -1158,6 +1196,7 @@ form.setValue("availableStock", material.totalStock)
 ```
 
 #### 2. **Stock Validation**
+
 ```typescript
 // Frontend validation before submission
 if (data.availableStock < parseFloat(data.quantity)) {
@@ -1171,16 +1210,22 @@ if (!batch) throw new Error("Insufficient stock")
 ```
 
 #### 3. **Stock Status Indicators**
+
 ```typescript
 // Visual indicators in UI
 getMaterialStockStatus(material) // "out_of_stock" | "low_stock" | "in_stock"
 
 // Color-coded warnings
-{material.totalStock === 0 && "text-destructive"}
-{material.totalStock < minimumStock && "text-orange-500"}
+{
+  material.totalStock === 0 && "text-destructive"
+}
+{
+  material.totalStock < minimumStock && "text-orange-500"
+}
 ```
 
 #### 4. **Stock Movement Audit Trail**
+
 ```typescript
 // Every material usage creates stock movement
 const stockMovement = await createStockMovement({
@@ -1188,7 +1233,7 @@ const stockMovement = await createStockMovement({
   quantity: quantityUsed,
   reason: "Used for patient visit (inpatient material usage)",
   referenceId: visitId,
-  performedBy: userId
+  performedBy: userId,
 })
 
 // Linked to material usage
@@ -1198,6 +1243,7 @@ materialUsage.stockMovementId = stockMovement.id
 ### API Enhancements
 
 #### New GET Endpoint:
+
 ```typescript
 GET /api/materials?search=...&limit=50
 
@@ -1218,6 +1264,7 @@ GET /api/materials?search=...&limit=50
 ```
 
 #### Enhanced POST Endpoint:
+
 ```typescript
 POST /api/materials
 
@@ -1241,24 +1288,26 @@ POST /api/materials
 ### Testing Improvements
 
 #### Before:
+
 - Hard to test (tightly coupled)
 - Need full database setup
 - Slow tests
 
 #### After:
+
 ```typescript
 // Unit test each function
-test('findAvailableBatch returns oldest unexpired batch', async () => {
+test("findAvailableBatch returns oldest unexpired batch", async () => {
   // Mock inventoryBatches table
   // Verify FIFO logic
 })
 
-test('validateBatch throws error if insufficient stock', async () => {
+test("validateBatch throws error if insufficient stock", async () => {
   // Mock specific batch
   // Test error case
 })
 
-test('deductStock updates batch quantity', async () => {
+test("deductStock updates batch quantity", async () => {
   // Test stock deduction
   // Verify update query
 })
@@ -1267,6 +1316,7 @@ test('deductStock updates batch quantity', async () => {
 ### File Structure Changes
 
 #### New Files Created:
+
 ```
 lib/inventory/
 └── inventory-service.ts         (NEW - 120 lines)
@@ -1282,6 +1332,7 @@ hooks/
 ```
 
 #### Files Modified:
+
 ```
 lib/inpatient/
 ├── api-service.ts                (-66% complexity)
@@ -1313,6 +1364,7 @@ app/api/materials/
 ### Migration Guide
 
 **For Frontend Developers:**
+
 ```typescript
 // OLD: Import Service type
 import type { Service } from "@/hooks/use-service-search"
@@ -1328,25 +1380,27 @@ import type { Material } from "@/types/material"
 ```
 
 **For Backend Developers:**
+
 ```typescript
 // OLD: Service-based recording
 await recordMaterialUsage({
   visitId,
   serviceId: "service-123",
-  quantity: 10
+  quantity: 10,
 })
 
 // NEW: Inventory-based recording
 await recordMaterialUsage({
   visitId,
-  itemId: "mat-123",  // From drugs table
-  quantity: "10"
+  itemId: "mat-123", // From drugs table
+  quantity: "10",
 })
 ```
 
 ### Breaking Changes
 
 **None**. All changes are backward compatible:
+
 - ✅ serviceId field still exists (nullable)
 - ✅ Legacy materialName approach still works
 - ✅ Existing API contracts unchanged
@@ -1373,27 +1427,32 @@ await recordMaterialUsage({
 Version 3.0 represents a major step forward in code quality:
 
 **Code Quality:**
+
 - 66% reduction in function complexity
 - Eliminated code duplication
 - Clear separation of concerns
 
 **Performance:**
+
 - Component memoization
 - Lazy module loading
 - Optimized database queries
 
 **Maintainability:**
+
 - Modular architecture
 - Unit-testable functions
 - Self-documenting code
 
 **Features:**
+
 - Real-time stock display
 - Stock validation
 - Full audit trail
 - FIFO batch selection
 
 **Developer Experience:**
+
 - Type-safe throughout
 - Easy to extend
 - Better error messages

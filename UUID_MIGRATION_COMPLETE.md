@@ -14,23 +14,27 @@ All database tables have been migrated from `serial` (integer) IDs to `text` (UU
 All 27 tables now use UUID primary keys:
 
 #### Core Tables
+
 - ✅ **patients** - Patient records
 - ✅ **visits** - Patient visits/encounters
 - ✅ **polis** - Clinic departments
 
 #### Medical Records
+
 - ✅ **medical_records** - Electronic medical records (SOAP)
 - ✅ **diagnoses** - ICD-10 diagnoses
 - ✅ **procedures** - ICD-9 procedures
 - ✅ **cppt** - Progress notes (inpatient)
 
 #### Pharmacy
+
 - ✅ **drugs** - Drug master data
 - ✅ **drug_inventory** - Drug stock with batches
 - ✅ **prescriptions** - Digital prescriptions
 - ✅ **stock_movements** - Inventory movements
 
 #### Billing
+
 - ✅ **services** - Service master data
 - ✅ **billings** - Billing records
 - ✅ **billing_items** - Billing line items
@@ -38,16 +42,19 @@ All 27 tables now use UUID primary keys:
 - ✅ **discharge_summaries** - Patient discharge summaries
 
 #### Inpatient
+
 - ✅ **rooms** - Hospital rooms
 - ✅ **bed_assignments** - Patient bed assignments
 - ✅ **vitals_history** - Vital signs tracking
 - ✅ **material_usage** - Medical materials usage
 
 #### Access Control
+
 - ✅ **roles** - User roles for RBAC
 - ✅ **user_roles** - User-role assignments
 
 #### Auth Tables
+
 - ✅ **user** - Already using UUIDs
 - ✅ **session** - Already using UUIDs
 - ✅ **account** - Already using UUIDs
@@ -56,6 +63,7 @@ All 27 tables now use UUID primary keys:
 ### ID Generation Pattern
 
 All tables now use:
+
 ```typescript
 id: text("id")
   .primaryKey()
@@ -75,21 +83,25 @@ Example UUID: `550e8400-e29b-41d4-a716-446655440000`
 ## Benefits Achieved
 
 ### 🔒 Security & Privacy
+
 - ✅ **No information leakage** - Can't infer patient count from IDs
 - ✅ **Prevents enumeration attacks** - Can't guess `/patients/1`, `/patients/2`
 - ✅ **HIPAA compliant** - Better privacy for medical records
 
 ### 🌍 Distributed & Scalable
+
 - ✅ **No ID collisions** - Can generate IDs offline or across servers
 - ✅ **Merge-friendly** - Easy to sync between clinics
 - ✅ **Client-side generation** - Reduce database roundtrips
 
 ### 🏥 Medical Data Best Practices
+
 - ✅ **External references** - Safe to share prescription/MR IDs with other facilities
 - ✅ **API security** - No predictable resource URLs
 - ✅ **Audit trails** - Consistent IDs across system boundaries
 
 ### 🔧 Consistency
+
 - ✅ **Matches auth schema** - All tables use same ID format
 - ✅ **Type safety** - TypeScript enforces UUID strings everywhere
 
@@ -100,12 +112,14 @@ Example UUID: `550e8400-e29b-41d4-a716-446655440000`
 Routes that previously used integer IDs now use UUIDs:
 
 **Before:**
+
 ```typescript
 // GET /api/patients/123
 const id = parseInt(params.id)
 ```
 
 **After:**
+
 ```typescript
 // GET /api/patients/550e8400-e29b-41d4-a716-446655440000
 const id = params.id // Already a string UUID
@@ -116,11 +130,13 @@ const id = params.id // Already a string UUID
 Links and displays will show UUIDs:
 
 **URLs will change from:**
+
 ```
 /dashboard/patients/123/edit
 ```
 
 **To:**
+
 ```
 /dashboard/patients/550e8400-e29b-41d4-a716-446655440000/edit
 ```
@@ -140,6 +156,7 @@ Links and displays will show UUIDs:
 ### 4. Documentation Updates
 
 Update any documentation that references integer IDs:
+
 - API documentation
 - Database diagrams
 - Integration guides
@@ -147,6 +164,7 @@ Update any documentation that references integer IDs:
 ## Performance Notes
 
 ✅ **No significant performance impact**:
+
 - UUIDs are only 12 bytes larger than integers (16 vs 4 bytes)
 - For 100,000 records: ~1.2 MB difference
 - PostgreSQL indexes UUIDs efficiently
@@ -171,6 +189,7 @@ npm run db:push
 ## Files Modified
 
 ### Schema Files (7)
+
 - `db/schema/patients.ts`
 - `db/schema/visits.ts`
 - `db/schema/medical-records.ts`
@@ -180,19 +199,23 @@ npm run db:push
 - `db/schema/roles.ts`
 
 ### Migration Files
+
 - `drizzle/0008_new_cerise.sql` (generated)
 
 ### Helper Scripts
+
 - `scripts/reset-db-with-uuids.ts` (created)
 - `scripts/reset-db-with-uuids.sh` (created)
 
 ### Documentation
+
 - `MIGRATION_UUID_GUIDE.md` (created)
 - `UUID_MIGRATION_COMPLETE.md` (this file)
 
 ## Support
 
 For questions or issues:
+
 1. Review `MIGRATION_UUID_GUIDE.md` for detailed information
 2. Check `documentation/backend_structure_document.md` for schema details
 3. Review `documentation/security_guideline_document.md` for security best practices

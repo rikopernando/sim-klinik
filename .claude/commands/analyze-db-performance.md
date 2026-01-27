@@ -13,6 +13,7 @@ $ARGUMENTS - Optional: specific table or route to analyze (e.g., `visits` or `/a
 Check all schema files in `db/schema/*.ts` for:
 
 **Missing Indexes** - Look for columns that should be indexed:
+
 ```typescript
 // GOOD - has index
 mrNumber: varchar("mr_number", { length: 20 }).unique(), // unique creates index
@@ -22,6 +23,7 @@ status: varchar("status", { length: 20 }), // needs .index() if filtered often
 ```
 
 **Foreign Key Indexes** - All foreign keys should have indexes:
+
 ```typescript
 // Check these patterns have indexes:
 patientId: uuid("patient_id").references(() => patients.id)
@@ -34,6 +36,7 @@ doctorId: uuid("doctor_id").references(() => user.id)
 Scan API routes for problematic patterns:
 
 **N+1 Queries** (BAD):
+
 ```typescript
 // Fetches visits, then loops to get patient for each
 const visits = await db.select().from(visits)
@@ -43,6 +46,7 @@ for (const visit of visits) {
 ```
 
 **Should be JOIN** (GOOD):
+
 ```typescript
 const visitsWithPatients = await db
   .select()
@@ -51,52 +55,52 @@ const visitsWithPatients = await db
 ```
 
 **Missing Pagination** (BAD):
+
 ```typescript
 // Returns ALL records
 const allPatients = await db.select().from(patients)
 ```
 
 **Should have LIMIT** (GOOD):
+
 ```typescript
-const patients = await db
-  .select()
-  .from(patients)
-  .limit(limit)
-  .offset(offset)
+const patients = await db.select().from(patients).limit(limit).offset(offset)
 ```
 
 ### 3. Generate Report
 
-```markdown
+````markdown
 ## Database Performance Report
 
 ### Summary
+
 - Tables analyzed: X
 - Potential issues found: X
 - Critical: X | High: X | Medium: X
 
 ### Missing Indexes (CRITICAL)
 
-| Table | Column | Usage Pattern | Recommendation |
-|-------|--------|---------------|----------------|
-| visits | status | Filtered in queue queries | Add `.index()` |
-| visits | created_at | Sorted in lists | Add `.index()` |
+| Table  | Column     | Usage Pattern             | Recommendation |
+| ------ | ---------- | ------------------------- | -------------- |
+| visits | status     | Filtered in queue queries | Add `.index()` |
+| visits | created_at | Sorted in lists           | Add `.index()` |
 
 ### N+1 Query Issues (HIGH)
 
-| File | Line | Issue | Fix |
-|------|------|-------|-----|
-| app/api/visits/route.ts | 45 | Loops to fetch patient | Use leftJoin |
+| File                    | Line | Issue                  | Fix          |
+| ----------------------- | ---- | ---------------------- | ------------ |
+| app/api/visits/route.ts | 45   | Loops to fetch patient | Use leftJoin |
 
 ### Missing Pagination (MEDIUM)
 
-| Endpoint | Issue |
-|----------|-------|
+| Endpoint       | Issue                           |
+| -------------- | ------------------------------- |
 | GET /api/drugs | Returns all drugs without limit |
 
 ### Recommended Index Additions
 
 Add to `db/schema/visits.ts`:
+
 ```typescript
 // Add indexes for frequently filtered/sorted columns
 status: varchar("status", { length: 20 }).notNull().default("waiting"),
@@ -108,10 +112,12 @@ status: varchar("status", { length: 20 }).notNull().default("waiting"),
   patientIdIdx: index("visits_patient_id_idx").on(table.patientId),
 }))
 ```
+````
 
 ### Query Optimization Examples
 
 **Before** (N+1):
+
 ```typescript
 // app/api/example/route.ts:32
 const visits = await db.select().from(visits).where(...)
@@ -122,6 +128,7 @@ const results = await Promise.all(visits.map(async v => ({
 ```
 
 **After** (Single query):
+
 ```typescript
 const results = await db
   .select({
@@ -132,7 +139,8 @@ const results = await db
   .leftJoin(patients, eq(visits.patientId, patients.id))
   .where(...)
 ```
-```
+
+````
 
 ### 4. Check Drizzle Relations
 
@@ -147,7 +155,7 @@ export const visitsRelations = relations(visits, ({ one, many }) => ({
   }),
   medicalRecords: many(medicalRecords),
 }))
-```
+````
 
 ### 5. Specific Tables to Prioritize
 
