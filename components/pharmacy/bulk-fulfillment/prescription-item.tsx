@@ -1,12 +1,23 @@
 /**
  * Prescription Item Component
- * Displays individual prescription with batch selector
+ * Displays individual prescription with auto-selected batch (FEFO)
+ * Manual batch selection is hidden by default but can be expanded
  */
 
+import { useState } from "react"
+import { ChevronDown, ChevronUp } from "lucide-react"
+
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible"
 import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
 import { BatchSelector } from "@/components/pharmacy/fulfillment/batch-selector"
+import { AutoBatchDisplay } from "@/components/pharmacy/fulfillment/auto-batch-display"
 import type { FulfillmentFormData } from "@/components/pharmacy/hooks/use-bulk-fulfillment-data"
 
 interface PrescriptionItemProps {
@@ -34,6 +45,9 @@ export function PrescriptionItem({
   onBatchSelect,
   showSeparator = false,
 }: PrescriptionItemProps) {
+  const [showManualSelector, setShowManualSelector] = useState(false)
+  const hasMultipleBatches = (fulfillmentData?.availableBatches?.length || 0) > 1
+
   return (
     <div className="space-y-3">
       {showSeparator && <Separator />}
@@ -55,16 +69,46 @@ export function PrescriptionItem({
         </div>
       </div>
 
-      {/* Batch Selector */}
+      {/* Auto-selected Batch Display */}
       <div className="ml-8">
-        <BatchSelector
-          isLoading={fulfillmentData?.isLoading || false}
-          batches={fulfillmentData?.availableBatches || []}
+        <AutoBatchDisplay
           selectedBatch={fulfillmentData?.selectedBatch || null}
-          onBatchSelect={onBatchSelect}
-          drugId={drugId}
+          requiredQuantity={quantity}
+          unit={unit}
+          isLoading={fulfillmentData?.isLoading || false}
           drugName={drugName}
         />
+
+        {/* Manual Batch Selection (Collapsible) */}
+        {hasMultipleBatches && !fulfillmentData?.isLoading && (
+          <Collapsible open={showManualSelector} onOpenChange={setShowManualSelector}>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm" className="mt-2 h-auto px-0 py-1">
+                {showManualSelector ? (
+                  <>
+                    <ChevronUp className="mr-1 h-4 w-4" />
+                    Sembunyikan Pilihan Batch
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="mr-1 h-4 w-4" />
+                    Ganti Batch Manual ({fulfillmentData?.availableBatches?.length} batch tersedia)
+                  </>
+                )}
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="mt-2">
+              <BatchSelector
+                isLoading={fulfillmentData?.isLoading || false}
+                batches={fulfillmentData?.availableBatches || []}
+                selectedBatch={fulfillmentData?.selectedBatch || null}
+                onBatchSelect={onBatchSelect}
+                drugId={drugId}
+                drugName={drugName}
+              />
+            </CollapsibleContent>
+          </Collapsible>
+        )}
       </div>
 
       {/* Display Prescription Quantity (Read-only) */}

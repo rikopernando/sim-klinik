@@ -52,9 +52,13 @@ export const visits = pgTable(
     doctorIdIdx: index("visits_doctor_id_idx").on(table.doctorId),
     poliIdIdx: index("visits_poli_id_idx").on(table.poliId),
     createdAtIdx: index("visits_created_at_idx").on(table.createdAt),
+    arrivalTimeIdx: index("visits_arrival_time_idx").on(table.arrivalTime),
     // Composite indexes for common query patterns
     doctorStatusIdx: index("visits_doctor_status_idx").on(table.doctorId, table.status),
     poliStatusIdx: index("visits_poli_status_idx").on(table.poliId, table.status),
+    // Composite index for date-filtered queue queries
+    arrivalTimeStatusIdx: index("visits_arrival_time_status_idx").on(table.arrivalTime, table.status),
+    visitTypeArrivalIdx: index("visits_visit_type_arrival_idx").on(table.visitType, table.arrivalTime),
   })
 )
 

@@ -1,4 +1,13 @@
-import { pgTable, varchar, text, timestamp, decimal, boolean, integer } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  varchar,
+  text,
+  timestamp,
+  decimal,
+  boolean,
+  integer,
+  index,
+} from "drizzle-orm/pg-core"
 import { medicalRecords } from "./medical-records"
 import { visits } from "./visits"
 import { user } from "./auth"
@@ -135,7 +144,17 @@ export const prescriptions = pgTable("prescriptions", {
   notes: text("notes"), // Pharmacist notes
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
+},
+(table) => ({
+  // Performance indexes for pharmacy queue queries
+  isFulfilledIdx: index("prescriptions_is_fulfilled_idx").on(table.isFulfilled),
+  medicalRecordIdIdx: index("prescriptions_medical_record_id_idx").on(table.medicalRecordId),
+  visitIdIdx: index("prescriptions_visit_id_idx").on(table.visitId),
+  drugIdIdx: index("prescriptions_drug_id_idx").on(table.drugId),
+  createdAtIdx: index("prescriptions_created_at_idx").on(table.createdAt),
+  // Composite index for the most common pharmacy queue query
+  fulfilledCreatedAtIdx: index("prescriptions_fulfilled_created_at_idx").on(table.isFulfilled, table.createdAt),
+}))
 
 /**
  * Stock Movements Table

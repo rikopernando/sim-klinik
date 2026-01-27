@@ -1,13 +1,22 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Loader2, RefreshCw, Clock, User } from "lucide-react"
+import { Loader2, RefreshCw, Clock, User, Pencil, X, MoreHorizontal } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status"
+import { EditVisitDialog } from "./edit-visit-dialog"
+import { CancelVisitDialog } from "./cancel-visit-dialog"
 
 interface QueueItem {
   visit: {
@@ -18,6 +27,10 @@ interface QueueItem {
     status: string
     arrivalTime: string
     triageStatus: string | null
+    poliId: string | null
+    doctorId: string | null
+    notes: string | null
+    chiefComplaint: string | null
   }
   patient: {
     id: string
@@ -33,6 +46,9 @@ interface QueueDisplayProps {
   visitType?: "outpatient" | "inpatient" | "emergency"
   autoRefresh?: boolean
   refreshInterval?: number // milliseconds
+  date?: string // YYYY-MM-DD format
+  dateFrom?: string // YYYY-MM-DD format
+  dateTo?: string // YYYY-MM-DD format
 }
 
 export function QueueDisplay({
@@ -40,11 +56,19 @@ export function QueueDisplay({
   visitType = "outpatient",
   autoRefresh = true,
   refreshInterval = 30000, // 30 seconds
+  date,
+  dateFrom,
+  dateTo,
 }: QueueDisplayProps) {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
+
+  // Edit/Cancel dialogs state
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
 
   const fetchQueue = useCallback(async () => {
     try {
@@ -56,6 +80,14 @@ export function QueueDisplay({
 
       if (poliId) {
         params.append("poliId", poliId.toString())
+      }
+
+      // Add date filters
+      if (date) {
+        params.append("date", date)
+      } else if (dateFrom || dateTo) {
+        if (dateFrom) params.append("dateFrom", dateFrom)
+        if (dateTo) params.append("dateTo", dateTo)
       }
 
       const response = await fetch(`/api/visits?${params.toString()}`)
@@ -80,7 +112,7 @@ export function QueueDisplay({
     } finally {
       setIsLoading(false)
     }
-  }, [poliId, visitType])
+  }, [poliId, visitType, date, dateFrom, dateTo])
 
   useEffect(() => {
     fetchQueue()
@@ -89,7 +121,7 @@ export function QueueDisplay({
       const interval = setInterval(fetchQueue, refreshInterval)
       return () => clearInterval(interval)
     }
-  }, [poliId, visitType, autoRefresh, refreshInterval, fetchQueue])
+  }, [poliId, visitType, autoRefresh, refreshInterval, fetchQueue, date, dateFrom, dateTo])
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString("id-ID", {
@@ -134,6 +166,20 @@ export function QueueDisplay({
         {statusInfo.label}
       </Badge>
     )
+  }
+
+  const handleEditClick = (item: QueueItem) => {
+    setSelectedItem(item)
+    setEditDialogOpen(true)
+  }
+
+  const handleCancelClick = (item: QueueItem) => {
+    setSelectedItem(item)
+    setCancelDialogOpen(true)
+  }
+
+  const handleDialogSuccess = () => {
+    fetchQueue()
   }
 
   return (
@@ -226,9 +272,34 @@ export function QueueDisplay({
                     </div>
                   </div>
 
-                  {/* Status Badge */}
+                  {/* Status Badge and Actions */}
                   <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(item.visit.status)}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(item.visit.status)}
+                      {/* Action Menu */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Aksi</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditClick(item)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Kunjungan
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleCancelClick(item)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Batalkan Kunjungan
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                     {index === 0 && <Badge className="bg-blue-500">Sekarang</Badge>}
                   </div>
                 </div>
@@ -237,6 +308,22 @@ export function QueueDisplay({
           ))}
         </div>
       )}
+
+      {/* Edit Visit Dialog */}
+      <EditVisitDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        queueItem={selectedItem}
+        onSuccess={handleDialogSuccess}
+      />
+
+      {/* Cancel Visit Dialog */}
+      <CancelVisitDialog
+        open={cancelDialogOpen}
+        onOpenChange={setCancelDialogOpen}
+        queueItem={selectedItem}
+        onSuccess={handleDialogSuccess}
+      />
     </div>
   )
 }

@@ -1,5 +1,6 @@
 /**
  * Custom hook for managing bulk fulfillment data and batch loading
+ * Uses FEFO (First Expiry, First Out) for automatic batch selection
  */
 
 import { useState, useEffect, useCallback } from "react"
@@ -8,6 +9,7 @@ import {
   type DrugInventoryWithDetails,
 } from "@/lib/services/inventory.service"
 import { PrescriptionQueueItem } from "@/types/pharmacy"
+import { findBestBatchForDispensing } from "@/lib/pharmacy/stock-utils"
 
 export interface FulfillmentFormData {
   inventoryId: string
@@ -47,7 +49,8 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
       for (const item of selectedGroup.prescriptions) {
         try {
           const batches = await getAvailableBatches(item.drug.id)
-          const [firstBatch] = batches || []
+          // Use FEFO (First Expiry First Out) to select the best batch
+          const bestBatch = findBestBatchForDispensing(batches, item.prescription.quantity)
 
           if (!ignore) {
             setFulfillmentData((prev) => ({
@@ -55,8 +58,8 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
               [item.prescription.id]: {
                 ...prev[item.prescription.id],
                 availableBatches: batches,
-                selectedBatch: firstBatch,
-                inventoryId: firstBatch ? firstBatch.id : "",
+                selectedBatch: bestBatch,
+                inventoryId: bestBatch ? bestBatch.id : "",
                 isLoading: false,
               },
             }))

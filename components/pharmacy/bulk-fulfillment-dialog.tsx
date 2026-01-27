@@ -65,9 +65,36 @@ export function BulkFulfillmentDialog({
     return !Object.values(fulfillmentData).some((d) => d.isLoading || !d.inventoryId)
   }, [fulfilledBy, fulfillmentData])
 
+  // Check for stock issues (items with no batches available)
+  const stockIssues = useMemo(() => {
+    const issues: string[] = []
+    for (const item of selectedGroup?.prescriptions || []) {
+      const data = fulfillmentData[item.prescription.id]
+      if (data && !data.isLoading) {
+        // No batches available
+        if (data.availableBatches.length === 0) {
+          issues.push(`"${item.drug.name}" tidak memiliki stok tersedia`)
+        }
+        // Selected batch has insufficient stock
+        else if (data.selectedBatch && data.selectedBatch.stockQuantity < data.dispensedQuantity) {
+          issues.push(
+            `"${item.drug.name}" stok tidak cukup (tersedia: ${data.selectedBatch.stockQuantity}, butuh: ${data.dispensedQuantity})`
+          )
+        }
+      }
+    }
+    return issues
+  }, [selectedGroup, fulfillmentData])
+
   // Handlers
   const handleSubmit = useCallback(async () => {
     setValidationError(null)
+
+    // Check for stock issues first
+    if (stockIssues.length > 0) {
+      setValidationError(`Stok tidak mencukupi: ${stockIssues.join(", ")}`)
+      return
+    }
 
     // Validate all fields are filled
     if (!fulfilledBy.trim()) {
@@ -87,12 +114,20 @@ export function BulkFulfillmentDialog({
       const data = fulfillmentData[item.prescription.id]
 
       if (!data || !data.inventoryId) {
-        setValidationError(`Batch untuk ${item.drug.name} belum dipilih`)
+        setValidationError(`Batch untuk "${item.drug.name}" belum dipilih`)
         return
       }
 
       if (!data.dispensedQuantity || data.dispensedQuantity <= 0) {
-        setValidationError(`Jumlah untuk ${item.drug.name} tidak valid`)
+        setValidationError(`Jumlah untuk "${item.drug.name}" tidak valid`)
+        return
+      }
+
+      // Double-check stock availability
+      if (data.selectedBatch && data.selectedBatch.stockQuantity < data.dispensedQuantity) {
+        setValidationError(
+          `Stok "${item.drug.name}" tidak mencukupi (tersedia: ${data.selectedBatch.stockQuantity}, butuh: ${data.dispensedQuantity})`
+        )
         return
       }
 
@@ -106,7 +141,7 @@ export function BulkFulfillmentDialog({
     }
 
     await onSubmit(prescriptionData)
-  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit])
+  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit, stockIssues])
 
   const handleClose = useCallback(() => {
     if (!isSubmitting) {
@@ -140,6 +175,21 @@ export function BulkFulfillmentDialog({
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{validationError}</AlertDescription>
+            </Alert>
+          )}
+
+          {/* Stock Issues Warning */}
+          {stockIssues.length > 0 && !validationError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="font-medium">Masalah Stok:</div>
+                <ul className="mt-1 list-inside list-disc text-sm">
+                  {stockIssues.map((issue, idx) => (
+                    <li key={idx}>{issue}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
             </Alert>
           )}
 
@@ -191,7 +241,7 @@ export function BulkFulfillmentDialog({
               <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid}>
+              <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid || stockIssues.length > 0}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
