@@ -84,14 +84,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Pelayanan Medis",
       items: [
         {
-          title: "Rekam Medis",
-          url: "/dashboard/medical-records",
-          icon: IconReportMedical,
-        },
-        {
-          title: "UGD",
-          url: "/dashboard/emergency",
-          icon: IconEmergencyBed,
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
+          icon: IconStethoscope,
+          items: [
+            {
+              title: "Antrian Poli",
+              url: "/dashboard/doctor",
+            },
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
         },
         {
           title: "Rawat Inap",
@@ -107,6 +112,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
               url: "/dashboard/inpatient/rooms",
             },
           ],
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
         },
       ],
     },
@@ -217,9 +227,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Pelayanan Medis",
       items: [
         {
-          title: "UGD",
-          url: "/dashboard/emergency",
-          icon: IconEmergencyBed,
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
+          icon: IconStethoscope,
+          items: [
+            {
+              title: "Antrian Poli",
+              url: "/dashboard/doctor",
+            },
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
         },
         {
           title: "Rawat Inap",
@@ -235,6 +255,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
               url: "/dashboard/inpatient/rooms",
             },
           ],
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
         },
       ],
     },
@@ -304,11 +329,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard",
           icon: IconDashboard,
         },
-        {
-          title: "Antrian Pasien",
-          url: "/dashboard/doctor",
-          icon: IconStethoscope,
-        },
       ],
     },
     {
@@ -330,19 +350,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Pelayanan Medis",
       items: [
         {
-          title: "Rekam Medis",
-          url: "/dashboard/medical-records",
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
           icon: IconStethoscope,
-        },
-        {
-          title: "UGD",
-          url: "/dashboard/emergency",
-          icon: IconEmergencyBed,
-        },
-        {
-          title: "Pasien Pulang",
-          url: "/dashboard/discharge",
-          icon: IconUserCheck,
+          items: [
+            {
+              title: "Antrian Poli",
+              url: "/dashboard/doctor",
+            },
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
         },
         {
           title: "Rawat Inap",
@@ -354,6 +374,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
               url: "/dashboard/inpatient/patients",
             },
           ],
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
+        {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
         },
       ],
     },
@@ -386,23 +416,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
-      label: "Rawat Jalan",
-      items: [
-        {
-          title: "Antrian Poli",
-          url: "/dashboard/doctor",
-          icon: IconStethoscope,
-        },
-        {
-          title: "Rekam Medis",
-          url: "/dashboard/medical-records",
-          icon: IconReportMedical,
-        },
-      ],
-    },
-    {
       label: "Pelayanan Medis",
       items: [
+        {
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
+          icon: IconStethoscope,
+          items: [
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
+        },
         {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",

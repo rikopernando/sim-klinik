@@ -49,6 +49,16 @@ import { ERQueueLoading } from "@/components/emergency/er-queue-loading"
 import { ERQueueTabs } from "@/components/emergency/er-queue-tabs"
 import { getErrorMessage } from "@/lib/utils/error"
 
+import { PageGuard } from "@/components/auth/page-guard"
+
+export default function EmergencyQueuePage() {
+  return (
+    <PageGuard roles={["nurse", "doctor", "super_admin", "admin"]}>
+      <EmergencyQueueContent />
+    </PageGuard>
+  )
+}
+
 // Custom hook for debouncing search input
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value)
@@ -66,7 +76,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-export default function EmergencyQueuePage() {
+function EmergencyQueueContent() {
   const router = useRouter()
   const [showQuickRegister, setShowQuickRegister] = useState(false)
   const [activeStatus, setActiveStatus] = useState("registered")
@@ -110,7 +120,8 @@ export default function EmergencyQueuePage() {
         duration: 5000,
       })
     },
-    [refresh, soundEnabled]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [soundEnabled]
   )
 
   // Use ER Notifications hook with SSE

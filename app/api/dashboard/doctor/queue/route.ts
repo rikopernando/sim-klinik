@@ -15,10 +15,18 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
  * Requires: visits:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest, { user }) => {
+  async (request: NextRequest, { user, role }) => {
     try {
       const searchParams = request.nextUrl.searchParams
       const status = searchParams.get("status") // optional filter: waiting, in_examination, all
+
+      let doctorCondition
+
+      if (role === "admin" || role === "super_admin") {
+        doctorCondition = undefined
+      } else {
+        doctorCondition = eq(visits.doctorId, user.id)
+      }
 
       // Build status filter
       let statusConditions
@@ -29,7 +37,7 @@ export const GET = withRBAC(
       } else {
         // Show all active visits (not completed/cancelled)
         statusConditions = and(
-          eq(visits.doctorId, user.id),
+          doctorCondition,
           or(
             eq(visits.status, "registered"),
             eq(visits.status, "waiting"),
@@ -56,7 +64,7 @@ export const GET = withRBAC(
         .leftJoin(patients, eq(visits.patientId, patients.id))
         .leftJoin(polis, eq(visits.poliId, polis.id))
         .leftJoin(medicalRecords, eq(medicalRecords.visitId, visits.id))
-        .where(and(eq(visits.doctorId, user.id), statusConditions))
+        .where(and(doctorCondition, statusConditions))
         .orderBy(asc(visits.queueNumber))
 
       const response: ResponseApi<{

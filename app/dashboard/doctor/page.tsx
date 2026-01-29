@@ -5,6 +5,7 @@
  * Patient queue, quick access to RME, and patient history
  */
 
+import { PageGuard } from "@/components/auth/page-guard"
 import { AlertCircle } from "lucide-react"
 import { useDoctorDashboard } from "@/hooks/use-doctor-dashboard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -16,6 +17,14 @@ import { DoctorStatsSkeleton } from "@/components/doctor/doctor-stats-skeleton"
 import { DoctorQueueSkeleton } from "@/components/doctor/doctor-queue-skeleton"
 
 export default function DoctorDashboard() {
+  return (
+    <PageGuard roles={["doctor", "super_admin", "admin"]}>
+      <DoctorDashboardContent />
+    </PageGuard>
+  )
+}
+
+function DoctorDashboardContent() {
   const {
     // State
     stats,

@@ -19,8 +19,17 @@ import { ProcessPaymentDialog } from "@/components/billing/process-payment-dialo
 import { QueueSidebar } from "@/components/billing/queue-sidebar"
 import { BillingDetailsPanel } from "@/components/billing/billing-details-panel"
 import type { ProcessPaymentData } from "@/types/billing"
+import { PageGuard } from "@/components/auth/page-guard"
 
 export default function CashierDashboard() {
+  return (
+    <PageGuard roles={["cashier", "super_admin", "admin"]}>
+      <CashierContent />
+    </PageGuard>
+  )
+}
+
+function CashierContent() {
   const { data: session } = useSession()
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
   const [processPaymentDialogOpen, setProcessPaymentDialogOpen] = useState(false)

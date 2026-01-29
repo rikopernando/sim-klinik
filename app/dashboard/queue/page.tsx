@@ -1,5 +1,6 @@
 "use client"
 
+import { PageGuard } from "@/components/auth/page-guard"
 import { Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 
@@ -19,6 +20,14 @@ import { Poli } from "@/types/poli"
 import { getPolisRequest } from "@/lib/services/poli.service"
 
 export default function QueuePage() {
+  return (
+    <PageGuard permissions={["visits:read"]}>
+      <QueuePageContent />
+    </PageGuard>
+  )
+}
+
+function QueuePageContent() {
   const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined)
   const [polis, setPolis] = useState<Poli[]>([])
   const [isLoadingPolis, setIsLoadingPolis] = useState(true)

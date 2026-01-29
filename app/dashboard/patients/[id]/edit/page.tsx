@@ -6,6 +6,7 @@
  */
 
 import { useEffect, useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { useRouter, useParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageHeader } from "@/components/patients/page-header"
@@ -20,6 +21,14 @@ import { type Patient } from "@/types/registration"
 type PageState = "loading" | "form" | "success" | "error"
 
 export default function EditPatientPage() {
+  return (
+    <PageGuard permissions={["patients:write"]}>
+      <EditPatientPageContent />
+    </PageGuard>
+  )
+}
+
+function EditPatientPageContent() {
   const router = useRouter()
   const params = useParams()
   const patientId = params.id as string

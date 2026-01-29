@@ -6,6 +6,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { IconFlask, IconRefresh, IconAlertCircle } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +16,14 @@ import { Label } from "@/components/ui/label"
 import { LabOrderQueueTable } from "@/components/laboratory"
 
 export default function LabTechnicianQueuePage() {
+  return (
+    <PageGuard permissions={["lab:read"]}>
+      <LabTechnicianQueuePageContent />
+    </PageGuard>
+  )
+}
+
+function LabTechnicianQueuePageContent() {
   const [myOrdersOnly, setMyOrdersOnly] = useState(false)
   const [autoRefresh, setAutoRefresh] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)

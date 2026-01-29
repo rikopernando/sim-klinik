@@ -6,6 +6,7 @@
  */
 
 import { useRouter } from "next/navigation"
+import { PageGuard } from "@/components/auth/page-guard"
 import { IconUserPlus, IconSearch } from "@tabler/icons-react"
 import {
   Card,
@@ -24,6 +25,14 @@ import Loader from "@/components/loader"
 import { usePermission } from "@/hooks/use-permission"
 
 export default function PatientsPage() {
+  return (
+    <PageGuard permissions={["patients:read"]}>
+      <PatientsPageContent />
+    </PageGuard>
+  )
+}
+
+function PatientsPageContent() {
   const router = useRouter()
 
   const { hasPermission } = usePermission()

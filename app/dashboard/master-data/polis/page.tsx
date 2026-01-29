@@ -5,6 +5,7 @@
 "use client"
 
 import { useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { toast } from "sonner"
 import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
 
@@ -37,6 +38,14 @@ import { usePoli } from "@/hooks/use-poli"
 import { ResultPoli, PayloadPoli } from "@/types/poli"
 
 export default function UsersPage() {
+  return (
+    <PageGuard roles={["super_admin", "admin"]}>
+      <PolisPageContent />
+    </PageGuard>
+  )
+}
+
+function PolisPageContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
