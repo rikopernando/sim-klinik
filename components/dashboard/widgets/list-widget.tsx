@@ -22,6 +22,11 @@ export interface ListWidgetItem {
   action?: {
     label: string
     onClick: () => void
+    disabled?: boolean
+  }
+  secondaryAction?: {
+    label: string
+    onClick: () => void
   }
 }
 
@@ -101,9 +106,22 @@ export function ListWidget({
                         {item.badge.label}
                       </span>
                     )}
+                    {item.secondaryAction && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          item.secondaryAction?.onClick()
+                        }}
+                      >
+                        {item.secondaryAction.label}
+                      </Button>
+                    )}
                     {item.action && (
                       <Button
                         variant="ghost"
+                        disabled={item.action.disabled}
                         onClick={(e) => {
                           e.stopPropagation()
                           item.action?.onClick()

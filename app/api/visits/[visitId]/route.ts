@@ -5,6 +5,12 @@ import { eq } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { editVisitApiSchema } from "@/lib/validations/edit-visit"
+import {
+  isValidStatusTransition,
+  getStatusTransitionError,
+  type VisitStatus,
+} from "@/types/visit-status"
 
 /**
  * GET /api/visits/[visitId]
@@ -82,29 +88,101 @@ export const PATCH = withRBAC(
       const [existingVisit] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1)
 
       if (!existingVisit) {
-        return NextResponse.json({ error: "Visit not found" }, { status: 404 })
+        const response: ResponseError<unknown> = {
+          error: "Visit not found",
+          message: "Visit not found",
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
-      // Update visit (only allow certain fields to be updated)
+      // Validate request body with Zod schema
+      const parsed = editVisitApiSchema.safeParse(body)
+      if (!parsed.success) {
+        const response: ResponseError<unknown> = {
+          error: parsed.error.flatten(),
+          message: "Validation failed",
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
+      }
+
+      const validatedData = parsed.data
+
+      // Validate status transition if status is being changed
+      if (validatedData.status && validatedData.status !== existingVisit.status) {
+        const currentStatus = existingVisit.status as VisitStatus
+        const newStatus = validatedData.status as VisitStatus
+        if (!isValidStatusTransition(currentStatus, newStatus)) {
+          const response: ResponseError<unknown> = {
+            error: getStatusTransitionError(currentStatus, newStatus),
+            message: getStatusTransitionError(currentStatus, newStatus),
+            status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+          }
+
+          return NextResponse.json(response, {
+            status: HTTP_STATUS_CODES.NOT_FOUND,
+          })
+        }
+      }
+
+      // Build update data from allowed fields
       const allowedFields = [
-        "poliId", // Allow changing poli for outpatient visits
+        "poliId",
         "triageStatus",
         "chiefComplaint",
         "notes",
         "doctorId",
         "roomId",
         "disposition",
+        "status",
+        "visitType",
+        "arrivalTime",
       ]
       const updateData: Record<string, unknown> = {}
 
       for (const field of allowedFields) {
-        if (body[field] !== undefined) {
-          updateData[field] = body[field]
+        const value = validatedData[field as keyof typeof validatedData]
+        if (value !== undefined) {
+          // Parse arrivalTime string to Date
+          if (field === "arrivalTime" && typeof value === "string") {
+            updateData[field] = new Date(value)
+          } else {
+            updateData[field] = value
+          }
+        }
+      }
+
+      // When changing visitType, clear fields that no longer apply
+      if (validatedData.visitType && validatedData.visitType !== existingVisit.visitType) {
+        if (validatedData.visitType !== "outpatient") {
+          // Clear outpatient-specific fields
+          if (!validatedData.poliId) updateData.poliId = null
+          if (!validatedData.doctorId) updateData.doctorId = null
+        }
+        if (validatedData.visitType !== "emergency") {
+          // Clear emergency-specific fields
+          if (!validatedData.triageStatus) updateData.triageStatus = null
+          if (!validatedData.chiefComplaint) updateData.chiefComplaint = null
         }
       }
 
       if (Object.keys(updateData).length === 0) {
-        return NextResponse.json({ error: "No valid fields to update" }, { status: 400 })
+        const response: ResponseError<unknown> = {
+          error: "No valid fields to update",
+          message: "No valid fields to update",
+          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+        }
+
+        return NextResponse.json(response, {
+          status: HTTP_STATUS_CODES.NOT_FOUND,
+        })
       }
 
       const [updatedVisit] = await db

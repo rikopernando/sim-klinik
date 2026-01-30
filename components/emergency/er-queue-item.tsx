@@ -7,10 +7,11 @@
  */
 
 import { useState, memo, useEffect } from "react"
+import { Clock, FileText, User, ArrowRight, AlertTriangle, Pencil } from "lucide-react"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Clock, FileText, User, ArrowRight, AlertTriangle } from "lucide-react"
 import { ERQueueItem } from "@/types/emergency"
 import {
   getTriageBadgeColor,
@@ -20,14 +21,18 @@ import {
   formatWaitTime,
   getWaitTimeAlertLevel,
 } from "@/lib/emergency/triage-utils"
-import { HandoverDialog } from "./handover-dialog"
+import { EditVisitDialog } from "@/components/visits/edit-visit-dialog"
+import type { EditVisitData } from "@/lib/validations/edit-visit"
 import { cn } from "@/lib/utils"
+
+import { HandoverDialog } from "./handover-dialog"
 
 interface ERQueueItemProps {
   item: ERQueueItem
   index: number
   onStartExamination?: (visitId: string, visitStatus: string) => void
   onHandoverSuccess?: () => void
+  onEditSuccess?: () => void
   isNew?: boolean // Flag for newly arrived patients (highlight animation)
 }
 
@@ -36,9 +41,11 @@ function ERQueueItemCardComponent({
   index,
   onStartExamination,
   onHandoverSuccess,
+  onEditSuccess,
   isNew = false,
 }: ERQueueItemProps) {
   const [showHandoverDialog, setShowHandoverDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
   const [waitTimeMinutes, setWaitTimeMinutes] = useState(() =>
     calculateWaitTimeMinutes(item.visit.arrivalTime)
   )
@@ -140,6 +147,11 @@ function ERQueueItemCardComponent({
 
               {(item.visit.status === "in_examination" || item.visit.status === "registered") && (
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setShowEditDialog(true)}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Edit
+                  </Button>
+
                   <Button
                     size="sm"
                     onClick={() => onStartExamination?.(item.visit.id, item.visit.status)}
@@ -175,6 +187,35 @@ function ERQueueItemCardComponent({
           if (onHandoverSuccess) {
             onHandoverSuccess()
           }
+        }}
+      />
+
+      {/* Edit Visit Dialog */}
+      <EditVisitDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        visitData={
+          {
+            visit: {
+              id: item.visit.id,
+              visitNumber: item.visit.visitNumber,
+              visitType: item.visit.visitType,
+              status: item.visit.status,
+              arrivalTime: item.visit.arrivalTime,
+              triageStatus: item.visit.triageStatus,
+              notes: item.visit.notes,
+              chiefComplaint: item.visit.chiefComplaint,
+            },
+            patient: {
+              id: item.patient.id,
+              mrNumber: item.patient.mrNumber,
+              name: item.patient.name,
+              gender: item.patient.gender,
+            },
+          } satisfies EditVisitData
+        }
+        onSuccess={() => {
+          onEditSuccess?.()
         }}
       />
     </>

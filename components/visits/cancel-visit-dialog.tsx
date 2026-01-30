@@ -27,31 +27,13 @@ import {
 } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { updateVisitStatus } from "@/lib/services/visit.service"
+import { QueueItem } from "@/types/dashboard"
 
 const cancelVisitSchema = z.object({
   reason: z.string().min(5, "Alasan pembatalan minimal 5 karakter"),
 })
 
 type CancelVisitForm = z.infer<typeof cancelVisitSchema>
-
-interface QueueItem {
-  visit: {
-    id: string
-    visitNumber: string
-    queueNumber: string | null
-    visitType: string
-    status: string
-    arrivalTime: string
-    triageStatus: string | null
-  }
-  patient: {
-    id: string
-    mrNumber: string
-    name: string
-    gender: string | null
-    dateOfBirth: string | null
-  }
-}
 
 interface CancelVisitDialogProps {
   open: boolean
@@ -101,12 +83,12 @@ export function CancelVisitDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
+            <AlertTriangle className="text-destructive h-5 w-5" />
             Batalkan Kunjungan?
           </AlertDialogTitle>
           <AlertDialogDescription>
-            Anda akan membatalkan kunjungan untuk pasien{" "}
-            <strong>{queueItem.patient.name}</strong> ({queueItem.patient.mrNumber}).
+            Anda akan membatalkan kunjungan untuk pasien <strong>{queueItem.patient?.name}</strong>{" "}
+            ({queueItem.patient?.mrNumber}).
             <br />
             Nomor kunjungan: <strong>{queueItem.visit.visitNumber}</strong>
           </AlertDialogDescription>

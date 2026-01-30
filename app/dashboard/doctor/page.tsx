@@ -10,6 +10,7 @@ import { AlertCircle } from "lucide-react"
 import { useDoctorDashboard } from "@/hooks/use-doctor-dashboard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
+import { EditVisitDialog } from "@/components/visits/edit-visit-dialog"
 import { DoctorHeader } from "@/components/doctor/doctor-header"
 import { DoctorStatsSection } from "@/components/doctor/doctor-stats-section"
 import { DoctorQueueTabs } from "@/components/doctor/doctor-queue-tabs"
@@ -38,6 +39,8 @@ function DoctorDashboardContent() {
     startingExamination,
     error,
     lastRefresh,
+    editVisitData,
+    showEditDialog,
 
     // Handlers
     handleRefreshAll,
@@ -45,6 +48,9 @@ function DoctorDashboardContent() {
     handleOpenMedicalRecord,
     handleViewHistory,
     handleCloseHistory,
+    handleEditVisit,
+    handleEditDialogClose,
+    handleEditSuccess,
   } = useDoctorDashboard()
 
   return (
@@ -75,6 +81,7 @@ function DoctorDashboardContent() {
           onStartExamination={handleStartExamination}
           onOpenMedicalRecord={handleOpenMedicalRecord}
           onViewHistory={handleViewHistory}
+          onEditVisit={handleEditVisit}
         />
       )}
 
@@ -84,9 +91,16 @@ function DoctorDashboardContent() {
           open={showHistory}
           onOpenChange={handleCloseHistory}
           patientId={selectedPatient.id}
-          // patientName={selectedPatient.name}
         />
       )}
+
+      {/* Edit Visit Dialog */}
+      <EditVisitDialog
+        open={showEditDialog}
+        onOpenChange={handleEditDialogClose}
+        visitData={editVisitData}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   )
 }

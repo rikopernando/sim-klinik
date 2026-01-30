@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { z } from "zod"
 import { Loader2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -34,72 +33,45 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Badge } from "@/components/ui/badge"
 import { Poli } from "@/types/poli"
 import { getPolisRequest } from "@/lib/services/poli.service"
+import { getDoctors } from "@/lib/services/doctor.service"
+import {
+  editVisitSchema,
+  type EditVisitFormData,
+  type EditVisitData,
+} from "@/lib/validations/edit-visit"
+import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status"
 
-const editVisitSchema = z.object({
-  // Visit info
-  poliId: z.string().optional(),
-  doctorId: z.string().optional(),
-  notes: z.string().optional(),
-  // Triage (for emergency)
-  triageStatus: z.enum(["red", "yellow", "green"]).optional(),
-  chiefComplaint: z.string().optional(),
-  // Vitals
-  temperature: z.string().optional(),
-  bloodPressureSystolic: z.coerce.number().int().optional().or(z.literal("")),
-  bloodPressureDiastolic: z.coerce.number().int().optional().or(z.literal("")),
-  pulse: z.coerce.number().int().optional().or(z.literal("")),
-  respiratoryRate: z.coerce.number().int().optional().or(z.literal("")),
-  oxygenSaturation: z.string().optional(),
-  weight: z.string().optional(),
-  height: z.string().optional(),
-})
-
-type EditVisitForm = z.infer<typeof editVisitSchema>
-
-interface QueueItem {
-  visit: {
-    id: string
-    visitNumber: string
-    queueNumber: string | null
-    visitType: string
-    status: string
-    arrivalTime: string
-    triageStatus: string | null
-    poliId: string | null
-    doctorId: string | null
-    notes: string | null
-    chiefComplaint: string | null
-  }
-  patient: {
-    id: string
-    mrNumber: string
-    name: string
-    gender: string | null
-    dateOfBirth: string | null
-  }
+interface Doctor {
+  id: string
+  name: string
 }
 
 interface EditVisitDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  queueItem: QueueItem | null
+  visitData: EditVisitData | null
   onSuccess?: () => void
 }
+
+export type { EditVisitData }
 
 export function EditVisitDialog({
   open,
   onOpenChange,
-  queueItem,
+  visitData,
   onSuccess,
 }: EditVisitDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [polis, setPolis] = useState<Poli[]>([])
+  const [doctors, setDoctors] = useState<Doctor[]>([])
   const [isLoadingPolis, setIsLoadingPolis] = useState(true)
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState(true)
 
-  const form = useForm<EditVisitForm>({
-    resolver: zodResolver(editVisitSchema),
+  const form = useForm<EditVisitFormData>({
+    resolver: zodResolver(editVisitSchema) as unknown as Resolver<EditVisitFormData>,
     defaultValues: {
       poliId: "",
       doctorId: "",
@@ -132,29 +104,69 @@ export function EditVisitDialog({
     fetchPolis()
   }, [])
 
-  // Reset form when queue item changes
+  // Fetch doctors
   useEffect(() => {
-    if (queueItem) {
-      form.reset({
-        poliId: queueItem.visit.poliId || "",
-        doctorId: queueItem.visit.doctorId || "",
-        notes: queueItem.visit.notes || "",
-        triageStatus: (queueItem.visit.triageStatus as "red" | "yellow" | "green") || undefined,
-        chiefComplaint: queueItem.visit.chiefComplaint || "",
-        temperature: "",
-        bloodPressureSystolic: "",
-        bloodPressureDiastolic: "",
-        pulse: "",
-        respiratoryRate: "",
-        oxygenSaturation: "",
-        weight: "",
-        height: "",
-      })
+    const fetchDoctors = async () => {
+      try {
+        const result = await getDoctors()
+        setDoctors(result || [])
+      } catch (error) {
+        console.error("Error fetching doctors:", error)
+      } finally {
+        setIsLoadingDoctors(false)
+      }
     }
-  }, [queueItem, form])
+    fetchDoctors()
+  }, [])
 
-  const handleSubmit = async (data: EditVisitForm) => {
-    if (!queueItem) return
+  // Reset form when visit data changes and fetch vitals
+  useEffect(() => {
+    if (!visitData || !open) return
+
+    // Reset form with visit data
+    form.reset({
+      poliId: visitData.visit.poliId || "",
+      doctorId: visitData.visit.doctorId || "",
+      notes: visitData.visit.notes || "",
+      triageStatus: (visitData.visit.triageStatus as "red" | "yellow" | "green") || undefined,
+      chiefComplaint: visitData.visit.chiefComplaint || "",
+      temperature: "",
+      bloodPressureSystolic: "",
+      bloodPressureDiastolic: "",
+      pulse: "",
+      respiratoryRate: "",
+      oxygenSaturation: "",
+      weight: "",
+      height: "",
+    })
+
+    // Fetch existing vitals
+    const fetchVitals = async () => {
+      try {
+        const response = await fetch(`/api/visits/${visitData.visit.id}/vitals`)
+        if (response.ok) {
+          const data = await response.json()
+          const vitals = data.data
+          if (vitals) {
+            form.setValue("temperature", vitals.temperature || "")
+            form.setValue("bloodPressureSystolic", vitals.bloodPressureSystolic ?? "")
+            form.setValue("bloodPressureDiastolic", vitals.bloodPressureDiastolic ?? "")
+            form.setValue("pulse", vitals.pulse ?? "")
+            form.setValue("respiratoryRate", vitals.respiratoryRate ?? "")
+            form.setValue("oxygenSaturation", vitals.oxygenSaturation || "")
+            form.setValue("weight", vitals.weight || "")
+            form.setValue("height", vitals.height || "")
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching vitals:", error)
+      }
+    }
+    fetchVitals()
+  }, [visitData, open, form])
+
+  const handleSubmit = async (data: EditVisitFormData) => {
+    if (!visitData) return
 
     setIsSubmitting(true)
     try {
@@ -167,14 +179,15 @@ export function EditVisitDialog({
       if (data.chiefComplaint) visitUpdateData.chiefComplaint = data.chiefComplaint
 
       if (Object.keys(visitUpdateData).length > 0) {
-        const visitResponse = await fetch(`/api/visits/${queueItem.visit.id}`, {
+        const visitResponse = await fetch(`/api/visits/${visitData.visit.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(visitUpdateData),
         })
 
         if (!visitResponse.ok) {
-          throw new Error("Failed to update visit")
+          const errorData = await visitResponse.json().catch(() => null)
+          throw new Error(errorData?.error || "Failed to update visit")
         }
       }
 
@@ -206,7 +219,7 @@ export function EditVisitDialog({
           height: data.height || undefined,
         }
 
-        const vitalsResponse = await fetch(`/api/visits/${queueItem.visit.id}/vitals`, {
+        const vitalsResponse = await fetch(`/api/visits/${visitData.visit.id}/vitals`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(vitalsData),
@@ -222,13 +235,15 @@ export function EditVisitDialog({
       onSuccess?.()
     } catch (error) {
       console.error("Error updating visit:", error)
-      toast.error("Gagal memperbarui data kunjungan")
+      toast.error(error instanceof Error ? error.message : "Gagal memperbarui data kunjungan")
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (!queueItem) return null
+  if (!visitData) return null
+
+  const statusInfo = VISIT_STATUS_INFO[visitData.visit.status as VisitStatus]
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -236,7 +251,7 @@ export function EditVisitDialog({
         <DialogHeader>
           <DialogTitle>Edit Kunjungan</DialogTitle>
           <DialogDescription>
-            {queueItem.patient.name} ({queueItem.patient.mrNumber}) - {queueItem.visit.visitNumber}
+            {visitData.patient.name} ({visitData.patient.mrNumber}) - {visitData.visit.visitNumber}
           </DialogDescription>
         </DialogHeader>
 
@@ -250,38 +265,79 @@ export function EditVisitDialog({
 
               {/* Visit Info Tab */}
               <TabsContent value="visit" className="space-y-4 pt-4">
-                {queueItem.visit.visitType === "outpatient" && (
-                  <FormField
-                    control={form.control}
-                    name="poliId"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Poliklinik</FormLabel>
-                        <Select
-                          onValueChange={field.onChange}
-                          value={field.value}
-                          disabled={isLoadingPolis}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Pilih poli" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {polis.map((poli) => (
-                              <SelectItem key={poli.id} value={poli.id}>
-                                {poli.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                {/* Status Badge */}
+                {statusInfo && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">Status:</span>
+                    <Badge className={`${statusInfo.bgColor} ${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </Badge>
+                  </div>
                 )}
 
-                {queueItem.visit.visitType === "emergency" && (
+                {visitData.visit.visitType === "outpatient" && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="poliId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Poliklinik</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isLoadingPolis}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih poli" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {polis.map((poli) => (
+                                <SelectItem key={poli.id} value={poli.id}>
+                                  {poli.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="doctorId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Dokter</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={isLoadingDoctors}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Pilih dokter" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {doctors.map((doctor) => (
+                                <SelectItem key={doctor.id} value={doctor.id}>
+                                  {doctor.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+
+                {visitData.visit.visitType === "emergency" && (
                   <>
                     <FormField
                       control={form.control}

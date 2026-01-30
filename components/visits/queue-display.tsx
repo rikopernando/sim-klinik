@@ -15,31 +15,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
 import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status"
-import { EditVisitDialog } from "./edit-visit-dialog"
-import { CancelVisitDialog } from "./cancel-visit-dialog"
+import { QueueItem } from "@/types/dashboard"
 
-interface QueueItem {
-  visit: {
-    id: string
-    visitNumber: string
-    queueNumber: string | null
-    visitType: string
-    status: string
-    arrivalTime: string
-    triageStatus: string | null
-    poliId: string | null
-    doctorId: string | null
-    notes: string | null
-    chiefComplaint: string | null
-  }
-  patient: {
-    id: string
-    mrNumber: string
-    name: string
-    gender: string | null
-    dateOfBirth: string | null
-  }
-}
+import { EditVisitData, EditVisitDialog } from "./edit-visit-dialog"
+import { CancelVisitDialog } from "./cancel-visit-dialog"
 
 interface QueueDisplayProps {
   poliId?: number
@@ -69,6 +48,7 @@ export function QueueDisplay({
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
+  const [editVisitData, setEditVisitData] = useState<EditVisitData | null>(null)
 
   const fetchQueue = useCallback(async () => {
     try {
@@ -169,7 +149,23 @@ export function QueueDisplay({
   }
 
   const handleEditClick = (item: QueueItem) => {
-    setSelectedItem(item)
+    const data: EditVisitData = {
+      visit: {
+        id: item.visit.id,
+        visitNumber: item.visit.visitNumber,
+        visitType: item.visit.visitType,
+        status: item.visit.status,
+        queueNumber: item.visit.queueNumber,
+        poliId: item.visit.poliId,
+        doctorId: item.visit.doctorId,
+      },
+      patient: {
+        id: item.visit.patientId,
+        mrNumber: item.patient?.mrNumber || "",
+        name: item.patient?.name || "",
+      },
+    }
+    setEditVisitData(data)
     setEditDialogOpen(true)
   }
 
@@ -253,8 +249,8 @@ export function QueueDisplay({
                     {/* Patient Info */}
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h4 className="font-semibold">{item.patient.name}</h4>
-                        {item.patient.gender && (
+                        <h4 className="font-semibold">{item.patient?.name}</h4>
+                        {item.patient?.gender && (
                           <Badge variant="outline" className="text-xs">
                             {item.patient.gender === "male" ? "L" : "P"}
                           </Badge>
@@ -263,7 +259,7 @@ export function QueueDisplay({
                       </div>
 
                       <div className="text-muted-foreground text-sm">
-                        <div>No. RM: {item.patient.mrNumber}</div>
+                        <div>No. RM: {item.patient?.mrNumber}</div>
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
                           Kedatangan: {formatTime(item.visit.arrivalTime)}
@@ -313,7 +309,7 @@ export function QueueDisplay({
       <EditVisitDialog
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
-        queueItem={selectedItem}
+        visitData={editVisitData}
         onSuccess={handleDialogSuccess}
       />
 

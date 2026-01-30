@@ -15,6 +15,7 @@ interface DoctorQueueTabsProps {
   onStartExamination: (visitId: string) => void
   onOpenMedicalRecord: (visitId: string) => void
   onViewHistory: (patient: QueuePatient | null) => void
+  onEditVisit?: (item: QueueItem) => void
 }
 
 export function DoctorQueueTabs({
@@ -25,6 +26,7 @@ export function DoctorQueueTabs({
   onStartExamination,
   onOpenMedicalRecord,
   onViewHistory,
+  onEditVisit,
 }: DoctorQueueTabsProps) {
   return (
     <DashboardSection title="Antrian Pasien" description="Daftar pasien yang perlu ditangani">
@@ -49,6 +51,12 @@ export function DoctorQueueTabs({
                 label: item.visit.visitType === "emergency" ? "UGD" : "Rawat Jalan",
                 variant: item.visit.visitType === "emergency" ? "destructive" : "outline",
               },
+              secondaryAction: onEditVisit
+                ? {
+                    label: "Edit",
+                    onClick: () => onEditVisit(item),
+                  }
+                : undefined,
               action: {
                 label: startingExamination === item.visit.id ? "Memulai..." : "Mulai",
                 onClick: () => onStartExamination(item.visit.id),
