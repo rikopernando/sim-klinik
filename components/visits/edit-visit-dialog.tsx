@@ -37,6 +37,7 @@ import { Badge } from "@/components/ui/badge"
 import { Poli } from "@/types/poli"
 import { getPolisRequest } from "@/lib/services/poli.service"
 import { getDoctors } from "@/lib/services/doctor.service"
+import { getVisitVitals, updateVisit, recordVisitVitals } from "@/lib/services/visit.service"
 import {
   editVisitSchema,
   type EditVisitFormData,
@@ -143,20 +144,16 @@ export function EditVisitDialog({
     // Fetch existing vitals
     const fetchVitals = async () => {
       try {
-        const response = await fetch(`/api/visits/${visitData.visit.id}/vitals`)
-        if (response.ok) {
-          const data = await response.json()
-          const vitals = data.data
-          if (vitals) {
-            form.setValue("temperature", vitals.temperature || "")
-            form.setValue("bloodPressureSystolic", vitals.bloodPressureSystolic ?? "")
-            form.setValue("bloodPressureDiastolic", vitals.bloodPressureDiastolic ?? "")
-            form.setValue("pulse", vitals.pulse ?? "")
-            form.setValue("respiratoryRate", vitals.respiratoryRate ?? "")
-            form.setValue("oxygenSaturation", vitals.oxygenSaturation || "")
-            form.setValue("weight", vitals.weight || "")
-            form.setValue("height", vitals.height || "")
-          }
+        const vitals = await getVisitVitals(visitData.visit.id)
+        if (vitals) {
+          form.setValue("temperature", vitals.temperature || "")
+          form.setValue("bloodPressureSystolic", vitals.bloodPressureSystolic ?? "")
+          form.setValue("bloodPressureDiastolic", vitals.bloodPressureDiastolic ?? "")
+          form.setValue("pulse", vitals.pulse ?? "")
+          form.setValue("respiratoryRate", vitals.respiratoryRate ?? "")
+          form.setValue("oxygenSaturation", vitals.oxygenSaturation || "")
+          form.setValue("weight", vitals.weight || "")
+          form.setValue("height", vitals.height || "")
         }
       } catch (error) {
         console.error("Error fetching vitals:", error)
@@ -179,16 +176,7 @@ export function EditVisitDialog({
       if (data.chiefComplaint) visitUpdateData.chiefComplaint = data.chiefComplaint
 
       if (Object.keys(visitUpdateData).length > 0) {
-        const visitResponse = await fetch(`/api/visits/${visitData.visit.id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(visitUpdateData),
-        })
-
-        if (!visitResponse.ok) {
-          const errorData = await visitResponse.json().catch(() => null)
-          throw new Error(errorData?.error || "Failed to update visit")
-        }
+        await updateVisit(visitData.visit.id, visitUpdateData)
       }
 
       // Update vitals if any provided
@@ -203,7 +191,7 @@ export function EditVisitDialog({
         data.height
 
       if (hasVitals) {
-        const vitalsData = {
+        await recordVisitVitals(visitData.visit.id, {
           temperature: data.temperature || undefined,
           bloodPressureSystolic:
             typeof data.bloodPressureSystolic === "number" ? data.bloodPressureSystolic : undefined,
@@ -217,17 +205,7 @@ export function EditVisitDialog({
           oxygenSaturation: data.oxygenSaturation || undefined,
           weight: data.weight || undefined,
           height: data.height || undefined,
-        }
-
-        const vitalsResponse = await fetch(`/api/visits/${visitData.visit.id}/vitals`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(vitalsData),
         })
-
-        if (!vitalsResponse.ok) {
-          throw new Error("Failed to update vitals")
-        }
       }
 
       toast.success("Data kunjungan berhasil diperbarui")
