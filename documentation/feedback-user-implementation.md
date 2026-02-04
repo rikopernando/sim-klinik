@@ -284,11 +284,13 @@ export function findBestBatchForDispensing(
 
 - [x] **RBAC:** Test access to dashboard without login (should redirect to /sign-in)
 - [x] **RBAC:** Test access based on user role, use usePagePermission for Client-side page-level permission checking with redirect (should redirect to /dashboard)
-- [ ] **Nurse Menu:** Login as nurse, verify Rawat Jalan menu appears
-- [ ] **API Performance:** Run `npm run db:push` to apply new indexes
-- [ ] **Edit Visit:** From queue page, click edit on a visit, change poli/vitals
-- [ ] **Cancel Visit:** From queue page, cancel a visit with reason
+- [x] **Nurse Menu:** Login as nurse, verify Rawat Jalan menu appears
+- [x] **API Performance:** Run `npm run db:push` to apply new indexes
+- [x] **Edit Visit:** From queue page, click edit on a visit, change poli/doctor/vitals
+  - should display old value vitals
+- [x] **Cancel Visit:** From queue page, cancel a visit with reason
 - [ ] **Date Filter:** Test all presets (today, yesterday, custom range)
+  - Instead of create some type of period (today, yesterday, custom range), let's make it simple with just date picker filter, with today as default.
 - [ ] **Stock Error:** Try fulfilling prescription with empty/insufficient stock
 - [ ] **Auto FIFO:** Verify auto-selected batch is earliest expiry with sufficient stock
 - [ ] **Compounded Route:** Create prescription with "Obat Racik" route

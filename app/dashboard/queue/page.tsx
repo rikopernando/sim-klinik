@@ -75,7 +75,6 @@ function QueuePageContent() {
           <h1 className="text-3xl font-bold tracking-tight">Antrian Pasien</h1>
           <p className="text-muted-foreground">Lihat antrian pasien untuk setiap layanan</p>
         </div>
-        <QueueDateFilter onDateChange={handleDateChange} />
       </div>
 
       {/* Queue Tabs */}
@@ -88,43 +87,38 @@ function QueuePageContent() {
 
         {/* Outpatient Queue */}
         <TabsContent value="outpatient" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filter Poli</CardTitle>
-              <CardDescription>Pilih poli untuk melihat antrian spesifik</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="poli-filter">Poliklinik</Label>
-                <Select
-                  value={selectedPoli?.toString()}
-                  onValueChange={(value) =>
-                    setSelectedPoli(value === "all" ? undefined : parseInt(value))
-                  }
-                  disabled={isLoadingPolis}
-                >
-                  <SelectTrigger className="w-[200px]" id="poli-filter">
-                    {isLoadingPolis ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Memuat...</span>
-                      </div>
-                    ) : (
-                      <SelectValue placeholder="Semua Poli" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Poli</SelectItem>
-                    {polis.map((poli) => (
-                      <SelectItem key={poli.id} value={poli.id.toString()}>
-                        {poli.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="poli-filter">Poliklinik</Label>
+              <Select
+                value={selectedPoli?.toString()}
+                onValueChange={(value) =>
+                  setSelectedPoli(value === "all" ? undefined : parseInt(value))
+                }
+                disabled={isLoadingPolis}
+              >
+                <SelectTrigger className="w-[200px]" id="poli-filter">
+                  {isLoadingPolis ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Memuat...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Semua Poli" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Poli</SelectItem>
+                  {polis.map((poli) => (
+                    <SelectItem key={poli.id} value={poli.id.toString()}>
+                      {poli.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <QueueDateFilter onDateChange={handleDateChange} />
+          </div>
 
           <QueueDisplay
             visitType="outpatient"
@@ -146,6 +140,9 @@ function QueuePageContent() {
                 Pasien diurutkan berdasarkan tingkat kegawatan (triage)
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <QueueDateFilter onDateChange={handleDateChange} />
+            </CardContent>
           </Card>
 
           <QueueDisplay
@@ -165,6 +162,9 @@ function QueuePageContent() {
               <CardTitle>Daftar Pasien Rawat Inap</CardTitle>
               <CardDescription>Pasien yang sedang dirawat di rumah sakit</CardDescription>
             </CardHeader>
+            <CardContent>
+              <QueueDateFilter onDateChange={handleDateChange} />
+            </CardContent>
           </Card>
 
           <QueueDisplay

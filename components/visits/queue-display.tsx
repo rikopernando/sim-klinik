@@ -78,12 +78,7 @@ export function QueueDisplay({
 
       const data = await response.json()
 
-      // Filter out completed and cancelled visits
-      const activeQueue = (data.data || []).filter((item: QueueItem) => {
-        return item.visit.status !== "completed" && item.visit.status !== "cancelled"
-      })
-
-      setQueue(activeQueue)
+      setQueue(data.data)
       setLastUpdate(new Date())
       setError(null)
     } catch (err) {

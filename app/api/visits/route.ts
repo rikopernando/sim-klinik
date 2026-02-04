@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { visits, patients, vitalsHistory } from "@/db/schema"
-import { eq, and, gte, lt } from "drizzle-orm"
+import { eq, and, gte, lt, ne } from "drizzle-orm"
 import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -252,7 +252,7 @@ export const GET = withRBAC(
       const dateTo = searchParams.get("dateTo")
 
       // Build query conditions
-      const conditions = []
+      const conditions = [ne(visits.status, "cancelled"), ne(visits.status, "completed")]
 
       if (poliId) {
         conditions.push(eq(visits.poliId, poliId))
@@ -266,10 +266,13 @@ export const GET = withRBAC(
         conditions.push(eq(visits.visitType, visitType))
       }
 
+      console.log({ date })
+
       // Date filtering logic
       if (date) {
         // Specific date filter
         const targetDate = new Date(date)
+        console.log({ date, targetDate })
         targetDate.setHours(0, 0, 0, 0)
         const nextDay = new Date(targetDate)
         nextDay.setDate(nextDay.getDate() + 1)

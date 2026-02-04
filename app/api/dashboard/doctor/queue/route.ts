@@ -64,7 +64,7 @@ export const GET = withRBAC(
         .leftJoin(patients, eq(visits.patientId, patients.id))
         .leftJoin(polis, eq(visits.poliId, polis.id))
         .leftJoin(medicalRecords, eq(medicalRecords.visitId, visits.id))
-        .where(and(doctorCondition, statusConditions))
+        .where(and(doctorCondition, statusConditions, eq(visits.visitType, "outpatient")))
         .orderBy(asc(visits.queueNumber))
 
       const response: ResponseApi<{
