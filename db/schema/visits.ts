@@ -29,21 +29,21 @@ export const visits = pgTable(
 
     // For inpatient
     roomId: text("room_id"), // Reference to room (will create rooms table)
-    admissionDate: timestamp("admission_date"),
-    dischargeDate: timestamp("discharge_date"),
+    admissionDate: timestamp("admission_date", { withTimezone: true }),
+    dischargeDate: timestamp("discharge_date", { withTimezone: true }),
 
     // Common fields
     status: varchar("status", { length: 20 }).notNull().default("pending"), // pending, registered, waiting, in_examination, examined, ready_for_billing, billed, paid, completed, cancelled
-    arrivalTime: timestamp("arrival_time").defaultNow().notNull(),
-    startTime: timestamp("start_time"), // When consultation/treatment starts
-    endTime: timestamp("end_time"), // When visit is completed
+    arrivalTime: timestamp("arrival_time", { withTimezone: true }).defaultNow().notNull(),
+    startTime: timestamp("start_time", { withTimezone: true }), // When consultation/treatment starts
+    endTime: timestamp("end_time", { withTimezone: true }), // When visit is completed
 
     // Disposition (especially for ER)
     disposition: varchar("disposition", { length: 50 }), // discharged, admitted, referred, died
 
     notes: text("notes"), // General notes
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
     // Performance indexes for common query patterns
@@ -57,8 +57,14 @@ export const visits = pgTable(
     doctorStatusIdx: index("visits_doctor_status_idx").on(table.doctorId, table.status),
     poliStatusIdx: index("visits_poli_status_idx").on(table.poliId, table.status),
     // Composite index for date-filtered queue queries
-    arrivalTimeStatusIdx: index("visits_arrival_time_status_idx").on(table.arrivalTime, table.status),
-    visitTypeArrivalIdx: index("visits_visit_type_arrival_idx").on(table.visitType, table.arrivalTime),
+    arrivalTimeStatusIdx: index("visits_arrival_time_status_idx").on(
+      table.arrivalTime,
+      table.status
+    ),
+    visitTypeArrivalIdx: index("visits_visit_type_arrival_idx").on(
+      table.visitType,
+      table.arrivalTime
+    ),
   })
 )
 
@@ -74,6 +80,6 @@ export const polis = pgTable("polis", {
   code: varchar("code", { length: 20 }).notNull().unique(),
   description: text("description").notNull(),
   isActive: varchar("is_active", { length: 10 }).notNull().default("active"), // active, inactive
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   // updatedAt: timestamp("update_at").defaultNow().notNull(),
 })

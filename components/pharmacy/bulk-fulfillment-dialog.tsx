@@ -241,7 +241,10 @@ export function BulkFulfillmentDialog({
               <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid || stockIssues.length > 0}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !isFormValid || stockIssues.length > 0}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

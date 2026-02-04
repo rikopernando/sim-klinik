@@ -86,7 +86,7 @@ export const GET = withRBAC(
       }> = {
         message: "Stats fetched successfully",
         data: {
-          queue: queueWithMedicalRecords as QueueItem[],
+          queue: queueWithMedicalRecords as unknown as QueueItem[],
           total: queueWithMedicalRecords.length,
         },
         status: HTTP_STATUS_CODES.OK,

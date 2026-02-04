@@ -13,7 +13,7 @@ export const patients = pgTable(
     mrNumber: varchar("mr_number", { length: 20 }).notNull().unique(), // Medical Record Number (auto-generated)
     nik: varchar("nik", { length: 16 }).unique(), // National ID Number (Nomor Induk Kependudukan)
     name: varchar("name", { length: 255 }).notNull(),
-    dateOfBirth: timestamp("date_of_birth"),
+    dateOfBirth: timestamp("date_of_birth", { withTimezone: true }),
     gender: varchar("gender", { length: 10 }), // male, female, other
     address: text("address"), // Street address details (Jalan, RT/RW, No. Rumah)
 
@@ -35,8 +35,8 @@ export const patients = pgTable(
     emergencyPhone: varchar("emergency_phone", { length: 20 }),
     bloodType: varchar("blood_type", { length: 5 }), // A, B, AB, O with +/-
     allergies: text("allergies"), // Comma-separated or JSON
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
     // Indexes for search performance

@@ -289,7 +289,7 @@ export function findBestBatchForDispensing(
 - [x] **Edit Visit:** From queue page, click edit on a visit, change poli/doctor/vitals
   - should display old value vitals
 - [x] **Cancel Visit:** From queue page, cancel a visit with reason
-- [ ] **Date Filter:** Test all presets (today, yesterday, custom range)
+- [x] **Date Filter:** Test all presets (today, yesterday, custom range)
   - Instead of create some type of period (today, yesterday, custom range), let's make it simple with just date picker filter, with today as default.
 - [ ] **Stock Error:** Try fulfilling prescription with empty/insufficient stock
 - [ ] **Auto FIFO:** Verify auto-selected batch is earliest expiry with sufficient stock
