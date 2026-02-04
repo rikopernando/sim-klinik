@@ -11,6 +11,7 @@ import { useDoctorDashboard } from "@/hooks/use-doctor-dashboard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
 import { EditVisitDialog } from "@/components/visits/edit-visit-dialog"
+import { QueueDateFilter } from "@/components/visits/queue-date-filter"
 import { DoctorHeader } from "@/components/doctor/doctor-header"
 import { DoctorStatsSection } from "@/components/doctor/doctor-stats-section"
 import { DoctorQueueTabs } from "@/components/doctor/doctor-queue-tabs"
@@ -44,6 +45,7 @@ function DoctorDashboardContent() {
 
     // Handlers
     handleRefreshAll,
+    handleDateChange,
     handleStartExamination,
     handleOpenMedicalRecord,
     handleViewHistory,
@@ -82,6 +84,7 @@ function DoctorDashboardContent() {
           onOpenMedicalRecord={handleOpenMedicalRecord}
           onViewHistory={handleViewHistory}
           onEditVisit={handleEditVisit}
+          headerAction={<QueueDateFilter onDateChange={handleDateChange} />}
         />
       )}
 

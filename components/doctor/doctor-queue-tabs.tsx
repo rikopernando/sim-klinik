@@ -2,6 +2,7 @@
  * Doctor Dashboard Queue Tabs
  */
 
+import { ReactNode } from "react"
 import { DashboardSection, ListWidget } from "@/components/dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { QueueItem, QueuePatient } from "@/types/dashboard"
@@ -16,6 +17,7 @@ interface DoctorQueueTabsProps {
   onOpenMedicalRecord: (visitId: string) => void
   onViewHistory: (patient: QueuePatient | null) => void
   onEditVisit?: (item: QueueItem) => void
+  headerAction?: ReactNode
 }
 
 export function DoctorQueueTabs({
@@ -27,9 +29,14 @@ export function DoctorQueueTabs({
   onOpenMedicalRecord,
   onViewHistory,
   onEditVisit,
+  headerAction,
 }: DoctorQueueTabsProps) {
   return (
-    <DashboardSection title="Antrian Pasien" description="Daftar pasien yang perlu ditangani">
+    <DashboardSection
+      title="Antrian Pasien"
+      description="Daftar pasien yang perlu ditangani"
+      action={headerAction}
+    >
       <Tabs defaultValue="waiting" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="waiting">Menunggu ({waitingQueue.length})</TabsTrigger>

@@ -4,6 +4,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
 import { useDoctorStats } from "@/hooks/use-doctor-stats"
 import { useDoctorQueue } from "@/hooks/use-doctor-queue"
 import { updateVisitStatus } from "@/lib/services/visit.service"
@@ -20,6 +21,7 @@ export function useDoctorDashboard() {
   const [error, setError] = useState<string | null>(null)
   const [editVisitData, setEditVisitData] = useState<EditVisitData | null>(null)
   const [showEditDialog, setShowEditDialog] = useState(false)
+  const [dateFilter, setDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"))
 
   // Fetch dashboard statistics with auto-refresh
   const {
@@ -39,6 +41,7 @@ export function useDoctorDashboard() {
     refresh: refreshQueue,
   } = useDoctorQueue({
     status: "all",
+    date: dateFilter,
     autoRefresh: true,
     refreshInterval: 30000, // Refresh every 30 seconds
   })
@@ -134,6 +137,13 @@ export function useDoctorDashboard() {
     refreshStats()
   }, [refreshQueue, refreshStats])
 
+  const handleDateChange = useCallback(
+    (date: string | undefined, _dateFrom: string | undefined, _dateTo: string | undefined) => {
+      if (date) setDateFilter(date)
+    },
+    []
+  )
+
   return {
     // State
     stats,
@@ -150,9 +160,11 @@ export function useDoctorDashboard() {
     error,
     editVisitData,
     showEditDialog,
+    dateFilter,
 
     // Handlers
     handleRefreshAll,
+    handleDateChange,
     handleStartExamination,
     handleOpenMedicalRecord,
     handleViewHistory,

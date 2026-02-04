@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { eq, and, or, asc } from "drizzle-orm"
+import { eq, and, or, asc, gte, lte } from "drizzle-orm"
 
 import { db } from "@/db"
 import { visits, patients, polis, medicalRecords } from "@/db/schema"
@@ -19,6 +19,17 @@ export const GET = withRBAC(
     try {
       const searchParams = request.nextUrl.searchParams
       const status = searchParams.get("status") // optional filter: waiting, in_examination, all
+      const date = searchParams.get("date") // YYYY-MM-DD format
+
+      // Build date filter condition
+      let dateCondition
+      if (date) {
+        const startOfDay = new Date(date)
+        startOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(date)
+        endOfDay.setHours(23, 59, 59, 999)
+        dateCondition = and(gte(visits.arrivalTime, startOfDay), lte(visits.arrivalTime, endOfDay))
+      }
 
       let doctorCondition
 
@@ -64,7 +75,9 @@ export const GET = withRBAC(
         .leftJoin(patients, eq(visits.patientId, patients.id))
         .leftJoin(polis, eq(visits.poliId, polis.id))
         .leftJoin(medicalRecords, eq(medicalRecords.visitId, visits.id))
-        .where(and(doctorCondition, statusConditions, eq(visits.visitType, "outpatient")))
+        .where(
+          and(doctorCondition, statusConditions, dateCondition, eq(visits.visitType, "outpatient"))
+        )
         .orderBy(asc(visits.queueNumber))
 
       const response: ResponseApi<{
