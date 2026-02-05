@@ -3,7 +3,8 @@
  * Stock alerts, expiry checks, and inventory calculations
  */
 
-import { StockAlertLevel, ExpiryAlertLevel, DrugInventoryWithDetails } from "@/types/pharmacy"
+import { StockAlertLevel, ExpiryAlertLevel } from "@/types/pharmacy"
+import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
 
 /**
  * Calculate days until expiry

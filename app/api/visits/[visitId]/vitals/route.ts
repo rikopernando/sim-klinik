@@ -83,7 +83,13 @@ export const GET = withRBAC(
  * Requires: visits:write permission
  */
 export const POST = withRBAC(
-  async (request: NextRequest, { params, user }) => {
+  async (
+    request: NextRequest,
+    {
+      params,
+      user,
+    }: { params: { visitId: string }; user: { id: string; email: string; name: string } }
+  ) => {
     try {
       const { visitId } = params
       const body = await request.json()

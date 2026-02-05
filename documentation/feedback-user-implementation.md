@@ -291,10 +291,10 @@ export function findBestBatchForDispensing(
 - [x] **Cancel Visit:** From queue page, cancel a visit with reason
 - [x] **Date Filter:** Test all presets (today, yesterday, custom range)
   - Instead of create some type of period (today, yesterday, custom range), let's make it simple with just date picker filter, with today as default.
-- [ ] **Stock Error:** Try fulfilling prescription with empty/insufficient stock
-- [ ] **Auto FIFO:** Verify auto-selected batch is earliest expiry with sufficient stock
-- [ ] **Compounded Route:** Create prescription with "Obat Racik" route
-- [ ] **Doctor Loader:** Verify skeletons show during initial load
+- [x] **Stock Error:** Try fulfilling prescription with empty/insufficient stock
+- [x] **Auto FIFO:** Verify auto-selected batch is earliest expiry with sufficient stock
+- [x] **Compounded Route:** Create prescription with "Obat Racik" route
+- [x] **Doctor Loader:** Verify skeletons show during initial load
 
 ---
 

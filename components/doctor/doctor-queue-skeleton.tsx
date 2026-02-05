@@ -27,10 +27,7 @@ export function DoctorQueueSkeleton() {
           </CardHeader>
           <CardContent className="space-y-3">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between rounded-lg border p-3"
-              >
+              <div key={i} className="flex items-center justify-between rounded-lg border p-3">
                 <div className="flex items-center gap-3">
                   <Skeleton className="h-10 w-10 rounded-full" />
                   <div className="space-y-2">

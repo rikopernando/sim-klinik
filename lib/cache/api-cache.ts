@@ -118,14 +118,17 @@ export const longCache = new ApiCache(300_000)
 /**
  * Helper to create cache key from query params
  */
-export function createCacheKey(base: string, params?: Record<string, string | number | undefined | null>): string {
+export function createCacheKey(
+  base: string,
+  params?: Record<string, string | number | undefined | null>
+): string {
   if (!params) return base
 
   const sortedParams = Object.entries(params)
     .filter(([, v]) => v !== undefined && v !== null)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([k, v]) => `${k}=${v}`)
-    .join('&')
+    .join("&")
 
   return sortedParams ? `${base}?${sortedParams}` : base
 }
