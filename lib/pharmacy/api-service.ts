@@ -605,6 +605,9 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
 /**
  * Bulk fulfill multiple prescriptions atomically
  *
+ * Supports multi-batch fulfillment: multiple entries with the same prescriptionId
+ * but different inventoryId are grouped and processed together.
+ *
  * Performance optimizations:
  * - Batch fetches all prescriptions and inventories upfront (reduces N+1 queries)
  * - Validates all data before making any changes (fail-fast approach)
@@ -623,8 +626,16 @@ export async function bulkFulfillPrescriptions(
     return []
   }
 
+  // Group by prescriptionId for multi-batch support
+  const grouped = new Map<string, PrescriptionFulfillmentInput[]>()
+  for (const req of fulfillmentRequests) {
+    const existing = grouped.get(req.prescriptionId) || []
+    existing.push(req)
+    grouped.set(req.prescriptionId, existing)
+  }
+
   // Extract all unique prescription and inventory IDs for batch fetching
-  const prescriptionIds = fulfillmentRequests.map((req) => req.prescriptionId)
+  const prescriptionIds = [...grouped.keys()]
   const inventoryIds = [...new Set(fulfillmentRequests.map((req) => req.inventoryId))]
 
   // Batch fetch all prescriptions and inventories in parallel (performance optimization)
@@ -654,30 +665,34 @@ export async function bulkFulfillPrescriptions(
   const inventoryMap = new Map(allInventories.map((inv) => [inv.id, inv]))
 
   // Validate all requests before making any changes (fail-fast)
-  for (const request of fulfillmentRequests) {
-    const prescription = prescriptionMap.get(request.prescriptionId)
-    const inventory = inventoryMap.get(request.inventoryId)
+  for (const [prescriptionId, requests] of grouped) {
+    const prescription = prescriptionMap.get(prescriptionId)
 
     // Validate prescription exists
     if (!prescription) {
-      throw new Error(`Prescription ${request.prescriptionId} not found`)
+      throw new Error(`Prescription ${prescriptionId} not found`)
     }
 
     // Validate prescription is not already fulfilled
     if (prescription.isFulfilled) {
-      throw new Error(`Prescription ${request.prescriptionId} has already been fulfilled`)
+      throw new Error(`Prescription ${prescriptionId} has already been fulfilled`)
     }
 
-    // Validate inventory exists
-    if (!inventory) {
-      throw new Error(`Inventory ${request.inventoryId} not found`)
-    }
+    // Validate each batch allocation
+    for (const req of requests) {
+      const inventory = inventoryMap.get(req.inventoryId)
 
-    // Validate sufficient stock (note: this is a snapshot check, actual stock checked in transaction)
-    if (inventory.stockQuantity < request.dispensedQuantity) {
-      throw new Error(
-        `Insufficient stock for inventory ${request.inventoryId}. Available: ${inventory.stockQuantity}, Requested: ${request.dispensedQuantity}`
-      )
+      // Validate inventory exists
+      if (!inventory) {
+        throw new Error(`Inventory ${req.inventoryId} not found`)
+      }
+
+      // Validate sufficient stock per batch allocation
+      if (inventory.stockQuantity < req.dispensedQuantity) {
+        throw new Error(
+          `Insufficient stock for inventory ${req.inventoryId}. Available: ${inventory.stockQuantity}, Requested: ${req.dispensedQuantity}`
+        )
+      }
     }
   }
 
@@ -685,38 +700,43 @@ export async function bulkFulfillPrescriptions(
   return await db.transaction(async (tx) => {
     const results: Array<typeof prescriptions.$inferSelect> = []
 
-    for (const request of fulfillmentRequests) {
-      // Update prescription status
+    for (const [prescriptionId, requests] of grouped) {
+      const totalDispensed = requests.reduce((sum, r) => sum + r.dispensedQuantity, 0)
+      const primaryInventoryId = requests[0].inventoryId
+
+      // Update prescription once with total dispensed quantity
       const [updatedPrescription] = await tx
         .update(prescriptions)
         .set({
           isFulfilled: true,
-          fulfilledBy: request.fulfilledBy,
+          fulfilledBy: requests[0].fulfilledBy,
           fulfilledAt: sql`CURRENT_TIMESTAMP`,
-          dispensedQuantity: request.dispensedQuantity,
-          inventoryId: request.inventoryId,
-          notes: request.notes || null,
+          dispensedQuantity: totalDispensed,
+          inventoryId: primaryInventoryId,
+          notes: requests[0].notes || null,
         })
-        .where(eq(prescriptions.id, request.prescriptionId))
+        .where(eq(prescriptions.id, prescriptionId))
         .returning()
 
-      // Reduce inventory stock
-      await tx
-        .update(drugInventory)
-        .set({
-          stockQuantity: sql`${drugInventory.stockQuantity} - ${request.dispensedQuantity}`,
-        })
-        .where(eq(drugInventory.id, request.inventoryId))
+      // Deduct stock from each batch separately
+      for (const req of requests) {
+        await tx
+          .update(drugInventory)
+          .set({
+            stockQuantity: sql`${drugInventory.stockQuantity} - ${req.dispensedQuantity}`,
+          })
+          .where(eq(drugInventory.id, req.inventoryId))
 
-      // Record stock movement for audit trail
-      await tx.insert(stockMovements).values({
-        inventoryId: request.inventoryId,
-        movementType: "out",
-        quantity: -request.dispensedQuantity,
-        reason: `Resep #${request.prescriptionId}`,
-        referenceId: request.prescriptionId,
-        performedBy: request.fulfilledBy,
-      })
+        // Record stock movement per batch for audit trail
+        await tx.insert(stockMovements).values({
+          inventoryId: req.inventoryId,
+          movementType: "out",
+          quantity: -req.dispensedQuantity,
+          reason: `Resep #${prescriptionId}`,
+          referenceId: prescriptionId,
+          performedBy: req.fulfilledBy,
+        })
+      }
 
       results.push(updatedPrescription)
     }

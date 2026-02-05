@@ -55,17 +55,21 @@ export function BulkFulfillmentDialog({
   const { pharmacists, isLoading: isLoadingPharmacists } = usePharmacists(open)
   const {
     fulfillmentData,
-    handleBatchSelect,
+    handleAllocationsChange,
     reset: resetFulfillmentData,
   } = useBulkFulfillmentData(open, selectedGroup)
 
   // Memoized validation check
   const isFormValid = useMemo(() => {
     if (!fulfilledBy.trim()) return false
-    return !Object.values(fulfillmentData).some((d) => d.isLoading || !d.inventoryId)
+    return !Object.values(fulfillmentData).some((d) => {
+      if (d.isLoading || d.allocatedBatches.length === 0) return true
+      const totalAllocated = d.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+      return totalAllocated !== d.dispensedQuantity
+    })
   }, [fulfilledBy, fulfillmentData])
 
-  // Check for stock issues (items with no batches available)
+  // Check for stock issues using total stock across all batches
   const stockIssues = useMemo(() => {
     const issues: string[] = []
     for (const item of selectedGroup?.prescriptions || []) {
@@ -75,11 +79,24 @@ export function BulkFulfillmentDialog({
         if (data.availableBatches.length === 0) {
           issues.push(`"${item.drug.name}" tidak memiliki stok tersedia`)
         }
-        // Selected batch has insufficient stock
-        else if (data.selectedBatch && data.selectedBatch.stockQuantity < data.dispensedQuantity) {
+        // Total stock across all batches is insufficient
+        else if (data.totalAvailableStock < data.dispensedQuantity) {
           issues.push(
-            `"${item.drug.name}" stok tidak cukup (tersedia: ${data.selectedBatch.stockQuantity}, butuh: ${data.dispensedQuantity})`
+            `"${item.drug.name}" total stok tidak cukup (tersedia: ${data.totalAvailableStock}, butuh: ${data.dispensedQuantity})`
           )
+        }
+        // Allocated quantity doesn't match required
+        else {
+          const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+          if (totalAllocated < data.dispensedQuantity) {
+            issues.push(
+              `"${item.drug.name}" jumlah alokasi kurang (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+            )
+          } else if (totalAllocated > data.dispensedQuantity) {
+            issues.push(
+              `"${item.drug.name}" jumlah alokasi berlebih (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+            )
+          }
         }
       }
     }
@@ -113,7 +130,7 @@ export function BulkFulfillmentDialog({
     for (const item of selectedGroup?.prescriptions || []) {
       const data = fulfillmentData[item.prescription.id]
 
-      if (!data || !data.inventoryId) {
+      if (!data || data.allocatedBatches.length === 0) {
         setValidationError(`Batch untuk "${item.drug.name}" belum dipilih`)
         return
       }
@@ -123,21 +140,25 @@ export function BulkFulfillmentDialog({
         return
       }
 
-      // Double-check stock availability
-      if (data.selectedBatch && data.selectedBatch.stockQuantity < data.dispensedQuantity) {
+      // Validate total allocated matches required
+      const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+      if (totalAllocated !== data.dispensedQuantity) {
         setValidationError(
-          `Stok "${item.drug.name}" tidak mencukupi (tersedia: ${data.selectedBatch.stockQuantity}, butuh: ${data.dispensedQuantity})`
+          `Jumlah alokasi "${item.drug.name}" tidak sesuai (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
         )
         return
       }
 
-      prescriptionData.push({
-        prescriptionId: item.prescription.id,
-        inventoryId: data.inventoryId,
-        dispensedQuantity: data.dispensedQuantity,
-        fulfilledBy: fulfilledBy.trim(),
-        notes: notes.trim() || undefined,
-      })
+      // Push one entry per allocated batch (supports multi-batch fulfillment)
+      for (const alloc of data.allocatedBatches) {
+        prescriptionData.push({
+          prescriptionId: item.prescription.id,
+          inventoryId: alloc.batch.id,
+          dispensedQuantity: alloc.quantity,
+          fulfilledBy: fulfilledBy.trim(),
+          notes: notes.trim() || undefined,
+        })
+      }
     }
 
     await onSubmit(prescriptionData)
@@ -206,7 +227,9 @@ export function BulkFulfillmentDialog({
                 quantity={item.prescription.quantity}
                 unit={item.drug.unit}
                 fulfillmentData={fulfillmentData[item.prescription.id]}
-                onBatchSelect={(batch) => handleBatchSelect(item.prescription.id, batch)}
+                onAllocationsChange={(allocs) =>
+                  handleAllocationsChange(item.prescription.id, allocs)
+                }
                 showSeparator={idx > 0}
               />
             ))}

@@ -1,7 +1,7 @@
 /**
  * Prescription Item Component
  * Displays individual prescription with auto-selected batch (FEFO)
- * Manual batch selection is hidden by default but can be expanded
+ * Manual multi-batch selection is hidden by default but can be expanded
  */
 
 import { useState } from "react"
@@ -10,15 +10,11 @@ import { ChevronDown, ChevronUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { BatchSelector } from "@/components/pharmacy/fulfillment/batch-selector"
 import { AutoBatchDisplay } from "@/components/pharmacy/fulfillment/auto-batch-display"
 import type { FulfillmentFormData } from "@/components/pharmacy/hooks/use-bulk-fulfillment-data"
+import type { BatchAllocation } from "@/lib/pharmacy/stock-utils"
 
 interface PrescriptionItemProps {
   index: number
@@ -29,7 +25,7 @@ interface PrescriptionItemProps {
   quantity: number
   unit: string
   fulfillmentData: FulfillmentFormData | undefined
-  onBatchSelect: (batch: DrugInventoryWithDetails) => void
+  onAllocationsChange: (allocations: BatchAllocation[]) => void
   showSeparator?: boolean
 }
 
@@ -42,7 +38,7 @@ export function PrescriptionItem({
   quantity,
   unit,
   fulfillmentData,
-  onBatchSelect,
+  onAllocationsChange,
   showSeparator = false,
 }: PrescriptionItemProps) {
   const [showManualSelector, setShowManualSelector] = useState(false)
@@ -73,13 +69,14 @@ export function PrescriptionItem({
       <div className="ml-8">
         <AutoBatchDisplay
           selectedBatch={fulfillmentData?.selectedBatch || null}
+          allocatedBatches={fulfillmentData?.allocatedBatches || []}
           requiredQuantity={quantity}
           unit={unit}
           isLoading={fulfillmentData?.isLoading || false}
           drugName={drugName}
         />
 
-        {/* Manual Batch Selection (Collapsible) */}
+        {/* Manual Multi-Batch Selection (Collapsible) */}
         {hasMultipleBatches && !fulfillmentData?.isLoading && (
           <Collapsible open={showManualSelector} onOpenChange={setShowManualSelector}>
             <CollapsibleTrigger asChild>
@@ -101,8 +98,10 @@ export function PrescriptionItem({
               <BatchSelector
                 isLoading={fulfillmentData?.isLoading || false}
                 batches={fulfillmentData?.availableBatches || []}
-                selectedBatch={fulfillmentData?.selectedBatch || null}
-                onBatchSelect={onBatchSelect}
+                allocatedBatches={fulfillmentData?.allocatedBatches || []}
+                requiredQuantity={quantity}
+                unit={unit}
+                onAllocationsChange={onAllocationsChange}
                 drugId={drugId}
                 drugName={drugName}
               />
@@ -112,16 +111,19 @@ export function PrescriptionItem({
       </div>
 
       {/* Display Prescription Quantity (Read-only) */}
-      {!fulfillmentData?.isLoading && !fulfillmentData?.error && fulfillmentData?.selectedBatch && (
-        <div className="ml-8">
-          <p className="text-muted-foreground text-sm">
-            Jumlah Diberikan:{" "}
-            <span className="text-foreground font-medium">
-              {quantity} {unit}
-            </span>
-          </p>
-        </div>
-      )}
+      {!fulfillmentData?.isLoading &&
+        !fulfillmentData?.error &&
+        fulfillmentData?.allocatedBatches &&
+        fulfillmentData.allocatedBatches.length > 0 && (
+          <div className="ml-8">
+            <p className="text-muted-foreground text-sm">
+              Jumlah Diberikan:{" "}
+              <span className="text-foreground font-medium">
+                {quantity} {unit}
+              </span>
+            </p>
+          </div>
+        )}
     </div>
   )
 }

@@ -1,6 +1,7 @@
 /**
  * Custom hook for managing bulk fulfillment data and batch loading
  * Uses FEFO (First Expiry, First Out) for automatic batch selection
+ * Supports multi-batch allocation when no single batch has enough stock
  */
 
 import { useState, useEffect, useCallback } from "react"
@@ -9,13 +10,19 @@ import {
   type DrugInventoryWithDetails,
 } from "@/lib/services/inventory.service"
 import { PrescriptionQueueItem } from "@/types/pharmacy"
-import { findBestBatchForDispensing } from "@/lib/pharmacy/stock-utils"
+import {
+  allocateBatchesForDispensing,
+  getAvailableStock,
+  type BatchAllocation,
+} from "@/lib/pharmacy/stock-utils"
 
 export interface FulfillmentFormData {
   inventoryId: string
   dispensedQuantity: number
   availableBatches: DrugInventoryWithDetails[]
   selectedBatch: DrugInventoryWithDetails | null
+  allocatedBatches: BatchAllocation[]
+  totalAvailableStock: number
   isLoading: boolean
   error: string | null
 }
@@ -38,6 +45,8 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
           dispensedQuantity: item.prescription.quantity,
           availableBatches: [],
           selectedBatch: null,
+          allocatedBatches: [],
+          totalAvailableStock: 0,
           isLoading: true,
           error: null,
         }
@@ -49,8 +58,9 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
       for (const item of selectedGroup.prescriptions) {
         try {
           const batches = await getAvailableBatches(item.drug.id)
-          // Use FEFO (First Expiry First Out) to select the best batch
-          const bestBatch = findBestBatchForDispensing(batches, item.prescription.quantity)
+          const allocations = allocateBatchesForDispensing(batches, item.prescription.quantity)
+          const totalStock = getAvailableStock(batches)
+          const primaryBatch = allocations.length > 0 ? allocations[0].batch : null
 
           if (!ignore) {
             setFulfillmentData((prev) => ({
@@ -58,8 +68,10 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
               [item.prescription.id]: {
                 ...prev[item.prescription.id],
                 availableBatches: batches,
-                selectedBatch: bestBatch,
-                inventoryId: bestBatch ? bestBatch.id : "",
+                selectedBatch: primaryBatch,
+                inventoryId: primaryBatch ? primaryBatch.id : "",
+                allocatedBatches: allocations,
+                totalAvailableStock: totalStock,
                 isLoading: false,
               },
             }))
@@ -85,16 +97,20 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
     }
   }, [open, selectedGroup])
 
-  const handleBatchSelect = useCallback(
-    (prescriptionId: string, batch: DrugInventoryWithDetails) => {
-      setFulfillmentData((prev) => ({
-        ...prev,
-        [prescriptionId]: {
-          ...prev[prescriptionId],
-          selectedBatch: batch,
-          inventoryId: batch.id,
-        },
-      }))
+  const handleAllocationsChange = useCallback(
+    (prescriptionId: string, allocations: BatchAllocation[]) => {
+      setFulfillmentData((prev) => {
+        const primaryBatch = allocations.length > 0 ? allocations[0].batch : null
+        return {
+          ...prev,
+          [prescriptionId]: {
+            ...prev[prescriptionId],
+            selectedBatch: primaryBatch,
+            inventoryId: primaryBatch ? primaryBatch.id : "",
+            allocatedBatches: allocations,
+          },
+        }
+      })
     },
     []
   )
@@ -105,7 +121,7 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
 
   return {
     fulfillmentData,
-    handleBatchSelect,
+    handleAllocationsChange,
     reset,
   }
 }
