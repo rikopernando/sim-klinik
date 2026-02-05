@@ -17,8 +17,8 @@ export const services = pgTable("services", {
   description: text("description"),
   category: varchar("category", { length: 100 }), // Grouping for reports
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -56,11 +56,11 @@ export const billings = pgTable("billings", {
 
   // Cashier info
   processedBy: text("processed_by").references(() => user.id),
-  processedAt: timestamp("processed_at"),
+  processedAt: timestamp("processed_at", { withTimezone: true }),
 
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -89,7 +89,7 @@ export const billingItems = pgTable("billing_items", {
   totalPrice: decimal("total_price", { precision: 12, scale: 2 }).notNull(),
 
   description: text("description"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -117,10 +117,11 @@ export const payments = pgTable("payments", {
   receivedBy: text("received_by")
     .notNull()
     .references(() => user.id),
-  receivedAt: timestamp("received_at").defaultNow().notNull(),
+  receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow().notNull(),
 
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -147,15 +148,15 @@ export const dischargeSummaries = pgTable("discharge_summaries", {
   dischargeInstructions: text("discharge_instructions").notNull(),
   dietaryRestrictions: text("dietary_restrictions"),
   activityRestrictions: text("activity_restrictions"),
-  followUpDate: timestamp("follow_up_date"),
+  followUpDate: timestamp("follow_up_date", { withTimezone: true }),
   followUpInstructions: text("follow_up_instructions"),
 
   // Doctor info
   dischargedBy: text("discharged_by")
     .notNull()
     .references(() => user.id),
-  dischargedAt: timestamp("discharged_at").defaultNow().notNull(),
+  dischargedAt: timestamp("discharged_at", { withTimezone: true }).defaultNow().notNull(),
 
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })

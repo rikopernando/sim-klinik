@@ -165,7 +165,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "inpatient:write",
     "inpatient:manage_beds",
     "lab:read",
-    "lab:write", // Nurses can collect specimens
   ],
 
   pharmacist: [

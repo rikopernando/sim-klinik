@@ -6,6 +6,7 @@
  */
 
 import { useParams, useRouter } from "next/navigation"
+import { PageGuard } from "@/components/auth/page-guard"
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
@@ -38,6 +39,14 @@ import { useSession } from "@/lib/auth-client"
 import { CreateLabOrderDialog, LabOrdersList } from "@/components/laboratory"
 
 export default function PatientDetailPage() {
+  return (
+    <PageGuard permissions={["inpatient:read"]}>
+      <PatientDetailPageContent />
+    </PageGuard>
+  )
+}
+
+function PatientDetailPageContent() {
   const { data: session } = useSession()
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()

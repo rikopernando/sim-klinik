@@ -6,13 +6,14 @@
  */
 
 import { useState, useMemo, useCallback } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { usePaginatedInventory } from "@/hooks/use-inventory"
 import { AddInventoryDialog } from "@/components/pharmacy/add-inventory-dialog"
 import { InventoryHeader } from "@/components/pharmacy/inventory/inventory-header"
 import { InventoryStats } from "@/components/pharmacy/inventory/inventory-stats"
 import { InventoryTable } from "@/components/pharmacy/inventory/inventory-table"
 
-export default function InventoryPage() {
+function InventoryPageContent() {
   const {
     inventories,
     isLoading,
@@ -82,5 +83,13 @@ export default function InventoryPage() {
         onSuccess={handleAddSuccess}
       />
     </div>
+  )
+}
+
+export default function InventoryPage() {
+  return (
+    <PageGuard permissions={["pharmacy:manage_inventory"]}>
+      <InventoryPageContent />
+    </PageGuard>
   )
 }

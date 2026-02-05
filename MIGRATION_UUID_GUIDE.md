@@ -21,6 +21,7 @@ All schema files have been converted to use UUIDs:
 ### ID Generation
 
 All tables now use:
+
 ```typescript
 id: text("id")
   .primaryKey()
@@ -44,6 +45,7 @@ npm run db:push
 ```
 
 This will:
+
 - Drop all existing tables
 - Create new tables with UUID primary keys
 - Set up all foreign key relationships correctly
@@ -68,21 +70,25 @@ npm run db:migrate
 ## Benefits of UUID Migration
 
 ### 1. Security & Privacy ✅
+
 - **No information leakage**: Serial IDs reveal business metrics (e.g., patient count)
 - **Harder to guess**: Prevents enumeration attacks (`/patients/1`, `/patients/2`, etc.)
 - **HIPAA compliance**: Better for protecting patient privacy
 
 ### 2. Distributed System Ready ✅
+
 - **No collision risk**: Can generate IDs client-side or across multiple servers
 - **Merge-friendly**: Easy to sync data between clinics or backup systems
 - **Offline capability**: Generate valid IDs without database connection
 
 ### 3. Better for Medical Records ✅
+
 - **External references**: MR numbers, prescription IDs can be shared safely
 - **API security**: No predictable resource enumeration
 - **Audit trails**: Easier to track records across system boundaries
 
 ### 4. Consistency ✅
+
 - **Matches auth schema**: All tables now use the same ID format
 - **Type safety**: TypeScript will enforce UUID format across the codebase
 
@@ -93,18 +99,20 @@ npm run db:migrate
 All API routes that used integer IDs now expect UUIDs:
 
 **Before:**
+
 ```typescript
 // GET /api/patients/123
 const patient = await db.query.patients.findFirst({
-  where: eq(patients.id, 123)
+  where: eq(patients.id, 123),
 })
 ```
 
 **After:**
+
 ```typescript
 // GET /api/patients/550e8400-e29b-41d4-a716-446655440000
 const patient = await db.query.patients.findFirst({
-  where: eq(patients.id, "550e8400-e29b-41d4-a716-446655440000")
+  where: eq(patients.id, "550e8400-e29b-41d4-a716-446655440000"),
 })
 ```
 
@@ -113,12 +121,14 @@ const patient = await db.query.patients.findFirst({
 Components that display or link to resources will need updates:
 
 **Before:**
+
 ```tsx
 <Link href={`/dashboard/patients/${patient.id}`}>View Patient</Link>
 // patient.id = 123
 ```
 
 **After:**
+
 ```tsx
 <Link href={`/dashboard/patients/${patient.id}`}>View Patient</Link>
 // patient.id = "550e8400-e29b-41d4-a716-446655440000"
@@ -144,11 +154,13 @@ After migration, verify:
 **Myth**: "UUIDs are slower"
 
 **Reality**:
+
 - For tables with <10M rows (your use case), the difference is negligible
 - PostgreSQL handles UUID indexes efficiently
 - Primary key lookups are fast regardless (indexed)
 
 **Storage**:
+
 - UUID: 16 bytes vs Serial: 4 bytes
 - For 100,000 patients: ~1.2 MB difference (trivial)
 
@@ -178,6 +190,7 @@ npm run db:generate
 ## Questions?
 
 Refer to the following documentation sections:
+
 - `documentation/backend_structure_document.md` - Database architecture
 - `documentation/security_guideline_document.md` - Security best practices
 

@@ -11,17 +11,20 @@ Implemented **Option A: Registration = Room Preference Only** to separate patien
 ### 1. **InpatientFields Component** (`/components/visits/inpatient-fields.tsx`)
 
 **Before:**
+
 - Room selection dropdown (required field)
 - Used hardcoded AVAILABLE_ROOMS data
 - Set `visits.roomId` during registration
 
 **After:**
+
 - Informational message only
 - No room selection required
 - Explains bed assignment will happen next
 - Shows user-friendly guidance about the workflow
 
 **UI Change:**
+
 ```
 ┌─────────────────────────────────────────┐
 │ 🛈 Pasien Rawat Inap                   │
@@ -40,10 +43,12 @@ Implemented **Option A: Registration = Room Preference Only** to separate patien
 ### 2. **Validation Schema** (`/lib/validations/registration.ts`)
 
 **Removed:**
+
 - `roomId` requirement for inpatient visits
 - Validation refine block (lines 94-106)
 
 **Updated Comment:**
+
 ```typescript
 /**
  * Visit Registration Form Validation Schema
@@ -54,6 +59,7 @@ Implemented **Option A: Registration = Room Preference Only** to separate patien
 ```
 
 **Impact:**
+
 - Inpatient registration can now proceed without selecting a room
 - `visits.roomId` will be set later during bed assignment
 - Faster registration process
@@ -63,11 +69,13 @@ Implemented **Option A: Registration = Room Preference Only** to separate patien
 ### 3. **Registration Success Page** (`/app/dashboard/registration/page.tsx`)
 
 **Added:**
+
 - **"Alokasi Bed Sekarang"** button (blue, prominent) for inpatient visits
 - Auto-redirects to bed assignment with query parameters
 - Only shows "Lihat Antrian" button for outpatient visits
 
 **Button Logic:**
+
 ```typescript
 {registeredVisit.visit?.visitType === "inpatient" && (
   <Button
@@ -86,6 +94,7 @@ Implemented **Option A: Registration = Room Preference Only** to separate patien
 ```
 
 **Query Parameters:**
+
 - `assignBed={visitId}` - The visit ID to assign bed for
 - `patientName={name}` - Patient name for display
 
@@ -94,11 +103,13 @@ Implemented **Option A: Registration = Room Preference Only** to separate patien
 ### 4. **Room Dashboard** (`/app/dashboard/inpatient/rooms/page.tsx`)
 
 **Added:**
+
 - `useSearchParams()` to read query parameters
 - Auto-open bed assignment dialog when coming from registration
 - Pass preselected visitId and patientName to dialog
 
 **Auto-Open Logic:**
+
 ```typescript
 useEffect(() => {
   const assignBedVisitId = searchParams.get("assignBed")
@@ -109,6 +120,7 @@ useEffect(() => {
 ```
 
 **Dialog Props:**
+
 ```typescript
 <AssignBedDialog
   open={assignBedDialogOpen}
@@ -126,11 +138,13 @@ useEffect(() => {
 ### 5. **Assign Bed Dialog** (`/components/inpatient/assign-bed-dialog.tsx`)
 
 **Added:**
+
 - `useEffect` to auto-select preselected visit
 - Skips patient search when visitId is provided
 - Directly shows room/bed selection
 
 **Auto-Selection Logic:**
+
 ```typescript
 useEffect(() => {
   if (open && preselectedVisitId && preselectedPatientName) {
@@ -221,27 +235,32 @@ useEffect(() => {
 ## Benefits
 
 ### 1. **Follows Real Hospital Workflow**
+
 - Admission clerks don't need real-time bed availability
 - Bed allocation handled by specialized ward staff
 - Can register patients even when beds are full (waitlist)
 
 ### 2. **Better Separation of Concerns**
+
 - **Front Desk**: Patient data entry, visit registration
 - **Ward/Admission**: Bed logistics and allocation
 - **Nursing Staff**: Clinical care
 
 ### 3. **Improved UX**
+
 - Faster registration (fewer required fields)
 - Clear workflow guidance
 - Seamless redirect to next step
 - Auto-populated bed assignment form
 
 ### 4. **Flexibility**
+
 - Bed can be assigned immediately (fast track)
 - Or assigned later when bed becomes available
 - Can reassign bed if needed before final allocation
 
 ### 5. **Data Integrity**
+
 - `bed_assignments` table always accurate
 - `rooms.availableBeds` count stays synchronized
 - No orphaned room selections
@@ -253,6 +272,7 @@ useEffect(() => {
 ### Database State Changes
 
 **After Registration:**
+
 ```sql
 -- visits table
 INSERT INTO visits (
@@ -266,6 +286,7 @@ INSERT INTO visits (
 ```
 
 **After Bed Assignment:**
+
 ```sql
 -- bed_assignments table
 INSERT INTO bed_assignments (
@@ -308,6 +329,7 @@ WHERE v.visit_type = 'inpatient'
 ```
 
 **Action Required:**
+
 1. Manually assign beds for these visits through the UI
 2. Or run a migration script to create bed_assignments records
 3. Or clear `visits.roomId` for pending visits

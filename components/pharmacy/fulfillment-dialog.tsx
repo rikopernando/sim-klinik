@@ -16,6 +16,7 @@ import {
   getAvailableBatches,
   type DrugInventoryWithDetails,
 } from "@/lib/services/inventory.service"
+import { type BatchAllocation } from "@/lib/pharmacy/stock-utils"
 import { DrugInfoDisplay } from "./fulfillment/drug-info-display"
 import { BatchSelector } from "./fulfillment/batch-selector"
 import { FulfillmentForm } from "./fulfillment/fulfillment-form"
@@ -73,19 +74,29 @@ export function FulfillmentDialog({
   const [availableBatches, setAvailableBatches] = useState<DrugInventoryWithDetails[]>([])
   const [isLoadingBatches, setIsLoadingBatches] = useState(false)
   const [selectedBatch, setSelectedBatch] = useState<DrugInventoryWithDetails | null>(null)
+  const [allocatedBatches, setAllocatedBatches] = useState<BatchAllocation[]>([])
 
-  const handleBatchSelect = useCallback(
-    (batch: DrugInventoryWithDetails) => {
-      setSelectedBatch(batch)
+  const handleAllocationsChange = useCallback(
+    (allocations: BatchAllocation[]) => {
+      setAllocatedBatches(allocations)
+      const primary = allocations.length > 0 ? allocations[0].batch : null
+      setSelectedBatch(primary)
       setFormData((prev) => ({
         ...prev,
-        inventoryId: batch.id.toString(),
+        inventoryId: primary ? primary.id.toString() : "",
         dispensedQuantity:
           prev.dispensedQuantity || selectedPrescription?.prescription.quantity.toString() || "",
       }))
     },
-
     [selectedPrescription?.prescription.quantity]
+  )
+
+  const handleBatchSelect = useCallback(
+    (batch: DrugInventoryWithDetails) => {
+      const qty = selectedPrescription?.prescription.quantity || 0
+      handleAllocationsChange([{ batch, quantity: qty }])
+    },
+    [selectedPrescription?.prescription.quantity, handleAllocationsChange]
   )
 
   const handleSubmit = useCallback(() => {
@@ -106,6 +117,7 @@ export function FulfillmentDialog({
         notes: "",
       })
       setSelectedBatch(null)
+      setAllocatedBatches([])
       setAvailableBatches([])
       onOpenChange(false)
     }
@@ -124,6 +136,7 @@ export function FulfillmentDialog({
         notes: "",
       })
       setSelectedBatch(null)
+      setAllocatedBatches([])
 
       getAvailableBatches(selectedPrescription.drug.id)
         .then((batches) => {
@@ -182,8 +195,10 @@ export function FulfillmentDialog({
             <BatchSelector
               isLoading={isLoadingBatches}
               batches={availableBatches}
-              selectedBatch={selectedBatch}
-              onBatchSelect={handleBatchSelect}
+              allocatedBatches={allocatedBatches}
+              requiredQuantity={selectedPrescription.prescription.quantity}
+              unit={selectedPrescription.drug.unit}
+              onAllocationsChange={handleAllocationsChange}
             />
 
             {/* Fulfillment Form */}

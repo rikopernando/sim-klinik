@@ -7,6 +7,7 @@ Add a new permission to the RBAC system and assign it to appropriate roles.
 $ARGUMENTS - Permission specification in format: `resource:action --roles role1,role2`
 
 Examples:
+
 - `reports:export --roles admin,doctor`
 - `appointments:write --roles receptionist,nurse,doctor`
 - `audit_logs:read --roles super_admin,admin`
@@ -37,7 +38,7 @@ export type Permission =
   // ... existing permissions ...
 
   // [NEW SECTION or existing section]
-  | "new_resource:action"  // <-- Add here
+  | "new_resource:action" // <-- Add here
 ```
 
 ### Step 2: Add to ROLE_PERMISSIONS
@@ -48,7 +49,7 @@ Add the permission to each role that should have it:
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   super_admin: [
     // ... existing permissions ...
-    "new_resource:action",  // <-- Super admin usually gets all permissions
+    "new_resource:action", // <-- Super admin usually gets all permissions
   ],
 
   admin: [
@@ -78,30 +79,30 @@ super_admin: [
 
 4. **Role assignment guidelines**:
 
-| Permission Pattern | Typical Roles |
-|-------------------|---------------|
-| `*:read` | Most roles that interact with the resource |
-| `*:write` | Roles that create/update the resource |
-| `*:delete` | Admin roles, sometimes the owner role |
-| `*:manage_*` | Admin roles, specialized managers |
-| `*:verify` | Supervisors (lab_supervisor, etc.) |
-| `*:fulfill` | Operational roles (pharmacist, etc.) |
-| `*:process_*` | Transaction handlers (cashier, etc.) |
+| Permission Pattern | Typical Roles                              |
+| ------------------ | ------------------------------------------ |
+| `*:read`           | Most roles that interact with the resource |
+| `*:write`          | Roles that create/update the resource      |
+| `*:delete`         | Admin roles, sometimes the owner role      |
+| `*:manage_*`       | Admin roles, specialized managers          |
+| `*:verify`         | Supervisors (lab_supervisor, etc.)         |
+| `*:fulfill`        | Operational roles (pharmacist, etc.)       |
+| `*:process_*`      | Transaction handlers (cashier, etc.)       |
 
 5. **Suggest role assignments** based on the resource:
 
-| Resource | Suggested Roles |
-|----------|-----------------|
-| `patients:*` | receptionist, nurse, doctor, admin |
-| `visits:*` | receptionist, doctor, admin |
-| `medical_records:*` | doctor, nurse (read only) |
-| `prescriptions:*` | doctor (write), pharmacist (fulfill) |
-| `pharmacy:*` | pharmacist |
-| `billing:*` | cashier, admin |
-| `inpatient:*` | nurse, doctor |
-| `lab:*` | lab_technician, lab_supervisor |
-| `system:*` | super_admin, admin |
-| `reports:*` | admin, relevant department heads |
+| Resource            | Suggested Roles                      |
+| ------------------- | ------------------------------------ |
+| `patients:*`        | receptionist, nurse, doctor, admin   |
+| `visits:*`          | receptionist, doctor, admin          |
+| `medical_records:*` | doctor, nurse (read only)            |
+| `prescriptions:*`   | doctor (write), pharmacist (fulfill) |
+| `pharmacy:*`        | pharmacist                           |
+| `billing:*`         | cashier, admin                       |
+| `inpatient:*`       | nurse, doctor                        |
+| `lab:*`             | lab_technician, lab_supervisor       |
+| `system:*`          | super_admin, admin                   |
+| `reports:*`         | admin, relevant department heads     |
 
 6. **After updating**, remind to:
    - Run `npm run lint` to check for TypeScript errors
@@ -113,6 +114,7 @@ super_admin: [
 Input: `/add-permission reports:export --roles admin,doctor,lab_supervisor`
 
 Output:
+
 ```
 ## Adding Permission: reports:export
 
@@ -188,6 +190,7 @@ Suggested based on resource type:
 ## Permission Naming Conventions
 
 Follow existing patterns:
+
 - Use lowercase with underscores: `medical_records`, not `medicalRecords`
 - Use colons to separate resource and action: `resource:action`
 - Common actions: `read`, `write`, `delete`, `manage`, `verify`, `fulfill`, `lock`, `unlock`, `process`

@@ -1,9 +1,11 @@
 "use client"
 
+import { PageGuard } from "@/components/auth/page-guard"
 import { Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 
 import { QueueDisplay } from "@/components/visits/queue-display"
+import { QueueDateFilter } from "@/components/visits/queue-date-filter"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -18,9 +20,36 @@ import { Poli } from "@/types/poli"
 import { getPolisRequest } from "@/lib/services/poli.service"
 
 export default function QueuePage() {
+  return (
+    <PageGuard permissions={["visits:read"]}>
+      <QueuePageContent />
+    </PageGuard>
+  )
+}
+
+function QueuePageContent() {
   const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined)
   const [polis, setPolis] = useState<Poli[]>([])
   const [isLoadingPolis, setIsLoadingPolis] = useState(true)
+
+  // Date filter state
+  const [dateFilter, setDateFilter] = useState<{
+    date: string | undefined
+    dateFrom: string | undefined
+    dateTo: string | undefined
+  }>({
+    date: undefined,
+    dateFrom: undefined,
+    dateTo: undefined,
+  })
+
+  const handleDateChange = (
+    date: string | undefined,
+    dateFrom: string | undefined,
+    dateTo: string | undefined
+  ) => {
+    setDateFilter({ date, dateFrom, dateTo })
+  }
 
   // Fetch polis data from API using service
   useEffect(() => {
@@ -41,9 +70,11 @@ export default function QueuePage() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">Antrian Pasien</h1>
-        <p className="text-muted-foreground">Lihat antrian pasien untuk setiap layanan</p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Antrian Pasien</h1>
+          <p className="text-muted-foreground">Lihat antrian pasien untuk setiap layanan</p>
+        </div>
       </div>
 
       {/* Queue Tabs */}
@@ -56,49 +87,47 @@ export default function QueuePage() {
 
         {/* Outpatient Queue */}
         <TabsContent value="outpatient" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Filter Poli</CardTitle>
-              <CardDescription>Pilih poli untuk melihat antrian spesifik</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Label htmlFor="poli-filter">Poliklinik</Label>
-                <Select
-                  value={selectedPoli?.toString()}
-                  onValueChange={(value) =>
-                    setSelectedPoli(value === "all" ? undefined : parseInt(value))
-                  }
-                  disabled={isLoadingPolis}
-                >
-                  <SelectTrigger className="w-[200px]" id="poli-filter">
-                    {isLoadingPolis ? (
-                      <div className="flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Memuat...</span>
-                      </div>
-                    ) : (
-                      <SelectValue placeholder="Semua Poli" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Semua Poli</SelectItem>
-                    {polis.map((poli) => (
-                      <SelectItem key={poli.id} value={poli.id.toString()}>
-                        {poli.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="flex gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="poli-filter">Poliklinik</Label>
+              <Select
+                value={selectedPoli?.toString()}
+                onValueChange={(value) =>
+                  setSelectedPoli(value === "all" ? undefined : parseInt(value))
+                }
+                disabled={isLoadingPolis}
+              >
+                <SelectTrigger className="w-[200px]" id="poli-filter">
+                  {isLoadingPolis ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Memuat...</span>
+                    </div>
+                  ) : (
+                    <SelectValue placeholder="Semua Poli" />
+                  )}
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Poli</SelectItem>
+                  {polis.map((poli) => (
+                    <SelectItem key={poli.id} value={poli.id.toString()}>
+                      {poli.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <QueueDateFilter onDateChange={handleDateChange} />
+          </div>
 
           <QueueDisplay
             visitType="outpatient"
             poliId={selectedPoli}
             autoRefresh={true}
             refreshInterval={30000}
+            date={dateFilter.date}
+            dateFrom={dateFilter.dateFrom}
+            dateTo={dateFilter.dateTo}
           />
         </TabsContent>
 
@@ -111,12 +140,18 @@ export default function QueuePage() {
                 Pasien diurutkan berdasarkan tingkat kegawatan (triage)
               </CardDescription>
             </CardHeader>
+            <CardContent>
+              <QueueDateFilter onDateChange={handleDateChange} />
+            </CardContent>
           </Card>
 
           <QueueDisplay
             visitType="emergency"
             autoRefresh={true}
             refreshInterval={15000} // Refresh faster for emergency
+            date={dateFilter.date}
+            dateFrom={dateFilter.dateFrom}
+            dateTo={dateFilter.dateTo}
           />
         </TabsContent>
 
@@ -127,12 +162,18 @@ export default function QueuePage() {
               <CardTitle>Daftar Pasien Rawat Inap</CardTitle>
               <CardDescription>Pasien yang sedang dirawat di rumah sakit</CardDescription>
             </CardHeader>
+            <CardContent>
+              <QueueDateFilter onDateChange={handleDateChange} />
+            </CardContent>
           </Card>
 
           <QueueDisplay
             visitType="inpatient"
             autoRefresh={true}
             refreshInterval={60000} // Refresh every minute for inpatient
+            date={dateFilter.date}
+            dateFrom={dateFilter.dateFrom}
+            dateTo={dateFilter.dateTo}
           />
         </TabsContent>
       </Tabs>

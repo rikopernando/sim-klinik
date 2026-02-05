@@ -55,19 +55,63 @@ export function BulkFulfillmentDialog({
   const { pharmacists, isLoading: isLoadingPharmacists } = usePharmacists(open)
   const {
     fulfillmentData,
-    handleBatchSelect,
+    handleAllocationsChange,
     reset: resetFulfillmentData,
   } = useBulkFulfillmentData(open, selectedGroup)
 
   // Memoized validation check
   const isFormValid = useMemo(() => {
     if (!fulfilledBy.trim()) return false
-    return !Object.values(fulfillmentData).some((d) => d.isLoading || !d.inventoryId)
+    return !Object.values(fulfillmentData).some((d) => {
+      if (d.isLoading || d.allocatedBatches.length === 0) return true
+      const totalAllocated = d.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+      return totalAllocated !== d.dispensedQuantity
+    })
   }, [fulfilledBy, fulfillmentData])
+
+  // Check for stock issues using total stock across all batches
+  const stockIssues = useMemo(() => {
+    const issues: string[] = []
+    for (const item of selectedGroup?.prescriptions || []) {
+      const data = fulfillmentData[item.prescription.id]
+      if (data && !data.isLoading) {
+        // No batches available
+        if (data.availableBatches.length === 0) {
+          issues.push(`"${item.drug.name}" tidak memiliki stok tersedia`)
+        }
+        // Total stock across all batches is insufficient
+        else if (data.totalAvailableStock < data.dispensedQuantity) {
+          issues.push(
+            `"${item.drug.name}" total stok tidak cukup (tersedia: ${data.totalAvailableStock}, butuh: ${data.dispensedQuantity})`
+          )
+        }
+        // Allocated quantity doesn't match required
+        else {
+          const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+          if (totalAllocated < data.dispensedQuantity) {
+            issues.push(
+              `"${item.drug.name}" jumlah alokasi kurang (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+            )
+          } else if (totalAllocated > data.dispensedQuantity) {
+            issues.push(
+              `"${item.drug.name}" jumlah alokasi berlebih (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+            )
+          }
+        }
+      }
+    }
+    return issues
+  }, [selectedGroup, fulfillmentData])
 
   // Handlers
   const handleSubmit = useCallback(async () => {
     setValidationError(null)
+
+    // Check for stock issues first
+    if (stockIssues.length > 0) {
+      setValidationError(`Stok tidak mencukupi: ${stockIssues.join(", ")}`)
+      return
+    }
 
     // Validate all fields are filled
     if (!fulfilledBy.trim()) {
@@ -86,27 +130,39 @@ export function BulkFulfillmentDialog({
     for (const item of selectedGroup?.prescriptions || []) {
       const data = fulfillmentData[item.prescription.id]
 
-      if (!data || !data.inventoryId) {
-        setValidationError(`Batch untuk ${item.drug.name} belum dipilih`)
+      if (!data || data.allocatedBatches.length === 0) {
+        setValidationError(`Batch untuk "${item.drug.name}" belum dipilih`)
         return
       }
 
       if (!data.dispensedQuantity || data.dispensedQuantity <= 0) {
-        setValidationError(`Jumlah untuk ${item.drug.name} tidak valid`)
+        setValidationError(`Jumlah untuk "${item.drug.name}" tidak valid`)
         return
       }
 
-      prescriptionData.push({
-        prescriptionId: item.prescription.id,
-        inventoryId: data.inventoryId,
-        dispensedQuantity: data.dispensedQuantity,
-        fulfilledBy: fulfilledBy.trim(),
-        notes: notes.trim() || undefined,
-      })
+      // Validate total allocated matches required
+      const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+      if (totalAllocated !== data.dispensedQuantity) {
+        setValidationError(
+          `Jumlah alokasi "${item.drug.name}" tidak sesuai (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+        )
+        return
+      }
+
+      // Push one entry per allocated batch (supports multi-batch fulfillment)
+      for (const alloc of data.allocatedBatches) {
+        prescriptionData.push({
+          prescriptionId: item.prescription.id,
+          inventoryId: alloc.batch.id,
+          dispensedQuantity: alloc.quantity,
+          fulfilledBy: fulfilledBy.trim(),
+          notes: notes.trim() || undefined,
+        })
+      }
     }
 
     await onSubmit(prescriptionData)
-  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit])
+  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit, stockIssues])
 
   const handleClose = useCallback(() => {
     if (!isSubmitting) {
@@ -143,6 +199,21 @@ export function BulkFulfillmentDialog({
             </Alert>
           )}
 
+          {/* Stock Issues Warning */}
+          {stockIssues.length > 0 && !validationError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="font-medium">Masalah Stok:</div>
+                <ul className="mt-1 list-inside list-disc text-sm">
+                  {stockIssues.map((issue, idx) => (
+                    <li key={idx}>{issue}</li>
+                  ))}
+                </ul>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="space-y-6">
             {/* Prescription Items */}
             {selectedGroup?.prescriptions.map((item, idx) => (
@@ -156,7 +227,9 @@ export function BulkFulfillmentDialog({
                 quantity={item.prescription.quantity}
                 unit={item.drug.unit}
                 fulfillmentData={fulfillmentData[item.prescription.id]}
-                onBatchSelect={(batch) => handleBatchSelect(item.prescription.id, batch)}
+                onAllocationsChange={(allocs) =>
+                  handleAllocationsChange(item.prescription.id, allocs)
+                }
                 showSeparator={idx > 0}
               />
             ))}
@@ -191,7 +264,10 @@ export function BulkFulfillmentDialog({
               <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
                 Batal
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || !isFormValid}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || !isFormValid || stockIssues.length > 0}
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

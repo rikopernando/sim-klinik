@@ -71,3 +71,54 @@ export async function updateVisitStatus(
     handleApiError(error)
   }
 }
+
+/**
+ * Get a single visit by ID with patient data
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getVisit(visitId: string): Promise<any> {
+  try {
+    const response = await axios.get(`/api/visits/${visitId}`)
+    return response.data
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Update visit details (PATCH)
+ */
+export async function updateVisit(visitId: string, data: Record<string, unknown>): Promise<void> {
+  try {
+    await axios.patch(`/api/visits/${visitId}`, data)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get latest vitals for a visit
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getVisitVitals(visitId: string): Promise<any | null> {
+  try {
+    const response = await axios.get<ResponseApi<unknown>>(`/api/visits/${visitId}/vitals`)
+    return response.data.data || null
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Record new vitals for a visit
+ */
+export async function recordVisitVitals(
+  visitId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    await axios.post(`/api/visits/${visitId}/vitals`, data)
+  } catch (error) {
+    handleApiError(error)
+  }
+}

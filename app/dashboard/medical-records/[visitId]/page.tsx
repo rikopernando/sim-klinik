@@ -9,6 +9,7 @@
 "use client"
 
 import { useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
@@ -22,6 +23,14 @@ import { MedicalRecordActions } from "@/components/medical-records/medical-recor
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
 
 export default function MedicalRecordPage() {
+  return (
+    <PageGuard permissions={["medical_records:read"]}>
+      <MedicalRecordPageContent />
+    </PageGuard>
+  )
+}
+
+function MedicalRecordPageContent() {
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("soap")

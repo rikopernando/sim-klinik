@@ -33,13 +33,20 @@ export async function getDoctorStats(): Promise<DoctorStats> {
 /**
  * Get doctor's patient queue
  * @param status - Filter by status: "waiting" | "in_examination" | undefined (all)
+ * @param date - Filter by date: YYYY-MM-DD format
  * @returns Queue items
  */
-export async function getDoctorQueue(status?: "waiting" | "in_examination"): Promise<QueueItem[]> {
+export async function getDoctorQueue(
+  status?: "waiting" | "in_examination",
+  date?: string
+): Promise<QueueItem[]> {
   try {
     const params: Record<string, string> = {}
     if (status) {
       params.status = status
+    }
+    if (date) {
+      params.date = date
     }
 
     const response = await axios.get<ResponseApi<QueueResponse>>("/api/dashboard/doctor/queue", {

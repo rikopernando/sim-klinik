@@ -3,6 +3,7 @@
 ## ✅ Completed Tasks
 
 ### 1. Created Inpatient Permissions Mapping
+
 **File:** `/lib/rbac/inpatient-permissions.ts`
 
 Documented all permission requirements for 19 inpatient routes with role access summary.
@@ -10,6 +11,7 @@ Documented all permission requirements for 19 inpatient routes with role access 
 ### 2. Applied `withRBAC` to All Inpatient API Routes (19 files)
 
 #### Bed Management (4 routes)
+
 - ✅ `POST /api/inpatient/assign-bed` - `inpatient:manage_beds`
 - ✅ `GET /api/inpatient/available-rooms` - `inpatient:read`
 - ✅ `GET /api/inpatient/search-unassigned-patients` - `inpatient:read`
@@ -18,43 +20,52 @@ Documented all permission requirements for 19 inpatient routes with role access 
 - ✅ `PATCH /api/rooms` - `inpatient:manage_beds`
 
 #### Vitals Management (3 routes)
+
 - ✅ `GET /api/inpatient/vitals` - `inpatient:read`
 - ✅ `POST /api/inpatient/vitals` - `inpatient:write`
 - ✅ `DELETE /api/inpatient/vitals/[id]` - `inpatient:write`
 
 #### CPPT (4 routes)
+
 - ✅ `GET /api/inpatient/cppt` - `inpatient:read`
 - ✅ `POST /api/inpatient/cppt` - `inpatient:write`
 - ✅ `PUT /api/inpatient/cppt/[id]` - `inpatient:write`
 - ✅ `DELETE /api/inpatient/cppt/[id]` - `inpatient:write`
 
 #### Patient Management (2 routes)
+
 - ✅ `GET /api/inpatient/patients` - `inpatient:read`
 - ✅ `GET /api/inpatient/patients/[visitId]` - `inpatient:read`
 
 #### Prescriptions (3 routes)
+
 - ✅ `POST /api/inpatient/prescriptions` - `prescriptions:write`
 - ✅ `DELETE /api/inpatient/prescriptions/[id]` - `prescriptions:write`
 - ✅ `POST /api/inpatient/prescriptions/administer` - `inpatient:write`
 
 #### Procedures (3 routes)
+
 - ✅ `GET /api/inpatient/procedures` - `inpatient:read`
 - ✅ `POST /api/inpatient/procedures` - `inpatient:write`
 - ✅ `DELETE /api/inpatient/procedures/[id]` - `inpatient:write`
 - ✅ `PATCH /api/inpatient/procedures/status` - `inpatient:write`
 
 #### Materials (2 routes)
+
 - ✅ `GET /api/materials` - `inpatient:read`
 - ✅ `POST /api/materials` - `inpatient:write`
 - ✅ `DELETE /api/materials/[id]` - `inpatient:write`
 
 #### Discharge (1 route)
+
 - ✅ `POST /api/inpatient/complete-discharge` - `discharge:write`
 
 ## Changes Made to Routes
 
 ### Pattern Applied
+
 All routes were updated from:
+
 ```typescript
 export async function METHOD(request: NextRequest) {
   // Manual auth check (if present)
@@ -66,14 +77,19 @@ export async function METHOD(request: NextRequest) {
 ```
 
 To:
+
 ```typescript
-export const METHOD = withRBAC(async (request: NextRequest, { user, role }) => {
-  // Handler logic - no manual auth checks needed
-  // user.id, user.email, user.name available from context
-}, { permissions: ["appropriate:permission"] })
+export const METHOD = withRBAC(
+  async (request: NextRequest, { user, role }) => {
+    // Handler logic - no manual auth checks needed
+    // user.id, user.email, user.name available from context
+  },
+  { permissions: ["appropriate:permission"] }
+)
 ```
 
 ### Key Improvements
+
 1. **Removed manual authentication checks** - `withRBAC` handles this automatically
 2. **Removed `getSession()` imports** - No longer needed
 3. **User context from middleware** - Access to `user.id`, `user.email`, `user.name`, `role`
@@ -83,6 +99,7 @@ export const METHOD = withRBAC(async (request: NextRequest, { user, role }) => {
 ## Permission Summary by Role
 
 ### Nurse
+
 - ✅ Can read all inpatient data
 - ✅ Can write vitals, CPPT, materials, procedures
 - ✅ Can manage beds (assign, transfer)
@@ -91,6 +108,7 @@ export const METHOD = withRBAC(async (request: NextRequest, { user, role }) => {
 - ❌ Cannot complete discharge (doctor only)
 
 ### Doctor
+
 - ✅ Can read all inpatient data
 - ✅ Can write vitals, CPPT, materials, procedures
 - ✅ Can create/delete prescriptions
@@ -98,16 +116,20 @@ export const METHOD = withRBAC(async (request: NextRequest, { user, role }) => {
 - ❌ Cannot manage beds directly (nurse responsibility)
 
 ### Admin
+
 - ✅ Can read all inpatient data (read-only for reporting)
 - ❌ Cannot write/modify clinical data
 
 ### Super Admin
+
 - ✅ Full access to all inpatient operations
 
 ### 3. Created `usePermission` Hook
+
 **File:** `/hooks/use-permission.ts`
 
 A client-side React hook for permission checking with the following capabilities:
+
 - `hasPermission(permission)` - Check single permission
 - `hasAnyPermission(permissions[])` - Check if user has any of the permissions
 - `hasAllPermissions(permissions[])` - Check if user has all permissions
@@ -118,9 +140,11 @@ A client-side React hook for permission checking with the following capabilities
 ### 4. Updated UI Components for Permission-Based Hiding
 
 #### Patient Detail Page
+
 **File:** `/app/dashboard/inpatient/patients/[visitId]/page.tsx`
 
 Updated to conditionally render action dialogs based on permissions:
+
 - ✅ `RecordVitalsDialog` - requires `inpatient:write`
 - ✅ `CPPTDialog` - requires `inpatient:write`
 - ✅ `RecordMaterialDialog` - requires `inpatient:write`
@@ -129,12 +153,15 @@ Updated to conditionally render action dialogs based on permissions:
 - ✅ `CompleteDischargeDialog` - requires `discharge:write`
 
 #### Room Card Component
+
 **File:** `/components/inpatient/room-card.tsx`
 
 Updated to conditionally render bed assignment button:
+
 - ✅ "Alokasi Bed" button - requires `inpatient:manage_beds`
 
 **Pattern Applied:**
+
 ```typescript
 const { hasPermission } = usePermission()
 
@@ -157,21 +184,25 @@ const { hasPermission } = usePermission()
 ## ✅ Priority 2: Bed Transfer Feature
 
 ### 1. Created Bed Transfer Validation Schema
+
 **File:** `/lib/inpatient/validation.ts`
 
 Added `bedTransferSchema` with fields:
+
 - `visitId` - Patient visit ID (required)
 - `newRoomId` - Target room ID (required)
 - `newBedNumber` - Target bed number (required)
 - `transferReason` - Reason for transfer (required)
 
 ### 2. Created Bed Transfer API Endpoint
+
 **File:** `/app/api/inpatient/transfer-bed/route.ts`
 
 **Endpoint:** `POST /api/inpatient/transfer-bed`
 **Permission:** `inpatient:manage_beds`
 
 **Transaction Logic:**
+
 1. Verify visit exists and is inpatient type
 2. Find current active bed assignment
 3. Verify new room exists and has available beds
@@ -184,9 +215,11 @@ Added `bedTransferSchema` with fields:
 10. Update visit's `roomId`
 
 ### 3. Created Transfer Bed Dialog Component
+
 **File:** `/components/inpatient/transfer-bed-dialog.tsx`
 
 A dialog component that allows nurses to transfer patients between beds with:
+
 - Room selection dropdown (shows only available rooms)
 - Bed number selection (dynamically generated based on room bed count)
 - Transfer reason text area (required)
@@ -194,6 +227,7 @@ A dialog component that allows nurses to transfer patients between beds with:
 - Success/error toast notifications
 
 ### 4. Added Transfer Bed Button to Patient Detail Page
+
 **File:** `/app/dashboard/inpatient/patients/[visitId]/page.tsx`
 
 - Button displayed after Patient Info Card
@@ -203,6 +237,7 @@ A dialog component that allows nurses to transfer patients between beds with:
 - Triggers refresh after successful transfer
 
 **Implementation:**
+
 ```typescript
 {hasPermission("inpatient:manage_beds") && patientDetail.bedAssignment && (
   <TransferBedDialog
@@ -218,12 +253,14 @@ A dialog component that allows nurses to transfer patients between beds with:
 ### 5. Refactored to Follow Service Layer Pattern
 
 **Files Modified:**
+
 - `/lib/inpatient/validation.ts` - Added `BedTransferInput` type export
 - `/lib/services/inpatient.service.ts` - Added `transferBed()` service function
 - `/hooks/use-bed-transfer.ts` - Created custom hook for bed transfer
 - `/components/inpatient/transfer-bed-dialog.tsx` - Refactored to use hook instead of fetch API
 
 **Pattern Applied:**
+
 - ✅ Uses axios instead of fetch API
 - ✅ API call logic moved to service layer (`inpatient.service.ts`)
 - ✅ Component uses custom hook (`useBedTransfer`)
@@ -232,6 +269,7 @@ A dialog component that allows nurses to transfer patients between beds with:
 - ✅ Loading state managed by hook
 
 **Before:**
+
 ```typescript
 const response = await fetch("/api/inpatient/transfer-bed", {
   method: "POST",
@@ -241,6 +279,7 @@ const response = await fetch("/api/inpatient/transfer-bed", {
 ```
 
 **After:**
+
 ```typescript
 const { transfer, isTransferring } = useBedTransfer({
   onSuccess: () => { ... }
@@ -259,9 +298,11 @@ await transfer({
 **Purpose**: Follow consistent form handling pattern used across the codebase.
 
 **Files Modified:**
+
 - `/components/inpatient/transfer-bed-dialog.tsx` - Complete refactor from manual state to React Hook Form
 
 **Changes Applied:**
+
 - ✅ Added `useForm` hook with `zodResolver` for Zod validation
 - ✅ Wrapped all form fields with `Controller` component
 - ✅ Replaced manual state (`useState`) with form state management
@@ -271,6 +312,7 @@ await transfer({
 - ✅ Form automatically resets on successful transfer via `form.reset()`
 
 **Pattern Followed** (from RecordVitalsDialog):
+
 ```typescript
 const form = useForm<TransferBedFormData>({
   resolver: zodResolver(transferBedFormSchema),
@@ -304,6 +346,7 @@ const selectedRoomId = form.watch("newRoomId")
 ```
 
 **Benefits:**
+
 - ✅ Consistent with other form components in codebase
 - ✅ Better validation with Zod schema integration
 - ✅ Cleaner code without manual state management
@@ -315,14 +358,17 @@ const selectedRoomId = form.watch("newRoomId")
 **Purpose**: Track and display full history of bed assignments and transfers for each patient.
 
 **Files Created:**
+
 - `/components/inpatient/bed-assignment-history.tsx` - Timeline component showing current and past bed assignments
 
 **Files Modified:**
+
 - `/lib/inpatient/api-service.ts` - Added query to fetch all bed assignments (including discharged)
 - `/types/inpatient.ts` - Added `BedAssignmentHistoryItem` interface and `bedAssignmentHistory` to `PatientDetail`
 - `/app/dashboard/inpatient/patients/[visitId]/page.tsx` - Added BedAssignmentHistory component
 
 **Features:**
+
 - ✅ Shows **current active bed** with green highlight
 - ✅ Shows **past bed assignments** with transfer arrows
 - ✅ Displays timestamps for each assignment and discharge
@@ -335,6 +381,7 @@ const selectedRoomId = form.watch("newRoomId")
 - ✅ Shows: Daily rate, number of days, and total cost per assignment
 
 **Data Structure:**
+
 ```typescript
 interface BedAssignmentHistoryItem {
   id: string
@@ -343,17 +390,18 @@ interface BedAssignmentHistoryItem {
   roomType: string
   bedNumber: string
   assignedAt: string
-  dischargedAt: string | null  // null = currently active
+  dischargedAt: string | null // null = currently active
   notes: string | null
   assignedBy: string | null
   assignedByName: string | null
-  dailyRate: string             // Room daily rate
-  days: number                  // Calculated: days in this bed
-  totalCost: string             // Calculated: dailyRate × days
+  dailyRate: string // Room daily rate
+  days: number // Calculated: days in this bed
+  totalCost: string // Calculated: dailyRate × days
 }
 ```
 
 **Cost Calculation Logic:**
+
 ```typescript
 const startDate = new Date(assignment.assignedAt)
 const endDate = assignment.dischargedAt ? new Date(assignment.dischargedAt) : new Date()
@@ -362,6 +410,7 @@ const totalCost = parseFloat(dailyRate) * days
 ```
 
 **UI Layout:**
+
 ```
 ┌─ Riwayat Bed ─────────────────────────────────────┐
 │ Riwayat Bed          Total Biaya Kamar            │
@@ -399,18 +448,21 @@ const totalCost = parseFloat(dailyRate) * days
 **Issue**: Discharge billing was only calculating room charges for ONE bed assignment (using `.limit(1)`), missing all previous rooms from transfers.
 
 **Fix**: Modified `/lib/billing/discharge-aggregation.ts` - `aggregateRoomCharges()` function
+
 - ✅ Removed `.limit(1)` - now fetches ALL bed assignments
 - ✅ Maps each assignment to a billing item
 - ✅ Calculates days and cost for EACH room stay
 - ✅ Total room charges = sum of all room items
 
 **Before:**
+
 ```typescript
 .where(eq(bedAssignments.visitId, visitId))
 .limit(1)  // Only got current room ❌
 ```
 
 **After:**
+
 ```typescript
 .where(eq(bedAssignments.visitId, visitId))
 .orderBy(bedAssignments.assignedAt)  // Get ALL rooms ✅
@@ -424,6 +476,7 @@ return bedAssignmentList.map((assignment) => {
 ```
 
 **Example Discharge Billing:**
+
 ```
 Room Charges:
 - Kamar Class 3 - 101 (Bed 1): 2 hari × Rp 250,000 = Rp 500,000
@@ -433,6 +486,7 @@ Total Room Charges: Rp 5,000,000
 ```
 
 ### Priority 2 Tasks Checklist:
+
 - [x] Create transfer bed dialog
 - [x] Create API endpoint: `POST /api/inpatient/transfer-bed`
 - [x] Implement transaction logic (close old assignment, create new, update rooms)
@@ -456,6 +510,7 @@ Total Room Charges: Rp 5,000,000
 **File Modified**: `/lib/inpatient/validation.ts` - `vitalSignsSchema`
 
 **Clinical Range Validations**:
+
 - ✅ **Temperature**: 35-42°C (medically safe range)
 - ✅ **Blood Pressure Systolic**: 60-250 mmHg
 - ✅ **Blood Pressure Diastolic**: 40-150 mmHg
@@ -467,13 +522,14 @@ Total Room Charges: Rp 5,000,000
 - ✅ **Pain Scale**: 0-10 (already validated)
 
 **Cross-Field Validations**:
+
 - ✅ Systolic and diastolic BP must be entered together
 - ✅ Systolic BP must be greater than diastolic BP
 
 **Example Validation**:
+
 ```typescript
-temperature: z
-  .string()
+temperature: z.string()
   .optional()
   .refine(
     (val) => {
@@ -494,6 +550,7 @@ temperature: z
 **File Modified**: `/lib/inpatient/validation.ts` - `inpatientPrescriptionSchema`
 
 **Validations Added**:
+
 - ✅ **Required fields for recurring medications**:
   - `startDate` required if `isRecurring = true`
   - `endDate` required if `isRecurring = true`
@@ -505,6 +562,7 @@ temperature: z
   - `startDate` cannot be more than 24 hours in the past
 
 **Example Validation**:
+
 ```typescript
 .refine(
   (data) => {
@@ -543,10 +601,12 @@ temperature: z
 ### 3. Bed Assignment Validation
 
 **Files Modified**:
+
 - `/lib/inpatient/validation.ts` - `bedAssignmentSchema`
 - `/lib/inpatient/validation.ts` - `bedTransferSchema`
 
 **Validations Added**:
+
 - ✅ **Bed number validation**:
   - Must be a valid positive integer (1-99)
   - Validated on both assignment and transfer
@@ -555,6 +615,7 @@ temperature: z
   - Minimum 10 characters required for transfer reason
 
 **Example Validation**:
+
 ```typescript
 .refine(
   (data) => {
@@ -578,11 +639,13 @@ temperature: z
 **File Modified**: `/lib/inpatient/validation.ts` - `materialUsageSchema`
 
 **Validations Added**:
+
 - ✅ **Quantity validation**:
   - Must be a positive number
   - Maximum 10,000 units (prevents accidental large quantities)
 
 **Example Validation**:
+
 ```typescript
 .refine(
   (data) => {
@@ -604,10 +667,12 @@ temperature: z
 ### 5. Room Configuration Validation
 
 **Files Modified**:
+
 - `/lib/inpatient/validation.ts` - `roomSchema`
 - `/lib/inpatient/validation.ts` - `roomUpdateSchema`
 
 **Validations Added**:
+
 - ✅ **Bed count validation**:
   - Minimum 1 bed per room
   - Maximum 20 beds per room (reasonable hospital limit)
@@ -617,24 +682,24 @@ temperature: z
   - Maximum 100 million (prevents accidental large values)
 
 **Example Validation**:
+
 ```typescript
-bedCount: z
-  .number()
+bedCount: z.number()
   .int()
   .min(1, "Jumlah bed minimal 1")
   .max(20, "Jumlah bed maksimal 20 per kamar")
 
-.refine(
-  (data) => {
-    // Daily rate should be a positive number
-    const rate = parseFloat(data.dailyRate)
-    return !isNaN(rate) && rate > 0 && rate <= 100000000
-  },
-  {
-    message: "Tarif harian harus berupa angka positif",
-    path: ["dailyRate"],
-  }
-)
+  .refine(
+    (data) => {
+      // Daily rate should be a positive number
+      const rate = parseFloat(data.dailyRate)
+      return !isNaN(rate) && rate > 0 && rate <= 100000000
+    },
+    {
+      message: "Tarif harian harus berupa angka positif",
+      path: ["dailyRate"],
+    }
+  )
 ```
 
 **Impact**: Ensures room configurations are realistic and prevents pricing errors.
@@ -646,11 +711,13 @@ bedCount: z
 **File Modified**: `/lib/inpatient/validation.ts` - `inpatientProcedureSchema`
 
 **Validations Added**:
+
 - ✅ **Scheduled date validation**:
   - Must be a valid ISO date string
   - Cannot be more than 24 hours in the past
 
 **Example Validation**:
+
 ```typescript
 .refine(
   (data) => {
@@ -677,6 +744,7 @@ bedCount: z
 ### Priority 3 Summary
 
 **Schemas Enhanced** (6 total):
+
 1. ✅ `vitalSignsSchema` - Clinical range + cross-field validations
 2. ✅ `inpatientPrescriptionSchema` - Recurring medication date logic
 3. ✅ `bedAssignmentSchema` - Bed number validation
@@ -687,6 +755,7 @@ bedCount: z
 8. ✅ `inpatientProcedureSchema` - Scheduled date validation
 
 **Validation Types Applied**:
+
 - ✅ **Range validation**: Numeric fields within medically/operationally safe ranges
 - ✅ **Cross-field validation**: Related fields validated together (e.g., systolic/diastolic BP)
 - ✅ **Date logic validation**: Start/end date relationships
@@ -694,6 +763,7 @@ bedCount: z
 - ✅ **Format validation**: Numeric parsing and date string validation
 
 **Benefits**:
+
 - 🛡️ **Patient Safety**: Medical ranges prevent dangerous vital sign entries
 - 📊 **Data Quality**: All data validated before database insertion
 - 🚫 **Error Prevention**: Invalid data rejected at API level
@@ -703,6 +773,7 @@ bedCount: z
 ---
 
 ### Priority 3 Tasks Checklist:
+
 - [x] Add vitals range validation (Temperature, BP, Pulse, RR, O2, Weight, Height)
 - [x] Add vitals cross-field validation (BP systolic/diastolic relationship)
 - [x] Add prescription date validation for recurring medications
@@ -718,10 +789,13 @@ bedCount: z
 ## 📋 Remaining Tasks
 
 ### Priority 1: RBAC
+
 - [ ] Test RBAC with different user roles
 
 ### Priority 2: Bed Transfer
+
 - [ ] Test transfer workflow end-to-end
 
 ### Priority 3: Data Validation
+
 - [x] All validation tasks completed

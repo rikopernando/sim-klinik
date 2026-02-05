@@ -64,7 +64,6 @@ interface DashboardWidgetProps {
 ```tsx
 import { DashboardWidget } from "@/components/dashboard"
 import { Users } from "lucide-react"
-
 ;<DashboardWidget
   title="Total Patients"
   description="Registered patients"
@@ -98,7 +97,6 @@ interface DashboardGridProps {
 
 ```tsx
 import { DashboardGrid } from "@/components/dashboard"
-
 ;<DashboardGrid columns={4} gap="lg">
   {/* Widgets go here */}
 </DashboardGrid>
@@ -135,7 +133,6 @@ interface DashboardSectionProps {
 ```tsx
 import { DashboardSection } from "@/components/dashboard"
 import { Button } from "@/components/ui/button"
-
 ;<DashboardSection
   title="Key Metrics"
   description="Overview statistik hari ini"
@@ -180,7 +177,6 @@ interface StatWidgetProps {
 ```tsx
 import { StatWidget } from "@/components/dashboard"
 import { Users } from "lucide-react"
-
 ;<StatWidget
   title="Total Pasien"
   value={245}
@@ -363,7 +359,6 @@ interface ChartWidgetProps {
 import { ChartWidget } from "@/components/dashboard"
 import { TrendingUp } from "lucide-react"
 // import { LineChart, Line } from "recharts"; // Future integration
-
 ;<ChartWidget title="Revenue Trend" description="Pendapatan 7 hari terakhir" icon={TrendingUp}>
   {/* Chart component goes here */}
   <div className="h-64">Chart placeholder</div>
@@ -659,7 +654,6 @@ Use with ChartWidget:
 
 ```tsx
 import { LineChart, Line, XAxis, YAxis } from "recharts"
-
 ;<ChartWidget title="Revenue Trend">
   <LineChart data={revenueData} width={600} height={300}>
     <XAxis dataKey="date" />
@@ -685,7 +679,6 @@ Allow users to customize widget layout:
 
 ```tsx
 import { DndContext } from "@dnd-kit/core"
-
 ;<DndContext onDragEnd={handleDragEnd}>
   <DashboardGrid columns={3}>{/* Draggable widgets */}</DashboardGrid>
 </DndContext>

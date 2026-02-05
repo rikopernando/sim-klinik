@@ -6,6 +6,7 @@
  */
 
 import { useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import {
   IconFlask,
   IconRefresh,
@@ -33,6 +34,14 @@ import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
 export default function LaboratoryDashboard() {
+  return (
+    <PageGuard permissions={["lab:read"]}>
+      <LaboratoryDashboardContent />
+    </PageGuard>
+  )
+}
+
+function LaboratoryDashboardContent() {
   const [departmentFilter, setDepartmentFilter] = useState<"all" | "LAB" | "RAD">("all")
   const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all")
 

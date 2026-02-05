@@ -6,12 +6,13 @@
  */
 
 import { useRouter } from "next/navigation"
+import { PageGuard } from "@/components/auth/page-guard"
 import { usePatientForm } from "@/hooks/use-patient-form"
 import { PageHeader } from "@/components/patients/page-header"
 import { PatientFormCard } from "@/components/patients/patient-form-card"
 import { PatientSuccessCard } from "@/components/patients/patient-success-card"
 
-export default function NewPatientPage() {
+function NewPatientPageContent() {
   const router = useRouter()
   const { pageState, registeredPatient, handleSuccess, handleReset } = usePatientForm()
 
@@ -46,5 +47,13 @@ export default function NewPatientPage() {
         />
       )}
     </div>
+  )
+}
+
+export default function NewPatientPage() {
+  return (
+    <PageGuard permissions={["patients:write"]}>
+      <NewPatientPageContent />
+    </PageGuard>
   )
 }

@@ -9,6 +9,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Documentation Reference
 
 Before implementing features, consult `/documentation/`:
+
 - **`tasks.md`**: Phase 1 MVP task breakdown (A-G modules with priorities)
 - **`app_flow_document.md`**: User stories for all 7 modules with role-based workflows
 - **`backend_structure_document.md`**: Database schema, API design
@@ -58,6 +59,7 @@ npm run docker:down  # Stop containers
 ### Database Schema (`db/schema/`)
 
 Schemas are organized by domain:
+
 - `auth.ts` - Better Auth tables (user, session, account, verification)
 - `roles.ts` - RBAC roles and user-role assignments
 - `patients.ts` - Patient master data with MR numbers
@@ -73,6 +75,7 @@ Schemas are organized by domain:
 Role-based access control with 10 roles: `super_admin`, `admin`, `doctor`, `nurse`, `pharmacist`, `cashier`, `receptionist`, `lab_technician`, `lab_supervisor`, `radiologist`
 
 **API Route Protection**:
+
 ```typescript
 import { withRBAC } from "@/lib/rbac/middleware"
 
@@ -88,6 +91,7 @@ export const POST = withRBAC(handler, { roles: ["doctor", "nurse"] })
 ```
 
 **Session Helpers** (`lib/rbac/session.ts`):
+
 ```typescript
 import { getSession, getUserRole, hasPermission } from "@/lib/rbac"
 ```
@@ -118,6 +122,7 @@ const response: ResponseError<unknown> = {
 ### Client Services (`lib/services/`)
 
 Services handle API calls from client components:
+
 - `patient.service.ts` - Patient CRUD
 - `visit.service.ts` - Visit management
 - `pharmacy.service.ts` - Pharmacy operations
@@ -128,6 +133,7 @@ Services handle API calls from client components:
 ### Type Definitions (`types/`)
 
 Domain types are in `/types/`:
+
 - `rbac.ts` - Roles, permissions, user types
 - `registration.ts` - Patient form types
 - `medical-record.ts` - EMR types
@@ -151,6 +157,7 @@ import { patientSchema } from "@/lib/validations/registration"
 ## Dashboard Routes
 
 Implemented pages in `app/dashboard/`:
+
 - `/registration` - Patient registration and visit creation
 - `/patients` - Patient list and management
 - `/queue` - Queue management per poli

@@ -6,6 +6,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { useUsers } from "@/hooks/use-users"
 import { useRoles } from "@/hooks/use-roles"
 import {
@@ -49,6 +50,14 @@ interface User {
 }
 
 export default function UsersPage() {
+  return (
+    <PageGuard roles={["super_admin"]}>
+      <UsersPageContent />
+    </PageGuard>
+  )
+}
+
+function UsersPageContent() {
   const [search, setSearch] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
   const [createDialogOpen, setCreateDialogOpen] = useState(false)

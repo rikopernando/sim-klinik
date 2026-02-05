@@ -13,6 +13,7 @@ $ARGUMENTS - Optional: specific route to analyze (e.g., `/api/patients` or `phar
 The `withRBAC` middleware runs on every protected request. Check for:
 
 **Session/Role Caching** - Currently in `lib/rbac/session.ts`:
+
 ```typescript
 // Current: Makes DB call every time
 export async function getSession() {
@@ -26,6 +27,7 @@ export async function getUserRole(userId: string) {
 ```
 
 **Optimization opportunities**:
+
 - Cache session in request context
 - Cache role/permissions (they rarely change)
 - Combine session + role lookup into single query
@@ -35,6 +37,7 @@ export async function getUserRole(userId: string) {
 For each API route, check:
 
 **Multiple Sequential Queries** (BAD):
+
 ```typescript
 export const GET = withRBAC(async (req, { user }) => {
   // Query 1
@@ -49,6 +52,7 @@ export const GET = withRBAC(async (req, { user }) => {
 ```
 
 **Should be Single Query with Joins**:
+
 ```typescript
 const result = await db
   .select()
@@ -62,21 +66,22 @@ const result = await db
 
 Based on clinic workflows, these are likely slow:
 
-| Endpoint | Why It's Slow | Check For |
-|----------|---------------|-----------|
-| `GET /api/pharmacy/queue` | Complex joins, status filters | N+1, missing index on status |
-| `GET /api/dashboard/doctor/queue` | Multiple table joins | Unoptimized query |
-| `GET /api/patients/search` | LIKE queries | Missing text search index |
-| `GET /api/medical-records/[visitId]` | Loads diagnoses, prescriptions, procedures | N+1 queries |
-| `GET /api/billing/[visitId]` | Aggregates from multiple tables | Multiple queries |
-| `GET /api/inpatient/patients` | Complex status + room joins | Missing indexes |
+| Endpoint                             | Why It's Slow                              | Check For                    |
+| ------------------------------------ | ------------------------------------------ | ---------------------------- |
+| `GET /api/pharmacy/queue`            | Complex joins, status filters              | N+1, missing index on status |
+| `GET /api/dashboard/doctor/queue`    | Multiple table joins                       | Unoptimized query            |
+| `GET /api/patients/search`           | LIKE queries                               | Missing text search index    |
+| `GET /api/medical-records/[visitId]` | Loads diagnoses, prescriptions, procedures | N+1 queries                  |
+| `GET /api/billing/[visitId]`         | Aggregates from multiple tables            | Multiple queries             |
+| `GET /api/inpatient/patients`        | Complex status + room joins                | Missing indexes              |
 
 ### 4. Generate Performance Report
 
-```markdown
+````markdown
 ## API Performance Report
 
 ### Summary
+
 - Routes analyzed: X
 - Potential issues: X
 - Estimated DB calls per request: X (should be 1-3)
@@ -84,13 +89,16 @@ Based on clinic workflows, these are likely slow:
 ### Critical Issues
 
 #### Endpoint: GET /api/pharmacy/queue
+
 **Current DB Calls**: 5+ per request
 **Issues Found**:
+
 1. N+1 query fetching patient for each prescription
 2. No caching of drug master data
 3. Missing index on prescription.status
 
 **Recommended Fix**:
+
 ```typescript
 // Single query with joins
 const queue = await db
@@ -105,33 +113,40 @@ const queue = await db
   .innerJoin(visits, eq(medicalRecords.visitId, visits.id))
   .innerJoin(patients, eq(visits.patientId, patients.id))
   .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-  .where(eq(prescriptions.status, 'pending'))
+  .where(eq(prescriptions.status, "pending"))
   .orderBy(desc(prescriptions.createdAt))
   .limit(50)
 ```
+````
 
 ### Medium Issues
 
 #### Endpoint: GET /api/patients/search
+
 **Issue**: LIKE query without proper indexing
 **Current**:
+
 ```typescript
-like(patients.name, `%${search}%`)  // Full table scan
+like(patients.name, `%${search}%`) // Full table scan
 ```
+
 **Recommendation**: Add trigram index for pattern matching or use prefix search:
+
 ```typescript
-like(patients.name, `${search}%`)  // Can use B-tree index
+like(patients.name, `${search}%`) // Can use B-tree index
 ```
 
 ### RBAC Optimization Needed
 
 **Current overhead per request**: ~3 DB calls before handler runs
+
 - getSession: 1 call
 - getUserRole: 1 call
 - hasPermission: potentially 1 more call
 
 **Recommendation**: Cache in request-scoped store or use single combined query
-```
+
+````
 
 ### 5. Caching Recommendations
 
@@ -158,26 +173,30 @@ return NextResponse.json(data, {
     'Cache-Control': 'public, max-age=3600', // 1 hour
   }
 })
-```
+````
 
 2. **Use `select` to limit columns**:
+
 ```typescript
 // BAD: fetches all columns
 const patients = await db.select().from(patients)
 
 // GOOD: only needed columns
-const patients = await db.select({
-  id: patients.id,
-  name: patients.name,
-  mrNumber: patients.mrNumber,
-}).from(patients)
+const patients = await db
+  .select({
+    id: patients.id,
+    name: patients.name,
+    mrNumber: patients.mrNumber,
+  })
+  .from(patients)
 ```
 
 3. **Add database connection pooling** in `db/index.ts`:
+
 ```typescript
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 20,  // max connections
+  max: 20, // max connections
   idleTimeoutMillis: 30000,
 })
 ```
@@ -185,6 +204,7 @@ const pool = new Pool({
 ### 7. Monitoring Suggestions
 
 Add logging to identify slow queries:
+
 ```typescript
 const start = performance.now()
 const result = await db.select()...

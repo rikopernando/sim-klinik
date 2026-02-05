@@ -521,50 +521,38 @@ curl http://localhost:3000/api/billing/1
 Test via Browser (Recommended for First Time)
 
 1. Open Cashier Dashboard
-
-
-    - Navigate to: http://localhost:3000/dashboard/cashier
-    - You should see the billing queue interface
+   - Navigate to: http://localhost:3000/dashboard/cashier
+   - You should see the billing queue interface
 
 2. Verify Queue Display
-
-
-    - You should see at least 1 test visit in the queue
-    - Check: Visit Number (V20250129999), Patient MR (MR999001), Name (Test Patient Billing)
-    - Status should show "Belum Dihitung" (Not Calculated)
+   - You should see at least 1 test visit in the queue
+   - Check: Visit Number (V20250129999), Patient MR (MR999001), Name (Test Patient Billing)
+   - Status should show "Belum Dihitung" (Not Calculated)
 
 3. Select Visit from Queue
-
-
-    - Click the "Pilih" button on the test visit
-    - The button changes to "Terpilih" (Selected)
-    - Billing details should appear below
+   - Click the "Pilih" button on the test visit
+   - The button changes to "Terpilih" (Selected)
+   - Billing details should appear below
 
 4. Review Billing Items
-
-
-    - You should see itemized costs:
-        - ✅ Biaya Administrasi (Rp 50,000)
-      - ✅ Konsultasi Dokter Umum (Rp 100,000)
-      - ✅ Medications from prescriptions (2 items)
-    - Check total amount is correct
+   - You should see itemized costs:
+     - ✅ Biaya Administrasi (Rp 50,000)
+     - ✅ Konsultasi Dokter Umum (Rp 100,000)
+     - ✅ Medications from prescriptions (2 items)
+   - Check total amount is correct
 
 5. Process Payment
-
-
-    - Click "Proses Pembayaran" button in the sticky total box (right side)
-    - Payment dialog opens
-    - Select payment method: Cash
-    - Enter amount received (e.g., Rp 200,000)
-    - System calculates change automatically
-    - Click "Proses Pembayaran" to complete
+   - Click "Proses Pembayaran" button in the sticky total box (right side)
+   - Payment dialog opens
+   - Select payment method: Cash
+   - Enter amount received (e.g., Rp 200,000)
+   - System calculates change automatically
+   - Click "Proses Pembayaran" to complete
 
 6. Verify Payment Success
-
-
-    - ✅ Dialog closes
-    - ✅ Payment status updates to "Lunas" (Paid)
-    - ✅ Payment appears in payment history
-    - ✅ Visit removed from queue (refresh to verify)
+   - ✅ Dialog closes
+   - ✅ Payment status updates to "Lunas" (Paid)
+   - ✅ Payment appears in payment history
+   - ✅ Visit removed from queue (refresh to verify)
 
 Happy Testing! 🎉

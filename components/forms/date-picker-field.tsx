@@ -5,6 +5,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FormField } from "@/components/ui/form-field"
 import { cn } from "@/lib/utils"
+import { useState } from "react"
 
 interface DatePickerFieldProps {
   label?: string
@@ -31,9 +32,16 @@ export function DatePickerField({
   dateFormat = "dd MMMM yyyy",
   endMonth,
 }: DatePickerFieldProps) {
+  const [calendarOpen, setCalendarOpen] = useState(false)
+
+  const onSelect = (date: Date | undefined) => {
+    onChange(date)
+    setCalendarOpen(false)
+  }
+
   return (
     <FormField label={label} required={required} error={error}>
-      <Popover>
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -52,7 +60,7 @@ export function DatePickerField({
             disabled={disabled}
             mode="single"
             selected={value}
-            onSelect={onChange}
+            onSelect={onSelect}
             captionLayout="dropdown"
             startMonth={startMonth}
             endMonth={endMonth}

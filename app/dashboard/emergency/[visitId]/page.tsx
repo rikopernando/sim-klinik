@@ -30,8 +30,17 @@ import { ERMedicalRecordActions } from "@/components/emergency/er-medical-record
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
 import type { DispositionType } from "@/types/emergency"
 import { getErrorMessage } from "@/lib/utils/error"
+import { PageGuard } from "@/components/auth/page-guard"
 
 export default function ERMedicalRecordPage() {
+  return (
+    <PageGuard roles={["nurse", "doctor", "super_admin", "admin"]}>
+      <ERMedicalRecordContent />
+    </PageGuard>
+  )
+}
+
+function ERMedicalRecordContent() {
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("soap")

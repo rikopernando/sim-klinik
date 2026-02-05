@@ -11,12 +11,14 @@ Refactored the Room Management Dashboard (`/app/dashboard/inpatient/rooms/page.t
 ### Before vs After
 
 **Before:**
+
 - **340+ lines** in single file
 - Inline functions and calculations
 - Difficult to test individual components
 - Mixed concerns (UI, logic, state management)
 
 **After:**
+
 - **100 lines** in main page (71% reduction)
 - Modular components and custom hooks
 - Easy to test each module independently
@@ -29,15 +31,18 @@ Refactored the Room Management Dashboard (`/app/dashboard/inpatient/rooms/page.t
 ### Custom Hooks (3)
 
 #### 1. `useRoomDashboard` (`/hooks/use-room-dashboard.ts`)
+
 **Purpose:** Fetch room data with auto-refresh capability
 
 **Features:**
+
 - Automatic polling with configurable interval
 - Manual refresh function
 - Loading and error states
 - Last refresh timestamp
 
 **Usage:**
+
 ```typescript
 const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
   autoRefresh: true,
@@ -46,6 +51,7 @@ const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
 ```
 
 **Benefits:**
+
 - Reusable across multiple pages
 - Auto-refresh keeps data current
 - Consistent error handling
@@ -53,22 +59,25 @@ const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
 ---
 
 #### 2. `useRoomStatistics` (`/hooks/use-room-statistics.ts`)
+
 **Purpose:** Calculate statistics from room data
 
 **Returns:**
+
 ```typescript
 {
-  total: number          // Total rooms
-  available: number      // Fully empty rooms
-  partial: number        // Partially occupied
-  full: number          // Fully occupied
-  totalBeds: number     // Total bed count
-  occupiedBeds: number  // Occupied bed count
+  total: number // Total rooms
+  available: number // Fully empty rooms
+  partial: number // Partially occupied
+  full: number // Fully occupied
+  totalBeds: number // Total bed count
+  occupiedBeds: number // Occupied bed count
   occupancyRate: number // Overall occupancy %
 }
 ```
 
 **Benefits:**
+
 - Memoized calculations (no recalculation on unrelated renders)
 - Single source of truth for statistics
 - Easy to add new metrics
@@ -76,20 +85,24 @@ const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
 ---
 
 #### 3. `useRoomFilter` (`/hooks/use-room-filter.ts`)
+
 **Purpose:** Handle room filtering logic
 
 **Filter Types:**
+
 - `all` - Show all rooms
 - `available` - Only empty rooms
 - `occupied` - Rooms with at least one patient
 - `full` - Fully occupied rooms
 
 **Usage:**
+
 ```typescript
 const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 ```
 
 **Benefits:**
+
 - Memoized filtering (performance optimization)
 - Centralized filter logic
 - Type-safe filter values
@@ -99,14 +112,17 @@ const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 ### UI Components (4)
 
 #### 1. `RoomDashboardHeader` (`/components/inpatient/room-dashboard-header.tsx`)
+
 **Purpose:** Page header with title and refresh button
 
 **Props:**
+
 - `lastRefresh: Date | null` - Timestamp of last data fetch
 - `onRefresh: () => void` - Refresh callback
 - `isLoading: boolean` - Loading state
 
 **Features:**
+
 - Shows last update time in Indonesian format
 - Animated refresh icon when loading
 - Responsive layout
@@ -114,15 +130,18 @@ const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 ---
 
 #### 2. `RoomStatisticsCards` (`/components/inpatient/room-statistics-cards.tsx`)
+
 **Purpose:** Display 4 statistic cards
 
 **Cards:**
+
 1. **Total Kamar** (neutral)
 2. **Kamar Kosong** (green)
 3. **Terisi Sebagian** (yellow)
 4. **Tingkat Hunian** (blue)
 
 **Features:**
+
 - Color-coded by status
 - Dark mode support
 - Responsive grid layout
@@ -130,15 +149,18 @@ const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 ---
 
 #### 3. `RoomFilterButtons` (`/components/inpatient/room-filter-buttons.tsx`)
+
 **Purpose:** Filter toggle buttons
 
 **Buttons:**
+
 - Semua (count)
 - Kosong (count)
 - Terisi (count)
 - Penuh (count)
 
 **Features:**
+
 - Active state highlighting
 - Dynamic counts
 - Keyboard accessible
@@ -146,9 +168,11 @@ const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 ---
 
 #### 4. `RoomCard` (`/components/inpatient/room-card.tsx`)
+
 **Purpose:** Individual room display card
 
 **Sections:**
+
 - Header (room number, type, status badge)
 - Bed info (occupancy count)
 - Occupancy rate (visual progress bar)
@@ -158,6 +182,7 @@ const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 - Assign bed button
 
 **Features:**
+
 - Color-coded border (green/yellow/red)
 - Dynamic status styling
 - Displays current patients
@@ -343,31 +368,37 @@ export default function RoomDashboardPage() {
 ## Benefits
 
 ### 1. **Maintainability** ✅
+
 - Each component has single responsibility
 - Easy to locate and fix bugs
 - Clear module boundaries
 
 ### 2. **Readability** ✅
+
 - Main page is now high-level composition
 - No complex inline logic
 - Self-documenting component names
 
 ### 3. **Performance** ✅
+
 - Memoized calculations (useMemo in hooks)
 - Memoized callbacks (useCallback)
 - No unnecessary re-renders
 
 ### 4. **Reusability** ✅
+
 - Hooks can be used in other pages
 - Components can be reused
 - Consistent UI patterns
 
 ### 5. **Testability** ✅
+
 - Each hook can be unit tested
 - Each component can be tested in isolation
 - Easy to mock dependencies
 
 ### 6. **Scalability** ✅
+
 - Easy to add new filters
 - Easy to add new statistics
 - Easy to add new card types
@@ -377,6 +408,7 @@ export default function RoomDashboardPage() {
 ## Performance Optimizations
 
 ### Before:
+
 ```typescript
 // Recalculated on EVERY render
 const stats = {
@@ -391,6 +423,7 @@ const filteredRooms = rooms.filter(...)
 ```
 
 ### After:
+
 ```typescript
 // Memoized - only recalculates when rooms change
 const statistics = useRoomStatistics(rooms)
@@ -406,6 +439,7 @@ const { filter, setFilter, filteredRooms } = useRoomFilter(rooms)
 ## Auto-Refresh Feature
 
 **New Feature Added:**
+
 ```typescript
 const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
   autoRefresh: true,
@@ -414,6 +448,7 @@ const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
 ```
 
 **Benefits:**
+
 - Real-time data without manual refresh
 - Configurable interval
 - Can be disabled per page
@@ -426,10 +461,13 @@ const { rooms, isLoading, lastRefresh, refresh } = useRoomDashboard({
 ### Unit Tests (Hooks)
 
 **`useRoomStatistics.test.ts`**
+
 ```typescript
-describe('useRoomStatistics', () => {
-  it('calculates statistics correctly', () => {
-    const rooms = [/* test data */]
+describe("useRoomStatistics", () => {
+  it("calculates statistics correctly", () => {
+    const rooms = [
+      /* test data */
+    ]
     const { result } = renderHook(() => useRoomStatistics(rooms))
 
     expect(result.current.total).toBe(5)
@@ -440,13 +478,16 @@ describe('useRoomStatistics', () => {
 ```
 
 **`useRoomFilter.test.ts`**
+
 ```typescript
-describe('useRoomFilter', () => {
-  it('filters available rooms', () => {
-    const rooms = [/* test data */]
+describe("useRoomFilter", () => {
+  it("filters available rooms", () => {
+    const rooms = [
+      /* test data */
+    ]
     const { result } = renderHook(() => useRoomFilter(rooms))
 
-    act(() => result.current.setFilter('available'))
+    act(() => result.current.setFilter("available"))
 
     expect(result.current.filteredRooms).toHaveLength(2)
   })
@@ -456,6 +497,7 @@ describe('useRoomFilter', () => {
 ### Component Tests
 
 **`RoomCard.test.tsx`**
+
 ```typescript
 describe('RoomCard', () => {
   it('shows green border for empty room', () => {
@@ -477,15 +519,19 @@ describe('RoomCard', () => {
 ## Migration Notes
 
 ### Backup Created
+
 Original file backed up at:
+
 ```
 /app/dashboard/inpatient/rooms/page.tsx.backup
 ```
 
 ### Breaking Changes
+
 **None** - All functionality preserved, just reorganized.
 
 ### API Changes
+
 **None** - Same API endpoints, same data structure.
 
 ---

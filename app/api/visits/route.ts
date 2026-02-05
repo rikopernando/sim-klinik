@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { visits, patients, vitalsHistory } from "@/db/schema"
-import { eq, and, gte, lt } from "drizzle-orm"
+import { eq, and, gte, lt, ne } from "drizzle-orm"
 import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -232,8 +232,12 @@ export const POST = withRBAC(
 )
 
 /**
- * GET /api/visits?poliId=X&status=pending
+ * GET /api/visits?poliId=X&status=pending&date=2024-01-15&dateFrom=2024-01-01&dateTo=2024-01-31
  * Get visits queue for a specific poli
+ * Supports date filtering:
+ * - date: specific date (YYYY-MM-DD)
+ * - dateFrom/dateTo: date range
+ * - If no date params provided, defaults to today
  * Requires: visits:read permission
  */
 export const GET = withRBAC(
@@ -243,9 +247,12 @@ export const GET = withRBAC(
       const poliId = searchParams.get("poliId")
       const status = searchParams.get("status")
       const visitType = searchParams.get("visitType")
+      const date = searchParams.get("date")
+      const dateFrom = searchParams.get("dateFrom")
+      const dateTo = searchParams.get("dateTo")
 
       // Build query conditions
-      const conditions = []
+      const conditions = [ne(visits.status, "cancelled"), ne(visits.status, "completed")]
 
       if (poliId) {
         conditions.push(eq(visits.poliId, poliId))
@@ -259,14 +266,41 @@ export const GET = withRBAC(
         conditions.push(eq(visits.visitType, visitType))
       }
 
-      // Get today's date range for filtering (only today's visits)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
+      console.log({ date })
 
-      conditions.push(gte(visits.arrivalTime, today))
-      conditions.push(lt(visits.arrivalTime, tomorrow))
+      // Date filtering logic
+      if (date) {
+        // Specific date filter
+        const targetDate = new Date(date)
+        console.log({ date, targetDate })
+        targetDate.setHours(0, 0, 0, 0)
+        const nextDay = new Date(targetDate)
+        nextDay.setDate(nextDay.getDate() + 1)
+
+        conditions.push(gte(visits.arrivalTime, targetDate))
+        conditions.push(lt(visits.arrivalTime, nextDay))
+      } else if (dateFrom || dateTo) {
+        // Date range filter
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom)
+          fromDate.setHours(0, 0, 0, 0)
+          conditions.push(gte(visits.arrivalTime, fromDate))
+        }
+        if (dateTo) {
+          const toDate = new Date(dateTo)
+          toDate.setHours(23, 59, 59, 999)
+          conditions.push(lt(visits.arrivalTime, toDate))
+        }
+      } else {
+        // Default: today's visits only
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        conditions.push(gte(visits.arrivalTime, today))
+        conditions.push(lt(visits.arrivalTime, tomorrow))
+      }
 
       // Query visits with patient data
       const visitQueue = await db
