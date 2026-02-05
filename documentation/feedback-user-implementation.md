@@ -186,60 +186,103 @@ GET /api/visits                           # Default: today
 
 ### 7. Stock Error Message (#7) - High Priority
 
-**Problem:** No clear error message when pharmacy stock is empty.
+**Problem:** No clear error message when pharmacy stock is empty. Additionally, stock was validated against a single batch only — when no single batch had enough stock but the total across all batches was sufficient (e.g., need 62 units, Batch A: 60, Batch B: 100), it incorrectly showed "insufficient stock".
 
-**Solution:**
+**Solution (v1 - Initial):**
 
 - Added pre-submit stock validation in bulk fulfillment
 - Shows prominent warning for stock issues before submission
 - Disabled submit button when stock issues exist
 
+**Solution (v2 - Multi-Batch Enhancement):**
+
+- Stock validation now checks **total available stock across all batches** instead of single batch
+- Supports multi-batch fulfillment: when no single batch has enough, automatically splits across multiple batches using FEFO order
+- Added allocation quantity validation: total allocated must match required quantity before submission
+- Shows under-allocation and over-allocation warnings
+
 **Files Modified:**
 
 - `components/pharmacy/bulk-fulfillment-dialog.tsx`:
-  - Added `stockIssues` memoized array detecting out-of-stock and insufficient stock
-  - Added stock issues warning alert
-  - Enhanced validation with detailed drug names and quantities
-  - Disabled submit button when `stockIssues.length > 0`
+  - `stockIssues` checks total available stock across all batches (not single batch)
+  - Added allocation validation: warns when total allocated doesn't match required quantity
+  - `handleSubmit` pushes one entry per allocated batch for multi-batch support
+  - `isFormValid` verifies allocated batches exist and total matches required
+- `lib/pharmacy/api-service.ts` (`bulkFulfillPrescriptions`):
+  - Groups requests by `prescriptionId` for multi-batch support
+  - Updates prescription once with total dispensed quantity
+  - Deducts stock from each batch separately in a single DB transaction
+  - Records per-batch stock movements for audit trail
 
 ---
 
 ### 8. Auto FIFO Batch Selection (#8) - Medium Priority
 
-**Problem:** Pharmacy shouldn't manually select batches for every prescription.
+**Problem:** Pharmacy shouldn't manually select batches for every prescription. Additionally, when no single batch had sufficient stock, the system had no way to split across multiple batches.
 
-**Solution:**
+**Solution (v1 - Initial):**
 
 - Implemented automatic batch selection using FEFO (First Expiry, First Out)
 - Made manual batch selector collapsible (hidden by default)
 - Created read-only display for auto-selected batch
 
+**Solution (v2 - Multi-Batch Enhancement):**
+
+- Auto-allocation now supports splitting across multiple batches when no single batch has enough stock
+- Manual batch selector upgraded from single radio selection to multi-batch with checkboxes + quantity inputs per batch
+- Auto-batch display shows multi-batch allocation summary (blue-themed card with each batch's contribution)
+- Running total indicator: green (exact match), orange (under), red (over)
+
 **Files Created:**
 
-- `components/pharmacy/fulfillment/auto-batch-display.tsx` - Read-only batch info display
+- `components/pharmacy/fulfillment/auto-batch-display.tsx` - Read-only batch info display with multi-batch support
+- `documentation/pharmacy_multi_batch_fulfillment.md` - Implementation plan documentation
 
 **Files Modified:**
 
-- `components/pharmacy/hooks/use-bulk-fulfillment-data.tsx` - Uses `findBestBatchForDispensing()` for FEFO selection
-- `components/pharmacy/bulk-fulfillment/prescription-item.tsx` - Shows auto-selected batch with collapsible manual override
+- `lib/pharmacy/stock-utils.ts`:
+  - Added `BatchAllocation` interface (`{ batch, quantity }`)
+  - Added `allocateBatchesForDispensing()` — tries single batch first (FEFO), falls back to splitting across batches
+- `components/pharmacy/hooks/use-bulk-fulfillment-data.tsx`:
+  - Added `allocatedBatches` and `totalAvailableStock` to `FulfillmentFormData`
+  - Uses `allocateBatchesForDispensing()` instead of `findBestBatchForDispensing()`
+  - Replaced `handleBatchSelect` with `handleAllocationsChange`
+- `components/pharmacy/fulfillment/batch-selector.tsx`:
+  - Rewritten: checkboxes + quantity inputs per batch (multi-batch selection)
+  - Auto-fills quantity with `min(stock, remaining)` when checking a batch
+  - Running total bar at bottom
+- `components/pharmacy/bulk-fulfillment/prescription-item.tsx`:
+  - Updated props from `onBatchSelect` to `onAllocationsChange`
+  - Passes `allocatedBatches` to AutoBatchDisplay and BatchSelector
+- `components/pharmacy/fulfillment-dialog.tsx`:
+  - Updated to use new BatchSelector API (allocatedBatches, onAllocationsChange)
 
-**FEFO Logic:**
+**Multi-Batch FEFO Logic:**
 
 ```typescript
 // From lib/pharmacy/stock-utils.ts
-export function findBestBatchForDispensing(
+export function allocateBatchesForDispensing(
   inventories: DrugInventoryWithDetails[],
   requiredQuantity: number
-): DrugInventoryWithDetails | null {
-  // Filter expired, sort by expiry date, find first with sufficient stock
+): BatchAllocation[] {
   const availableBatches = sortByFEFO(
     inventories.filter((inv) => inv.expiryAlertLevel !== "expired" && inv.stockQuantity > 0)
   )
-  return (
-    availableBatches.find((batch) => batch.stockQuantity >= requiredQuantity) ||
-    availableBatches[0] ||
-    null
-  )
+  // Try single batch first (preferred)
+  const sufficientBatch = availableBatches.find((b) => b.stockQuantity >= requiredQuantity)
+  if (sufficientBatch) {
+    return [{ batch: sufficientBatch, quantity: requiredQuantity }]
+  }
+  // Multi-batch allocation in FEFO order
+  const allocations: BatchAllocation[] = []
+  let remaining = requiredQuantity
+  for (const batch of availableBatches) {
+    if (remaining <= 0) break
+    const take = Math.min(batch.stockQuantity, remaining)
+    allocations.push({ batch, quantity: take })
+    remaining -= take
+  }
+  return allocations
 }
 ```
 
@@ -292,7 +335,13 @@ export function findBestBatchForDispensing(
 - [x] **Date Filter:** Test all presets (today, yesterday, custom range)
   - Instead of create some type of period (today, yesterday, custom range), let's make it simple with just date picker filter, with today as default.
 - [x] **Stock Error:** Try fulfilling prescription with empty/insufficient stock
+- [x] **Stock Error (Multi-Batch):** Verify no "insufficient stock" when total across batches is enough (e.g., need 62, batches have 60+100)
+- [x] **Stock Error (Multi-Batch):** Verify warning shows when total stock IS insufficient (e.g., need 200, total = 160)
 - [x] **Auto FIFO:** Verify auto-selected batch is earliest expiry with sufficient stock
+- [x] **Auto FIFO (Multi-Batch):** Verify auto-allocation splits across batches when no single batch is enough
+- [x] **Manual Multi-Batch:** Verify checkboxes + quantity inputs work for manual batch selection
+- [x] **Allocation Validation:** Verify cannot submit when total allocated doesn't match required quantity
+- [x] **Multi-Batch Fulfillment:** Submit multi-batch fulfillment, verify stock movements created per batch
 - [x] **Compounded Route:** Create prescription with "Obat Racik" route
 - [x] **Doctor Loader:** Verify skeletons show during initial load
 
@@ -320,3 +369,4 @@ npm run db:push
 - `documentation/feedback-user.md` - Original feedback items
 - `documentation/rbac_implementation_guide.md` - RBAC system details
 - `documentation/visit_status_lifecycle.md` - Visit status state machine
+- `documentation/pharmacy_multi_batch_fulfillment.md` - Multi-batch fulfillment implementation plan
