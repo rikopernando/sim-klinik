@@ -4,6 +4,7 @@
  */
 
 import { memo } from "react"
+import { useRouter } from "next/navigation"
 import {
   Table,
   TableBody,
@@ -23,7 +24,6 @@ import Loader from "@/components/loader"
 interface HistoryListTableProps {
   records: MedicalRecordHistoryListItem[]
   isLoading: boolean
-  onViewDetail: (patientId: string) => void
 }
 
 const VISIT_TYPE_LABELS: Record<string, string> = {
@@ -32,7 +32,23 @@ const VISIT_TYPE_LABELS: Record<string, string> = {
   emergency: "UGD",
 }
 
-function HistoryListTableComponent({ records, isLoading, onViewDetail }: HistoryListTableProps) {
+function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps) {
+  const router = useRouter()
+
+  const handleViewDetail = (visitId: string, visitType: string) => {
+    switch (visitType) {
+      case "emergency":
+        router.push(`/dashboard/emergency/${visitId}`)
+        break
+      case "inpatient":
+        router.push(`/dashboard/inpatient/patients/${visitId}`)
+        break
+      case "outpatient":
+      default:
+        router.push(`/dashboard/medical-records/${visitId}`)
+        break
+    }
+  }
   if (isLoading) {
     return <Loader message="Memuat riwayat rekam medis..." />
   }
@@ -100,8 +116,8 @@ function HistoryListTableComponent({ records, isLoading, onViewDetail }: History
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onViewDetail(item.patient.id)}
-                title="Lihat Riwayat Pasien"
+                onClick={() => handleViewDetail(item.visitId, item.visitType)}
+                title="Lihat Detail Rekam Medis"
               >
                 <Eye className="h-4 w-4" />
               </Button>

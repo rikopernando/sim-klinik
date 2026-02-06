@@ -4,7 +4,6 @@
  */
 
 "use client"
-import { useState } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
 import { RefreshCw, Search } from "lucide-react"
 
@@ -15,7 +14,6 @@ import { useMedicalRecordHistoryListFilters } from "@/hooks/use-medical-record-h
 import { HistoryListTable } from "@/components/medical-records/history-list-table"
 import { HistoryListFilters } from "@/components/medical-records/history-list-filters"
 import { HistoryListPagination } from "@/components/medical-records/history-list-pagination"
-import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
 import { FilterDrawer } from "@/components/ui/filter-drawer"
 import { Button } from "@/components/ui/button"
 
@@ -32,15 +30,6 @@ function MedicalRecordHistoryPageContent() {
   const { records, pagination, isLoading, handlePageChange, refresh } = useMedicalRecordHistoryList(
     filterHook.filters
   )
-
-  // State for patient history dialog
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-
-  const handleViewDetail = (patientId: string) => {
-    setSelectedPatientId(patientId)
-    setIsDialogOpen(true)
-  }
 
   return (
     <div className="container mx-auto p-6">
@@ -107,11 +96,7 @@ function MedicalRecordHistoryPageContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Table */}
-            <HistoryListTable
-              records={records}
-              isLoading={isLoading}
-              onViewDetail={handleViewDetail}
-            />
+            <HistoryListTable records={records} isLoading={isLoading} />
 
             {/* Pagination */}
             {!isLoading && (
@@ -120,13 +105,6 @@ function MedicalRecordHistoryPageContent() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Patient Medical Record History Dialog */}
-      <MedicalRecordHistoryDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        patientId={selectedPatientId || ""}
-      />
     </div>
   )
 }
