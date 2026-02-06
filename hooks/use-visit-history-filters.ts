@@ -31,13 +31,23 @@ export function useVisitHistoryFilters() {
     [debouncedSearch, status, visitType, dateFrom, dateTo]
   )
 
+  // Reset only drawer filters (not search which is inline)
   const resetFilters = () => {
-    setSearch("")
     setStatus("all")
     setVisitType("all")
     setDateFrom("")
     setDateTo("")
   }
+
+  // Count active filters in drawer only (excluding search which is inline)
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (status !== "all") count++
+    if (visitType !== "all") count++
+    if (dateFrom) count++
+    if (dateTo) count++
+    return count
+  }, [status, visitType, dateFrom, dateTo])
 
   return {
     search,
@@ -51,6 +61,7 @@ export function useVisitHistoryFilters() {
     setDateFrom,
     setDateTo,
     resetFilters,
+    activeFilterCount,
     filters,
   }
 }

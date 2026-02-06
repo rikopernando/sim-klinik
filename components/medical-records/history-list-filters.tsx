@@ -1,9 +1,8 @@
 /**
  * Medical Record History List Filters Component
- * Filter controls for the medical record history list
+ * Filter controls for the medical record history list (used inside FilterDrawer)
  */
 
-import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
@@ -11,18 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search } from "lucide-react"
 import { DatePickerField } from "@/components/forms/date-picker-field"
 import { VISIT_TYPE_OPTIONS, LOCKED_STATUS_OPTIONS } from "@/types/medical-record"
 import { format } from "date-fns"
+import { Label } from "@/components/ui/label"
 
 interface HistoryListFiltersProps {
-  search: string
   visitType: string
   isLocked: string
   dateFrom: string
   dateTo: string
-  onSearchChange: (value: string) => void
   onVisitTypeChange: (value: string) => void
   onIsLockedChange: (value: string) => void
   onDateFromChange: (value: string) => void
@@ -30,12 +27,10 @@ interface HistoryListFiltersProps {
 }
 
 export function HistoryListFilters({
-  search,
   visitType,
   isLocked,
   dateFrom,
   dateTo,
-  onSearchChange,
   onVisitTypeChange,
   onIsLockedChange,
   onDateFromChange,
@@ -43,24 +38,12 @@ export function HistoryListFilters({
 }: HistoryListFiltersProps) {
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Search Input */}
-        <div className="lg:col-span-2">
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder="Cari nama pasien, No. RM, No. Kunjungan..."
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-        </div>
-
-        {/* Visit Type Filter */}
+      {/* Visit Type Filter */}
+      <div className="space-y-2">
+        <Label>Tipe Kunjungan</Label>
         <Select value={visitType} onValueChange={onVisitTypeChange}>
           <SelectTrigger>
-            <SelectValue placeholder="Tipe Kunjungan" />
+            <SelectValue placeholder="Pilih tipe kunjungan" />
           </SelectTrigger>
           <SelectContent>
             {VISIT_TYPE_OPTIONS.map((option) => (
@@ -70,11 +53,14 @@ export function HistoryListFilters({
             ))}
           </SelectContent>
         </Select>
+      </div>
 
-        {/* Locked Status Filter */}
+      {/* Locked Status Filter */}
+      <div className="space-y-2">
+        <Label>Status Kunci</Label>
         <Select value={isLocked} onValueChange={onIsLockedChange}>
           <SelectTrigger>
-            <SelectValue placeholder="Status Kunci" />
+            <SelectValue placeholder="Pilih status kunci" />
           </SelectTrigger>
           <SelectContent>
             {LOCKED_STATUS_OPTIONS.map((option) => (
@@ -87,17 +73,17 @@ export function HistoryListFilters({
       </div>
 
       {/* Date Range */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4">
         <DatePickerField
           label="Dari Tanggal"
-          placeholder="Pilih tanggal awal"
+          placeholder="Pilih tanggal"
           value={dateFrom ? new Date(dateFrom) : undefined}
           onChange={(date) => onDateFromChange(date ? format(date, "yyyy-MM-dd") : "")}
           endMonth={new Date()}
         />
         <DatePickerField
           label="Sampai Tanggal"
-          placeholder="Pilih tanggal akhir"
+          placeholder="Pilih tanggal"
           value={dateTo ? new Date(dateTo) : undefined}
           onChange={(date) => onDateToChange(date ? format(date, "yyyy-MM-dd") : "")}
           endMonth={new Date()}

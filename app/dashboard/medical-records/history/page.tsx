@@ -6,22 +6,17 @@
 "use client"
 import { useState } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, Search } from "lucide-react"
 
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { useMedicalRecordHistoryList } from "@/hooks/use-medical-record-history-list"
 import { useMedicalRecordHistoryListFilters } from "@/hooks/use-medical-record-history-list-filters"
 import { HistoryListTable } from "@/components/medical-records/history-list-table"
 import { HistoryListFilters } from "@/components/medical-records/history-list-filters"
 import { HistoryListPagination } from "@/components/medical-records/history-list-pagination"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
+import { FilterDrawer } from "@/components/ui/filter-drawer"
 import { Button } from "@/components/ui/button"
 
 export default function MedicalRecordHistoryPage() {
@@ -58,38 +53,57 @@ function MedicalRecordHistoryPageContent() {
               Daftar rekam medis pasien yang sedang berjalan maupun sudah selesai
             </p>
           </div>
-          <Button onClick={refresh} variant="outline" disabled={isLoading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
 
-        {/* Record List Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Daftar Rekam Medis</CardTitle>
-            <CardDescription>
-              {isLoading
-                ? "Memuat data..."
-                : pagination.total > 0
-                  ? `Total: ${pagination.total} rekam medis`
-                  : "Tidak ada data rekam medis"}
-            </CardDescription>
-            <CardAction>
-              {/* Filters */}
+          <div className="flex items-center gap-2">
+            <FilterDrawer
+              activeFilterCount={filterHook.activeFilterCount}
+              onReset={filterHook.resetFilters}
+              title="Filter Rekam Medis"
+              description="Atur filter untuk menyaring data rekam medis"
+            >
               <HistoryListFilters
-                search={filterHook.search}
                 visitType={filterHook.visitType}
                 isLocked={filterHook.isLocked}
                 dateFrom={filterHook.dateFrom}
                 dateTo={filterHook.dateTo}
-                onSearchChange={filterHook.setSearch}
                 onVisitTypeChange={filterHook.setVisitType}
                 onIsLockedChange={filterHook.setIsLocked}
                 onDateFromChange={filterHook.setDateFrom}
                 onDateToChange={filterHook.setDateTo}
               />
-            </CardAction>
+            </FilterDrawer>
+            <Button onClick={refresh} variant="outline" disabled={isLoading}>
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </div>
+        </div>
+        {/* Record List Card */}
+        <Card>
+          <CardHeader className="flex items-center justify-between">
+            <div>
+              <CardTitle>Daftar Rekam Medis</CardTitle>
+              <CardDescription>
+                {isLoading
+                  ? "Memuat data..."
+                  : pagination.total > 0
+                    ? `Total: ${pagination.total} rekam medis`
+                    : "Tidak ada data rekam medis"}
+              </CardDescription>
+            </div>
+
+            {/* Search and Filter */}
+            <div className="flex min-w-xs items-center gap-2">
+              <div className="relative max-w-sm flex-1">
+                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+                <Input
+                  placeholder="Cari nama pasien, No. RM, No. Kunjungan..."
+                  value={filterHook.search}
+                  onChange={(e) => filterHook.setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Table */}

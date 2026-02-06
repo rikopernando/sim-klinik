@@ -31,13 +31,23 @@ export function useMedicalRecordHistoryListFilters() {
     [debouncedSearch, visitType, isLocked, dateFrom, dateTo]
   )
 
+  // Reset only drawer filters (not search which is inline)
   const resetFilters = () => {
-    setSearch("")
     setVisitType("all")
     setIsLocked("all")
     setDateFrom("")
     setDateTo("")
   }
+
+  // Count active filters in drawer only (excluding search which is inline)
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (visitType !== "all") count++
+    if (isLocked !== "all") count++
+    if (dateFrom) count++
+    if (dateTo) count++
+    return count
+  }, [visitType, isLocked, dateFrom, dateTo])
 
   return {
     search,
@@ -51,6 +61,7 @@ export function useMedicalRecordHistoryListFilters() {
     setDateFrom,
     setDateTo,
     resetFilters,
+    activeFilterCount,
     filters,
   }
 }
