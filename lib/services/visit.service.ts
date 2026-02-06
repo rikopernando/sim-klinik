@@ -4,8 +4,9 @@
 
 import axios from "axios"
 import { type VisitFormData, type RegisteredVisit } from "@/types/registration"
-import { type ResponseApi } from "@/types/api"
+import { type ResponseApi, type Pagination } from "@/types/api"
 import { handleApiError, ApiServiceError } from "./api.service"
+import { type VisitHistoryItem, type VisitHistoryFilters } from "@/types/visit-history"
 
 /**
  * Register a new visit
@@ -118,6 +119,46 @@ export async function recordVisitVitals(
 ): Promise<void> {
   try {
     await axios.post(`/api/visits/${visitId}/vitals`, data)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch visit history with filters and pagination
+ */
+export interface FetchVisitHistoryParams {
+  filters?: VisitHistoryFilters
+  page?: number
+  limit?: number
+}
+
+export interface FetchVisitHistoryResult {
+  visits: VisitHistoryItem[]
+  pagination: Pagination
+}
+
+export async function fetchVisitHistory(
+  params?: FetchVisitHistoryParams
+): Promise<FetchVisitHistoryResult> {
+  try {
+    const response = await axios.get<ResponseApi<VisitHistoryItem[]>>("/api/visits/history", {
+      params: {
+        ...params?.filters,
+        page: params?.page || 1,
+        limit: params?.limit || 10,
+      },
+    })
+
+    return {
+      visits: response.data.data || [],
+      pagination: response.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      },
+    }
   } catch (error) {
     handleApiError(error)
   }

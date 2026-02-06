@@ -5,7 +5,7 @@
 
 import axios from "axios"
 
-import { ResponseApi } from "@/types/api"
+import { ResponseApi, Pagination } from "@/types/api"
 import {
   MedicalRecordCoreData,
   MedicalRecordFormData,
@@ -14,6 +14,8 @@ import {
   Procedure,
   Prescription,
   MedicalRecordHistoryData,
+  MedicalRecordHistoryListItem,
+  MedicalRecordHistoryListFilters,
 } from "@/types/medical-record"
 import {
   CreateDiagnosisFormData,
@@ -294,6 +296,49 @@ export async function getMedicalRecordHistory(
     }
 
     return response.data.data
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch medical record history list with filters and pagination
+ */
+export interface FetchMedicalRecordHistoryListParams {
+  filters?: MedicalRecordHistoryListFilters
+  page?: number
+  limit?: number
+}
+
+export interface FetchMedicalRecordHistoryListResult {
+  records: MedicalRecordHistoryListItem[]
+  pagination: Pagination
+}
+
+export async function fetchMedicalRecordHistoryList(
+  params?: FetchMedicalRecordHistoryListParams
+): Promise<FetchMedicalRecordHistoryListResult> {
+  try {
+    const response = await axios.get<ResponseApi<MedicalRecordHistoryListItem[]>>(
+      "/api/medical-records/history/list",
+      {
+        params: {
+          ...params?.filters,
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+        },
+      }
+    )
+
+    return {
+      records: response.data.data || [],
+      pagination: response.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      },
+    }
   } catch (error) {
     handleApiError(error)
   }
