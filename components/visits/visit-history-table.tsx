@@ -37,8 +37,19 @@ const VISIT_TYPE_LABELS: Record<string, string> = {
 function VisitHistoryTableComponent({ visits, isLoading }: VisitHistoryTableProps) {
   const router = useRouter()
 
-  const handleViewDetail = (visitId: string) => {
-    router.push(`/dashboard/medical-records/${visitId}`)
+  const handleViewDetail = (visitId: string, visitType: string) => {
+    switch (visitType) {
+      case "emergency":
+        router.push(`/dashboard/emergency/${visitId}`)
+        break
+      case "inpatient":
+        router.push(`/dashboard/inpatient/patients/${visitId}`)
+        break
+      case "outpatient":
+      default:
+        router.push(`/dashboard/medical-records/${visitId}`)
+        break
+    }
   }
 
   if (isLoading) {
@@ -100,7 +111,7 @@ function VisitHistoryTableComponent({ visits, isLoading }: VisitHistoryTableProp
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleViewDetail(item.visit.id)}
+                  onClick={() => handleViewDetail(item.visit.id, item.visit.visitType)}
                   title="Lihat Detail"
                 >
                   <Eye className="h-4 w-4" />
