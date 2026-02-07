@@ -169,3 +169,54 @@ export const MEDICATION_ROUTES = [
   { value: "sublingual", label: "Sublingual" },
   { value: "compounded", label: "Obat Racik" },
 ] as const
+
+/**
+ * Medical Record History List Item
+ * Used for browsing medical records across all patients
+ */
+export interface MedicalRecordHistoryListItem {
+  id: string
+  visitId: string
+  visitNumber: string
+  visitType: string
+  recordType: string
+  isLocked: boolean
+  isDraft: boolean
+  createdAt: string
+  updatedAt: string
+  patient: {
+    id: string
+    mrNumber: string
+    name: string
+  }
+}
+
+/**
+ * Filters for medical record history list
+ */
+export interface MedicalRecordHistoryListFilters {
+  search?: string
+  visitType?: string
+  isLocked?: string
+  dateFrom?: string
+  dateTo?: string
+}
+
+/**
+ * Visit type options for filter dropdown
+ */
+export const VISIT_TYPE_OPTIONS = [
+  { value: "all", label: "Semua Tipe" },
+  { value: "outpatient", label: "Rawat Jalan" },
+  { value: "inpatient", label: "Rawat Inap" },
+  { value: "emergency", label: "UGD" },
+] as const
+
+/**
+ * Locked status options for filter dropdown
+ */
+export const LOCKED_STATUS_OPTIONS = [
+  { value: "all", label: "Semua Status" },
+  { value: "true", label: "Terkunci" },
+  { value: "false", label: "Belum Terkunci" },
+] as const

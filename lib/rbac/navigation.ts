@@ -22,6 +22,7 @@ import {
   IconDatabase,
   IconFlask,
   IconCirclePlus2,
+  IconHistory,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -77,6 +78,22 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -91,10 +108,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Antrian Poli",
               url: "/dashboard/doctor",
-            },
-            {
-              title: "Rekam Medis",
-              url: "/dashboard/medical-records",
             },
           ],
         },
@@ -220,6 +233,22 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -343,6 +372,22 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -412,6 +457,27 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Data Pasien",
           url: "/dashboard/patients",
           icon: IconUserPlus,
+        },
+        {
+          title: "Kunjungan",
+          url: "/dashboard/visits",
+          icon: IconHistory,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -532,6 +598,12 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
         },
       ],
     },
