@@ -145,6 +145,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+          items: [
+            {
+              title: "Antrian Pembayaran",
+              url: "/dashboard/cashier",
+            },
+            {
+              title: "Riwayat Transaksi",
+              url: "/dashboard/cashier/transactions",
+            },
+          ],
         },
         {
           title: "Pemeriksaan Penunjang",
@@ -304,6 +314,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+          items: [
+            {
+              title: "Antrian Pembayaran",
+              url: "/dashboard/cashier",
+            },
+            {
+              title: "Riwayat Transaksi",
+              url: "/dashboard/cashier/transactions",
+            },
+          ],
         },
         {
           title: "Pemeriksaan Penunjang",
@@ -560,6 +580,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+        },
+        {
+          title: "Riwayat Transaksi",
+          url: "/dashboard/cashier/transactions",
+          icon: IconHistory,
         },
         {
           title: "Pasien Pulang",

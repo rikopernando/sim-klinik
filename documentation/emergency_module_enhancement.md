@@ -12,11 +12,13 @@ This document summarizes the implementation of all recommended improvements for 
 ## Phase 1: Security - RBAC Protection
 
 ### Objective
+
 Secure all emergency API endpoints with proper role-based access control.
 
 ### Changes Made
 
 #### 1. Quick Registration Endpoint
+
 **File:** `app/api/emergency/quick-register/route.ts`
 
 - Added `withRBAC` middleware wrapper
@@ -25,6 +27,7 @@ Secure all emergency API endpoints with proper role-based access control.
 - Returns 403 for unauthorized roles
 
 #### 2. Complete Registration Endpoint
+
 **File:** `app/api/emergency/complete-registration/route.ts`
 
 - Added `withRBAC` middleware wrapper
@@ -32,6 +35,7 @@ Secure all emergency API endpoints with proper role-based access control.
 - Note: `doctor` role excluded as registration completion is typically handled by admin staff
 
 ### Testing Checklist
+
 - [ ] Access quick-register without auth → should get 401
 - [ ] Access with non-allowed role → should get 403
 - [ ] Access with allowed role → should work
@@ -41,14 +45,17 @@ Secure all emergency API endpoints with proper role-based access control.
 ## Phase 2: UX Improvements
 
 ### Objective
+
 Improve queue usability with search, waiting time display, and better filtering.
 
 ### Changes Made
 
 #### 1. Wait Time Calculation Helpers
+
 **File:** `lib/emergency/triage-utils.ts`
 
 Added new functions:
+
 - `calculateWaitTimeMinutes(arrivalTime)` - Calculates minutes since arrival
 - `formatWaitTime(minutes)` - Formats as "X menit" or "X jam Y menit"
 - `isWaitTimeExceeded(arrivalTime, triageStatus)` - Checks if threshold exceeded
@@ -57,12 +64,13 @@ Added new functions:
 Wait time thresholds by triage level:
 | Triage | Alert Threshold |
 |--------|-----------------|
-| Red    | > 5 minutes     |
-| Yellow | > 15 minutes    |
-| Green  | > 30 minutes    |
+| Red | > 5 minutes |
+| Yellow | > 15 minutes |
+| Green | > 30 minutes |
 | Untriaged | > 10 minutes |
 
 #### 2. Patient Search
+
 **File:** `hooks/use-er-queue.ts`
 
 - Added `search` option to hook
@@ -76,6 +84,7 @@ Wait time thresholds by triage level:
 - Search icon with placeholder text
 
 #### 3. Waiting Time Display
+
 **File:** `components/emergency/er-queue-item.tsx`
 
 - Displays formatted wait time instead of "arrived X ago"
@@ -87,12 +96,14 @@ Wait time thresholds by triage level:
 - Auto-updates every minute
 
 #### 4. Incomplete Registration Indicator
+
 **File:** `components/emergency/er-queue-item.tsx`
 
 - Checks if patient NIK is null/empty
 - Shows orange badge "Data Belum Lengkap" for incomplete registrations
 
 ### Testing Checklist
+
 - [ ] Search patients by name → should filter queue
 - [ ] Search by MR number → should filter queue
 - [ ] Search by NIK → should filter queue
@@ -105,11 +116,13 @@ Wait time thresholds by triage level:
 ## Phase 3: Real-time Updates & Alerts
 
 ### Objective
+
 Replace polling with SSE for instant updates and add critical patient alerts.
 
 ### Changes Made
 
 #### 1. ER SSE Notification Endpoint
+
 **File:** `app/api/notifications/emergency/route.ts` (NEW)
 
 - Server-Sent Events endpoint at `/api/notifications/emergency`
@@ -117,14 +130,17 @@ Replace polling with SSE for instant updates and add critical patient alerts.
 - Uses existing SSE infrastructure from pharmacy module
 
 #### 2. ER Notification Types
+
 **File:** `lib/notifications/sse-manager.ts`
 
 Added new notification types:
+
 - `er_new_patient` - When quick registration completes
 - `er_status_change` - When patient status changes
 - `er_triage_change` - When triage level changes
 
 Data interfaces:
+
 ```typescript
 interface ERNewPatientData {
   visitId: string
@@ -151,9 +167,11 @@ interface ERTriageChangeData {
 ```
 
 #### 3. ER Notifications Hook
+
 **File:** `lib/notifications/use-er-notifications.ts` (NEW)
 
 React hook features:
+
 - EventSource connection to `/api/notifications/emergency`
 - Auto-reconnect on disconnect
 - Callback for new patient arrivals
@@ -161,12 +179,14 @@ React hook features:
 - Cleanup on unmount
 
 #### 4. SSE Broadcast on Registration
+
 **File:** `app/api/emergency/quick-register/route.ts`
 
 - Broadcasts `er_new_patient` notification after successful registration
 - Includes patient name, MR number, triage status, chief complaint
 
 #### 5. Queue Page SSE Integration
+
 **File:** `app/dashboard/emergency/page.tsx`
 
 - Uses SSE when connected, falls back to polling when disconnected
@@ -176,6 +196,7 @@ React hook features:
 - Toast notification for new arrivals
 
 #### 6. Audio Alert for Red Triage
+
 **File:** `app/dashboard/emergency/page.tsx`
 
 - Audio element for emergency alert sound
@@ -186,6 +207,7 @@ React hook features:
 **Required:** Add audio file at `public/sounds/emergency-alert.mp3`
 
 #### 7. Visual Highlight for Critical Patients
+
 **File:** `components/emergency/er-queue-item.tsx`
 
 - Pulsing border animation for Red triage patients
@@ -195,8 +217,13 @@ React hook features:
 
 ```css
 @keyframes pulse-border {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7); }
-  50% { box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.4); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.4);
+  }
 }
 
 .animate-pulse-border {
@@ -205,6 +232,7 @@ React hook features:
 ```
 
 ### Testing Checklist
+
 - [ ] Open queue in two browsers → changes in one should appear in other instantly
 - [ ] Register Red triage patient → audio alert should play (if sound enabled)
 - [ ] New patient should show toast notification
@@ -216,14 +244,17 @@ React hook features:
 ## Phase 4: Clinical & Operational Enhancements
 
 ### Objective
+
 Add vital signs tracking, print functionality, and pre-handover validation.
 
 ### Changes Made
 
 #### 1. ER Vitals Chart Component
+
 **File:** `components/emergency/er-vitals-chart.tsx` (NEW)
 
 Features:
+
 - Displays latest vitals with trend indicators (up/down/stable)
 - Color-coded abnormal values (outside normal range)
 - Normal range display for each vital sign
@@ -241,9 +272,11 @@ Vital signs tracked:
 | Pain Scale | /10 | 0-3 |
 
 #### 2. ER Print Summary Component
+
 **File:** `components/emergency/er-print-summary.tsx` (NEW)
 
 Printable summary includes:
+
 - Patient information (name, MR, NIK, gender, DOB, address, phone)
 - Visit information (visit number, arrival time, triage status, disposition)
 - Vital signs summary
@@ -255,9 +288,11 @@ Printable summary includes:
 - Signature area for attending physician
 
 #### 3. Handover Print Component
+
 **File:** `components/emergency/handover-print.tsx` (NEW)
 
 Printable handover document includes:
+
 - Handover metadata (from unit, to unit, time, staff)
 - Patient identification
 - Visit and triage information
@@ -268,14 +303,17 @@ Printable handover document includes:
 - Dual signature areas (sender and receiver)
 
 #### 4. Pre-handover Validation
+
 **File:** `components/emergency/handover-dialog.tsx`
 
 Validation checklist before handover:
+
 - [ ] Diagnosis recorded
 - [ ] Vital signs recorded
 - [ ] Chief complaint documented
 
 Features:
+
 - Shows warning alert if validation fails
 - Checklist with green check/red X icons
 - Override option with checkbox acknowledgment
@@ -283,6 +321,7 @@ Features:
 - Override reason prepended to handover notes
 
 Interface:
+
 ```typescript
 interface HandoverValidation {
   hasDiagnosis: boolean
@@ -292,6 +331,7 @@ interface HandoverValidation {
 ```
 
 ### Testing Checklist
+
 - [ ] Vitals chart displays latest readings correctly
 - [ ] Trend indicators show correct direction
 - [ ] Abnormal values highlighted in red
@@ -305,30 +345,33 @@ interface HandoverValidation {
 ## File Summary
 
 ### Modified Files
-| File | Changes |
-|------|---------|
-| `app/api/emergency/quick-register/route.ts` | RBAC + SSE broadcast |
-| `app/api/emergency/complete-registration/route.ts` | RBAC |
-| `app/dashboard/emergency/page.tsx` | Search, SSE, audio alerts |
-| `components/emergency/er-queue-item.tsx` | Wait time, badges, animations |
-| `components/emergency/handover-dialog.tsx` | Pre-handover validation |
-| `hooks/use-er-queue.ts` | Search parameter |
-| `lib/emergency/triage-utils.ts` | Wait time helpers |
-| `lib/notifications/sse-manager.ts` | ER notification types |
-| `app/globals.css` | Pulse animation |
+
+| File                                               | Changes                       |
+| -------------------------------------------------- | ----------------------------- |
+| `app/api/emergency/quick-register/route.ts`        | RBAC + SSE broadcast          |
+| `app/api/emergency/complete-registration/route.ts` | RBAC                          |
+| `app/dashboard/emergency/page.tsx`                 | Search, SSE, audio alerts     |
+| `components/emergency/er-queue-item.tsx`           | Wait time, badges, animations |
+| `components/emergency/handover-dialog.tsx`         | Pre-handover validation       |
+| `hooks/use-er-queue.ts`                            | Search parameter              |
+| `lib/emergency/triage-utils.ts`                    | Wait time helpers             |
+| `lib/notifications/sse-manager.ts`                 | ER notification types         |
+| `app/globals.css`                                  | Pulse animation               |
 
 ### New Files
-| File | Purpose |
-|------|---------|
-| `app/api/notifications/emergency/route.ts` | SSE endpoint |
-| `lib/notifications/use-er-notifications.ts` | SSE React hook |
-| `components/emergency/er-vitals-chart.tsx` | Vitals timeline/chart |
-| `components/emergency/er-print-summary.tsx` | Print ER summary |
-| `components/emergency/handover-print.tsx` | Print handover document |
+
+| File                                        | Purpose                 |
+| ------------------------------------------- | ----------------------- |
+| `app/api/notifications/emergency/route.ts`  | SSE endpoint            |
+| `lib/notifications/use-er-notifications.ts` | SSE React hook          |
+| `components/emergency/er-vitals-chart.tsx`  | Vitals timeline/chart   |
+| `components/emergency/er-print-summary.tsx` | Print ER summary        |
+| `components/emergency/handover-print.tsx`   | Print handover document |
 
 ### Required Assets
-| File | Status |
-|------|--------|
+
+| File                                | Status                        |
+| ----------------------------------- | ----------------------------- |
 | `public/sounds/emergency-alert.mp3` | **REQUIRED** - Add audio file |
 
 ---
@@ -336,16 +379,15 @@ interface HandoverValidation {
 ## Integration Notes
 
 ### Using the Vitals Chart
+
 ```tsx
 import { ERVitalsChart } from "@/components/emergency/er-vitals-chart"
 
-<ERVitalsChart
-  vitalsHistory={vitalsData}
-  isLoading={isLoading}
-/>
+;<ERVitalsChart vitalsHistory={vitalsData} isLoading={isLoading} />
 ```
 
 ### Using Print Components
+
 ```tsx
 import { ERPrintSummary } from "@/components/emergency/er-print-summary"
 import { useRef } from "react"
@@ -359,6 +401,7 @@ const handlePrint = useReactToPrint({ content: () => printRef.current })
 ```
 
 ### Passing Validation to Handover Dialog
+
 ```tsx
 <HandoverDialog
   open={open}

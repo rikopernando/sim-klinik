@@ -96,6 +96,7 @@
   - **Problem**: Using default postgres.js connection configuration
   - **Impact**: May not be optimal for production workloads
   - **Recommended Fix**: Configure explicit pool settings
+
   ```typescript
   const client = postgres(connectionString, {
     max: 20, // Maximum connections

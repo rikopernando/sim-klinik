@@ -26,13 +26,13 @@ Support splitting fulfillment across multiple batches when no single batch has e
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `lib/pharmacy/stock-utils.ts` | Add `allocateBatchesForDispensing()` function |
-| `components/pharmacy/hooks/use-bulk-fulfillment-data.tsx` | Add `allocatedBatches` to `FulfillmentFormData`, use new allocation |
-| `components/pharmacy/fulfillment/auto-batch-display.tsx` | Display multi-batch allocation info |
-| `components/pharmacy/bulk-fulfillment-dialog.tsx` | Fix `stockIssues` to use total stock; submit multi-batch entries |
-| `lib/pharmacy/api-service.ts` | Handle multi-batch entries per prescription in `bulkFulfillPrescriptions` |
+| File                                                      | Changes                                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `lib/pharmacy/stock-utils.ts`                             | Add `allocateBatchesForDispensing()` function                             |
+| `components/pharmacy/hooks/use-bulk-fulfillment-data.tsx` | Add `allocatedBatches` to `FulfillmentFormData`, use new allocation       |
+| `components/pharmacy/fulfillment/auto-batch-display.tsx`  | Display multi-batch allocation info                                       |
+| `components/pharmacy/bulk-fulfillment-dialog.tsx`         | Fix `stockIssues` to use total stock; submit multi-batch entries          |
+| `lib/pharmacy/api-service.ts`                             | Handle multi-batch entries per prescription in `bulkFulfillPrescriptions` |
 
 ---
 

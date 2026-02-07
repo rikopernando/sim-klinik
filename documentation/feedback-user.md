@@ -15,3 +15,7 @@
 
 - [x] List atau history atau daftar kunjungan, untuk memudahkan melihat kunjungan yang sudah selesai, maupun yang sedang berjalan
 - [x] Daftar atau history rekam medik pasien, untuk melihat rekam medik yang sudah selesai, maupun yang sedang berjalan
+
+### Feedback User V3
+
+- [x] List Transaksi untuk mengetahui riwayat pembayaran pada kasir, tambahkan fitur yang diperlukan untuk mendukung fitur ini
