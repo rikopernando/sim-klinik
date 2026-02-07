@@ -106,10 +106,12 @@ export function NavMain(props: NavMainProps) {
                       (pathname === item.url || pathname.startsWith(item.url + "/"))
 
                 // For items with subitems, check if any subitem is active
+                // Apply the same hasMoreSpecificMatch logic to subitems
                 const hasActiveSubitem = hasSubitems
                   ? item.items!.some(
                       (subitem) =>
-                        pathname === subitem.url || pathname.startsWith(subitem.url + "/")
+                        !hasMoreSpecificMatch(subitem.url) &&
+                        (pathname === subitem.url || pathname.startsWith(subitem.url + "/"))
                     )
                   : false
 
@@ -134,7 +136,8 @@ export function NavMain(props: NavMainProps) {
                           <SidebarMenuSub>
                             {item.items!.map((subitem) => {
                               const isSubitemActive =
-                                pathname === subitem.url || pathname.startsWith(subitem.url + "/")
+                                !hasMoreSpecificMatch(subitem.url) &&
+                                (pathname === subitem.url || pathname.startsWith(subitem.url + "/"))
 
                               return (
                                 <SidebarMenuSubItem key={subitem.title}>
