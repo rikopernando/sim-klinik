@@ -22,6 +22,7 @@ import { ArrowLeft, Loader2, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 import { useERVisit } from "@/hooks/use-er-visit"
 import { useMedicalRecord } from "@/hooks/use-medical-record"
@@ -150,6 +151,12 @@ function ERMedicalRecordContent() {
     )
   }
 
+  // Check if visit is cancelled
+  const isCancelled = visit.status === "cancelled"
+
+  // Treat cancelled visits as locked (read-only)
+  const isReadOnly = isLocked || isCancelled
+
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
       {/* Back Button */}
@@ -157,6 +164,17 @@ function ERMedicalRecordContent() {
         <ArrowLeft className="mr-2 h-4 w-4" />
         Kembali ke Antrian UGD
       </Button>
+
+      {/* Cancelled Visit Banner */}
+      {isCancelled && (
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center gap-2">
+            <Badge variant="destructive">Dibatalkan</Badge>
+            Kunjungan UGD ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
+            diubah.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Patient & Visit Header with Disposition */}
       <ERVisitHeader visit={visit} />
@@ -179,8 +197,8 @@ function ERMedicalRecordContent() {
               </CardDescription>
             </div>
 
-            {/* Action Buttons with Disposition (Save Draft / Lock & Finish / Unlock) */}
-            {coreData && (
+            {/* Action Buttons with Disposition (Save Draft / Lock & Finish / Unlock) - Hidden when cancelled */}
+            {coreData && !isCancelled && (
               <ERMedicalRecordActions
                 isLocked={isLocked}
                 isSaving={isSaving}
@@ -200,7 +218,7 @@ function ERMedicalRecordContent() {
             <MedicalRecordTabs
               coreData={coreData}
               activeTab={activeTab}
-              isLocked={isLocked}
+              isLocked={isReadOnly}
               onTabChange={setActiveTab}
               onUpdateRecord={updateRecord}
               onSaveSOAP={saveSOAP}

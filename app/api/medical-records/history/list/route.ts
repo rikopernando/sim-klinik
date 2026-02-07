@@ -7,8 +7,7 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { medicalRecords, diagnoses, procedures } from "@/db/schema/medical-records"
-import { prescriptions } from "@/db/schema/inventory"
+import { medicalRecords } from "@/db/schema/medical-records"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
 import { and, count, desc, eq, gte, ilike, lte, or, SQL } from "drizzle-orm"
@@ -34,9 +33,6 @@ export interface MedicalRecordHistoryListItem {
     mrNumber: string
     name: string
   }
-  diagnosisCount: number
-  procedureCount: number
-  prescriptionCount: number
 }
 
 export const GET = withRBAC(
@@ -147,56 +143,6 @@ export const GET = withRBAC(
         .limit(limit)
         .offset(offset)
 
-      // Get counts for each medical record
-      const medicalRecordIds = results.map((r) => r.id)
-
-      // Fetch counts in parallel
-      const [diagnosisCounts, procedureCounts, prescriptionCounts] = await Promise.all([
-        db
-          .select({
-            medicalRecordId: diagnoses.medicalRecordId,
-            count: count(),
-          })
-          .from(diagnoses)
-          .where(
-            medicalRecordIds.length > 0
-              ? or(...medicalRecordIds.map((id) => eq(diagnoses.medicalRecordId, id)))
-              : undefined
-          )
-          .groupBy(diagnoses.medicalRecordId),
-        db
-          .select({
-            medicalRecordId: procedures.medicalRecordId,
-            count: count(),
-          })
-          .from(procedures)
-          .where(
-            medicalRecordIds.length > 0
-              ? or(...medicalRecordIds.map((id) => eq(procedures.medicalRecordId, id)))
-              : undefined
-          )
-          .groupBy(procedures.medicalRecordId),
-        db
-          .select({
-            medicalRecordId: prescriptions.medicalRecordId,
-            count: count(),
-          })
-          .from(prescriptions)
-          .where(
-            medicalRecordIds.length > 0
-              ? or(...medicalRecordIds.map((id) => eq(prescriptions.medicalRecordId, id)))
-              : undefined
-          )
-          .groupBy(prescriptions.medicalRecordId),
-      ])
-
-      // Create count maps
-      const diagnosisCountMap = new Map(diagnosisCounts.map((d) => [d.medicalRecordId, d.count]))
-      const procedureCountMap = new Map(procedureCounts.map((p) => [p.medicalRecordId, p.count]))
-      const prescriptionCountMap = new Map(
-        prescriptionCounts.map((p) => [p.medicalRecordId, p.count])
-      )
-
       // Map results to response format
       const recordList: MedicalRecordHistoryListItem[] = results.map((result) => ({
         id: result.id,
@@ -213,9 +159,6 @@ export const GET = withRBAC(
           mrNumber: result.mrNumber,
           name: result.patientName,
         },
-        diagnosisCount: diagnosisCountMap.get(result.id) || 0,
-        procedureCount: procedureCountMap.get(result.id) || 0,
-        prescriptionCount: prescriptionCountMap.get(result.id) || 0,
       }))
 
       const response: ResponseApi<MedicalRecordHistoryListItem[]> = {

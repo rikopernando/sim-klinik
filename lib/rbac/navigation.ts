@@ -88,6 +88,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+    {
       label: "Pelayanan Medis",
       items: [
         {
@@ -98,14 +108,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Antrian Poli",
               url: "/dashboard/doctor",
-            },
-            {
-              title: "Rekam Medis",
-              url: "/dashboard/medical-records",
-            },
-            {
-              title: "Riwayat Rekam Medis",
-              url: "/dashboard/medical-records/history",
             },
           ],
         },
@@ -241,6 +243,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+    {
       label: "Pelayanan Medis",
       items: [
         {
@@ -255,10 +267,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Rekam Medis",
               url: "/dashboard/medical-records",
-            },
-            {
-              title: "Riwayat Rekam Medis",
-              url: "/dashboard/medical-records/history",
             },
           ],
         },
@@ -374,6 +382,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+    {
       label: "Pelayanan Medis",
       items: [
         {
@@ -388,10 +406,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Rekam Medis",
               url: "/dashboard/medical-records",
-            },
-            {
-              title: "Riwayat Rekam Medis",
-              url: "/dashboard/medical-records/history",
             },
           ],
         },
@@ -458,6 +472,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       ],
     },
     {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
+        },
+      ],
+    },
+    {
       label: "Pelayanan Medis",
       items: [
         {
@@ -468,10 +492,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Rekam Medis",
               url: "/dashboard/medical-records",
-            },
-            {
-              title: "Riwayat Rekam Medis",
-              url: "/dashboard/medical-records/history",
             },
           ],
         },

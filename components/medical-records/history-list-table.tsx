@@ -71,9 +71,6 @@ function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps
           <TableHead>No. Kunjungan</TableHead>
           <TableHead>Tipe</TableHead>
           <TableHead>Tanggal Rekam</TableHead>
-          <TableHead className="text-center">Diagnosis</TableHead>
-          <TableHead className="text-center">Prosedur</TableHead>
-          <TableHead className="text-center">Resep</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="text-right">Aksi</TableHead>
         </TableRow>
@@ -94,9 +91,6 @@ function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps
             <TableCell>
               {format(new Date(item.createdAt), "dd MMM yyyy, HH:mm", { locale: id })}
             </TableCell>
-            <TableCell className="text-center">{item.diagnosisCount}</TableCell>
-            <TableCell className="text-center">{item.procedureCount}</TableCell>
-            <TableCell className="text-center">{item.prescriptionCount}</TableCell>
             <TableCell>
               {item.isLocked ? (
                 <Badge className="border-0 bg-green-100 text-green-700">

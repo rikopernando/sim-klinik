@@ -189,9 +189,6 @@ export interface MedicalRecordHistoryListItem {
     mrNumber: string
     name: string
   }
-  diagnosisCount: number
-  procedureCount: number
-  prescriptionCount: number
 }
 
 /**

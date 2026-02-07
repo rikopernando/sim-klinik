@@ -16,6 +16,7 @@ import { Loader2 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 import { useMedicalRecord } from "@/hooks/use-medical-record"
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header"
@@ -83,6 +84,12 @@ function MedicalRecordPageContent() {
     return null
   }
 
+  // Check if visit is cancelled
+  const isCancelled = coreData.visit.status === "cancelled"
+
+  // Treat cancelled visits as locked (read-only)
+  const isReadOnly = isLocked || isCancelled
+
   // Handle lock action
   const handleLock = async (billingAdjustment?: number, adjustmentNote?: string) => {
     await lockRecord(billingAdjustment, adjustmentNote)
@@ -90,6 +97,17 @@ function MedicalRecordPageContent() {
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
+      {/* Cancelled Visit Banner */}
+      {isCancelled && (
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center gap-2">
+            <Badge variant="destructive">Dibatalkan</Badge>
+            Kunjungan ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
+            diubah.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header with visit info and status badges */}
       <MedicalRecordHeader visit={coreData.visit} isLocked={isLocked} isDraft={isDraft} />
 
@@ -109,15 +127,17 @@ function MedicalRecordPageContent() {
               <CardDescription>Dokumentasi pemeriksaan dan tindakan medis</CardDescription>
             </div>
 
-            {/* Action Buttons (Save Draft / Lock & Finish / Unlock) */}
-            <MedicalRecordActions
-              isLocked={isLocked}
-              isSaving={isSaving}
-              isLocking={isLocking}
-              onSave={saveDraft}
-              onLock={handleLock}
-              onUnlock={unlockRecord}
-            />
+            {/* Action Buttons (Save Draft / Lock & Finish / Unlock) - Hidden when cancelled */}
+            {!isCancelled && (
+              <MedicalRecordActions
+                isLocked={isLocked}
+                isSaving={isSaving}
+                isLocking={isLocking}
+                onSave={saveDraft}
+                onLock={handleLock}
+                onUnlock={unlockRecord}
+              />
+            )}
           </div>
         </CardHeader>
 
@@ -126,7 +146,7 @@ function MedicalRecordPageContent() {
           <MedicalRecordTabs
             coreData={coreData}
             activeTab={activeTab}
-            isLocked={isLocked}
+            isLocked={isReadOnly}
             onTabChange={setActiveTab}
             onUpdateRecord={updateRecord}
             onSaveSOAP={saveSOAP}
