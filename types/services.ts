@@ -3,8 +3,11 @@ export interface PayloadServices {
   name: string
   serviceType: string
   price: string
+  description: string
+  category: string
 }
 
 export interface ResultService extends PayloadServices {
   id: string
+  // createdAt: Date
 }

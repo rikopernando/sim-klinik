@@ -96,7 +96,7 @@ export function usePoli(): UsePoliResult {
       try {
         setLoading(true)
         const created = await createPoliRequest(payload)
-        await fetchPolis(pagination.page, debouncedSearch, includeInactive)
+        refetch()
         return created
       } catch (error) {
         setErrorMessage(getErrorMessage(error))
@@ -106,7 +106,7 @@ export function usePoli(): UsePoliResult {
         setLoading(false)
       }
     },
-    [fetchPolis, pagination.page, debouncedSearch, includeInactive]
+    [refetch]
   )
 
   const updatePoli = useCallback(
@@ -114,7 +114,7 @@ export function usePoli(): UsePoliResult {
       try {
         setLoading(true)
         const updated = await updatePoliRequest(id, payload)
-        await fetchPolis(pagination.page, debouncedSearch, includeInactive)
+        refetch()
         return updated
       } catch (error) {
         setErrorMessage(getErrorMessage(error))
@@ -124,7 +124,7 @@ export function usePoli(): UsePoliResult {
         setLoading(false)
       }
     },
-    [fetchPolis, pagination.page, debouncedSearch, includeInactive]
+    [refetch]
   )
 
   const deletePoli = useCallback(
@@ -132,7 +132,7 @@ export function usePoli(): UsePoliResult {
       try {
         setLoading(true)
         await deletePoliRequest(id)
-        await fetchPolis(pagination.page, debouncedSearch, includeInactive)
+        refetch()
         return true
       } catch (error) {
         setErrorMessage(getErrorMessage(error))
@@ -142,7 +142,7 @@ export function usePoli(): UsePoliResult {
         setLoading(false)
       }
     },
-    [fetchPolis, pagination.page, debouncedSearch, includeInactive]
+    [refetch]
   )
 
   return {

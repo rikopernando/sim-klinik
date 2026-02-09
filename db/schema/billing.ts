@@ -14,8 +14,8 @@ export const services = pgTable("services", {
   name: varchar("name", { length: 255 }).notNull(),
   serviceType: varchar("service_type", { length: 50 }).notNull(), // consultation, procedure, room, laboratory, radiology, etc.
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  description: text("description"),
-  category: varchar("category", { length: 100 }), // Grouping for reports
+  description: text("description").notNull(),
+  category: varchar("category", { length: 100 }).notNull(), // Grouping for reports
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

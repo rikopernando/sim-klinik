@@ -1,7 +1,3 @@
-/**
- * Polis Management Page
- */
-
 "use client"
 
 import { useState } from "react"
@@ -15,7 +11,6 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Pagination } from "@/components/users/pagination"
 import {
   AlertDialog,
@@ -27,62 +22,77 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
-import { PolisTable } from "@/components/polis/polis-table"
 import { toast } from "sonner"
-import { usePoli } from "@/hooks/use-poli"
-import { ResultPoli, PayloadPoli } from "@/types/poli"
-import { EditPolisDialog } from "@/components/polis/edit-polis-dialog"
-import { CreatePolisDialog } from "@/components/polis/create-polis-dialog"
+import { ServicesTable } from "@/components/services/service-table"
+import { PayloadServices, ResultService } from "@/types/services"
+import { useService } from "@/hooks/use-service"
+import { FormServiceDialog } from "@/components/services/form-service-dialog"
+import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
 
 export default function UsersPage() {
-  const [createDialogOpen, setCreateDialogOpen] = useState(false)
-  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [formDialogOpen, setFormDialogOpen] = useState(false)
+  const [mode, setMode] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedPolis, setSelectedPolis] = useState<ResultPoli | null>(null)
-  const [poliToDelete, setPoliToDelete] = useState<string | null>(null)
+  const [selectedService, setSelectedService] = useState<ResultService | null>(null)
+  const [serviceToDelete, setServiceToDelete] = useState<string | null>(null)
 
   const {
-    polis,
-    createPoli,
-    updatePoli,
-    deletePoli,
+    services,
+    createService,
+    deleteService,
+    fetchServices,
+    refetch,
+    updateService,
     isLoading,
     errorMessage,
     pagination,
     searchQuery,
     setSearchQuery,
-    includeInactive,
-    setIncludeInactive,
     handlePageChange,
-  } = usePoli()
+    getServiceById,
+  } = useService()
 
-  const handleEdit = (polis: ResultPoli) => {
-    setSelectedPolis(polis)
-    setEditDialogOpen(true)
+  const handleEdit = async (service: ResultService) => {
+    const updatedService = await getServiceById(service.id)
+    if (updatedService) {
+      setSelectedService(updatedService)
+    } else {
+      setSelectedService(service)
+    }
+    setFormDialogOpen(true)
+    setMode("edit")
   }
 
   const handleDelete = (id: string) => {
-    setPoliToDelete(id)
+    setServiceToDelete(id)
     setDeleteDialogOpen(true)
   }
 
   const confirmDelete = async () => {
-    if (!poliToDelete) return
+    if (!serviceToDelete) return
 
-    const success = await deletePoli(poliToDelete)
+    const success = await deleteService(serviceToDelete)
 
     if (success) {
       setDeleteDialogOpen(false)
-      setPoliToDelete(null)
-      toast.success("Poli berhasil dihapus!")
+      setServiceToDelete(null)
+      toast.success("Service berhasil dihapus!")
     } else {
-      toast.error("Gagal menghapus poli!")
+      toast.error("Gagal menghapus services!")
     }
   }
 
-  const handleSuccess = () => {}
-
+  const formSubmit = async (mode: string, data: PayloadServices, id?: string) => {
+    try {
+      if (mode === "add") {
+        await createService(data)
+      } else if (mode === "edit" && id) {
+        await updateService(id, data)
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error)
+    }
+  }
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6 flex items-center justify-between">
@@ -90,7 +100,12 @@ export default function UsersPage() {
           <h1 className="text-3xl font-bold">Manajemen Services</h1>
           <p className="text-muted-foreground">Kelola Services</p>
         </div>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <Button
+          onClick={() => {
+            setFormDialogOpen(true)
+            setMode("add")
+          }}
+        >
           <IconCirclePlus2 size={20} className="mr-2" />
           Tambah Services
         </Button>
@@ -110,33 +125,21 @@ export default function UsersPage() {
                   size={20}
                 />
                 <Input
-                  placeholder="Cari berdasarkan nama atau kode"
+                  placeholder="Cari berdasarkan nama, tipe, kategori atau kode"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="min-w-[304px] pl-10"
                 />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="include-inactive"
-                    checked={includeInactive}
-                    onCheckedChange={(v) => setIncludeInactive(Boolean(v))}
-                  />
-                  <label htmlFor="include-inactive" className="muted-foreground text-sm">
-                    Tampilkan non-aktif
-                  </label>
-                </div>
               </div>
             </div>
           </CardAction>
         </CardHeader>
 
         <CardContent>
-          {isLoading && polis.length === 0 ? (
-            <div className="text-muted-foreground py-12 text-center">Memuat data polis...</div>
+          {isLoading && services.length === 0 ? (
+            <div className="text-muted-foreground py-12 text-center">Memuat data Service ...</div>
           ) : (
-            <PolisTable polis={polis} onEdit={handleEdit} onDelete={handleDelete} />
+            <ServicesTable service={services} onEdit={handleEdit} onDelete={handleDelete} />
           )}
 
           {pagination.totalPages > 1 && (
@@ -151,34 +154,22 @@ export default function UsersPage() {
         </CardContent>
       </Card>
 
-      {/* Create Polis Dialog */}
-      <CreatePolisDialog
+      <FormServiceDialog
+        data={selectedService}
         error={errorMessage}
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSubmit={async (payload: PayloadPoli) => {
-          await createPoli(payload)
-        }}
-      />
-
-      {/* Edit Polis Dialog */}
-      <EditPolisDialog
-        polis={selectedPolis}
-        open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
-        onSuccess={handleSuccess}
-        onSubmit={async (id: string, payload: PayloadPoli) => {
-          await updatePoli(id, payload)
-        }}
+        open={formDialogOpen}
+        mode={mode}
+        onOpenChange={setFormDialogOpen}
+        onSubmit={formSubmit}
       />
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Poli?</AlertDialogTitle>
+            <AlertDialogTitle>Hapus Service?</AlertDialogTitle>
             <AlertDialogDescription>
-              Aksi ini tidak dapat dibatalkan. Poli akan dihapus permanen dari sistem.
+              Aksi ini tidak dapat dibatalkan. Service akan dihapus permanen dari sistem.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

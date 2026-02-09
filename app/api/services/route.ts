@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
         category: services.category,
       })
       .from(services)
-      .limit(limit) // ← Gunakan limit dari parameter, bukan hardcode 20
+      .limit(limit)
       .offset(offset)
       .orderBy(services.name)
 
@@ -95,18 +95,11 @@ export async function POST(request: Request) {
     const existingServices = await db
       .select()
       .from(services)
-      .where(
-        or(
-          eq(services.name, validate.name),
-          eq(services.code, validate.code),
-          eq(services.serviceType, validate.serviceType)
-        )
-      )
+      .where(or(eq(services.name, validate.name), eq(services.code, validate.code)))
 
     if (existingServices.length > 0) {
       const conflicts: string[] = []
 
-      // Cek semua kemungkinan conflict
       existingServices.forEach((existing) => {
         if (existing.name === validate.name && !conflicts.includes("nama")) {
           conflicts.push("nama")
@@ -114,25 +107,14 @@ export async function POST(request: Request) {
         if (existing.code === validate.code && !conflicts.includes("kode")) {
           conflicts.push("kode")
         }
-        if (existing.serviceType === validate.serviceType && !conflicts.includes("tipe layanan")) {
-          conflicts.push("tipe layanan")
-        }
       })
 
-      // Generate pesan pintar
       let message = ""
-
       if (conflicts.length === 1) {
-        // Hanya 1 conflict
-        message = `Poli dengan ${conflicts[0]} ini sudah ada`
+        message = `Service dengan ${conflicts[0]} ini sudah ada`
       } else if (conflicts.length === 2) {
-        // 2 conflicts
-        message = `Poli dengan ${conflicts[0]} dan ${conflicts[1]} ini sudah ada`
-      } else {
-        // 3 conflicts (semua)
-        message = `Poli dengan ${conflicts[0]}, ${conflicts[1]}, dan ${conflicts[2]} ini sudah ada`
+        message = `Service dengan ${conflicts[0]} dan ${conflicts[1]} ini sudah ada`
       }
-
       const response: ResponseError<null> = {
         error: null,
         message,
@@ -147,18 +129,17 @@ export async function POST(request: Request) {
     const newServices = await db
       .insert(services)
       .values({
-        name: validate.name,
         code: validate.code,
-        price: String(validate.price), // Ensure it's a number if your DB expects numeric
-        // OR if your DB expects a string:
-        // price: String(validate.price),
+        name: validate.name,
         serviceType: validate.serviceType,
-        category: validate.category ?? null,
-        description: validate.description ?? null,
+        price: String(validate.price),
+        category: validate.category,
+        description: validate.description ?? "",
       })
       .returning()
+
     const response: ResponseApi<ResultService> = {
-      message: "Poli created successfully",
+      message: "Service created successfully",
       data: newServices[0],
       status: HTTP_STATUS_CODES.CREATED,
     }
@@ -177,7 +158,7 @@ export async function POST(request: Request) {
 
     const response: ResponseError<unknown> = {
       error,
-      message: "Failed to create poli",
+      message: "Failed to create service", // Ganti dari "poli" ke "service"
       status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 
