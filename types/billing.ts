@@ -345,6 +345,9 @@ export interface BillingDetails {
     visitNumber: string
     createdAt: Date | string
   }
+  cashier?: {
+    name: string
+  }
 }
 
 export interface ProcessPaymentResult {

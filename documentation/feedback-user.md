@@ -21,3 +21,8 @@
 - [x] List Transaksi untuk mengetahui riwayat pembayaran pada kasir, tambahkan fitur yang diperlukan untuk mendukung fitur ini
 
 ### Feedback User V4
+
+- [] Print Transaksi
+  - Tambahkan Logo Klinik
+  - Tambahkan Kolom Tanda Tangan Kasir dan Penerima/Penanggung Jawab Pasien
+- [] Rawat Jalan -> Tambahkan fitur pindah atau transfer pasien ke Rawat Inap

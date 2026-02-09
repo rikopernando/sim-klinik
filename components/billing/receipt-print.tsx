@@ -3,6 +3,8 @@
  * Printable receipt/invoice for completed billing transactions
  */
 
+import Image from "next/image"
+
 import {
   formatCurrency,
   formatDateTime,
@@ -16,19 +18,36 @@ interface ReceiptPrintProps {
 }
 
 export function ReceiptPrint({ data }: ReceiptPrintProps) {
-  const { billing, items, payments, patient, visit } = data
+  const { billing, items, payments, patient, visit, cashier } = data
   const receiptNumber = generateReceiptNumber(billing.id)
 
   return (
     <div className="hidden print:block">
       <div className="mx-auto max-w-[210mm] bg-white p-8 text-black">
         {/* Header */}
-        <div className="mb-6 border-b-2 border-black pb-4 text-center">
-          <h1 className="text-2xl font-bold">KLINIK BUMI ANDALAS</h1>
-          <p className="text-sm">Jl. Kesehatan No. 123, Jakarta</p>
-          <p className="text-sm">Telp: (021) 1234-5678</p>
-          <p className="mt-2 text-sm font-semibold">KUITANSI PEMBAYARAN</p>
-          <p className="text-xs">No: {receiptNumber}</p>
+        <div className="mb-6 border-b-2 border-black pb-4">
+          <div className="flex items-center gap-4">
+            <Image
+              src="/bumi-andalas-logo-v2.png"
+              alt="Logo Klinik"
+              width={60}
+              height={60}
+              unoptimized
+              className="shrink-0"
+            />
+            <div className="flex-1 text-center">
+              <h1 className="text-2xl font-bold">KLINIK BUMI ANDALAS</h1>
+              <p className="text-sm">
+                Jl. Lintas Bungin Agung Raya, Purajaya, Kebun Tebu, Kab. Lampung Barat
+              </p>
+              <p className="text-sm">Telp: 082183825717</p>
+            </div>
+            <div className="w-[60px]" /> {/* Spacer for balance */}
+          </div>
+          <div className="mt-2 text-center">
+            <p className="text-sm font-semibold">KUITANSI PEMBAYARAN</p>
+            <p className="text-xs">No: {receiptNumber}</p>
+          </div>
         </div>
 
         {/* Patient & Visit Info */}
@@ -136,6 +155,20 @@ export function ReceiptPrint({ data }: ReceiptPrintProps) {
           <div className="mt-2 flex justify-between border-t border-gray-400 py-2 text-sm font-bold">
             <span>Status:</span>
             <span className="text-green-600">LUNAS</span>
+          </div>
+        </div>
+
+        {/* Signature Section */}
+        <div className="mt-10 mb-8 grid grid-cols-2 gap-8 text-sm">
+          <div className="text-center">
+            <p className="font-semibold">Kasir</p>
+            <div className="mt-16 border-b border-black" />
+            <p className="mt-1">{cashier?.name || "________________"}</p>
+          </div>
+          <div className="text-center">
+            <p className="font-semibold">Penerima/Penanggung Jawab</p>
+            <div className="mt-16 border-b border-black" />
+            <p className="mt-1">________________</p>
           </div>
         </div>
 

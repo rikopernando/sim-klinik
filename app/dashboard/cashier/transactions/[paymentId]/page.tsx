@@ -24,9 +24,9 @@ import {
   TableFooter,
 } from "@/components/ui/table"
 import Loader from "@/components/loader"
-import { TransactionReceiptPrint } from "@/components/billing/transaction-receipt-print"
+import { ReceiptPrint } from "@/components/billing/receipt-print"
 import { fetchTransactionDetail } from "@/lib/services/billing.service"
-import { formatCurrency } from "@/lib/billing/billing-utils"
+import { formatCurrency, transactionToBillingDetails } from "@/lib/billing/billing-utils"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import type { TransactionHistoryItem } from "@/types/transaction"
@@ -134,7 +134,7 @@ function TransactionDetailContent({ params }: TransactionDetailPageProps) {
   return (
     <>
       {/* Print Receipt */}
-      <TransactionReceiptPrint transaction={transaction} />
+      <ReceiptPrint data={transactionToBillingDetails(transaction)} />
 
       {/* Screen Content */}
       <div className="container mx-auto p-6 print:hidden">
@@ -146,7 +146,7 @@ function TransactionDetailContent({ params }: TransactionDetailPageProps) {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Detail Transaksi</h1>
+                <h1 className="text-2xl font-bold tracking-tight">Detail Transaksi</h1>
                 <p className="text-muted-foreground">
                   {format(new Date(transaction.payment.receivedAt), "dd MMMM yyyy, HH:mm", {
                     locale: id,
