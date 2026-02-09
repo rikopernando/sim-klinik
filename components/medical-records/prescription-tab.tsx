@@ -21,7 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import { deletePrescription } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
-import { type Prescription } from "@/types/medical-record"
+import { MEDICATION_ROUTES, type Prescription } from "@/types/medical-record"
 import { canEditMedicalRecord, canDeletePrescription } from "@/lib/utils/medical-record"
 import { usePrescriptions } from "@/hooks/use-prescriptions"
 
@@ -130,6 +130,9 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
         >
           <div className="space-y-3">
             {prescriptions.map((prescription) => {
+              const medicationRoute = MEDICATION_ROUTES.find(
+                (item) => item.value === prescription.route
+              )
               const itemSubtotal =
                 parseFloat(prescription.drugPrice || "0") *
                 (prescription.dispensedQuantity || prescription.quantity)
@@ -170,7 +173,7 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
                       {prescription.route && (
                         <div className="grid grid-cols-4 md:col-span-1">
                           <span className="col-span-2 font-medium">Rute</span>
-                          <span className="col-span-2">: {prescription.route}</span>
+                          <span className="col-span-2">: {medicationRoute?.label}</span>
                         </div>
                       )}
                       {prescription.drugPrice && (

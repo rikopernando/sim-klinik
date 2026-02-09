@@ -20,7 +20,6 @@ interface PrescriptionItemProps {
   index: number
   drugId: string
   drugName: string
-  genericName?: string | null
   frequency: string
   quantity: number
   unit: string
@@ -34,7 +33,6 @@ export function PrescriptionItem({
   index,
   drugId,
   drugName,
-  genericName,
   frequency,
   quantity,
   unit,
@@ -62,7 +60,7 @@ export function PrescriptionItem({
             <span>
               Jumlah Resep: {quantity} {unit}
             </span>
-            <span>Instruksi Tambahan: {instructions}</span>
+            <span>Instruksi Tambahan: {instructions || "-"}</span>
           </div>
         </div>
       </div>
