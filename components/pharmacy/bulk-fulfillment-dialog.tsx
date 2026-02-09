@@ -222,7 +222,6 @@ export function BulkFulfillmentDialog({
                 index={idx}
                 drugId={item.drug.id}
                 drugName={item.drug.name}
-                genericName={item.drug.genericName}
                 frequency={item.prescription.frequency}
                 quantity={item.prescription.quantity}
                 instructions={item.prescription.instructions}

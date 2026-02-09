@@ -29,6 +29,7 @@ import {
   deleteInpatientPrescription,
 } from "@/lib/services/inpatient.service"
 import { useSession } from "@/lib/auth-client"
+import { MEDICATION_ROUTES } from "@/types/medical-record"
 
 interface PrescriptionsListProps {
   prescriptions: InpatientPrescription[]
@@ -62,6 +63,7 @@ const PrescriptionRow = memo(function PrescriptionRow({
   isLoading: boolean
   isLocked: boolean
 }) {
+  const medicationRoute = MEDICATION_ROUTES.find((item) => item.value === prescription.route)
   return (
     <TableRow>
       <TableCell className="font-medium">{prescription.drugName || "-"}</TableCell>
@@ -71,7 +73,7 @@ const PrescriptionRow = memo(function PrescriptionRow({
           <div className="text-muted-foreground">{prescription.frequency}</div>
         </div>
       </TableCell>
-      <TableCell>{prescription.route || "-"}</TableCell>
+      <TableCell>{medicationRoute?.label || "-"}</TableCell>
       <TableCell className="text-right">{prescription.quantity}</TableCell>
       <TableCell className="text-right">
         {formatCurrency(parseFloat(prescription.drugPrice || "0"))}
