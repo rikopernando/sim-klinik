@@ -27,6 +27,7 @@ import { AlertCircle, Loader2, Plus } from "lucide-react"
 import { getPharmacists } from "@/lib/services/pharmacist.service"
 import axios from "axios"
 import { Pharmacist } from "@/types/user"
+import { FREQUENCY_OPTIONS } from "@/lib/utils/prescription"
 
 interface Drug {
   id: string
@@ -84,19 +85,6 @@ export function AddPrescriptionDialog({
   const [isLoadingPharmacists, setIsLoadingPharmacists] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  // Frequency options (same as in prescription form)
-  const frequencyOptions = [
-    { value: "1 x 1 Sebelum Makan", label: "1 x 1 Sebelum Makan" },
-    { value: "1 x 1 Setelah Makan", label: "1 x 1 Setelah Makan" },
-    { value: "2 x 1 Sebelum Makan", label: "2 x 1 Sebelum Makan" },
-    { value: "2 x 1 Setelah Makan", label: "2 x 1 Setelah Makan" },
-    { value: "3 x 1 Sebelum Makan", label: "3 x 1 Sebelum Makan" },
-    { value: "3 x 1 Setelah Makan", label: "3 x 1 Setelah Makan" },
-    { value: "4 x 1 Sebelum Makan", label: "4 x 1 Sebelum Makan" },
-    { value: "4 x 1 Setelah Makan", label: "4 x 1 Setelah Makan" },
-    { value: "Bila Perlu", label: "Bila Perlu" },
-  ]
 
   // Load drugs and pharmacists when dialog opens
   useEffect(() => {
@@ -295,7 +283,7 @@ export function AddPrescriptionDialog({
                 <SelectValue placeholder="Pilih frekuensi" />
               </SelectTrigger>
               <SelectContent>
-                {frequencyOptions.map((option) => (
+                {FREQUENCY_OPTIONS.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

@@ -56,5 +56,11 @@ export const FREQUENCY_OPTIONS = [
   { value: "3x1", label: "3 x 1" },
   { value: "2x1", label: "2 x 1" },
   { value: "1x1", label: "1 x 1" },
+  { value: "6x1/2", label: "6 x 1/2" },
+  { value: "5x1/2", label: "5 x 1/2" },
+  { value: "4x1/2", label: "4 x 1/2" },
+  { value: "3x1/2", label: "3 x 1/2" },
+  { value: "2x1/2", label: "2 x 1/2" },
+  { value: "1x1/2", label: "1 x 1/2" },
   { value: "bila_perlu", label: "Bila Perlu" },
 ] as const

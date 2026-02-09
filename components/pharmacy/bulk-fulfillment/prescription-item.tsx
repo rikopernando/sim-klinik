@@ -24,6 +24,7 @@ interface PrescriptionItemProps {
   frequency: string
   quantity: number
   unit: string
+  instructions: string | null
   fulfillmentData: FulfillmentFormData | undefined
   onAllocationsChange: (allocations: BatchAllocation[]) => void
   showSeparator?: boolean
@@ -37,6 +38,7 @@ export function PrescriptionItem({
   frequency,
   quantity,
   unit,
+  instructions,
   fulfillmentData,
   onAllocationsChange,
   showSeparator = false,
@@ -55,12 +57,12 @@ export function PrescriptionItem({
             <Badge>{index + 1}</Badge>
             <h4 className="font-semibold">{drugName}</h4>
           </div>
-          {genericName && <p className="text-muted-foreground ml-8 text-sm">{genericName}</p>}
-          <div className="text-muted-foreground mt-1 ml-8 flex justify-between gap-4 text-sm">
+          <div className="text-muted-foreground mt-1 ml-8 flex flex-col gap-1 text-sm">
             <span>Frekuensi: {frequency}</span>
             <span>
               Jumlah Resep: {quantity} {unit}
             </span>
+            <span>Instruksi Tambahan: {instructions}</span>
           </div>
         </div>
       </div>

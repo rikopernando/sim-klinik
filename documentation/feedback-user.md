@@ -19,3 +19,5 @@
 ### Feedback User V3
 
 - [x] List Transaksi untuk mengetahui riwayat pembayaran pada kasir, tambahkan fitur yang diperlukan untuk mendukung fitur ini
+
+### Feedback User V4

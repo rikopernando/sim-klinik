@@ -187,7 +187,7 @@ export function BulkFulfillmentDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
             <BulkFulfillmentHeader selectedGroup={selectedGroup} />
           </DialogHeader>
@@ -225,6 +225,7 @@ export function BulkFulfillmentDialog({
                 genericName={item.drug.genericName}
                 frequency={item.prescription.frequency}
                 quantity={item.prescription.quantity}
+                instructions={item.prescription.instructions}
                 unit={item.drug.unit}
                 fulfillmentData={fulfillmentData[item.prescription.id]}
                 onAllocationsChange={(allocs) =>

@@ -168,6 +168,7 @@ export const MEDICATION_ROUTES = [
   { value: "rectal", label: "Rektal" },
   { value: "sublingual", label: "Sublingual" },
   { value: "compounded", label: "Obat Racik" },
+  { value: "drops", label: "Tetes" },
 ] as const
 
 /**
