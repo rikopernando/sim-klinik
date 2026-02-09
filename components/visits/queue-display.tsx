@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { Loader2, RefreshCw, Clock, User, Pencil, X, MoreHorizontal } from "lucide-react"
+import { Loader2, RefreshCw, Clock, User, Pencil, X, MoreHorizontal, Bed } from "lucide-react"
 
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -19,6 +19,7 @@ import { QueueItem } from "@/types/dashboard"
 
 import { EditVisitData, EditVisitDialog } from "./edit-visit-dialog"
 import { CancelVisitDialog } from "./cancel-visit-dialog"
+import { TransferToInpatientDialog } from "./transfer-to-inpatient-dialog"
 
 interface QueueDisplayProps {
   poliId?: number
@@ -44,9 +45,10 @@ export function QueueDisplay({
   const [error, setError] = useState<string | null>(null)
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date())
 
-  // Edit/Cancel dialogs state
+  // Edit/Cancel/Transfer dialogs state
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [selectedItem, setSelectedItem] = useState<QueueItem | null>(null)
   const [editVisitData, setEditVisitData] = useState<EditVisitData | null>(null)
 
@@ -169,6 +171,11 @@ export function QueueDisplay({
     setCancelDialogOpen(true)
   }
 
+  const handleTransferClick = (item: QueueItem) => {
+    setSelectedItem(item)
+    setTransferDialogOpen(true)
+  }
+
   const handleDialogSuccess = () => {
     fetchQueue()
   }
@@ -280,6 +287,12 @@ export function QueueDisplay({
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit Kunjungan
                           </DropdownMenuItem>
+                          {visitType === "outpatient" && (
+                            <DropdownMenuItem onClick={() => handleTransferClick(item)}>
+                              <Bed className="mr-2 h-4 w-4" />
+                              Transfer ke Rawat Inap
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => handleCancelClick(item)}
@@ -315,6 +328,17 @@ export function QueueDisplay({
         queueItem={selectedItem}
         onSuccess={handleDialogSuccess}
       />
+
+      {/* Transfer to Inpatient Dialog */}
+      {selectedItem && (
+        <TransferToInpatientDialog
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          visitId={selectedItem.visit.id}
+          patientName={selectedItem.patient?.name || ""}
+          onSuccess={handleDialogSuccess}
+        />
+      )}
     </div>
   )
 }

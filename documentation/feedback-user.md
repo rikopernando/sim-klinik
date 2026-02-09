@@ -22,7 +22,7 @@
 
 ### Feedback User V4
 
-- [] Print Transaksi
+- [x] Print Transaksi
   - Tambahkan Logo Klinik
   - Tambahkan Kolom Tanda Tangan Kasir dan Penerima/Penanggung Jawab Pasien
-- [] Rawat Jalan -> Tambahkan fitur pindah atau transfer pasien ke Rawat Inap
+- [x] Rawat Jalan -> Tambahkan fitur pindah atau transfer pasien ke Rawat Inap
