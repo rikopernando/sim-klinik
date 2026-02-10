@@ -1,27 +1,22 @@
-/**
- * Polis Table Component
- * Displays Polis in a table with actions
- */
-
 "use client"
 
-import { Button } from "@/components/ui/button"
 import {
   Table,
+  TableRow,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
 } from "@/components/ui/table"
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { IconTrash, IconEdit } from "@tabler/icons-react"
+import { Button } from "@/components/ui/button"
 import { ResultService } from "@/types/services"
+import { IconTrash, IconEdit } from "@tabler/icons-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 interface ServicesTableProps {
   service: ResultService[]
-  onEdit: (service: ResultService) => void
   onDelete?: (serviceId: string) => void
+  onEdit: (service: ResultService) => void
 }
 
 export function ServicesTable({ service, onEdit, onDelete }: ServicesTableProps) {

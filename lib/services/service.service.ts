@@ -1,7 +1,7 @@
-import { Meta, ResponseApi } from "@/types/api"
-import { PayloadServices, ResultService } from "@/types/services"
-import { ApiServiceError, handleApiError } from "./api.service"
 import axios from "axios"
+import { Meta, ResponseApi } from "@/types/api"
+import { ApiServiceError, handleApiError } from "./api.service"
+import { PayloadServices, ResultService } from "@/types/services"
 
 export async function getServiceByIdRequest(id: string): Promise<ResultService | undefined> {
   try {

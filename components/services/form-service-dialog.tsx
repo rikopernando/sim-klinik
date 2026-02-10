@@ -1,45 +1,45 @@
 "use client"
 
-import { useEffect } from "react"
-import { useForm, Controller } from "react-hook-form"
-import { Button } from "@/components/ui/button"
 import {
   Dialog,
+  DialogTitle,
+  DialogHeader,
   DialogContent,
   DialogDescription,
-  DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog"
-import { toast } from "sonner"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
-  SelectContent,
   SelectItem,
-  SelectTrigger,
   SelectValue,
+  SelectTrigger,
+  SelectContent,
 } from "@/components/ui/select"
-import { PayloadServices, ResultService } from "@/types/services"
+import { toast } from "sonner"
+import { useEffect } from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { useForm, Controller } from "react-hook-form"
 import { Field, FieldGroup, FieldLabel } from "../ui/field"
+import { PayloadServices, ResultService } from "@/types/services"
 
 interface FormServiceDialogProps {
-  data: ResultService | null
-  error: string | null
-  open: boolean
   mode: string
+  open: boolean
+  error: string | null
+  data: ResultService | null
   onOpenChange: (open: boolean) => void
   onSubmit: (mode: string, payload: PayloadServices, id?: string) => Promise<void>
 }
 
 export function FormServiceDialog({
   data,
-  error,
   open,
   mode,
-  onOpenChange,
+  error,
   onSubmit,
+  onOpenChange,
 }: FormServiceDialogProps) {
   const {
     control,
@@ -93,7 +93,6 @@ export function FormServiceDialog({
     }
   }
 
-  // Define actual service types and categories
   const serviceTypes = [
     "administration",
     "procedure",
@@ -103,6 +102,7 @@ export function FormServiceDialog({
     "pharmacy",
     "room",
   ]
+
   const serviceCategories = [
     "administrative",
     "medical",
@@ -229,8 +229,8 @@ export function FormServiceDialog({
                   if (numericValue > 999999999) {
                     return "Harga maksimal Rp 999.999.999"
                   }
-                  if (numericValue < 100) {
-                    return "Harga minimal Rp 100"
+                  if (numericValue < 10000) {
+                    return "Harga minimal Rp 10.000"
                   }
                   return true
                 },

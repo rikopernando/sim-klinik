@@ -4,15 +4,15 @@
  * Search and retrieve services (for procedure autocomplete)
  */
 
-import { NextRequest, NextResponse } from "next/server"
+import z from "zod"
 import { db } from "@/db"
 import { services } from "@/db/schema/billing"
-import { ilike, and, eq, or, count } from "drizzle-orm"
-import z from "zod"
-import { ResponseApi, ResponseError } from "@/types/api"
-import HTTP_STATUS_CODES from "@/lib/constants/http"
-import { createServicesSchema } from "@/lib/validations/services.validation"
 import { ResultService } from "@/types/services"
+import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { ilike, and, eq, or, count } from "drizzle-orm"
+import { NextRequest, NextResponse } from "next/server"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { createServicesSchema } from "@/lib/validations/services.validation"
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
       const q = `%${search}%`
       const searchCondition = or(
         ilike(services.name, q),
+        ilike(services.code, q),
         ilike(services.serviceType, q),
         ilike(services.category, q)
       )
@@ -158,7 +159,7 @@ export async function POST(request: Request) {
 
     const response: ResponseError<unknown> = {
       error,
-      message: "Failed to create service", // Ganti dari "poli" ke "service"
+      message: "Failed to create service",
       status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
     }
 

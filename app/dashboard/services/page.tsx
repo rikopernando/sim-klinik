@@ -1,17 +1,13 @@
 "use client"
 
-import { useState } from "react"
 import {
   Card,
-  CardAction,
-  CardContent,
-  CardHeader,
   CardTitle,
+  CardAction,
+  CardHeader,
+  CardContent,
   CardDescription,
 } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Pagination } from "@/components/users/pagination"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,33 +19,35 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
-import { ServicesTable } from "@/components/services/service-table"
-import { PayloadServices, ResultService } from "@/types/services"
+import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { useService } from "@/hooks/use-service"
-import { FormServiceDialog } from "@/components/services/form-service-dialog"
+import { Pagination } from "@/components/users/pagination"
+import { PayloadServices, ResultService } from "@/types/services"
 import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
+import { ServicesTable } from "@/components/services/service-table"
+import { FormServiceDialog } from "@/components/services/form-service-dialog"
 
 export default function UsersPage() {
-  const [formDialogOpen, setFormDialogOpen] = useState(false)
   const [mode, setMode] = useState("")
+  const [formDialogOpen, setFormDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedService, setSelectedService] = useState<ResultService | null>(null)
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null)
+  const [selectedService, setSelectedService] = useState<ResultService | null>(null)
 
   const {
     services,
-    createService,
-    deleteService,
-    fetchServices,
-    refetch,
-    updateService,
     isLoading,
-    errorMessage,
     pagination,
     searchQuery,
+    errorMessage,
+    updateService,
+    createService,
+    deleteService,
     setSearchQuery,
-    handlePageChange,
     getServiceById,
+    handlePageChange,
   } = useService()
 
   const handleEdit = async (service: ResultService) => {

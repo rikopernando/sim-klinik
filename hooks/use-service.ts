@@ -5,10 +5,11 @@ import {
   deleteServiceRequest,
   getServiceByIdRequest,
 } from "@/lib/services/service.service"
-import { getErrorMessage } from "@/lib/utils/error"
-import { PayloadServices, ResultService } from "@/types/services"
-import { useCallback, useEffect, useState } from "react"
 import { useDebounce } from "./use-debounce"
+import { getErrorMessage } from "@/lib/utils/error"
+import { useCallback, useEffect, useState } from "react"
+import { PayloadServices, ResultService } from "@/types/services"
+
 interface PaginationInfo {
   page: number
   limit: number
@@ -26,16 +27,12 @@ interface UseServiceResult {
   setSearchQuery: (q: string) => void
   handlePageChange: (page: number) => void
   deleteService: (id: string) => Promise<boolean>
-  createService: (payload: PayloadServices) => Promise<ResultService | null>
-  updateService: (id: string, payload: Partial<PayloadServices>) => Promise<ResultService | null>
-  fetchServices: (page?: number, search?: string, includeInactive?: boolean) => Promise<void>
   getServiceById: (id: string) => Promise<ResultService | null>
+  createService: (payload: PayloadServices) => Promise<ResultService | null>
+  fetchServices: (page?: number, search?: string, includeInactive?: boolean) => Promise<void>
+  updateService: (id: string, payload: Partial<PayloadServices>) => Promise<ResultService | null>
 }
 export function useService(): UseServiceResult {
-  const [isLoading, setLoading] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [services, setServices] = useState<ResultService[]>([])
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
     limit: 10,
@@ -43,7 +40,11 @@ export function useService(): UseServiceResult {
     totalPages: 0,
   })
 
+  const [isLoading, setLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
+  const [services, setServices] = useState<ResultService[]>([])
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const fetchServices = useCallback(
     async (page: number = 1, search: string = "") => {
@@ -54,7 +55,6 @@ export function useService(): UseServiceResult {
           page,
           limit: pagination.limit,
           search,
-          // includeInactive: includeInactiveFlag,
         })
         if (response) {
           setServices(response.data || [])
@@ -160,20 +160,18 @@ export function useService(): UseServiceResult {
   }, [])
 
   return {
+    refetch,
     services,
     isLoading,
-    searchQuery,
-    // includeInactive,
     pagination,
+    searchQuery,
     errorMessage,
-    refetch,
-    setSearchQuery,
-    handlePageChange,
     fetchServices,
     updateService,
     deleteService,
     createService,
+    setSearchQuery,
     getServiceById,
-    // setIncludeInactive,
+    handlePageChange,
   }
 }

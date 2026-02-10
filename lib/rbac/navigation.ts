@@ -21,6 +21,7 @@ import {
   IconUser,
   IconDatabase,
   IconFlask,
+  IconTool,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -146,6 +147,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Data Kamar",
           url: "/dashboard/master-data/rooms",
           icon: IconDatabase,
+        },
+        {
+          title: "Services",
+          url: "/dashboard/services",
+          icon: IconTool,
         },
       ],
     },
@@ -275,6 +281,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Data Kamar",
           url: "/dashboard/master-data/rooms",
           icon: IconDatabase,
+        },
+        {
+          title: "Services",
+          url: "/dashboard/services",
+          icon: IconTool,
         },
       ],
     },
