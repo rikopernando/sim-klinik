@@ -118,7 +118,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
                 control={form.control}
                 name="temperature"
                 render={({ field }) => (
-                  <Input id="temperature" {...field} placeholder="36.5" type="text" />
+                  <Input id="temperature" {...field} placeholder="36.5" type="number" />
                 )}
               />
               <FieldError errors={[form.formState.errors.temperature]} />
