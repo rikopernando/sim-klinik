@@ -26,10 +26,13 @@ interface VitalSignsFieldsProps {
 }
 
 const CONSCIOUSNESS_OPTIONS = [
-  { value: "Alert", label: "Alert (Sadar)" },
-  { value: "Confused", label: "Confused (Bingung)" },
-  { value: "Drowsy", label: "Drowsy (Mengantuk)" },
-  { value: "Unresponsive", label: "Unresponsive (Tidak Responsif)" },
+  { value: "Compos Mentis (CM)", label: "Compos Mentis (CM)" },
+  { value: "Apatis", label: "Apatis" },
+  { value: "Delirium", label: "Delirium" },
+  { value: "Somnolen", label: "Somnolen" },
+  { value: "Sopor", label: "Sopor" },
+  { value: "Semi Coma", label: "Semi Coma" },
+  { value: "Coma", label: "Coma" },
 ]
 
 export function VitalSignsFields({ control, errors }: VitalSignsFieldsProps) {
