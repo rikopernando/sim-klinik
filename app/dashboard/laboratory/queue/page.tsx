@@ -5,15 +5,16 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+import { startOfDay, format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
+import { IconFlask, IconRefresh } from "@tabler/icons-react"
 import { PageGuard } from "@/components/auth/page-guard"
-import { IconFlask, IconRefresh, IconAlertCircle } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { LabOrderQueueTable } from "@/components/laboratory"
+import { LabDateFilter } from "@/components/laboratory/lab-date-filter"
 
 export default function LabTechnicianQueuePage() {
   return (
@@ -24,24 +25,22 @@ export default function LabTechnicianQueuePage() {
 }
 
 function LabTechnicianQueuePageContent() {
-  const [myOrdersOnly, setMyOrdersOnly] = useState(false)
-  const [autoRefresh, setAutoRefresh] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
-
-  // Auto-refresh every 30 seconds
-  useEffect(() => {
-    if (!autoRefresh) return
-
-    const interval = setInterval(() => {
-      setRefreshKey((prev) => prev + 1)
-    }, 30000) // 30 seconds
-
-    return () => clearInterval(interval)
-  }, [autoRefresh])
+  const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()))
 
   const handleManualRefresh = () => {
     setRefreshKey((prev) => prev + 1)
   }
+
+  const handleDateChange = (dateFrom: Date | undefined) => {
+    if (dateFrom) {
+      setSelectedDate(dateFrom)
+      // Force refresh when date changes
+      setRefreshKey((prev) => prev + 1)
+    }
+  }
+
+  const currentDateDisplay = format(selectedDate, "d MMMM yyyy", { locale: idLocale })
 
   return (
     <div className="container mx-auto space-y-6 p-6">
@@ -53,18 +52,13 @@ function LabTechnicianQueuePageContent() {
             Antrian Pemeriksaan Penunjang
           </h1>
           <p className="text-muted-foreground mt-1">
-            Worklist untuk teknisi laboratorium - Proses order sesuai prioritas
+            Worklist untuk teknisi laboratorium - {currentDateDisplay}
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-          {/* Auto-refresh toggle */}
-          <div className="flex items-center gap-2">
-            <Switch id="auto-refresh" checked={autoRefresh} onCheckedChange={setAutoRefresh} />
-            <Label htmlFor="auto-refresh" className="cursor-pointer">
-              Auto-refresh (30s)
-            </Label>
-          </div>
+        <div className="flex items-end gap-4">
+          {/* Date Filter */}
+          <LabDateFilter onDateChange={handleDateChange} initialDate={selectedDate} />
 
           {/* Manual refresh button */}
           <Button onClick={handleManualRefresh} variant="outline" size="sm">
@@ -73,27 +67,6 @@ function LabTechnicianQueuePageContent() {
           </Button>
         </div>
       </div>
-
-      {/* My Orders Filter */}
-      <Card className="border-blue-200 bg-blue-50 py-0 dark:border-blue-900 dark:bg-blue-950">
-        <CardContent className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-2">
-            <IconAlertCircle className="h-5 w-5 text-blue-600" />
-            <div>
-              <p className="font-medium">Filter Antrian</p>
-              <p className="text-muted-foreground text-sm">
-                Tampilkan hanya order yang sedang Anda kerjakan
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch id="my-orders" checked={myOrdersOnly} onCheckedChange={setMyOrdersOnly} />
-            <Label htmlFor="my-orders" className="cursor-pointer font-medium">
-              Order Saya Saja
-            </Label>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Tabs for different status groups */}
       <Tabs defaultValue="actionable" className="space-y-4">
@@ -123,9 +96,11 @@ function LabTechnicianQueuePageContent() {
             </CardHeader>
             <CardContent>
               <LabOrderQueueTable
-                key={`actionable-${refreshKey}`}
+                key={`actionable-${refreshKey}-${selectedDate.getTime()}`}
                 defaultStatus={["ordered", "specimen_collected"]}
                 showFilters
+                dateFrom={selectedDate}
+                dateTo={selectedDate}
               />
             </CardContent>
           </Card>
@@ -142,9 +117,11 @@ function LabTechnicianQueuePageContent() {
               </CardHeader>
               <CardContent>
                 <LabOrderQueueTable
-                  key={`stat-${refreshKey}`}
+                  key={`stat-${refreshKey}-${selectedDate.getTime()}`}
                   defaultStatus={["ordered", "specimen_collected", "in_progress"]}
                   showFilters={false}
+                  dateFrom={selectedDate}
+                  dateTo={selectedDate}
                 />
               </CardContent>
             </Card>
@@ -157,9 +134,11 @@ function LabTechnicianQueuePageContent() {
               </CardHeader>
               <CardContent>
                 <LabOrderQueueTable
-                  key={`urgent-${refreshKey}`}
+                  key={`urgent-${refreshKey}-${selectedDate.getTime()}`}
                   defaultStatus={["ordered", "specimen_collected", "in_progress"]}
                   showFilters={false}
+                  dateFrom={selectedDate}
+                  dateTo={selectedDate}
                 />
               </CardContent>
             </Card>
@@ -177,9 +156,11 @@ function LabTechnicianQueuePageContent() {
             </CardHeader>
             <CardContent>
               <LabOrderQueueTable
-                key={`in-progress-${refreshKey}`}
+                key={`in-progress-${refreshKey}-${selectedDate.getTime()}`}
                 defaultStatus="in_progress"
                 showFilters
+                dateFrom={selectedDate}
+                dateTo={selectedDate}
               />
             </CardContent>
           </Card>
@@ -189,16 +170,18 @@ function LabTechnicianQueuePageContent() {
         <TabsContent value="completed" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Order Selesai Hari Ini</CardTitle>
+              <CardTitle>Order Selesai {currentDateDisplay}</CardTitle>
               <CardDescription>
                 Order yang sudah selesai diproses dan menunggu verifikasi
               </CardDescription>
             </CardHeader>
             <CardContent>
               <LabOrderQueueTable
-                key={`completed-${refreshKey}`}
+                key={`completed-${refreshKey}-${selectedDate.getTime()}`}
                 defaultStatus={["completed", "verified"]}
                 showFilters
+                dateFrom={selectedDate}
+                dateTo={selectedDate}
               />
             </CardContent>
           </Card>

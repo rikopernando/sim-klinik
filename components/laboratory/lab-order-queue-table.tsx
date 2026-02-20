@@ -21,22 +21,35 @@ import { useLabOrders } from "@/hooks/use-lab-orders"
 import type { LAB_DEPARTMENTS, OrderStatus } from "@/types/lab"
 
 import { LabOrderRow } from "./lab-order-row"
+import { LabPagination } from "./lab-pagination"
 
 interface LabOrderQueueTableProps {
   defaultStatus?: OrderStatus | OrderStatus[]
   showFilters?: boolean
+  dateFrom?: Date
+  dateTo?: Date
 }
 
 type UrgencyFilter = "all" | "urgent" | "stat"
 type DepartmentFilter = "all" | keyof typeof LAB_DEPARTMENTS | undefined
 
-export function LabOrderQueueTable({ defaultStatus, showFilters = true }: LabOrderQueueTableProps) {
+export function LabOrderQueueTable({
+  defaultStatus,
+  showFilters = true,
+  dateFrom,
+  dateTo,
+}: LabOrderQueueTableProps) {
   const [departmentFilter, setDepartmentFilter] = useState<DepartmentFilter>("all")
   const [urgencyFilter, setUrgencyFilter] = useState<UrgencyFilter>("all")
 
-  const { orders, loading, refetch, setDepartment } = useLabOrders({
-    initialFilters: defaultStatus ? { status: defaultStatus } : {},
+  const { orders, loading, pagination, refetch, setDepartment, handlePageChange } = useLabOrders({
+    initialFilters: {
+      ...(defaultStatus ? { status: defaultStatus } : {}),
+      ...(dateFrom ? { dateFrom } : {}),
+      ...(dateTo ? { dateTo } : {}),
+    },
     autoFetch: true,
+    defaultToToday: !dateFrom && !dateTo, // Only default to today if no dates provided
   })
 
   const handleDepartmentChange = (value: string) => {
@@ -122,18 +135,31 @@ export function LabOrderQueueTable({ defaultStatus, showFilters = true }: LabOrd
             <p className="text-muted-foreground text-sm">Tidak ada order dalam antrian</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">#</TableHead>
-                <TableHead className="min-w-[200px]">Tes / Pasien</TableHead>
-                <TableHead className="min-w-[150px]">Detail Order</TableHead>
-                <TableHead className="min-w-[120px]">Status</TableHead>
-                <TableHead className="min-w-[180px] text-right">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>{tableRows}</TableBody>
-          </Table>
+          <div className="space-y-4">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">#</TableHead>
+                  <TableHead className="min-w-[200px]">Tes / Pasien</TableHead>
+                  <TableHead className="min-w-[150px]">Detail Order</TableHead>
+                  <TableHead className="min-w-[120px]">Status</TableHead>
+                  <TableHead className="min-w-[180px] text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>{tableRows}</TableBody>
+            </Table>
+
+            {/* Pagination */}
+            {pagination && pagination.totalPages > 1 && (
+              <div className="border-t pt-4">
+                <LabPagination
+                  pagination={pagination}
+                  onPageChange={handlePageChange}
+                  itemLabel="order"
+                />
+              </div>
+            )}
+          </div>
         )}
       </CardContent>
     </Card>

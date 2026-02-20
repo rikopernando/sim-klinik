@@ -32,7 +32,7 @@
 - [x] Pada Daftar Pemeriksaan Laboratorium
   - data yang ditampilkan seharusnya adalah data laboratorium hari ini saja, dan tambahkan filter tanggal untuk melihat daftar pada tanggal tertentu
   - Belum ada pagination
-- [] Pada Antrian Pemeriksaan Penunjang
+- [x] Pada Antrian Pemeriksaan Penunjang
   - data yang ditampilkan seharusnya adalah data laboratorium hari ini saja, dan tambahkan filter tanggal untuk melihat daftar pada tanggal tertentu
   - Belum ada pagination
-    [] Belum ada list atau daftar riwayat pemeriksaan penunjang
+- [] Belum ada list atau daftar riwayat pemeriksaan penunjang
