@@ -1,11 +1,8 @@
 /**
  * Lab History Filters Component
- * Filter controls for lab order history
+ * Filter controls for lab examination history (used inside FilterDrawer)
  */
 
-"use client"
-
-import { memo } from "react"
 import {
   Select,
   SelectContent,
@@ -13,46 +10,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
 import { DatePickerField } from "@/components/forms/date-picker-field"
+import { format } from "date-fns"
+import { Label } from "@/components/ui/label"
 
 interface LabHistoryFiltersProps {
   status: string
-  setStatus: (value: string) => void
   department: string
-  setDepartment: (value: string) => void
   dateFrom: string
-  setDateFrom: (value: string) => void
   dateTo: string
-  setDateTo: (value: string) => void
+  onStatusChange: (value: string) => void
+  onDepartmentChange: (value: string) => void
+  onDateFromChange: (value: string) => void
+  onDateToChange: (value: string) => void
 }
 
-const currentYear = new Date().getFullYear() + 20
-
-function LabHistoryFiltersComponent({
+export function LabHistoryFilters({
   status,
-  setStatus,
   department,
-  setDepartment,
   dateFrom,
-  setDateFrom,
   dateTo,
-  setDateTo,
+  onStatusChange,
+  onDepartmentChange,
+  onDateFromChange,
+  onDateToChange,
 }: LabHistoryFiltersProps) {
-  const handleDateFromChange = (date: Date | undefined) => {
-    setDateFrom(date ? date.toISOString().split("T")[0] : "")
-  }
-
-  const handleDateToChange = (date: Date | undefined) => {
-    setDateTo(date ? date.toISOString().split("T")[0] : "")
-  }
-
   return (
     <div className="space-y-4">
       {/* Status Filter */}
       <div className="space-y-2">
         <Label>Status</Label>
-        <Select value={status} onValueChange={setStatus}>
+        <Select value={status} onValueChange={onStatusChange}>
           <SelectTrigger>
             <SelectValue placeholder="Pilih status" />
           </SelectTrigger>
@@ -72,7 +60,7 @@ function LabHistoryFiltersComponent({
       {/* Department Filter */}
       <div className="space-y-2">
         <Label>Departemen</Label>
-        <Select value={department} onValueChange={setDepartment}>
+        <Select value={department} onValueChange={onDepartmentChange}>
           <SelectTrigger>
             <SelectValue placeholder="Pilih departemen" />
           </SelectTrigger>
@@ -84,27 +72,23 @@ function LabHistoryFiltersComponent({
         </Select>
       </div>
 
-      {/* Date From */}
-      <div className="space-y-2">
+      {/* Date Range */}
+      <div className="grid grid-cols-2 gap-4">
         <DatePickerField
           label="Dari Tanggal"
+          placeholder="Pilih tanggal"
           value={dateFrom ? new Date(dateFrom) : undefined}
-          onChange={handleDateFromChange}
-          endMonth={new Date(currentYear, 12)}
+          onChange={(date) => onDateFromChange(date ? format(date, "yyyy-MM-dd") : "")}
+          endMonth={new Date()}
         />
-      </div>
-
-      {/* Date To */}
-      <div className="space-y-2">
         <DatePickerField
           label="Sampai Tanggal"
+          placeholder="Pilih tanggal"
           value={dateTo ? new Date(dateTo) : undefined}
-          onChange={handleDateToChange}
-          endMonth={new Date(currentYear, 12)}
+          onChange={(date) => onDateToChange(date ? format(date, "yyyy-MM-dd") : "")}
+          endMonth={new Date()}
         />
       </div>
     </div>
   )
 }
-
-export const LabHistoryFilters = memo(LabHistoryFiltersComponent)
