@@ -35,4 +35,4 @@
 - [x] Pada Antrian Pemeriksaan Penunjang
   - data yang ditampilkan seharusnya adalah data laboratorium hari ini saja, dan tambahkan filter tanggal untuk melihat daftar pada tanggal tertentu
   - Belum ada pagination
-- [] Belum ada list atau daftar riwayat pemeriksaan penunjang
+- [x] Belum ada list atau daftar riwayat pemeriksaan penunjang

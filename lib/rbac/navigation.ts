@@ -169,6 +169,10 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
               title: "Antrian Pemeriksaan",
               url: "/dashboard/laboratory/queue",
             },
+            {
+              title: "Riwayat Pemeriksaan",
+              url: "/dashboard/laboratory/history",
+            },
           ],
         },
       ],
@@ -337,6 +341,10 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Antrian Pemeriksaan",
               url: "/dashboard/laboratory/queue",
+            },
+            {
+              title: "Riwayat Pemeriksaan",
+              url: "/dashboard/laboratory/history",
             },
           ],
         },
