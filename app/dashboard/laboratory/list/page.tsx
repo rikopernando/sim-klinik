@@ -5,7 +5,7 @@
  * Central hub for lab orders, results, and workflow management
  */
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
 import {
   IconFlask,
@@ -16,6 +16,8 @@ import {
   IconAlertCircle,
   IconDroplet,
 } from "@tabler/icons-react"
+import { formatDistanceToNow, format } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -28,10 +30,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useLabOrders } from "@/hooks/use-lab-orders"
+import { LabPagination } from "@/components/laboratory/lab-pagination"
+import { LabDateFilter } from "@/components/laboratory/lab-date-filter"
 import type { OrderStatus } from "@/types/lab"
 import { formatCurrency } from "@/lib/utils/billing"
-import { formatDistanceToNow } from "date-fns"
-import { id as idLocale } from "date-fns/locale"
 
 export default function LaboratoryDashboard() {
   return (
@@ -45,9 +47,20 @@ function LaboratoryDashboardContent() {
   const [departmentFilter, setDepartmentFilter] = useState<"all" | "LAB" | "RAD">("all")
   const [statusFilter, setStatusFilter] = useState<"all" | OrderStatus>("all")
 
-  const { orders, loading, setDepartment, setStatus, refetch } = useLabOrders({
+  const {
+    orders,
+    loading,
+    filters,
+    pagination,
+    setDepartment,
+    setStatus,
+    setDateRange,
+    handlePageChange,
+    refetch,
+  } = useLabOrders({
     initialFilters: {},
     autoFetch: true,
+    defaultToToday: true,
   })
 
   const handleDepartmentChange = (value: string) => {
@@ -60,15 +73,29 @@ function LaboratoryDashboardContent() {
     setStatus(value === "all" ? undefined : (value as OrderStatus))
   }
 
-  // Calculate statistics
-  const stats = {
-    total: orders.length,
-    pending: orders.filter((o) => o.status === "ordered").length,
-    inProgress: orders.filter((o) => ["specimen_collected", "in_progress"].includes(o.status || ""))
-      .length,
-    completed: orders.filter((o) => ["completed", "verified"].includes(o.status || "")).length,
-    urgent: orders.filter((o) => o.urgency === "urgent" || o.urgency === "stat").length,
+  const handleDateChange = (dateFrom: Date | undefined, dateTo: Date | undefined) => {
+    setDateRange(dateFrom, dateTo)
   }
+
+  // Calculate statistics from current page orders
+  // Note: These stats are for the current filtered view only
+  const stats = useMemo(
+    () => ({
+      total: pagination?.total ?? orders.length,
+      pending: orders.filter((o) => o.status === "ordered").length,
+      inProgress: orders.filter((o) =>
+        ["specimen_collected", "in_progress"].includes(o.status || "")
+      ).length,
+      completed: orders.filter((o) => ["completed", "verified"].includes(o.status || "")).length,
+      urgent: orders.filter((o) => o.urgency === "urgent" || o.urgency === "stat").length,
+    }),
+    [orders, pagination]
+  )
+
+  // Get current date for display
+  const currentDateDisplay = filters.dateFrom
+    ? format(filters.dateFrom, "d MMMM yyyy", { locale: idLocale })
+    : "Hari Ini"
 
   const getStatusBadge = (status: string | null) => {
     switch (status) {
@@ -129,12 +156,17 @@ function LaboratoryDashboardContent() {
             <IconFlask className="h-8 w-8" />
             Daftar Pemeriksaan Laboratorium
           </h1>
-          <p className="text-muted-foreground mt-1">Kelola pemeriksaan penunjang diagnostik</p>
+          <p className="text-muted-foreground mt-1">
+            Kelola pemeriksaan penunjang diagnostik - {currentDateDisplay}
+          </p>
         </div>
-        <Button onClick={refetch} variant="outline" size="sm">
-          <IconRefresh className="mr-2 h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex items-end gap-2">
+          <LabDateFilter onDateChange={handleDateChange} initialDate={filters.dateFrom} />
+          <Button onClick={refetch} variant="outline" size="sm">
+            <IconRefresh className="mr-2 h-4 w-4" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Statistics Cards */}
@@ -145,7 +177,7 @@ function LaboratoryDashboardContent() {
             <CardTitle className="text-3xl">{stats.total}</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-muted-foreground text-xs">Semua order hari ini</p>
+            <p className="text-muted-foreground text-xs">Semua order {currentDateDisplay}</p>
           </CardContent>
         </Card>
 
@@ -238,7 +270,9 @@ function LaboratoryDashboardContent() {
           ) : orders.length === 0 ? (
             <div className="py-12 text-center">
               <IconFlask className="text-muted-foreground mx-auto mb-4 h-12 w-12 opacity-50" />
-              <p className="text-muted-foreground text-sm">Tidak ada order ditemukan</p>
+              <p className="text-muted-foreground text-sm">
+                Tidak ada order ditemukan untuk {currentDateDisplay}
+              </p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -299,6 +333,17 @@ function LaboratoryDashboardContent() {
                   </CardContent>
                 </Card>
               ))}
+
+              {/* Pagination */}
+              {pagination && (
+                <div className="mt-4 border-t pt-4">
+                  <LabPagination
+                    pagination={pagination}
+                    onPageChange={handlePageChange}
+                    itemLabel="order"
+                  />
+                </div>
+              )}
             </div>
           )}
         </CardContent>

@@ -382,7 +382,6 @@ interface HandoverValidation {
 
 ```tsx
 import { ERVitalsChart } from "@/components/emergency/er-vitals-chart"
-
 ;<ERVitalsChart vitalsHistory={vitalsData} isLoading={isLoading} />
 ```
 

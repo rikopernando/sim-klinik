@@ -26,3 +26,13 @@
   - Tambahkan Logo Klinik
   - Tambahkan Kolom Tanda Tangan Kasir dan Penerima/Penanggung Jawab Pasien
 - [x] Rawat Jalan -> Tambahkan fitur pindah atau transfer pasien ke Rawat Inap
+
+### Feedback User V5
+
+- [x] Pada Daftar Pemeriksaan Laboratorium
+  - data yang ditampilkan seharusnya adalah data laboratorium hari ini saja, dan tambahkan filter tanggal untuk melihat daftar pada tanggal tertentu
+  - Belum ada pagination
+- [] Pada Antrian Pemeriksaan Penunjang
+  - data yang ditampilkan seharusnya adalah data laboratorium hari ini saja, dan tambahkan filter tanggal untuk melihat daftar pada tanggal tertentu
+  - Belum ada pagination
+    [] Belum ada list atau daftar riwayat pemeriksaan penunjang

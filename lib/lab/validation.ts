@@ -180,6 +180,8 @@ export const labOrderFiltersSchema = z.object({
   department: z.enum([LAB_DEPARTMENTS.LAB, LAB_DEPARTMENTS.RAD]).optional(),
   dateFrom: z.iso.datetime().optional(),
   dateTo: z.iso.datetime().optional(),
+  page: z.coerce.number().int().positive().optional(),
+  limit: z.coerce.number().int().positive().max(100).optional(),
 })
 
 // ============================================================================
