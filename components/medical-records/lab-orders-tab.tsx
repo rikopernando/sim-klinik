@@ -20,6 +20,7 @@ export function LabOrdersTab({ visitId, patientId, isLocked }: LabOrdersTabProps
   const { refetch } = useLabOrders({
     initialFilters: { visitId },
     autoFetch: false, // LabOrdersList handles its own fetching
+    defaultToToday: false, // Show all orders for this visit, not just today
   })
 
   return (

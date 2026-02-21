@@ -28,6 +28,7 @@ export function LabOrdersList({ visitId, showSubtotal }: LabOrdersListProps) {
   const { orders, loading } = useLabOrders({
     initialFilters: { visitId },
     autoFetch: true,
+    defaultToToday: false, // Show all orders for this visit, not just today
   })
 
   const subtotal = useMemo(() => {
