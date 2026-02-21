@@ -5,7 +5,7 @@
 
 import { alias } from "drizzle-orm/pg-core"
 import { and, eq, desc, or, ilike, inArray, gte, lt, sql } from "drizzle-orm"
-import { startOfDay, endOfDay } from "date-fns"
+// Note: date-fns startOfDay/endOfDay removed - dates from frontend are already timezone-correct
 import { db } from "@/db"
 import {
   labTests,
@@ -298,15 +298,18 @@ export async function getLabOrders(
   }
 
   // Date filtering
+  // Note: dates from frontend are already in correct timezone (sent as ISO strings)
+  // We should NOT apply startOfDay/endOfDay here as it would shift to server timezone
   if (filters.dateFrom) {
     const dateFrom = new Date(filters.dateFrom)
-    conditions.push(gte(labOrders.orderedAt, startOfDay(dateFrom)))
+    conditions.push(gte(labOrders.orderedAt, dateFrom))
   }
 
   if (filters.dateTo) {
     const dateTo = new Date(filters.dateTo)
-    // Add 1 day to include the end date fully
-    conditions.push(lt(labOrders.orderedAt, endOfDay(dateTo)))
+    // Add 24 hours to include the entire day (dateTo is start of day, so we need end of day)
+    const endDate = new Date(dateTo.getTime() + 24 * 60 * 60 * 1000)
+    conditions.push(lt(labOrders.orderedAt, endDate))
   }
 
   // Department filtering (done in query for efficiency)
