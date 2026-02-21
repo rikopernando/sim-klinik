@@ -6,9 +6,9 @@
 
 "use client"
 
-import { LabOrdersList } from "@/components/laboratory/lab-orders-list"
+import { useRef } from "react"
+import { LabOrdersList, LabOrdersListRef } from "@/components/laboratory/lab-orders-list"
 import { CreateLabOrderDialog } from "@/components/laboratory/create-lab-order-dialog"
-import { useLabOrders } from "@/hooks/use-lab-orders"
 
 interface LabOrdersTabProps {
   visitId: string
@@ -17,21 +17,25 @@ interface LabOrdersTabProps {
 }
 
 export function LabOrdersTab({ visitId, patientId, isLocked }: LabOrdersTabProps) {
-  const { refetch } = useLabOrders({
-    initialFilters: { visitId },
-    autoFetch: false, // LabOrdersList handles its own fetching
-    defaultToToday: false, // Show all orders for this visit, not just today
-  })
+  const labOrdersListRef = useRef<LabOrdersListRef>(null)
+
+  const handleOrderCreated = () => {
+    labOrdersListRef.current?.refetch()
+  }
 
   return (
     <div className="space-y-6">
       {/* Order Lab Dialog */}
       {!isLocked && (
-        <CreateLabOrderDialog visitId={visitId} patientId={patientId} onSuccess={refetch} />
+        <CreateLabOrderDialog
+          visitId={visitId}
+          patientId={patientId}
+          onSuccess={handleOrderCreated}
+        />
       )}
 
       {/* Lab Orders List */}
-      <LabOrdersList showSubtotal visitId={visitId} />
+      <LabOrdersList ref={labOrdersListRef} showSubtotal visitId={visitId} />
     </div>
   )
 }
