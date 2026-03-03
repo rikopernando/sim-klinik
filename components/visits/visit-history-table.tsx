@@ -42,24 +42,41 @@ function VisitHistoryTableComponent({ visits, isLoading }: VisitHistoryTableProp
   const [isUpdatingVisitStatus, setUpdatingVisitStatus] = useState(false)
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
 
-  const handleViewDetail = async (visitId: string, visitType: string, visitStatus: VisitStatus) => {
-    try {
-      setSelectedVisitId(visitId)
-      if (visitStatus === "registered") {
-        setUpdatingVisitStatus(true)
-        await updateVisitStatus(visitId, "in_examination")
+  const handleViewDetailInpatient = (item: VisitHistoryItem) => {
+    if (item.visit.status === "registered") {
+      const paramsObj = {
+        mrNumber: item?.patient?.mrNumber || "",
+        visitNumber: item?.visit.visitNumber || "",
+        assignBed: item.visit.id || "",
+        patientName: item?.patient?.name || "",
       }
 
-      switch (visitType) {
+      const queryString = new URLSearchParams(paramsObj).toString()
+
+      router.push(`/dashboard/inpatient/rooms?${queryString}`)
+    } else {
+      router.push(`/dashboard/inpatient/patients/${item.visit.id}`)
+    }
+  }
+
+  const handleViewDetail = async (item: VisitHistoryItem) => {
+    try {
+      setSelectedVisitId(item.visit.id)
+      if (item.visit.status === "registered" && item.visit.visitType !== "inpatient") {
+        setUpdatingVisitStatus(true)
+        await updateVisitStatus(item.visit.id, "in_examination")
+      }
+
+      switch (item.visit.visitType) {
         case "emergency":
-          router.push(`/dashboard/emergency/${visitId}`)
+          router.push(`/dashboard/emergency/${item.visit.id}`)
           break
         case "inpatient":
-          router.push(`/dashboard/inpatient/patients/${visitId}`)
+          handleViewDetailInpatient(item)
           break
         case "outpatient":
         default:
-          router.push(`/dashboard/medical-records/${visitId}`)
+          router.push(`/dashboard/medical-records/${item.visit.id}`)
           break
       }
     } catch (error) {
@@ -129,9 +146,7 @@ function VisitHistoryTableComponent({ visits, isLoading }: VisitHistoryTableProp
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() =>
-                    handleViewDetail(item.visit.id, item.visit.visitType, item.visit.status)
-                  }
+                  onClick={() => handleViewDetail(item)}
                   title="Lihat Detail"
                 >
                   {selectedVisitId === item.visit.id && isUpdatingVisitStatus ? (

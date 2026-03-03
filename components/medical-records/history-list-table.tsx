@@ -21,7 +21,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import type { MedicalRecordHistoryListItem } from "@/types/medical-record"
 import Loader from "@/components/loader"
-import { VisitStatus } from "@/types/visit-status"
 import { updateVisitStatus } from "@/lib/services/visit.service"
 import { getErrorMessage } from "@/lib/utils/error"
 
@@ -41,10 +40,28 @@ function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps
   const [isUpdatingVisitStatus, setUpdatingVisitStatus] = useState(false)
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
 
-  const handleViewDetail = async (visitId: string, visitType: string, visitStatus: VisitStatus) => {
+  const handleViewDetailInpatient = (record: MedicalRecordHistoryListItem) => {
+    if (record.visitStatus === "registered") {
+      const paramsObj = {
+        mrNumber: record?.patient?.mrNumber || "",
+        visitNumber: record?.visitNumber || "",
+        assignBed: record.visitId || "",
+        patientName: record?.patient?.name || "",
+      }
+
+      const queryString = new URLSearchParams(paramsObj).toString()
+
+      router.push(`/dashboard/inpatient/rooms?${queryString}`)
+    } else {
+      router.push(`/dashboard/inpatient/patients/${record.visitId}`)
+    }
+  }
+
+  const handleViewDetail = async (record: MedicalRecordHistoryListItem) => {
+    const { visitId, visitType, visitStatus } = record
     try {
       setSelectedVisitId(visitId)
-      if (visitStatus === "registered") {
+      if (visitStatus === "registered" && visitType !== "inpatient") {
         setUpdatingVisitStatus(true)
         await updateVisitStatus(visitId, "in_examination")
       }
@@ -54,7 +71,7 @@ function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps
           router.push(`/dashboard/emergency/${visitId}`)
           break
         case "inpatient":
-          router.push(`/dashboard/inpatient/patients/${visitId}`)
+          handleViewDetailInpatient(record)
           break
         case "outpatient":
         default:
@@ -131,7 +148,7 @@ function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps
                 variant="ghost"
                 size="sm"
                 disabled={selectedVisitId === item.visitId && isUpdatingVisitStatus}
-                onClick={() => handleViewDetail(item.visitId, item.visitType, item.visitStatus)}
+                onClick={() => handleViewDetail(item)}
                 title="Lihat Detail Rekam Medis"
               >
                 {selectedVisitId === item.visitId && isUpdatingVisitStatus ? (
