@@ -9,7 +9,7 @@
  * - usePrescriptions
  */
 
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   getMedicalRecordByVisit,
@@ -70,6 +70,10 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     enabled: !!visitId,
   })
 
+  // State
+  const [isSaving, setIsSaving] = useState(false)
+  const [isLocking, setIsLocking] = useState(false)
+
   // Error handling
   const error = coreQuery.error ? getErrorMessage(coreQuery.error) : null
 
@@ -83,6 +87,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     if (!coreQuery.data) return
 
     try {
+      setIsSaving(true)
       await updateMedicalRecordByVisit(visitId, { isDraft: true })
       await refetch()
       toast.success("Draft berhasil disimpan!")
@@ -90,6 +95,8 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       const errorMessage = getErrorMessage(err)
       toast.error(`Gagal menyimpan draft: ${errorMessage}`)
       throw err
+    } finally {
+      setIsSaving(false)
     }
   }, [visitId, coreQuery.data, refetch])
 
@@ -99,6 +106,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       if (!coreQuery.data) return
 
       try {
+        setIsLocking(true)
         await lockMedicalRecord({
           id: coreQuery.data.medicalRecord.id,
           billingAdjustment,
@@ -109,6 +117,8 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
       } catch (err) {
         toast.error("Gagal mengunci rekam medis")
         throw err
+      } finally {
+        setIsLocking(false)
       }
     },
     [coreQuery.data, refetch]
@@ -119,12 +129,15 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     if (!coreQuery.data) return
 
     try {
+      setIsLocking(true)
       await unlockMedicalRecord(coreQuery.data.medicalRecord.id)
       await refetch()
       toast.success("Rekam medis berhasil dibuka!")
     } catch (err) {
       toast.error("Gagal membuka kunci rekam medis")
       throw err
+    } finally {
+      setIsLocking(false)
     }
   }, [coreQuery.data, refetch])
 
@@ -179,8 +192,8 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
 
     // Loading states
     isLoading: coreQuery.isLoading,
-    isSaving: false, // Managed by mutations in the future
-    isLocking: false, // Managed by mutations in the future
+    isSaving, // Managed by mutations in the future
+    isLocking, // Managed by mutations in the future
 
     // Error handling
     error,

@@ -73,11 +73,11 @@ export const POST = withRBAC(
         })
       }
 
-      // Validate visit status transition to ready_for_billing
+      // Validate visit status transition to billed
       const currentStatus = visit.status as VisitStatus
       const finalStatus: VisitStatus = "billed"
 
-      // Can transition from in_examination or examined directly to ready_for_billing
+      // Can transition from in_examination or examined directly to billed
       if (!isValidStatusTransition(currentStatus, finalStatus)) {
         const response: ResponseError<unknown> = {
           error: "Cannot lock medical record",

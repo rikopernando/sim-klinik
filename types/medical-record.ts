@@ -4,6 +4,7 @@
 
 import { Drug } from "./pharmacy"
 import { Patient } from "./registration"
+import { VisitStatus } from "./visit-status"
 
 export interface MedicalRecord {
   id: string
@@ -180,6 +181,7 @@ export interface MedicalRecordHistoryListItem {
   visitId: string
   visitNumber: string
   visitType: string
+  visitStatus: VisitStatus
   recordType: string
   isLocked: boolean
   isDraft: boolean

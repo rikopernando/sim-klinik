@@ -14,6 +14,7 @@ import { and, count, desc, eq, gte, ilike, lte, or, SQL } from "drizzle-orm"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi } from "@/types/api"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { VisitStatus } from "@/types/visit-status"
 
 const DEFAULT_PAGE = 1
 const DEFAULT_LIMIT = 10
@@ -23,6 +24,7 @@ export interface MedicalRecordHistoryListItem {
   visitId: string
   visitNumber: string
   visitType: string
+  visitStatus: VisitStatus
   recordType: string
   isLocked: boolean
   isDraft: boolean
@@ -130,6 +132,7 @@ export const GET = withRBAC(
           // Visit fields
           visitNumber: visits.visitNumber,
           visitType: visits.visitType,
+          visitStatus: visits.status,
           // Patient fields
           patientId: patients.id,
           patientName: patients.name,
@@ -149,6 +152,7 @@ export const GET = withRBAC(
         visitId: result.visitId,
         visitNumber: result.visitNumber,
         visitType: result.visitType,
+        visitStatus: result.visitStatus as VisitStatus,
         recordType: result.recordType,
         isLocked: result.isLocked,
         isDraft: result.isDraft,

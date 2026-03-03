@@ -3,7 +3,11 @@
  * Displays list of medical records with related data
  */
 
-import { memo } from "react"
+import { memo, useState } from "react"
+import { Eye, Loader2, Lock, Unlock } from "lucide-react"
+import { format } from "date-fns"
+import { toast } from "sonner"
+import { id } from "date-fns/locale"
 import { useRouter } from "next/navigation"
 import {
   Table,
@@ -15,11 +19,11 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Eye, Lock, Unlock } from "lucide-react"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import type { MedicalRecordHistoryListItem } from "@/types/medical-record"
 import Loader from "@/components/loader"
+import { VisitStatus } from "@/types/visit-status"
+import { updateVisitStatus } from "@/lib/services/visit.service"
+import { getErrorMessage } from "@/lib/utils/error"
 
 interface HistoryListTableProps {
   records: MedicalRecordHistoryListItem[]
@@ -34,21 +38,37 @@ const VISIT_TYPE_LABELS: Record<string, string> = {
 
 function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps) {
   const router = useRouter()
+  const [isUpdatingVisitStatus, setUpdatingVisitStatus] = useState(false)
+  const [selectedVisitId, setSelectedVisitId] = useState<string | null>(null)
 
-  const handleViewDetail = (visitId: string, visitType: string) => {
-    switch (visitType) {
-      case "emergency":
-        router.push(`/dashboard/emergency/${visitId}`)
-        break
-      case "inpatient":
-        router.push(`/dashboard/inpatient/patients/${visitId}`)
-        break
-      case "outpatient":
-      default:
-        router.push(`/dashboard/medical-records/${visitId}`)
-        break
+  const handleViewDetail = async (visitId: string, visitType: string, visitStatus: VisitStatus) => {
+    try {
+      setSelectedVisitId(visitId)
+      if (visitStatus === "registered") {
+        setUpdatingVisitStatus(true)
+        await updateVisitStatus(visitId, "in_examination")
+      }
+
+      switch (visitType) {
+        case "emergency":
+          router.push(`/dashboard/emergency/${visitId}`)
+          break
+        case "inpatient":
+          router.push(`/dashboard/inpatient/patients/${visitId}`)
+          break
+        case "outpatient":
+        default:
+          router.push(`/dashboard/medical-records/${visitId}`)
+          break
+      }
+    } catch (error) {
+      console.error("Failed to start examination:", error)
+      toast.error(`Gagal memulai pemeriksaan: ${getErrorMessage(error)}`)
+    } finally {
+      setUpdatingVisitStatus(false)
     }
   }
+
   if (isLoading) {
     return <Loader message="Memuat riwayat rekam medis..." />
   }
@@ -110,10 +130,15 @@ function HistoryListTableComponent({ records, isLoading }: HistoryListTableProps
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleViewDetail(item.visitId, item.visitType)}
+                disabled={selectedVisitId === item.visitId && isUpdatingVisitStatus}
+                onClick={() => handleViewDetail(item.visitId, item.visitType, item.visitStatus)}
                 title="Lihat Detail Rekam Medis"
               >
-                <Eye className="h-4 w-4" />
+                {selectedVisitId === item.visitId && isUpdatingVisitStatus ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </TableCell>
           </TableRow>

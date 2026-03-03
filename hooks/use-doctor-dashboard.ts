@@ -59,7 +59,13 @@ export function useDoctorDashboard() {
   )
 
   const unlockedQueue = useMemo(
-    () => queue.filter((item) => item.medicalRecord && !item.medicalRecord.isLocked),
+    () =>
+      queue.filter(
+        (item) =>
+          item.medicalRecord &&
+          !item.medicalRecord.isLocked &&
+          item.visit.status === "in_examination"
+      ),
     [queue]
   )
 
