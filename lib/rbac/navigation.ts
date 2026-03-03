@@ -149,7 +149,7 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           icon: IconDatabase,
         },
         {
-          title: "Services",
+          title: "Tindakan",
           url: "/dashboard/services",
           icon: IconTool,
         },

@@ -29,7 +29,7 @@ import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
 import { ServicesTable } from "@/components/services/service-table"
 import { FormServiceDialog } from "@/components/services/form-service-dialog"
 
-export default function UsersPage() {
+export default function ServicePage() {
   const [mode, setMode] = useState("")
   const [formDialogOpen, setFormDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)

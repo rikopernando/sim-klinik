@@ -68,7 +68,6 @@ export async function PATCH(request: Request, { params }: Params) {
     const { id } = await params
     const body = await request.json()
     const validate = updateServicesSchema.parse(body)
-    console.log(validate)
 
     const existing = await db.select().from(services).where(eq(services.id, id)).limit(1)
 
