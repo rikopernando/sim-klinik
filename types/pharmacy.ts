@@ -105,7 +105,8 @@ export interface DrugInventoryWithDetails extends DrugInventory {
  */
 export interface PrescriptionWithDetails {
   prescription: Prescription
-  drug: Drug
+  drug: Drug | null // Can be null for compound prescriptions
+  compoundRecipe?: CompoundRecipeBasic | null
   patient: {
     id: string
     name: string
@@ -119,6 +120,22 @@ export interface PrescriptionWithDetails {
     id: string
     visitNumber: string
   }
+}
+
+/**
+ * Basic compound recipe info for prescription display
+ */
+export interface CompoundRecipeBasic {
+  id: string
+  code: string
+  name: string
+  composition: {
+    drugId: string
+    drugName: string
+    quantity: number
+    unit: string
+  }[]
+  price: string | null
 }
 
 /**

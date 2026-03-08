@@ -76,7 +76,7 @@ export function AddPrescriptionDialog({
           ? {
               prescriptions: [
                 {
-                  drugId: prescription.drugId,
+                  drugId: prescription.drugId || "",
                   drugName: prescription.drugName,
                   drugPrice: prescription.drugPrice || "",
                   dosage: prescription.dosage || "",

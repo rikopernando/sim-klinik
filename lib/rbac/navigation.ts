@@ -190,6 +190,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard/master-data/polis",
           icon: IconCirclePlus2,
         },
+        {
+          title: "Obat Racik",
+          url: "/dashboard/master-data/compound-recipes",
+          icon: IconPill,
+        },
       ],
     },
     {
@@ -357,6 +362,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Data Kamar",
           url: "/dashboard/master-data/rooms",
           icon: IconDatabase,
+        },
+        {
+          title: "Obat Racik",
+          url: "/dashboard/master-data/compound-recipes",
+          icon: IconPill,
         },
       ],
     },
@@ -564,6 +574,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Farmasi",
           url: "/dashboard/pharmacy",
+          icon: IconPill,
+        },
+      ],
+    },
+    {
+      label: "Master Data",
+      items: [
+        {
+          title: "Obat Racik",
+          url: "/dashboard/master-data/compound-recipes",
           icon: IconPill,
         },
       ],
