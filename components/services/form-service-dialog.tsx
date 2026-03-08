@@ -64,7 +64,7 @@ export function FormServiceDialog({
       setValue("code", data.code)
       setValue("category", data.category, { shouldValidate: true })
       setValue("serviceType", data.serviceType, { shouldValidate: true })
-      setValue("price", data.price)
+      setValue("price", String(parseFloat(data.price)))
       setValue("description", data.description || "")
     } else if (open && mode === "add") {
       reset()
@@ -220,18 +220,11 @@ export function FormServiceDialog({
               control={control}
               rules={{
                 required: "Harga harus diisi",
-                min: { value: 0, message: "Harga tidak boleh negatif" },
                 validate: (value) => {
-                  const numericValue = parseInt(value.replace(/\D/g, ""), 10)
-                  if (isNaN(numericValue)) {
-                    return "Harga harus berupa angka"
-                  }
-                  if (numericValue > 999999999) {
-                    return "Harga maksimal Rp 999.999.999"
-                  }
-                  if (numericValue < 10000) {
-                    return "Harga minimal Rp 10.000"
-                  }
+                  const numericValue = parseFloat(value.replace(/[^\d.]/g, ""))
+                  if (isNaN(numericValue)) return "Harga harus berupa angka"
+                  if (numericValue > 999999999) return "Harga maksimal Rp 999.999.999"
+                  if (numericValue < 10000) return "Harga minimal Rp 10.000"
                   return true
                 },
               }}

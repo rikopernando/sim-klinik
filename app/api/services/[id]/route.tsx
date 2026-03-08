@@ -63,6 +63,7 @@ export async function GET(request: Request, { params }: Params) {
     })
   }
 }
+
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { id } = await params
