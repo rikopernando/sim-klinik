@@ -8,15 +8,15 @@
 
 import z from "zod"
 import { eq } from "drizzle-orm"
-import { count, and, or, ilike } from "drizzle-orm"
-import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/db"
 import { ResultPoli } from "@/types/poli"
 import { polis } from "@/db/schema/visits"
-import { createPoliSchema } from "@/lib/validations/poli.validation"
-import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { count, and, or, ilike } from "drizzle-orm"
+import { ResponseApi, ResponseError } from "@/types/api"
+import { NextRequest, NextResponse } from "next/server"
+import { createPoliSchema } from "@/lib/validations/poli.validation"
 
 /**
  * Get all active polis
