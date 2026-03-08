@@ -12,6 +12,8 @@ import { ApiServiceError } from "@/lib/services/api.service"
 interface UseERQueueOptions {
   autoRefresh?: boolean
   refreshInterval?: number // in milliseconds
+  status?: string // Filter by status ("all" fetches all statuses)
+  search?: string // Client-side search filter (name, MR number, NIK)
 }
 
 interface UseERQueueReturn {
@@ -26,7 +28,12 @@ interface UseERQueueReturn {
 }
 
 export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
-  const { autoRefresh = true, refreshInterval = 30000 } = options
+  const {
+    autoRefresh = true,
+    refreshInterval = 30000,
+    status = "registered",
+    search = "",
+  } = options
 
   const [queue, setQueue] = useState<ERQueueItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -41,7 +48,8 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
       setIsLoading(true)
       setError(null)
 
-      const data = await getERQueue("registered")
+      // If status is "all", fetch without status filter, otherwise filter by status
+      const data = await getERQueue(status === "all" ? undefined : status)
 
       setQueue(data)
       setLastRefresh(new Date())
@@ -55,7 +63,7 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [status])
 
   /**
    * Manual refresh
@@ -79,9 +87,24 @@ export function useERQueue(options: UseERQueueOptions = {}): UseERQueueReturn {
   )
 
   /**
+   * Filter queue by search term (client-side)
+   */
+  const filteredQueue = useMemo(() => {
+    if (!search.trim()) return queue
+
+    const searchLower = search.toLowerCase().trim()
+    return queue.filter((item) => {
+      const nameMatch = item.patient.name.toLowerCase().includes(searchLower)
+      const mrMatch = item.patient.mrNumber.toLowerCase().includes(searchLower)
+      const nikMatch = item.patient.nik?.toLowerCase().includes(searchLower)
+      return nameMatch || mrMatch || nikMatch
+    })
+  }, [queue, search])
+
+  /**
    * Sort queue by triage priority (memoized for performance)
    */
-  const sortedQueue = useMemo(() => sortByTriagePriority(queue), [queue])
+  const sortedQueue = useMemo(() => sortByTriagePriority(filteredQueue), [filteredQueue])
 
   /**
    * Initial fetch

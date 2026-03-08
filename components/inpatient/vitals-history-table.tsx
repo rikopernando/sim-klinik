@@ -196,23 +196,7 @@ export function VitalsHistoryTable({
               </TableCell>
 
               {/* Consciousness */}
-              <TableCell>
-                {vital.consciousness ? (
-                  <Badge
-                    variant={
-                      vital.consciousness === "Alert"
-                        ? "default"
-                        : vital.consciousness === "Confused"
-                          ? "secondary"
-                          : "destructive"
-                    }
-                  >
-                    {vital.consciousness}
-                  </Badge>
-                ) : (
-                  "-"
-                )}
-              </TableCell>
+              <TableCell>{vital.consciousness || "-"}</TableCell>
 
               {/* Pain Scale */}
               <TableCell>

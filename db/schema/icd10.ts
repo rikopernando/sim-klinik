@@ -14,8 +14,8 @@ export const icd10Codes = pgTable(
     code: varchar("code", { length: 10 }).notNull().unique(),
     description: text("description").notNull(),
     category: varchar("category", { length: 100 }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (table) => ({
     codeIdx: index("icd10_code_idx").on(table.code),

@@ -14,8 +14,8 @@ import { ZodError } from "zod"
 
 /**
  * GET /api/lab/orders
- * List lab orders with filters
- * Query params: visitId, patientId, status, department, dateFrom, dateTo
+ * List lab orders with filters and pagination
+ * Query params: visitId, patientId, status, department, dateFrom, dateTo, page, limit
  * Requires: lab:read permission
  */
 export const GET = withRBAC(
@@ -31,15 +31,18 @@ export const GET = withRBAC(
         department: searchParams.get("department") || undefined,
         dateFrom: searchParams.get("dateFrom") || undefined,
         dateTo: searchParams.get("dateTo") || undefined,
+        page: searchParams.get("page") || undefined,
+        limit: searchParams.get("limit") || undefined,
       })
 
       // Get lab orders using service layer
       const result = await getLabOrders(filters)
 
-      const response: ResponseApi<typeof result> = {
+      const response: ResponseApi<typeof result.orders> = {
         status: HTTP_STATUS_CODES.OK,
         message: "Lab orders fetched successfully",
-        data: result,
+        data: result.orders,
+        pagination: result.pagination,
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })

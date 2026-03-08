@@ -3,6 +3,8 @@
  * Centralized types for the Emergency/ER module
  */
 
+import type { VisitStatus } from "./visit-status"
+
 /**
  * Triage Status Types
  */
@@ -25,11 +27,6 @@ export const DISPOSITION_TYPES = {
   REFERRED: "referred" as DispositionType,
   OBSERVATION: "observation" as DispositionType,
 } as const
-
-/**
- * Visit Status Types
- */
-export type VisitStatus = "pending" | "in_progress" | "completed" | "cancelled"
 
 /**
  * Quick Registration Data

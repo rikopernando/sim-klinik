@@ -13,10 +13,12 @@ interface DischargeBillingPreviewSectionProps {
   summary: DischargeBillingSummary | null
   isLoading: boolean
   adjustmentType: "none" | "discount" | "surcharge"
+  type: "UGD" | "Rawat Jalan" | "Rawat Inap"
   adjustmentAmount: string
 }
 
 export function DischargeBillingPreviewSection({
+  type,
   summary,
   isLoading,
   adjustmentType,
@@ -130,7 +132,7 @@ export function DischargeBillingPreviewSection({
               )}
             >
               <span>
-                {adjustmentType === "discount" ? "Diskon Rawat Inap" : "Biaya Tambahan Rawat Inap"}
+                {adjustmentType === "discount" ? `Diskon ${type}` : `Biaya Tambahan ${type}`}
               </span>
               <span>
                 {adjustmentType === "discount" ? "- " : "+ "}

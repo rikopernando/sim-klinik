@@ -140,6 +140,7 @@ export function CompleteDischargeDialog({
               </Alert>
             )}
             <DischargeBillingPreviewSection
+              type="Rawat Inap"
               summary={summary}
               isLoading={isFetching}
               adjustmentType={adjustmentType}

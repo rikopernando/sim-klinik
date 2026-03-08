@@ -45,6 +45,20 @@ export function NavMain(props: NavMainProps) {
     },
   ]
 
+  // Collect all navigation URLs for detecting more specific matches
+  const allNavUrls = groups.flatMap((g) =>
+    g.items.flatMap((i) => [i.url, ...(i.items?.map((s) => s.url) || [])])
+  )
+
+  // Check if there's a more specific nav item that matches the current pathname
+  const hasMoreSpecificMatch = (itemUrl: string) =>
+    allNavUrls.some(
+      (url) =>
+        url !== itemUrl &&
+        url.startsWith(itemUrl + "/") &&
+        (pathname === url || pathname.startsWith(url + "/"))
+    )
+
   return (
     <>
       {/* Quick Create Section */}
@@ -84,16 +98,20 @@ export function NavMain(props: NavMainProps) {
 
                 // Special handling for dashboard: only active when exactly on /dashboard
                 // For other routes: active when pathname matches or starts with the route
+                // BUT not if there's a more specific sibling route that also matches
                 const isActive =
                   item.url === "/dashboard"
                     ? pathname === "/dashboard"
-                    : pathname === item.url || pathname.startsWith(item.url + "/")
+                    : !hasMoreSpecificMatch(item.url) &&
+                      (pathname === item.url || pathname.startsWith(item.url + "/"))
 
                 // For items with subitems, check if any subitem is active
+                // Apply the same hasMoreSpecificMatch logic to subitems
                 const hasActiveSubitem = hasSubitems
                   ? item.items!.some(
                       (subitem) =>
-                        pathname === subitem.url || pathname.startsWith(subitem.url + "/")
+                        !hasMoreSpecificMatch(subitem.url) &&
+                        (pathname === subitem.url || pathname.startsWith(subitem.url + "/"))
                     )
                   : false
 
@@ -118,7 +136,8 @@ export function NavMain(props: NavMainProps) {
                           <SidebarMenuSub>
                             {item.items!.map((subitem) => {
                               const isSubitemActive =
-                                pathname === subitem.url || pathname.startsWith(subitem.url + "/")
+                                !hasMoreSpecificMatch(subitem.url) &&
+                                (pathname === subitem.url || pathname.startsWith(subitem.url + "/"))
 
                               return (
                                 <SidebarMenuSubItem key={subitem.title}>

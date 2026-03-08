@@ -6,6 +6,7 @@
  */
 
 import { useRouter } from "next/navigation"
+import { PageGuard } from "@/components/auth/page-guard"
 import { IconUserPlus, IconSearch } from "@tabler/icons-react"
 import {
   Card,
@@ -21,9 +22,20 @@ import { usePatients } from "@/hooks/use-patients"
 import { PatientsTable } from "@/components/patients/patients-table"
 import { PatientsPagination } from "@/components/patients/patients-pagination"
 import Loader from "@/components/loader"
+import { usePermission } from "@/hooks/use-permission"
 
 export default function PatientsPage() {
+  return (
+    <PageGuard permissions={["patients:read"]}>
+      <PatientsPageContent />
+    </PageGuard>
+  )
+}
+
+function PatientsPageContent() {
   const router = useRouter()
+
+  const { hasPermission } = usePermission()
   const { patients, loading, searchQuery, pagination, setSearchQuery, handlePageChange } =
     usePatients()
 
@@ -43,10 +55,13 @@ export default function PatientsPage() {
           <h1 className="text-3xl font-bold">Data Pasien</h1>
           <p className="text-muted-foreground">Kelola data pasien yang terdaftar</p>
         </div>
-        <Button onClick={handleNewPatient}>
-          <IconUserPlus size={20} className="mr-2" />
-          Pasien Baru
-        </Button>
+
+        {hasPermission("patients:write") && (
+          <Button onClick={handleNewPatient}>
+            <IconUserPlus size={20} className="mr-2" />
+            Pasien Baru
+          </Button>
+        )}
       </div>
 
       {/* Patient List */}

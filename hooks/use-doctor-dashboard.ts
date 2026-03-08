@@ -4,11 +4,14 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { useRouter } from "next/navigation"
+import { format } from "date-fns"
 import { useDoctorStats } from "@/hooks/use-doctor-stats"
 import { useDoctorQueue } from "@/hooks/use-doctor-queue"
-import { createMedicalRecord } from "@/lib/services/medical-record.service"
 import { updateVisitStatus } from "@/lib/services/visit.service"
-import { QueuePatient } from "@/types/dashboard"
+import { QueueItem, QueuePatient } from "@/types/dashboard"
+import { toast } from "sonner"
+import { getErrorMessage } from "@/lib/utils/error"
+import type { EditVisitData } from "@/lib/validations/edit-visit"
 
 export function useDoctorDashboard() {
   const router = useRouter()
@@ -16,6 +19,9 @@ export function useDoctorDashboard() {
   const [showHistory, setShowHistory] = useState(false)
   const [startingExamination, setStartingExamination] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [editVisitData, setEditVisitData] = useState<EditVisitData | null>(null)
+  const [showEditDialog, setShowEditDialog] = useState(false)
+  const [dateFilter, setDateFilter] = useState<string>(format(new Date(), "yyyy-MM-dd"))
 
   // Fetch dashboard statistics with auto-refresh
   const {
@@ -35,6 +41,7 @@ export function useDoctorDashboard() {
     refresh: refreshQueue,
   } = useDoctorQueue({
     status: "all",
+    date: dateFilter,
     autoRefresh: true,
     refreshInterval: 30000, // Refresh every 30 seconds
   })
@@ -52,7 +59,13 @@ export function useDoctorDashboard() {
   )
 
   const unlockedQueue = useMemo(
-    () => queue.filter((item) => item.medicalRecord && !item.medicalRecord.isLocked),
+    () =>
+      queue.filter(
+        (item) =>
+          item.medicalRecord &&
+          !item.medicalRecord.isLocked &&
+          item.visit.status === "in_examination"
+      ),
     [queue]
   )
 
@@ -68,26 +81,12 @@ export function useDoctorDashboard() {
         setStartingExamination(visitId)
         setError(null)
 
-        // Step 1: Create medical record for this visit
-        await createMedicalRecord({
-          visitId,
-          isDraft: true,
-        })
-
-        // Step 2: Update visit status to "in_examination"
         await updateVisitStatus(visitId, "in_examination")
 
-        // Step 3: Navigate to medical record page
         router.push(`/dashboard/medical-records/${visitId}`)
       } catch (error: unknown) {
-        // If medical record already exists, just navigate to it
-        const errorResponse = error as { response?: { data?: { error?: string } } }
-        if (errorResponse.response?.data?.error?.includes("already exists")) {
-          router.push(`/dashboard/medical-records/${visitId}`)
-        } else {
-          setError(errorResponse.response?.data?.error || "Gagal memulai pemeriksaan")
-          console.error("Failed to start examination:", error)
-        }
+        console.error("Failed to start examination:", error)
+        toast.error(`Gagal memulai pemeriksaan: ${getErrorMessage(error)}`)
       } finally {
         setStartingExamination(null)
       }
@@ -113,6 +112,44 @@ export function useDoctorDashboard() {
     setSelectedPatient(null)
   }, [])
 
+  const handleEditVisit = useCallback((queueItem: QueueItem) => {
+    const data: EditVisitData = {
+      visit: {
+        id: queueItem.visit.id,
+        visitNumber: queueItem.visit.visitNumber,
+        visitType: queueItem.visit.visitType,
+        status: queueItem.visit.status,
+        queueNumber: queueItem.visit.queueNumber,
+        poliId: queueItem.visit.poliId,
+        doctorId: queueItem.visit.doctorId,
+      },
+      patient: {
+        id: queueItem.visit.patientId,
+        mrNumber: queueItem.patient?.mrNumber || "",
+        name: queueItem.patient?.name || "",
+      },
+    }
+    setEditVisitData(data)
+    setShowEditDialog(true)
+  }, [])
+
+  const handleEditDialogClose = useCallback((open: boolean) => {
+    setShowEditDialog(open)
+    if (!open) setEditVisitData(null)
+  }, [])
+
+  const handleEditSuccess = useCallback(() => {
+    refreshQueue()
+    refreshStats()
+  }, [refreshQueue, refreshStats])
+
+  const handleDateChange = useCallback(
+    (date: string | undefined, _dateFrom: string | undefined, _dateTo: string | undefined) => {
+      if (date) setDateFilter(date)
+    },
+    []
+  )
+
   return {
     // State
     stats,
@@ -127,12 +164,19 @@ export function useDoctorDashboard() {
     showHistory,
     startingExamination,
     error,
+    editVisitData,
+    showEditDialog,
+    dateFilter,
 
     // Handlers
     handleRefreshAll,
+    handleDateChange,
     handleStartExamination,
     handleOpenMedicalRecord,
     handleViewHistory,
     handleCloseHistory,
+    handleEditVisit,
+    handleEditDialogClose,
+    handleEditSuccess,
   }
 }

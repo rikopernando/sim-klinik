@@ -3,17 +3,20 @@
  * Main page for viewing and editing electronic medical records
  *
  * Refactored for better readability, modularity, and performance
+ * Each tab now fetches its own data lazily when activated
  */
 
 "use client"
 
 import { useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 import { useMedicalRecord } from "@/hooks/use-medical-record"
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header"
@@ -21,20 +24,28 @@ import { MedicalRecordActions } from "@/components/medical-records/medical-recor
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
 
 export default function MedicalRecordPage() {
+  return (
+    <PageGuard permissions={["medical_records:read"]}>
+      <MedicalRecordPageContent />
+    </PageGuard>
+  )
+}
+
+function MedicalRecordPageContent() {
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState("soap")
 
-  // Use custom hook for all medical record operations
+  // Use custom hook for core medical record operations
+  // Diagnoses, procedures, and prescriptions are fetched lazily by their respective tabs
   const {
-    recordData,
+    coreData,
     isLocked,
     isDraft,
     isLoading,
     isSaving,
     isLocking,
     error,
-    loadMedicalRecord,
     saveSOAP,
     saveDraft,
     lockRecord,
@@ -55,7 +66,7 @@ export default function MedicalRecordPage() {
   }
 
   // Error state (no data loaded)
-  if (error && !recordData) {
+  if (error && !coreData) {
     return (
       <div className="container mx-auto max-w-6xl p-6">
         <Alert variant="destructive">
@@ -69,9 +80,15 @@ export default function MedicalRecordPage() {
   }
 
   // No data state
-  if (!recordData) {
+  if (!coreData) {
     return null
   }
+
+  // Check if visit is cancelled
+  const isCancelled = coreData.visit.status === "cancelled"
+
+  // Treat cancelled visits as locked (read-only)
+  const isReadOnly = isLocked || isCancelled
 
   // Handle lock action
   const handleLock = async (billingAdjustment?: number, adjustmentNote?: string) => {
@@ -80,8 +97,19 @@ export default function MedicalRecordPage() {
 
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
+      {/* Cancelled Visit Banner */}
+      {isCancelled && (
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center gap-2">
+            <Badge variant="destructive">Dibatalkan</Badge>
+            Kunjungan ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
+            diubah.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Header with visit info and status badges */}
-      <MedicalRecordHeader visit={recordData.visit} isLocked={isLocked} isDraft={isDraft} />
+      <MedicalRecordHeader visit={coreData.visit} isLocked={isLocked} isDraft={isDraft} />
 
       {/* Error Alert (shows errors during operations) */}
       {error && (
@@ -99,26 +127,27 @@ export default function MedicalRecordPage() {
               <CardDescription>Dokumentasi pemeriksaan dan tindakan medis</CardDescription>
             </div>
 
-            {/* Action Buttons (Save Draft / Lock & Finish / Unlock) */}
-            <MedicalRecordActions
-              isLocked={isLocked}
-              isSaving={isSaving}
-              isLocking={isLocking}
-              onSave={saveDraft}
-              onLock={handleLock}
-              onUnlock={unlockRecord}
-            />
+            {/* Action Buttons (Save Draft / Lock & Finish / Unlock) - Hidden when cancelled */}
+            {!isCancelled && (
+              <MedicalRecordActions
+                isLocked={isLocked}
+                isSaving={isSaving}
+                isLocking={isLocking}
+                onSave={saveDraft}
+                onLock={handleLock}
+                onUnlock={unlockRecord}
+              />
+            )}
           </div>
         </CardHeader>
 
         <CardContent>
-          {/* Tabs with memoized content for better performance */}
+          {/* Tabs with lazy loading - each tab fetches its own data when activated */}
           <MedicalRecordTabs
-            recordData={recordData}
+            coreData={coreData}
             activeTab={activeTab}
-            isLocked={isLocked}
+            isLocked={isReadOnly}
             onTabChange={setActiveTab}
-            onUpdate={loadMedicalRecord}
             onUpdateRecord={updateRecord}
             onSaveSOAP={saveSOAP}
           />

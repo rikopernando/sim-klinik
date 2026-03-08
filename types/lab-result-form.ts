@@ -32,11 +32,7 @@ export interface NumericResultFormData extends BaseResultFormData {
 /**
  * Form data for descriptive result template
  */
-export interface DescriptiveResultFormData extends BaseResultFormData {
-  findings: string
-  interpretation?: string
-  impression?: string
-}
+export type DescriptiveResultFormData = BaseResultFormData & Record<string, string>
 
 /**
  * Form data for multi-parameter result template

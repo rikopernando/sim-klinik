@@ -12,7 +12,7 @@ import type {
   CreateLabOrderInput,
   UpdateLabOrderStatusInput,
 } from "@/types/lab"
-import type { ResponseApi } from "@/types/api"
+import type { ResponseApi, Pagination } from "@/types/api"
 import { CreateLabResultInput } from "@/lib/lab"
 
 import { ApiServiceError, handleApiError } from "./api.service"
@@ -67,11 +67,11 @@ export async function fetchLabTestById(testId: string): Promise<LabTest> {
 // ============================================================================
 
 /**
- * Fetch lab orders with filters
+ * Fetch lab orders with filters and pagination
  */
 export async function fetchLabOrders(
-  filters?: Partial<LabOrderFilters>
-): Promise<LabOrderWithRelations[]> {
+  filters?: Partial<LabOrderFilters> & { page?: number; limit?: number }
+): Promise<{ orders: LabOrderWithRelations[]; pagination: Pagination }> {
   try {
     const params = new URLSearchParams()
 
@@ -94,6 +94,12 @@ export async function fetchLabOrders(
     if (filters?.dateTo) {
       params.append("dateTo", filters.dateTo.toISOString())
     }
+    if (filters?.page) {
+      params.append("page", filters.page.toString())
+    }
+    if (filters?.limit) {
+      params.append("limit", filters.limit.toString())
+    }
 
     const response = await axios.get<ResponseApi<LabOrderWithRelations[]>>(
       `/api/lab/orders?${params}`
@@ -103,7 +109,15 @@ export async function fetchLabOrders(
       throw new ApiServiceError("Invalid response: missing data")
     }
 
-    return response.data.data
+    return {
+      orders: response.data.data,
+      pagination: response.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: response.data.data.length,
+        totalPages: 1,
+      },
+    }
   } catch (error) {
     console.error("Error fetching lab orders:", error)
     handleApiError(error)

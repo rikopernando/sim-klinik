@@ -12,8 +12,8 @@ export const roles = pgTable("roles", {
   name: varchar("name", { length: 50 }).notNull().unique(), // admin, doctor, nurse, pharmacist, cashier, receptionist
   description: text("description"),
   permissions: text("permissions"), // JSON array of permissions
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -30,6 +30,6 @@ export const userRoles = pgTable("user_roles", {
   roleId: text("role_id")
     .notNull()
     .references(() => roles.id, { onDelete: "cascade" }),
-  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).defaultNow().notNull(),
   assignedBy: text("assigned_by").references(() => user.id),
 })

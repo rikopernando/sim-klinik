@@ -3,7 +3,8 @@
  * Calculations, formatting, and status helpers
  */
 
-import type { PaymentStatus, BillingItem } from "@/types/billing"
+import type { PaymentStatus, BillingItem, BillingDetails, PaymentMethod } from "@/types/billing"
+import type { TransactionHistoryItem } from "@/types/transaction"
 
 /**
  * Format currency (IDR)
@@ -299,4 +300,75 @@ export function calculateTotalByType(items: BillingItem[], itemType: string): st
     .filter((item) => item.itemType === itemType)
     .reduce((sum, item) => sum + parseFloat(item.totalPrice), 0)
   return total.toFixed(2)
+}
+
+/**
+ * Transform TransactionHistoryItem to BillingDetails for receipt printing
+ * This allows reusing the ReceiptPrint component for transaction history
+ */
+export function transactionToBillingDetails(transaction: TransactionHistoryItem): BillingDetails {
+  const totalAmount = transaction.billing.totalAmount.toFixed(2)
+
+  return {
+    billing: {
+      id: transaction.billing.id,
+      visitId: transaction.visit.id,
+      subtotal: totalAmount,
+      discount: "0",
+      discountPercentage: null,
+      tax: "0",
+      totalAmount: totalAmount,
+      insuranceCoverage: "0",
+      patientPayable: totalAmount,
+      paymentStatus: transaction.billing.paymentStatus as PaymentStatus,
+      paidAmount: transaction.payment.amount.toFixed(2),
+      remainingAmount: (transaction.billing.totalAmount - transaction.payment.amount).toFixed(2),
+      paymentMethod: transaction.payment.paymentMethod,
+      paymentReference: transaction.payment.paymentReference,
+      processedBy: transaction.cashier.id,
+      processedAt: transaction.payment.receivedAt,
+      notes: transaction.payment.notes,
+    },
+    items: transaction.billing.items.map((item) => ({
+      id: item.id,
+      billingId: transaction.billing.id,
+      itemType: item.itemType as BillingItem["itemType"],
+      itemId: null,
+      itemName: item.itemName,
+      itemCode: item.itemCode,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice.toFixed(2),
+      subtotal: item.subtotal.toFixed(2),
+      discount: item.discount.toFixed(2),
+      totalPrice: item.totalPrice.toFixed(2),
+      description: null,
+      createdAt: transaction.payment.receivedAt,
+    })),
+    payments: [
+      {
+        id: transaction.payment.id,
+        billingId: transaction.billing.id,
+        amount: transaction.payment.amount.toFixed(2),
+        paymentMethod: transaction.payment.paymentMethod as PaymentMethod,
+        paymentReference: transaction.payment.paymentReference,
+        amountReceived: transaction.payment.amountReceived?.toFixed(2) || null,
+        changeGiven: transaction.payment.changeGiven?.toFixed(2) || null,
+        receivedBy: transaction.cashier.id,
+        receivedAt: transaction.payment.receivedAt,
+        notes: transaction.payment.notes,
+        createdAt: transaction.payment.receivedAt,
+      },
+    ],
+    patient: {
+      name: transaction.patient.name,
+      mrNumber: transaction.patient.mrNumber,
+    },
+    visit: {
+      visitNumber: transaction.visit.visitNumber,
+      createdAt: transaction.payment.receivedAt,
+    },
+    cashier: {
+      name: transaction.cashier.name,
+    },
+  }
 }

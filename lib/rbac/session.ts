@@ -12,6 +12,35 @@ import { ROLE_PERMISSIONS } from "@/types/rbac"
 import { headers } from "next/headers"
 
 /**
+ * Role Cache
+ * In-memory cache to reduce database lookups for user roles
+ * TTL: 60 seconds - balances performance with role change responsiveness
+ */
+interface CachedRole {
+  role: UserRole
+  timestamp: number
+}
+
+const roleCache = new Map<string, CachedRole>()
+const ROLE_CACHE_TTL_MS = 60_000 // 1 minute
+
+/**
+ * Clear cached role for a user
+ * Call this when a user's role is changed
+ */
+export function invalidateRoleCache(userId: string): void {
+  roleCache.delete(userId)
+}
+
+/**
+ * Clear all cached roles
+ * Call this on server restart or when roles are bulk-updated
+ */
+export function clearRoleCache(): void {
+  roleCache.clear()
+}
+
+/**
  * Get current session from Better Auth
  */
 export async function getSession() {
@@ -23,9 +52,17 @@ export async function getSession() {
 }
 
 /**
- * Get user role from database
+ * Get user role from database with caching
+ * Reduces database lookups by caching roles for 60 seconds
  */
 export async function getUserRole(userId: string): Promise<UserRole | null> {
+  // Check cache first
+  const cached = roleCache.get(userId)
+  if (cached && Date.now() - cached.timestamp < ROLE_CACHE_TTL_MS) {
+    return cached.role
+  }
+
+  // Cache miss - fetch from database
   const [userRole] = await db
     .select({
       roleName: roles.name,
@@ -39,11 +76,17 @@ export async function getUserRole(userId: string): Promise<UserRole | null> {
     return null
   }
 
-  return userRole.roleName as UserRole
+  const role = userRole.roleName as UserRole
+
+  // Store in cache
+  roleCache.set(userId, { role, timestamp: Date.now() })
+
+  return role
 }
 
 /**
  * Get user permissions based on role
+ * Uses cached role lookup for performance
  */
 export async function getUserPermissions(userId: string): Promise<Permission[]> {
   const role = await getUserRole(userId)

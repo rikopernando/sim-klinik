@@ -6,6 +6,7 @@
  */
 
 import { useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
@@ -35,6 +36,14 @@ import { RoomsPagination } from "@/components/master-data/rooms/rooms-pagination
 import { ROOM_TYPE_FILTER_OPTIONS } from "@/lib/constants/rooms"
 
 export default function RoomsPage() {
+  return (
+    <PageGuard roles={["super_admin", "admin"]}>
+      <RoomsPageContent />
+    </PageGuard>
+  )
+}
+
+function RoomsPageContent() {
   // Use modular hooks
   const filterHook = useRoomFilters()
   const { rooms, isLoading, pagination, handlePageChange, refresh } = useRoomsList(

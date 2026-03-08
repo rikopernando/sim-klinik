@@ -8,6 +8,7 @@
 import { useState, useCallback, useMemo } from "react"
 import { toast } from "sonner"
 
+import { PageGuard } from "@/components/auth/page-guard"
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PharmacyHeader } from "@/components/pharmacy/pharmacy-header"
@@ -29,6 +30,14 @@ import {
 type VisitTypeFilter = "all" | "outpatient" | "inpatient"
 
 export default function PharmacyDashboard() {
+  return (
+    <PageGuard permissions={["prescriptions:read", "pharmacy:read"]}>
+      <PharmacyDashboardContent />
+    </PageGuard>
+  )
+}
+
+function PharmacyDashboardContent() {
   const {
     queue,
     queueLoading,

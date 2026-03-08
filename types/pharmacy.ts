@@ -30,7 +30,15 @@ export type DrugCategory =
 /**
  * Route Types
  */
-export type RouteType = "oral" | "topical" | "injection" | "inhalation" | "others"
+export type RouteType =
+  | "oral"
+  | "topical"
+  | "injection"
+  | "inhalation"
+  | "rectal"
+  | "sublingual"
+  | "compounded"
+  | "others"
 
 /**
  * Stock Alert Level

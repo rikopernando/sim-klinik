@@ -1,6 +1,7 @@
+import { desc, like, and, eq, gte, lt } from "drizzle-orm"
+
 import { db } from "@/db"
 import { patients, visits } from "@/db/schema"
-import { desc, like } from "drizzle-orm"
 
 /**
  * Generate unique Medical Record (MR) Number
@@ -103,6 +104,3 @@ export async function generateQueueNumber(poliId: string): Promise<string> {
   const sequenceStr = String(sequence).padStart(3, "0")
   return `A${sequenceStr}`
 }
-
-// Import and, eq, gte, lt for the generateQueueNumber function
-import { and, eq, gte, lt } from "drizzle-orm"

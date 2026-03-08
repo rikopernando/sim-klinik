@@ -2,25 +2,17 @@ import { NextRequest, NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
-import {
-  medicalRecords,
-  diagnoses,
-  procedures,
-  prescriptions,
-  visits,
-  drugs,
-  user,
-  services,
-} from "@/db/schema"
+import { medicalRecords, visits } from "@/db/schema"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
-import { MedicalRecord, MedicalRecordData } from "@/types/medical-record"
+import { MedicalRecord, MedicalRecordCoreData } from "@/types/medical-record"
 import z from "zod"
 
 /**
  * GET /api/medical-records/[visitId]
- * Get medical record by visit ID (RESTful endpoint)
+ * Get core medical record and visit info by visit ID
+ * Related data (diagnoses, procedures, prescriptions) available via separate endpoints
  * Requires: medical_records:read permission
  */
 export const GET = withRBAC(
@@ -39,14 +31,13 @@ export const GET = withRBAC(
         })
       }
 
-      // Get medical record for specific visit
-      const records = await db
-        .select()
-        .from(medicalRecords)
-        .where(eq(medicalRecords.visitId, visitId))
-        .limit(1)
+      // Get medical record and visit info in parallel
+      const [[record], [visitInfo]] = await Promise.all([
+        db.select().from(medicalRecords).where(eq(medicalRecords.visitId, visitId)).limit(1),
+        db.select().from(visits).where(eq(visits.id, visitId)).limit(1),
+      ])
 
-      if (records.length === 0) {
+      if (!record) {
         const response: ResponseError<unknown> = {
           error: {},
           message: "Medical record not found for this visit",
@@ -57,84 +48,10 @@ export const GET = withRBAC(
         })
       }
 
-      const record = records[0]
-
-      // Get diagnoses
-      const diagnosisList = await db
-        .select()
-        .from(diagnoses)
-        .where(eq(diagnoses.medicalRecordId, record.id))
-
-      // Get procedures with performer and service information
-      const proceduresList = await db
-        .select({
-          id: procedures.id,
-          medicalRecordId: procedures.medicalRecordId,
-          serviceId: procedures.serviceId,
-          serviceName: services.name,
-          servicePrice: services.price,
-          icd9Code: procedures.icd9Code,
-          description: procedures.description,
-          performedBy: procedures.performedBy,
-          performedByName: user.name,
-          performedAt: procedures.performedAt,
-          notes: procedures.notes,
-          createdAt: procedures.createdAt,
-        })
-        .from(procedures)
-        .leftJoin(user, eq(procedures.performedBy, user.id))
-        .leftJoin(services, eq(procedures.serviceId, services.id))
-        .where(eq(procedures.medicalRecordId, record.id))
-
-      // Get prescriptions with drug information and pharmacist info
-      const prescriptionsList = await db
-        .select({
-          id: prescriptions.id,
-          medicalRecordId: prescriptions.medicalRecordId,
-          drugId: prescriptions.drugId,
-          drugName: drugs.name,
-          drugPrice: drugs.price,
-          dosage: prescriptions.dosage,
-          frequency: prescriptions.frequency,
-          duration: prescriptions.duration,
-          quantity: prescriptions.quantity,
-          instructions: prescriptions.instructions,
-          route: prescriptions.route,
-          isFulfilled: prescriptions.isFulfilled,
-          fulfilledBy: prescriptions.fulfilledBy,
-          fulfilledAt: prescriptions.fulfilledAt,
-          dispensedQuantity: prescriptions.dispensedQuantity,
-          inventoryId: prescriptions.inventoryId,
-          notes: prescriptions.notes,
-          // Pharmacist-added prescription fields
-          addedByPharmacist: prescriptions.addedByPharmacist,
-          addedByPharmacistId: prescriptions.addedByPharmacistId,
-          addedByPharmacistName: user.name,
-          approvedBy: prescriptions.approvedBy,
-          approvedAt: prescriptions.approvedAt,
-          pharmacistNote: prescriptions.pharmacistNote,
-          createdAt: prescriptions.createdAt,
-          updatedAt: prescriptions.updatedAt,
-        })
-        .from(prescriptions)
-        .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-        .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
-        .where(eq(prescriptions.medicalRecordId, record.id))
-
-      // Get visit information
-      const [visitInfo] = await db
-        .select()
-        .from(visits)
-        .where(eq(visits.id, record.visitId))
-        .limit(1)
-
-      const response: ResponseApi<MedicalRecordData> = {
+      const response: ResponseApi<MedicalRecordCoreData> = {
         message: "Medical record fetched successfully",
         data: {
           medicalRecord: record,
-          diagnoses: diagnosisList,
-          procedures: proceduresList,
-          prescriptions: prescriptionsList,
           visit: visitInfo,
         },
         status: HTTP_STATUS_CODES.OK,

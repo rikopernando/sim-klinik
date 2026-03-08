@@ -40,7 +40,7 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
           </form>
           <div className="bg-muted relative hidden md:block">
             <Image
-              src="/bumi-andalas-logo.jpg"
+              src="/bumi-andalas-logo-v2.png"
               alt="Image"
               width={300}
               height={300}

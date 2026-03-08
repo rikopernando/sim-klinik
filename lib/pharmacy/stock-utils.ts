@@ -3,7 +3,8 @@
  * Stock alerts, expiry checks, and inventory calculations
  */
 
-import { StockAlertLevel, ExpiryAlertLevel, DrugInventoryWithDetails } from "@/types/pharmacy"
+import { StockAlertLevel, ExpiryAlertLevel } from "@/types/pharmacy"
+import type { DrugInventoryWithDetails } from "@/lib/services/inventory.service"
 
 /**
  * Calculate days until expiry
@@ -211,6 +212,46 @@ export function sortByFEFO<T extends { expiryDate: string }>(inventories: T[]): 
   return [...inventories].sort((a, b) => {
     return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime()
   })
+}
+
+/**
+ * Batch allocation result for multi-batch dispensing
+ */
+export interface BatchAllocation {
+  batch: DrugInventoryWithDetails
+  quantity: number
+}
+
+/**
+ * Allocate batches for dispensing using FEFO with multi-batch support.
+ * Prefers single batch when possible, falls back to splitting across batches.
+ */
+export function allocateBatchesForDispensing(
+  inventories: DrugInventoryWithDetails[],
+  requiredQuantity: number
+): BatchAllocation[] {
+  const availableBatches = sortByFEFO(
+    inventories.filter((inv) => inv.expiryAlertLevel !== "expired" && inv.stockQuantity > 0)
+  )
+
+  // Try single batch first (preferred)
+  const sufficientBatch = availableBatches.find((b) => b.stockQuantity >= requiredQuantity)
+  if (sufficientBatch) {
+    return [{ batch: sufficientBatch, quantity: requiredQuantity }]
+  }
+
+  // Multi-batch allocation in FEFO order
+  const allocations: BatchAllocation[] = []
+  let remaining = requiredQuantity
+
+  for (const batch of availableBatches) {
+    if (remaining <= 0) break
+    const take = Math.min(batch.stockQuantity, remaining)
+    allocations.push({ batch, quantity: take })
+    remaining -= take
+  }
+
+  return allocations
 }
 
 /**

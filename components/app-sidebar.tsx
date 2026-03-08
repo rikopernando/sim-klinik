@@ -26,12 +26,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ? {
         name: session.user.name || "User",
         email: session.user.email,
-        avatar: session.user.image || "/bumi-andalas-logo.jpg",
+        avatar: session.user.image || "/bumi-andalas-logo-v2.png",
       }
     : {
         name: "Guest",
         email: "guest@example.com",
-        avatar: "/bumi-andalas-logo.jpg",
+        avatar: "/bumi-andalas-logo-v2.png",
       }
 
   // Get user role from session, default to 'admin' if not found
@@ -48,7 +48,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <Link href="/">
                 <Image
-                  src="/bumi-andalas-logo.jpg"
+                  src="/bumi-andalas-logo-v2.png"
                   alt="Sim Klinik"
                   width={32}
                   height={32}

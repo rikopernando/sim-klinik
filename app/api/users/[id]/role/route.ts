@@ -10,6 +10,7 @@ import { db } from "@/db"
 import { user } from "@/db/schema/auth"
 import { userRoles, roles } from "@/db/schema/roles"
 import { withRBAC } from "@/lib/rbac/middleware"
+import { invalidateRoleCache } from "@/lib/rbac"
 
 /**
  * PUT /api/users/[id]/role
@@ -72,6 +73,9 @@ export const PUT = withRBAC(
       })
     }
 
+    // Invalidate cached role for this user
+    invalidateRoleCache(userId)
+
     return NextResponse.json({
       success: true,
       message: `Role "${role.name}" assigned to user successfully`,
@@ -97,6 +101,9 @@ export const DELETE = withRBAC(
     if (result.length === 0) {
       return NextResponse.json({ error: "User has no role assigned" }, { status: 404 })
     }
+
+    // Invalidate cached role for this user
+    invalidateRoleCache(userId)
 
     return NextResponse.json({
       success: true,

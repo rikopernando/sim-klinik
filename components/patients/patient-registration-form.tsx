@@ -45,6 +45,15 @@ export function PatientRegistrationForm({ onSuccess, onCancel }: PatientRegistra
       gender: undefined,
       bloodType: "",
       phone: "",
+      // Hierarchical address fields
+      provinceId: "",
+      provinceName: "",
+      cityId: "",
+      cityName: "",
+      subdistrictId: "",
+      subdistrictName: "",
+      villageId: "",
+      villageName: "",
       address: "",
       email: "",
       emergencyContact: "",
@@ -61,6 +70,7 @@ export function PatientRegistrationForm({ onSuccess, onCancel }: PatientRegistra
     control,
     watch,
     trigger,
+    setValue,
     formState: { errors },
   } = form
 
@@ -123,6 +133,7 @@ export function PatientRegistrationForm({ onSuccess, onCancel }: PatientRegistra
           register={register}
           control={control}
           errors={errors}
+          setValue={setValue}
           insuranceType={insuranceType}
         />
       )}

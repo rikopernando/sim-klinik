@@ -1,4 +1,13 @@
-import { pgTable, varchar, text, timestamp, decimal, boolean, integer } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  varchar,
+  text,
+  timestamp,
+  decimal,
+  boolean,
+  integer,
+  index,
+} from "drizzle-orm/pg-core"
 import { medicalRecords } from "./medical-records"
 import { visits } from "./visits"
 import { user } from "./auth"
@@ -37,8 +46,8 @@ export const inventoryItems = pgTable("drugs", {
   // TRUE for drugs (pharmacy workflow), FALSE for materials (nurse recording)
 
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 // Alias for backward compatibility in code
@@ -59,13 +68,13 @@ export const inventoryBatches = pgTable("drug_inventory", {
     .notNull()
     .references(() => inventoryItems.id, { onDelete: "cascade" }),
   batchNumber: varchar("batch_number", { length: 100 }).notNull(),
-  expiryDate: timestamp("expiry_date").notNull(),
+  expiryDate: timestamp("expiry_date", { withTimezone: true }).notNull(),
   stockQuantity: integer("stock_quantity").notNull().default(0),
   purchasePrice: decimal("purchase_price", { precision: 10, scale: 2 }),
   supplier: varchar("supplier", { length: 255 }),
-  receivedDate: timestamp("received_date").defaultNow().notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  receivedDate: timestamp("received_date", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 // Alias for backward compatibility in code
@@ -78,64 +87,80 @@ export const drugInventory = inventoryBatches
  *
  * References inventoryItems (drugs table) which now includes materials
  */
-export const prescriptions = pgTable("prescriptions", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
+export const prescriptions = pgTable(
+  "prescriptions",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
 
-  // Medical record reference (can be outpatient consultation or inpatient progress note)
-  medicalRecordId: text("medical_record_id").references(() => medicalRecords.id, {
-    onDelete: "cascade",
-  }),
+    // Medical record reference (can be outpatient consultation or inpatient progress note)
+    medicalRecordId: text("medical_record_id").references(() => medicalRecords.id, {
+      onDelete: "cascade",
+    }),
 
-  // Visit reference (for inpatient prescriptions)
-  visitId: text("visit_id").references(() => visits.id, { onDelete: "cascade" }),
+    // Visit reference (for inpatient prescriptions)
+    visitId: text("visit_id").references(() => visits.id, { onDelete: "cascade" }),
 
-  drugId: text("drug_id") // Keep original column name for compatibility
-    .notNull()
-    .references(() => inventoryItems.id),
+    drugId: text("drug_id") // Keep original column name for compatibility
+      .notNull()
+      .references(() => inventoryItems.id),
 
-  // Prescription details
-  dosage: varchar("dosage", { length: 100 }), // e.g., "500mg"
-  frequency: varchar("frequency", { length: 100 }).notNull(), // e.g., "3x daily", "After meals"
-  duration: varchar("duration", { length: 100 }), // e.g., "7 days", "Until finished"
-  quantity: integer("quantity").notNull(), // Total quantity to dispense
+    // Prescription details
+    dosage: varchar("dosage", { length: 100 }), // e.g., "500mg"
+    frequency: varchar("frequency", { length: 100 }).notNull(), // e.g., "3x daily", "After meals"
+    duration: varchar("duration", { length: 100 }), // e.g., "7 days", "Until finished"
+    quantity: integer("quantity").notNull(), // Total quantity to dispense
 
-  // Instructions
-  instructions: text("instructions"), // Additional instructions for patient
-  route: varchar("route", { length: 50 }), // oral, topical, injection, etc.
+    // Instructions
+    instructions: text("instructions"), // Additional instructions for patient
+    route: varchar("route", { length: 50 }), // oral, topical, injection, etc.
 
-  // INPATIENT specific fields
-  isRecurring: boolean("is_recurring").notNull().default(false), // Daily medication for inpatient
-  startDate: timestamp("start_date", { withTimezone: true }), // When to start (inpatient)
-  endDate: timestamp("end_date", { withTimezone: true }), // When to stop (inpatient)
-  administrationSchedule: text("administration_schedule"), // "08:00,14:00,20:00" for 3x daily
+    // INPATIENT specific fields
+    isRecurring: boolean("is_recurring").notNull().default(false), // Daily medication for inpatient
+    startDate: timestamp("start_date", { withTimezone: true }), // When to start (inpatient)
+    endDate: timestamp("end_date", { withTimezone: true }), // When to stop (inpatient)
+    administrationSchedule: text("administration_schedule"), // "08:00,14:00,20:00" for 3x daily
 
-  // Administration tracking (for nurses - inpatient)
-  isAdministered: boolean("is_administered").notNull().default(false),
-  administeredBy: text("administered_by").references(() => user.id), // Nurse who gave medication
-  administeredAt: timestamp("administered_at", { withTimezone: true }),
+    // Administration tracking (for nurses - inpatient)
+    isAdministered: boolean("is_administered").notNull().default(false),
+    administeredBy: text("administered_by").references(() => user.id), // Nurse who gave medication
+    administeredAt: timestamp("administered_at", { withTimezone: true }),
 
-  // Fulfillment tracking (pharmacy)
-  isFulfilled: boolean("is_fulfilled").notNull().default(false),
-  fulfilledBy: text("fulfilled_by").references(() => user.id), // Pharmacist who fulfilled
-  fulfilledAt: timestamp("fulfilled_at", { withTimezone: true }),
-  dispensedQuantity: integer("dispensed_quantity"), // Actual quantity dispensed
+    // Fulfillment tracking (pharmacy)
+    isFulfilled: boolean("is_fulfilled").notNull().default(false),
+    fulfilledBy: text("fulfilled_by").references(() => user.id), // Pharmacist who fulfilled
+    fulfilledAt: timestamp("fulfilled_at", { withTimezone: true }),
+    dispensedQuantity: integer("dispensed_quantity"), // Actual quantity dispensed
 
-  // Stock tracking
-  inventoryId: text("inventory_id").references(() => inventoryBatches.id), // Which batch was used
+    // Stock tracking
+    inventoryId: text("inventory_id").references(() => inventoryBatches.id), // Which batch was used
 
-  // Pharmacist-added prescriptions (for urgent cases)
-  addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false),
-  addedByPharmacistId: text("added_by_pharmacist_id").references(() => user.id),
-  approvedBy: text("approved_by").references(() => user.id),
-  approvedAt: timestamp("approved_at", { withTimezone: true }),
-  pharmacistNote: text("pharmacist_note"),
+    // Pharmacist-added prescriptions (for urgent cases)
+    addedByPharmacist: boolean("added_by_pharmacist").notNull().default(false),
+    addedByPharmacistId: text("added_by_pharmacist_id").references(() => user.id),
+    approvedBy: text("approved_by").references(() => user.id),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    pharmacistNote: text("pharmacist_note"),
 
-  notes: text("notes"), // Pharmacist notes
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-})
+    notes: text("notes"), // Pharmacist notes
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => ({
+    // Performance indexes for pharmacy queue queries
+    isFulfilledIdx: index("prescriptions_is_fulfilled_idx").on(table.isFulfilled),
+    medicalRecordIdIdx: index("prescriptions_medical_record_id_idx").on(table.medicalRecordId),
+    visitIdIdx: index("prescriptions_visit_id_idx").on(table.visitId),
+    drugIdIdx: index("prescriptions_drug_id_idx").on(table.drugId),
+    createdAtIdx: index("prescriptions_created_at_idx").on(table.createdAt),
+    // Composite index for the most common pharmacy queue query
+    fulfilledCreatedAtIdx: index("prescriptions_fulfilled_created_at_idx").on(
+      table.isFulfilled,
+      table.createdAt
+    ),
+  })
+)
 
 /**
  * Stock Movements Table
@@ -153,5 +178,5 @@ export const stockMovements = pgTable("stock_movements", {
   reason: text("reason"), // Reason for movement
   referenceId: text("reference_id"), // Reference to prescription/visit if type is "out"
   performedBy: text("performed_by").references(() => user.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })

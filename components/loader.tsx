@@ -1,10 +1,11 @@
 import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item"
 
 import { Spinner } from "@/components/ui/spinner"
+import { cn } from "@/lib/utils"
 
-function Loader({ message }: { message: string }) {
+function Loader({ message, className }: { message: string; className?: string }) {
   return (
-    <div className="mx-auto flex w-full max-w-xs flex-col gap-4 [--radius:1rem]">
+    <div className={cn("mx-auto flex w-full max-w-xs flex-col gap-4 [--radius:1rem]", className)}>
       <Item variant="outline">
         <ItemMedia>
           <Spinner />

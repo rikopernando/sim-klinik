@@ -21,6 +21,8 @@ import {
   IconUser,
   IconDatabase,
   IconFlask,
+  IconCirclePlus2,
+  IconHistory,
   IconTool,
 } from "@tabler/icons-react"
 
@@ -77,6 +79,22 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -84,14 +102,15 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Pelayanan Medis",
       items: [
         {
-          title: "Rekam Medis",
-          url: "/dashboard/medical-records",
-          icon: IconReportMedical,
-        },
-        {
-          title: "UGD",
-          url: "/dashboard/emergency",
-          icon: IconEmergencyBed,
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
+          icon: IconStethoscope,
+          items: [
+            {
+              title: "Antrian Poli",
+              url: "/dashboard/doctor",
+            },
+          ],
         },
         {
           title: "Rawat Inap",
@@ -108,6 +127,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             },
           ],
         },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
       ],
     },
     {
@@ -122,6 +146,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+          items: [
+            {
+              title: "Antrian Pembayaran",
+              url: "/dashboard/cashier",
+            },
+            {
+              title: "Riwayat Transaksi",
+              url: "/dashboard/cashier/transactions",
+            },
+          ],
         },
         {
           title: "Pemeriksaan Penunjang",
@@ -135,6 +169,10 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Antrian Pemeriksaan",
               url: "/dashboard/laboratory/queue",
+            },
+            {
+              title: "Riwayat Pemeriksaan",
+              url: "/dashboard/laboratory/history",
             },
           ],
         },
@@ -152,6 +190,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Tindakan",
           url: "/dashboard/services",
           icon: IconTool,
+        },
+        {
+          title: "Poli",
+          url: "/dashboard/master-data/polis",
+          icon: IconCirclePlus2,
         },
       ],
     },
@@ -176,12 +219,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Pengaturan",
           url: "/dashboard/settings",
-          icon: IconSettings,
-        },
-
-        {
-          title: "Poli",
-          url: "/dashboard/polis",
           icon: IconSettings,
         },
       ],
@@ -216,6 +253,22 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -223,9 +276,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Pelayanan Medis",
       items: [
         {
-          title: "UGD",
-          url: "/dashboard/emergency",
-          icon: IconEmergencyBed,
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
+          icon: IconStethoscope,
+          items: [
+            {
+              title: "Antrian Poli",
+              url: "/dashboard/doctor",
+            },
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
         },
         {
           title: "Rawat Inap",
@@ -242,6 +305,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             },
           ],
         },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
       ],
     },
     {
@@ -256,6 +324,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kasir",
           url: "/dashboard/cashier",
           icon: IconCash,
+          items: [
+            {
+              title: "Antrian Pembayaran",
+              url: "/dashboard/cashier",
+            },
+            {
+              title: "Riwayat Transaksi",
+              url: "/dashboard/cashier/transactions",
+            },
+          ],
         },
         {
           title: "Pemeriksaan Penunjang",
@@ -269,6 +347,10 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
             {
               title: "Antrian Pemeriksaan",
               url: "/dashboard/laboratory/queue",
+            },
+            {
+              title: "Riwayat Pemeriksaan",
+              url: "/dashboard/laboratory/history",
             },
           ],
         },
@@ -315,11 +397,6 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard",
           icon: IconDashboard,
         },
-        {
-          title: "Antrian Pasien",
-          url: "/dashboard/doctor",
-          icon: IconStethoscope,
-        },
       ],
     },
     {
@@ -334,6 +411,22 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
         },
       ],
     },
@@ -341,19 +434,19 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
       label: "Pelayanan Medis",
       items: [
         {
-          title: "Rekam Medis",
-          url: "/dashboard/medical-records",
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
           icon: IconStethoscope,
-        },
-        {
-          title: "UGD",
-          url: "/dashboard/emergency",
-          icon: IconEmergencyBed,
-        },
-        {
-          title: "Pasien Pulang",
-          url: "/dashboard/discharge",
-          icon: IconUserCheck,
+          items: [
+            {
+              title: "Antrian Poli",
+              url: "/dashboard/doctor",
+            },
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
         },
         {
           title: "Rawat Inap",
@@ -365,6 +458,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
               url: "/dashboard/inpatient/patients",
             },
           ],
+        },
+        {
+          title: "UGD",
+          url: "/dashboard/emergency",
+          icon: IconEmergencyBed,
+        },
+        {
+          title: "Pasien Pulang",
+          url: "/dashboard/discharge",
+          icon: IconUserCheck,
         },
       ],
     },
@@ -394,11 +497,43 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard/patients",
           icon: IconUserPlus,
         },
+        {
+          title: "Kunjungan",
+          url: "/dashboard/visits",
+          icon: IconHistory,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
+        },
+      ],
+    },
+    {
+      label: "Rekam Medis",
+      items: [
+        {
+          title: "Riwayat Rekam Medis",
+          url: "/dashboard/medical-records/history",
+          icon: IconReportMedical,
+        },
       ],
     },
     {
       label: "Pelayanan Medis",
       items: [
+        {
+          title: "Rawat Jalan",
+          url: "/dashboard/inpatient",
+          icon: IconStethoscope,
+          items: [
+            {
+              title: "Rekam Medis",
+              url: "/dashboard/medical-records",
+            },
+          ],
+        },
         {
           title: "Rawat Inap",
           url: "/dashboard/inpatient",
@@ -466,6 +601,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           icon: IconCash,
         },
         {
+          title: "Riwayat Transaksi",
+          url: "/dashboard/cashier/transactions",
+          icon: IconHistory,
+        },
+        {
           title: "Pasien Pulang",
           url: "/dashboard/discharge",
           icon: IconUserCheck,
@@ -502,6 +642,12 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Kunjungan",
           url: "/dashboard/visits",
           icon: IconClipboardList,
+          items: [
+            {
+              title: "Riwayat Kunjungan",
+              url: "/dashboard/visits/history",
+            },
+          ],
         },
       ],
     },

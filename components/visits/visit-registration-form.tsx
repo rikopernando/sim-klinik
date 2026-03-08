@@ -3,19 +3,22 @@
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Loader2, Check, AlertCircle } from "lucide-react"
+import { Loader2, Check, AlertCircle, ChevronDown, ChevronUp, HeartPulse } from "lucide-react"
 
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { VitalSignsFields } from "@/components/vitals/vital-signs-fields"
+import { PatientInfoCard } from "@/components/forms/patient-info-card"
 
+import { createMedicalRecord } from "@/lib/services/medical-record.service"
 import { visitFormSchema, type VisitFormData } from "@/lib/validations/registration"
 import { type Patient, type RegisteredVisit } from "@/types/registration"
 import { registerVisit } from "@/lib/services/visit.service"
 import { getErrorMessage } from "@/lib/utils/error"
-import { PatientInfoCard } from "@/components/forms/patient-info-card"
 import { useDoctor } from "@/hooks/use-doctor"
 import { usePoli } from "@/hooks/use-poli"
 
@@ -30,6 +33,26 @@ interface VisitRegistrationFormProps {
   onCancel?: () => void
 }
 
+function hasVitalSigns(data: VisitFormData): boolean {
+  return !!(
+    data.temperature ||
+    data.bloodPressureSystolic ||
+    data.bloodPressureDiastolic ||
+    data.pulse ||
+    data.respiratoryRate ||
+    data.oxygenSaturation ||
+    data.weight ||
+    data.height ||
+    data.painScale ||
+    data.consciousness
+  )
+}
+
+function generateSoapObjective(data: VisitFormData): string | undefined {
+  if (!hasVitalSigns(data)) return
+  return `TTV: Suhu: ${data.temperature || "-"} °C, TD: ${data.bloodPressureSystolic}/${data.bloodPressureDiastolic} mmHg, Nadi: ${data.pulse || "-"}/menit, RR: ${data.respiratoryRate || "-"}/menit, SpO2: ${data.oxygenSaturation || "-"}%, BB: ${data.weight || "-"} kg, TB: ${data.height || "-"} cm, Kesadaran: ${data.consciousness || "-"}`
+}
+
 export function VisitRegistrationForm({
   patient,
   onSuccess,
@@ -37,6 +60,7 @@ export function VisitRegistrationForm({
 }: VisitRegistrationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [vitalsOpen, setVitalsOpen] = useState(false)
 
   const { doctors, isLoading: loadingDoctors, errorMessage: doctorsError } = useDoctor()
   const { polis, isLoading: loadingPolis, errorMessage: polisError } = usePoli()
@@ -47,6 +71,7 @@ export function VisitRegistrationForm({
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<VisitFormData>({
     resolver: zodResolver(visitFormSchema),
@@ -58,6 +83,17 @@ export function VisitRegistrationForm({
       chiefComplaint: "",
       roomId: "",
       notes: "",
+      // Vital Signs
+      temperature: "",
+      bloodPressureSystolic: undefined,
+      bloodPressureDiastolic: undefined,
+      pulse: undefined,
+      respiratoryRate: undefined,
+      oxygenSaturation: "",
+      weight: "",
+      height: "",
+      painScale: undefined,
+      consciousness: "",
     },
   })
 
@@ -68,8 +104,14 @@ export function VisitRegistrationForm({
     setErrorMessage(null)
 
     try {
-      const visit = await registerVisit(patient.id, data)
-      onSuccess?.(visit)
+      const response = await registerVisit(patient.id, data)
+      await createMedicalRecord({
+        soapObjective: generateSoapObjective(data),
+        visitId: response.visit.id,
+        isDraft: true,
+      })
+
+      onSuccess?.(response)
     } catch (error) {
       setErrorMessage(getErrorMessage(error))
       console.error("Visit registration error:", error)
@@ -120,6 +162,30 @@ export function VisitRegistrationForm({
               )}
 
               {visitType === "inpatient" && <InpatientFields />}
+
+              {/* Vital Signs Section (Collapsible) */}
+              <Collapsible open={vitalsOpen} onOpenChange={setVitalsOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="hover:bg-muted/50 flex w-full items-center justify-between rounded-lg border p-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <HeartPulse className="text-muted-foreground h-5 w-5" />
+                      <span className="font-medium">Tanda Vital</span>
+                    </div>
+                    {vitalsOpen ? (
+                      <ChevronUp className="text-muted-foreground h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="text-muted-foreground h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-4">
+                  <VitalSignsFields control={control} errors={errors} />
+                </CollapsibleContent>
+              </Collapsible>
 
               {/* Common Notes Field */}
               <FieldGroup>

@@ -10,12 +10,13 @@ import { getErrorMessage } from "@/lib/utils/error"
 
 export interface UseDoctorQueueOptions {
   status?: "waiting" | "in_examination" | "all"
+  date?: string
   autoRefresh?: boolean
   refreshInterval?: number
 }
 
 export function useDoctorQueue(options: UseDoctorQueueOptions = {}) {
-  const { status = "all", autoRefresh = false, refreshInterval = 30000 } = options
+  const { status = "all", date, autoRefresh = false, refreshInterval = 30000 } = options
 
   const [queue, setQueue] = useState<QueueItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -29,7 +30,7 @@ export function useDoctorQueue(options: UseDoctorQueueOptions = {}) {
 
       // Only pass status if it's not "all"
       const filterStatus = status !== "all" ? status : undefined
-      const data = await getDoctorQueue(filterStatus)
+      const data = await getDoctorQueue(filterStatus, date)
 
       setQueue(data)
       setLastRefresh(new Date())
@@ -39,7 +40,7 @@ export function useDoctorQueue(options: UseDoctorQueueOptions = {}) {
     } finally {
       setIsLoading(false)
     }
-  }, [status])
+  }, [status, date])
 
   useEffect(() => {
     fetchQueue()

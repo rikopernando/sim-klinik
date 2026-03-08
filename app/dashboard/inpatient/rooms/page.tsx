@@ -6,6 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { useSearchParams } from "next/navigation"
 import { RefreshCw } from "lucide-react"
 
@@ -22,6 +23,14 @@ import { AssignBedDialog } from "@/components/inpatient/assign-bed-dialog"
 import type { RoomWithOccupancy } from "@/types/inpatient"
 
 export default function RoomDashboardPage() {
+  return (
+    <PageGuard permissions={["inpatient:manage_beds"]}>
+      <RoomDashboardPageContent />
+    </PageGuard>
+  )
+}
+
+function RoomDashboardPageContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
 

@@ -58,12 +58,12 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
     ? {
         name: session.user.name || "User",
         email: session.user.email,
-        avatar: session.user.image || "/bumi-andalas-logo.jpg",
+        avatar: session.user.image || "/bumi-andalas-logo-v2.png",
       }
     : {
         name: "Guest",
         email: "guest@example.com",
-        avatar: "/bumi-andalas-logo.jpg",
+        avatar: "/bumi-andalas-logo-v2.png",
       }
 
   // Get navigation groups based on role
@@ -85,7 +85,7 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
             <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
               <Link href="/">
                 <Image
-                  src="/bumi-andalas-logo.jpg"
+                  src="/bumi-andalas-logo-v2.png"
                   alt="Klinik Bumi Andalas"
                   width={32}
                   height={32}

@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
-import { visits, patients } from "@/db/schema"
-import { eq, and, gte, lt } from "drizzle-orm"
+import { visits, patients, vitalsHistory } from "@/db/schema"
+import { eq, and, gte, lt, ne } from "drizzle-orm"
 import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
-import { RegisteredVisit } from "@/types/visit"
+import { calculateBMI } from "@/lib/inpatient/vitals-utils"
+import { RegisteredVisit } from "@/types/registration"
 
 /**
  * Visit Registration Schema
@@ -21,7 +22,36 @@ const visitSchema = z.object({
   chiefComplaint: z.string().optional(),
   roomId: z.string().optional(),
   notes: z.string().optional(),
+  // Vital Signs (all optional)
+  temperature: z.string().optional(),
+  bloodPressureSystolic: z.number().int().optional(),
+  bloodPressureDiastolic: z.number().int().optional(),
+  pulse: z.number().int().optional(),
+  respiratoryRate: z.number().int().optional(),
+  oxygenSaturation: z.string().optional(),
+  weight: z.string().optional(),
+  height: z.string().optional(),
+  painScale: z.number().int().optional(),
+  consciousness: z.string().optional(),
 })
+
+/**
+ * Check if any vital signs are provided
+ */
+function hasVitalSigns(data: z.infer<typeof visitSchema>): boolean {
+  return !!(
+    data.temperature ||
+    data.bloodPressureSystolic ||
+    data.bloodPressureDiastolic ||
+    data.pulse ||
+    data.respiratoryRate ||
+    data.oxygenSaturation ||
+    data.weight ||
+    data.height ||
+    data.painScale ||
+    data.consciousness
+  )
+}
 
 /**
  * POST /api/visits
@@ -29,7 +59,7 @@ const visitSchema = z.object({
  * Requires: visits:write permission
  */
 export const POST = withRBAC(
-  async (request: NextRequest) => {
+  async (request: NextRequest, context) => {
     try {
       const body = await request.json()
 
@@ -89,65 +119,85 @@ export const POST = withRBAC(
       // Get initial status based on visit type
       const initialStatus = "registered"
 
-      // Create visit
-      const newVisit = await db
-        .insert(visits)
-        .values({
-          patientId: validatedData.patientId,
-          visitType: validatedData.visitType,
-          visitNumber,
-          poliId: validatedData.poliId || null,
-          doctorId: validatedData.doctorId || null,
-          queueNumber,
-          triageStatus: validatedData.triageStatus || null,
-          chiefComplaint: validatedData.chiefComplaint || null,
-          roomId: validatedData.roomId || null,
-          admissionDate: validatedData.visitType === "inpatient" ? new Date() : null,
-          status: initialStatus,
-          notes: validatedData.notes || null,
-        })
-        .returning()
+      const newVisit = await db.transaction(async (tx) => {
+        // Create visit
+        const [createdVisit] = await tx
+          .insert(visits)
+          .values({
+            patientId: validatedData.patientId,
+            visitType: validatedData.visitType,
+            visitNumber,
+            poliId: validatedData.poliId || null,
+            doctorId: validatedData.doctorId || null,
+            queueNumber,
+            triageStatus: validatedData.triageStatus || null,
+            chiefComplaint: validatedData.chiefComplaint || null,
+            roomId: validatedData.roomId || null,
+            admissionDate: validatedData.visitType === "inpatient" ? new Date() : null,
+            status: initialStatus,
+            notes: validatedData.notes || null,
+          })
+          .returning()
 
+        // Save vital signs if any are provided
+        if (hasVitalSigns(validatedData)) {
+          const bmi = calculateBMI(validatedData.weight || "0", validatedData.height || "0")
+          await tx.insert(vitalsHistory).values({
+            visitId: createdVisit.id,
+            temperature: validatedData.temperature || null,
+            bloodPressureSystolic: validatedData.bloodPressureSystolic || null,
+            bloodPressureDiastolic: validatedData.bloodPressureDiastolic || null,
+            pulse: validatedData.pulse || null,
+            respiratoryRate: validatedData.respiratoryRate || null,
+            oxygenSaturation: validatedData.oxygenSaturation || null,
+            weight: validatedData.weight || null,
+            height: validatedData.height || null,
+            bmi,
+            painScale: validatedData.painScale || null,
+            consciousness: validatedData.consciousness || null,
+            recordedBy: context.user.id,
+            notes: validatedData.notes || null,
+          })
+        }
+
+        return createdVisit
+      })
       // Fetch complete visit with patient data
       const [completeVisit] = await db
         .select({
-          visit: visits,
-          patient: patients,
+          visit: {
+            id: visits.id,
+            visitNumber: visits.visitNumber,
+            queueNumber: visits.queueNumber,
+            visitType: visits.visitType,
+            arrivalTime: visits.arrivalTime,
+          },
+          patient: {
+            id: patients.id,
+            mrNumber: patients.mrNumber,
+            name: patients.name,
+          },
         })
         .from(visits)
         .leftJoin(patients, eq(visits.patientId, patients.id))
-        .where(eq(visits.id, newVisit[0].id))
+        .where(eq(visits.id, newVisit.id))
         .limit(1)
 
       const response: ResponseApi<RegisteredVisit> = {
         message: "Visit registered successfully",
         data: {
           visit: {
-            ...completeVisit.visit,
-            admissionDate: completeVisit.visit.admissionDate
-              ? completeVisit.visit.admissionDate.toISOString()
-              : null,
-            dischargeDate: completeVisit.visit.dischargeDate
-              ? completeVisit.visit.dischargeDate.toISOString()
-              : null,
-            startTime: completeVisit.visit.startTime
-              ? completeVisit.visit.startTime.toISOString()
-              : null,
-            endTime: completeVisit.visit.endTime ? completeVisit.visit.endTime.toISOString() : null,
+            id: completeVisit.visit.id,
+            visitNumber: completeVisit.visit.visitNumber,
+            queueNumber: completeVisit.visit.queueNumber || "",
+            visitType: completeVisit.visit.visitType,
             arrivalTime: completeVisit.visit.arrivalTime.toISOString(),
-            createdAt: completeVisit.visit.createdAt.toISOString(),
-            updatedAt: completeVisit.visit.updatedAt.toISOString(),
           },
-          patient: completeVisit.patient
-            ? {
-                ...completeVisit.patient,
-                dateOfBirth: completeVisit.patient.dateOfBirth
-                  ? completeVisit.patient.dateOfBirth.toISOString()
-                  : null,
-                createdAt: completeVisit.patient.createdAt?.toISOString(),
-                updatedAt: completeVisit.patient.updatedAt?.toISOString(),
-              }
-            : null,
+          patient: {
+            id: completeVisit?.patient?.id || "",
+            mrNumber: completeVisit?.patient?.mrNumber || "",
+            name: completeVisit?.patient?.name || "",
+          },
         },
         status: HTTP_STATUS_CODES.CREATED,
       }
@@ -182,8 +232,12 @@ export const POST = withRBAC(
 )
 
 /**
- * GET /api/visits?poliId=X&status=pending
+ * GET /api/visits?poliId=X&status=pending&date=2024-01-15&dateFrom=2024-01-01&dateTo=2024-01-31
  * Get visits queue for a specific poli
+ * Supports date filtering:
+ * - date: specific date (YYYY-MM-DD)
+ * - dateFrom/dateTo: date range
+ * - If no date params provided, defaults to today
  * Requires: visits:read permission
  */
 export const GET = withRBAC(
@@ -193,9 +247,12 @@ export const GET = withRBAC(
       const poliId = searchParams.get("poliId")
       const status = searchParams.get("status")
       const visitType = searchParams.get("visitType")
+      const date = searchParams.get("date")
+      const dateFrom = searchParams.get("dateFrom")
+      const dateTo = searchParams.get("dateTo")
 
       // Build query conditions
-      const conditions = []
+      const conditions = [ne(visits.status, "cancelled"), ne(visits.status, "completed")]
 
       if (poliId) {
         conditions.push(eq(visits.poliId, poliId))
@@ -209,14 +266,41 @@ export const GET = withRBAC(
         conditions.push(eq(visits.visitType, visitType))
       }
 
-      // Get today's date range for filtering (only today's visits)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
+      console.log({ date })
 
-      conditions.push(gte(visits.arrivalTime, today))
-      conditions.push(lt(visits.arrivalTime, tomorrow))
+      // Date filtering logic
+      if (date) {
+        // Specific date filter
+        const targetDate = new Date(date)
+        console.log({ date, targetDate })
+        targetDate.setHours(0, 0, 0, 0)
+        const nextDay = new Date(targetDate)
+        nextDay.setDate(nextDay.getDate() + 1)
+
+        conditions.push(gte(visits.arrivalTime, targetDate))
+        conditions.push(lt(visits.arrivalTime, nextDay))
+      } else if (dateFrom || dateTo) {
+        // Date range filter
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom)
+          fromDate.setHours(0, 0, 0, 0)
+          conditions.push(gte(visits.arrivalTime, fromDate))
+        }
+        if (dateTo) {
+          const toDate = new Date(dateTo)
+          toDate.setHours(23, 59, 59, 999)
+          conditions.push(lt(visits.arrivalTime, toDate))
+        }
+      } else {
+        // Default: today's visits only
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+
+        conditions.push(gte(visits.arrivalTime, today))
+        conditions.push(lt(visits.arrivalTime, tomorrow))
+      }
 
       // Query visits with patient data
       const visitQueue = await db

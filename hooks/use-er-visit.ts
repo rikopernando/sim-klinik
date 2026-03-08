@@ -4,7 +4,12 @@
  */
 
 import { useState, useEffect, useCallback } from "react"
-import { getVisitById, updateVisit, type Visit, type UpdateVisitData } from "@/lib/services/visits.service"
+import {
+  getVisitById,
+  updateVisit,
+  type Visit,
+  type UpdateVisitData,
+} from "@/lib/services/visits.service"
 import { ApiServiceError } from "@/lib/services/api.service"
 
 interface UseERVisitReturn {

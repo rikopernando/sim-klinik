@@ -102,7 +102,6 @@ export function insertSuggestionMultiValue(
   delimiter: string = ", "
 ): { newValue: string; newCursorPos: number } {
   const textBeforeCursor = value.substring(0, cursorPosition)
-  const textAfterCursor = value.substring(cursorPosition)
 
   // Get current line
   const lines = textBeforeCursor.split("\n")

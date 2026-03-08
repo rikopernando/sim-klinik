@@ -26,7 +26,9 @@ export async function getPolisRequest(opts?: {
     if (opts?.search) params.search = opts.search
     if (opts?.includeInactive) params.includeInactive = opts.includeInactive
 
-    const response = await axios.get<ResponseApi<ResultPoli[]>>("/api/polis", { params })
+    const response = await axios.get<ResponseApi<ResultPoli[]>>("/api/master-data/polis", {
+      params,
+    })
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing polis data")
     }
@@ -40,7 +42,7 @@ export async function getPolisRequest(opts?: {
 
 export async function createPoliRequest(payload: PayloadPoli): Promise<ResultPoli> {
   try {
-    const response = await axios.post<ResponseApi<ResultPoli>>("/api/polis", payload)
+    const response = await axios.post<ResponseApi<ResultPoli>>("/api/master-data/polis", payload)
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing created poli data")
     }
@@ -57,7 +59,10 @@ export async function updatePoliRequest(
   payload: Partial<PayloadPoli>
 ): Promise<ResultPoli> {
   try {
-    const response = await axios.patch<ResponseApi<ResultPoli>>(`/api/polis/${id}`, payload)
+    const response = await axios.patch<ResponseApi<ResultPoli>>(
+      `/api/master-data/polis/${id}`,
+      payload
+    )
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing updated poli data")
     }
@@ -71,7 +76,7 @@ export async function updatePoliRequest(
 
 export async function deletePoliRequest(id: string): Promise<void> {
   try {
-    await axios.delete<ResponseApi<null>>(`/api/polis/${id}`)
+    await axios.delete<ResponseApi<null>>(`/api/master-data/polis/${id}`)
   } catch (error) {
     console.error("Error in deletePoli service:", error)
     handleApiError(error)

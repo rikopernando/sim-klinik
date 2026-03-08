@@ -5,13 +5,14 @@
 
 import axios from "axios"
 
-import { ResponseApi } from "@/types/api"
+import { ResponseApi, Pagination } from "@/types/api"
 import type {
   BillingDetails,
   BillingQueueItem,
   ProcessPaymentResult,
   DischargeBillingSummary,
 } from "@/types/billing"
+import type { TransactionHistoryItem, TransactionHistoryFilters } from "@/types/transaction"
 
 import { ApiServiceError, handleApiError } from "./api.service"
 import { ProcessPaymentInput } from "@/lib/billing/validation"
@@ -112,6 +113,96 @@ export async function createDischargeBilling(
     })
   } catch (error) {
     console.error("Error in createDischargeBilling service:", error)
+    handleApiError(error)
+  }
+}
+
+// ============================================================================
+// TRANSACTION HISTORY
+// ============================================================================
+
+export interface FetchTransactionHistoryParams {
+  filters?: TransactionHistoryFilters
+  page?: number
+  limit?: number
+}
+
+export interface FetchTransactionHistoryResult {
+  transactions: TransactionHistoryItem[]
+  pagination: Pagination
+}
+
+/**
+ * Fetch transaction history
+ * Fetches payment transactions with filters and pagination
+ */
+export async function fetchTransactionHistory(
+  params?: FetchTransactionHistoryParams
+): Promise<FetchTransactionHistoryResult> {
+  try {
+    const queryParams = new URLSearchParams()
+
+    if (params?.filters?.search) {
+      queryParams.set("search", params.filters.search)
+    }
+    if (params?.filters?.paymentMethod) {
+      queryParams.set("paymentMethod", params.filters.paymentMethod)
+    }
+    if (params?.filters?.visitType) {
+      queryParams.set("visitType", params.filters.visitType)
+    }
+    if (params?.filters?.dateFrom) {
+      queryParams.set("dateFrom", params.filters.dateFrom)
+    }
+    if (params?.filters?.dateTo) {
+      queryParams.set("dateTo", params.filters.dateTo)
+    }
+    if (params?.page) {
+      queryParams.set("page", String(params.page))
+    }
+    if (params?.limit) {
+      queryParams.set("limit", String(params.limit))
+    }
+
+    const url = `/api/billing/transactions?${queryParams.toString()}`
+    const response = await axios.get<ResponseApi<TransactionHistoryItem[]>>(url)
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return {
+      transactions: response.data.data,
+      pagination: response.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      },
+    }
+  } catch (error) {
+    console.error("Error in fetchTransactionHistory service:", error)
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch single transaction detail
+ * Fetches a specific payment transaction by ID
+ */
+export async function fetchTransactionDetail(paymentId: string): Promise<TransactionHistoryItem> {
+  try {
+    const response = await axios.get<ResponseApi<TransactionHistoryItem>>(
+      `/api/billing/transactions/${paymentId}`
+    )
+
+    if (!response.data.data) {
+      throw new ApiServiceError("Invalid response: missing data")
+    }
+
+    return response.data.data
+  } catch (error) {
+    console.error("Error in fetchTransactionDetail service:", error)
     handleApiError(error)
   }
 }

@@ -9,3 +9,5 @@ export interface ResultPoli extends PayloadPoli {
   id: string
   createdAt: Date
 }
+
+export type Poli = ResultPoli

@@ -1,8 +1,9 @@
 "use client"
 
+import Image from "next/image"
+
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AuthButtons, HeroAuthButtons } from "@/components/auth-buttons"
-import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 
 export default function Home() {
@@ -19,7 +20,7 @@ export default function Home() {
 
         <div className="mb-4 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
           <Image
-            src="/bumi-andalas-logo.jpg"
+            src="/bumi-andalas-logo-v2.png"
             alt="Klinik Bumi Andalas Logo"
             width={50}
             height={50}

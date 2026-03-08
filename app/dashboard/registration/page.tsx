@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { PageGuard } from "@/components/auth/page-guard"
 import { useRouter } from "next/navigation"
 import { CheckCircle, ArrowLeft, UserPlus, Eye, List } from "lucide-react"
 
@@ -15,6 +16,14 @@ import { Patient, RegisteredVisit } from "@/types/registration"
 type RegistrationStep = "search" | "new-patient" | "visit-registration" | "success"
 
 export default function RegistrationPage() {
+  return (
+    <PageGuard roles={["super_admin", "admin"]}>
+      <RegistrationPageContent />
+    </PageGuard>
+  )
+}
+
+function RegistrationPageContent() {
   const router = useRouter()
   const [step, setStep] = useState<RegistrationStep>("search")
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null)

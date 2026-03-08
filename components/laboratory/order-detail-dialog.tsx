@@ -38,6 +38,7 @@ import type { LabOrderWithRelations } from "@/types/lab"
 import { ResultDisplay } from "./result-display"
 import AttachmentSection from "./lab-attachment"
 import { formatDateTime } from "@/lib/utils/date"
+import LabBadge from "./lab-badge"
 
 // ============================================================================
 // HELPER COMPONENTS
@@ -238,7 +239,7 @@ export function OrderDetailDialog({
                       <h3 className="text-lg font-semibold">
                         {order.test?.name || "Test Unknown"}
                       </h3>
-                      <Badge variant="secondary">{order.test?.department}</Badge>
+                      <LabBadge departement={order.test?.department || "LAB"} />
                       {urgencyBadge}
                     </div>
                     <p className="text-muted-foreground font-mono text-sm">{order.orderNumber}</p>
@@ -340,6 +341,8 @@ export function OrderDetailDialog({
                 )}
 
                 <ResultDisplay resultData={order.result.resultData} />
+
+                <Separator />
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="rounded-md border p-3">

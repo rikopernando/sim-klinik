@@ -2,6 +2,7 @@
  * Doctor Dashboard Queue Tabs
  */
 
+import { ReactNode } from "react"
 import { DashboardSection, ListWidget } from "@/components/dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { QueueItem, QueuePatient } from "@/types/dashboard"
@@ -15,6 +16,8 @@ interface DoctorQueueTabsProps {
   onStartExamination: (visitId: string) => void
   onOpenMedicalRecord: (visitId: string) => void
   onViewHistory: (patient: QueuePatient | null) => void
+  onEditVisit?: (item: QueueItem) => void
+  headerAction?: ReactNode
 }
 
 export function DoctorQueueTabs({
@@ -25,9 +28,15 @@ export function DoctorQueueTabs({
   onStartExamination,
   onOpenMedicalRecord,
   onViewHistory,
+  onEditVisit,
+  headerAction,
 }: DoctorQueueTabsProps) {
   return (
-    <DashboardSection title="Antrian Pasien" description="Daftar pasien yang perlu ditangani">
+    <DashboardSection
+      title="Antrian Pasien"
+      description="Daftar pasien yang perlu ditangani"
+      action={headerAction}
+    >
       <Tabs defaultValue="waiting" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="waiting">Menunggu ({waitingQueue.length})</TabsTrigger>
@@ -49,12 +58,19 @@ export function DoctorQueueTabs({
                 label: item.visit.visitType === "emergency" ? "UGD" : "Rawat Jalan",
                 variant: item.visit.visitType === "emergency" ? "destructive" : "outline",
               },
+              secondaryAction: onEditVisit
+                ? {
+                    label: "Edit",
+                    onClick: () => onEditVisit(item),
+                  }
+                : undefined,
               action: {
                 label: startingExamination === item.visit.id ? "Memulai..." : "Mulai",
                 onClick: () => onStartExamination(item.visit.id),
                 disabled: startingExamination !== null,
               },
             }))}
+            className="overflow-scroll"
             emptyMessage="Tidak ada pasien dalam antrian"
             maxHeight="450px"
             onItemClick={(item) => {
@@ -85,6 +101,7 @@ export function DoctorQueueTabs({
                 onClick: () => onOpenMedicalRecord(item.visit.id),
               },
             }))}
+            className="overflow-scroll"
             emptyMessage="Tidak ada pasien yang sedang diperiksa"
             maxHeight="450px"
             onItemClick={(item) => {
@@ -115,6 +132,7 @@ export function DoctorQueueTabs({
                 onClick: () => onOpenMedicalRecord(item.visit.id),
               },
             }))}
+            className="overflow-scroll"
             emptyMessage="Semua RME sudah dikunci"
             maxHeight="450px"
             onItemClick={(item) => {

@@ -2,45 +2,110 @@
  * Emergency Room Medical Record Page
  * Specialized medical record interface for emergency cases
  *
- * Refactored for better readability, modularity, and performance
+ * Features:
+ * - ER-specific SOAP documentation
+ * - Diagnosis (ICD-10) entry
+ * - Prescription management
+ * - Procedure documentation
+ * - Lab orders integration
+ * - Disposition management (required before locking)
+ * - Billing preview
  */
 
 "use client"
 
+import { useState, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
+import { toast } from "sonner"
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 
 import { useERVisit } from "@/hooks/use-er-visit"
+import { useMedicalRecord } from "@/hooks/use-medical-record"
 import { ERVisitHeader } from "@/components/emergency/er-visit-header"
-import { ERMedicalRecordForm } from "@/components/emergency/er-medical-record-form"
+import { ERMedicalRecordActions } from "@/components/emergency/er-medical-record-actions"
+import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
+import type { DispositionType } from "@/types/emergency"
+import { getErrorMessage } from "@/lib/utils/error"
+import { PageGuard } from "@/components/auth/page-guard"
 
 export default function ERMedicalRecordPage() {
+  return (
+    <PageGuard roles={["nurse", "doctor", "super_admin", "admin"]}>
+      <ERMedicalRecordContent />
+    </PageGuard>
+  )
+}
+
+function ERMedicalRecordContent() {
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
+  const [activeTab, setActiveTab] = useState("soap")
 
-  // Use custom hook for all ER visit operations
-  const { visit, isLoading, error, isEmergencyVisit } = useERVisit({ visitId })
+  // Use ER visit hook for visit data
+  const {
+    visit,
+    isLoading: isLoadingVisit,
+    error: visitError,
+    isEmergencyVisit,
+    updateVisit,
+  } = useERVisit({ visitId })
 
-  /**
-   * Handle successful save - navigate back to ER queue
-   */
-  const handleSuccess = () => {
-    router.push("/dashboard/emergency")
-  }
+  // Use medical record hook for core medical record operations
+  // Diagnoses, procedures, and prescriptions are fetched lazily by their respective tabs
+  const {
+    coreData,
+    isLocked,
+    isLoading: isLoadingRecord,
+    isSaving,
+    isLocking,
+    error: recordError,
+    saveSOAP,
+    saveDraft,
+    lockRecord,
+    unlockRecord,
+    updateRecord,
+  } = useMedicalRecord({ visitId })
 
   /**
    * Navigate back to ER queue
    */
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     router.push("/dashboard/emergency")
-  }
+  }, [router])
 
-  // Loading state
-  if (isLoading) {
+  /**
+   * Handle lock action with disposition
+   * Disposition is required before locking ER medical record
+   */
+  const handleLock = useCallback(
+    async (disposition: DispositionType, billingAdjustment?: number, adjustmentNote?: string) => {
+      try {
+        // First update disposition on the visit
+        await updateVisit({ disposition })
+
+        // Then lock the medical record
+        await lockRecord(billingAdjustment, adjustmentNote)
+
+        toast.success("Rekam medis berhasil dikunci")
+
+        // Navigate back to queue after locking
+        setTimeout(() => {
+          handleBack()
+        }, 1000)
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+      }
+    },
+    [updateVisit, lockRecord, handleBack]
+  )
+
+  // Loading state (visit or medical record)
+  if (isLoadingVisit || isLoadingRecord) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -52,6 +117,7 @@ export default function ERMedicalRecordPage() {
   }
 
   // Error state
+  const error = visitError || recordError
   if (error || !visit) {
     return (
       <div className="container mx-auto max-w-6xl p-6">
@@ -85,6 +151,12 @@ export default function ERMedicalRecordPage() {
     )
   }
 
+  // Check if visit is cancelled
+  const isCancelled = visit.status === "cancelled"
+
+  // Treat cancelled visits as locked (read-only)
+  const isReadOnly = isLocked || isCancelled
+
   return (
     <div className="container mx-auto max-w-6xl space-y-6 p-6">
       {/* Back Button */}
@@ -93,27 +165,69 @@ export default function ERMedicalRecordPage() {
         Kembali ke Antrian UGD
       </Button>
 
-      {/* Patient & Visit Header */}
+      {/* Cancelled Visit Banner */}
+      {isCancelled && (
+        <Alert variant="destructive">
+          <AlertDescription className="flex items-center gap-2">
+            <Badge variant="destructive">Dibatalkan</Badge>
+            Kunjungan UGD ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
+            diubah.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Patient & Visit Header with Disposition */}
       <ERVisitHeader visit={visit} />
 
-      {/* ER Medical Record Form */}
+      {/* Error Alert (shows errors during operations) */}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Main Content Card */}
       <Card>
         <CardHeader>
-          <CardTitle>Catatan Medis UGD</CardTitle>
-          <CardDescription>Dokumentasi pemeriksaan dan tindakan gawat darurat</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Catatan Medis UGD</CardTitle>
+              <CardDescription>
+                Dokumentasi lengkap pemeriksaan, diagnosis, resep, dan tindakan gawat darurat
+              </CardDescription>
+            </div>
+
+            {/* Action Buttons with Disposition (Save Draft / Lock & Finish / Unlock) - Hidden when cancelled */}
+            {coreData && !isCancelled && (
+              <ERMedicalRecordActions
+                isLocked={isLocked}
+                isSaving={isSaving}
+                isLocking={isLocking}
+                currentDisposition={visit.disposition as DispositionType | null}
+                onSave={saveDraft}
+                onLock={handleLock}
+                onUnlock={unlockRecord}
+              />
+            )}
+          </div>
         </CardHeader>
+
         <CardContent>
-          <ERMedicalRecordForm
-            visitId={visitId}
-            patientName={visit.patient.name}
-            triageStatus={visit.triageStatus || "green"}
-            onSave={(isDraft) => {
-              if (!isDraft) {
-                // If it's not a draft (i.e., it's locked), navigate back to queue
-                handleSuccess()
-              }
-            }}
-          />
+          {/* Medical Record Tabs (SOAP, Diagnosis, Prescription, Procedure, Lab Orders) */}
+          {coreData ? (
+            <MedicalRecordTabs
+              coreData={coreData}
+              activeTab={activeTab}
+              isLocked={isReadOnly}
+              onTabChange={setActiveTab}
+              onUpdateRecord={updateRecord}
+              onSaveSOAP={saveSOAP}
+            />
+          ) : (
+            <div className="text-muted-foreground py-8 text-center">
+              <p>Belum ada catatan medis. Mulai dengan mengisi SOAP.</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

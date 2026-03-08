@@ -206,6 +206,7 @@ export function MedicalRecordActions({
           <div className="my-4 space-y-4">
             {/* Billing Preview */}
             <DischargeBillingPreviewSection
+              type="Rawat Jalan"
               summary={summary}
               isLoading={isFetching}
               adjustmentType={adjustmentType}

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { eq, and, or, asc } from "drizzle-orm"
+import { eq, and, or, asc, gte, lte } from "drizzle-orm"
 
 import { db } from "@/db"
 import { visits, patients, polis, medicalRecords } from "@/db/schema"
@@ -15,10 +15,29 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
  * Requires: visits:read permission
  */
 export const GET = withRBAC(
-  async (request: NextRequest, { user }) => {
+  async (request: NextRequest, { user, role }) => {
     try {
       const searchParams = request.nextUrl.searchParams
       const status = searchParams.get("status") // optional filter: waiting, in_examination, all
+      const date = searchParams.get("date") // YYYY-MM-DD format
+
+      // Build date filter condition
+      let dateCondition
+      if (date) {
+        const startOfDay = new Date(date)
+        startOfDay.setHours(0, 0, 0, 0)
+        const endOfDay = new Date(date)
+        endOfDay.setHours(23, 59, 59, 999)
+        dateCondition = and(gte(visits.arrivalTime, startOfDay), lte(visits.arrivalTime, endOfDay))
+      }
+
+      let doctorCondition
+
+      if (role === "admin" || role === "super_admin") {
+        doctorCondition = undefined
+      } else {
+        doctorCondition = eq(visits.doctorId, user.id)
+      }
 
       // Build status filter
       let statusConditions
@@ -29,7 +48,7 @@ export const GET = withRBAC(
       } else {
         // Show all active visits (not completed/cancelled)
         statusConditions = and(
-          eq(visits.doctorId, user.id),
+          doctorCondition,
           or(
             eq(visits.status, "registered"),
             eq(visits.status, "waiting"),
@@ -39,38 +58,27 @@ export const GET = withRBAC(
         )
       }
 
-      // Get patient queue with patient info and poli info
+      // Get patient queue with patient info, poli info, and medical record
+      // Single query with LEFT JOIN to avoid N+1 problem
       // Sorted by queue number (ascending) - first arrival first
-      const queue = await db
+      const queueWithMedicalRecords = await db
         .select({
           visit: visits,
           patient: patients,
           poli: polis,
+          medicalRecord: {
+            id: medicalRecords.id,
+            isLocked: medicalRecords.isLocked,
+          },
         })
         .from(visits)
         .leftJoin(patients, eq(visits.patientId, patients.id))
         .leftJoin(polis, eq(visits.poliId, polis.id))
-        .where(and(eq(visits.doctorId, user.id), statusConditions))
+        .leftJoin(medicalRecords, eq(medicalRecords.visitId, visits.id))
+        .where(
+          and(doctorCondition, statusConditions, dateCondition, eq(visits.visitType, "outpatient"))
+        )
         .orderBy(asc(visits.queueNumber))
-
-      // For each visit, check if medical record exists
-      const queueWithMedicalRecords = await Promise.all(
-        queue.map(async (item) => {
-          const [medicalRecord] = await db
-            .select({
-              id: medicalRecords.id,
-              isLocked: medicalRecords.isLocked,
-            })
-            .from(medicalRecords)
-            .where(eq(medicalRecords.visitId, item.visit.id))
-            .limit(1)
-
-          return {
-            ...item,
-            medicalRecord: medicalRecord || null,
-          }
-        })
-      )
 
       const response: ResponseApi<{
         queue: QueueItem[]
@@ -78,7 +86,7 @@ export const GET = withRBAC(
       }> = {
         message: "Stats fetched successfully",
         data: {
-          queue: queueWithMedicalRecords as QueueItem[],
+          queue: queueWithMedicalRecords as unknown as QueueItem[],
           total: queueWithMedicalRecords.length,
         },
         status: HTTP_STATUS_CODES.OK,

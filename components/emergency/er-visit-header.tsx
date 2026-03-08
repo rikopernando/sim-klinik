@@ -1,11 +1,15 @@
 /**
  * ER Visit Header Component
- * Displays patient information and visit details in ER medical record page
+ * Displays patient information, visit details, and disposition in ER medical record page
  */
+
+"use client"
 
 import { Card, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { getTriageLabel, getTriageBadgeColor } from "@/lib/emergency/triage-utils"
+import { getDispositionOptions } from "@/lib/emergency/disposition-utils"
+import type { DispositionType } from "@/types/emergency"
 
 interface Patient {
   id: string
@@ -22,6 +26,7 @@ interface Visit {
   triageStatus: "red" | "yellow" | "green" | null
   chiefComplaint: string | null
   status: string
+  disposition: DispositionType | null
   patient: Patient
 }
 
@@ -31,6 +36,7 @@ interface ERVisitHeaderProps {
 
 /**
  * Displays patient and visit information header for ER medical record
+ * Includes editable disposition field
  */
 export function ERVisitHeader({ visit }: ERVisitHeaderProps) {
   const getStatusLabel = (status: string) => {
@@ -43,6 +49,8 @@ export function ERVisitHeader({ visit }: ERVisitHeaderProps) {
         return "Menunggu"
       case "examined":
         return "Sudah Diperiksa"
+      case "ready_for_billing":
+        return "Siap Billing"
       case "completed":
         return "Selesai"
       default:
@@ -61,6 +69,8 @@ export function ERVisitHeader({ visit }: ERVisitHeaderProps) {
     }
   }
 
+  const dispositionOptions = getDispositionOptions()
+
   return (
     <Card>
       <CardHeader>
@@ -78,7 +88,7 @@ export function ERVisitHeader({ visit }: ERVisitHeaderProps) {
 
               {visit.patient.nik && (
                 <>
-                  <span>•</span>
+                  <span>|</span>
                   <div className="flex items-center gap-1">
                     <span className="font-medium">NIK:</span>
                     <span className="font-mono">{visit.patient.nik}</span>
@@ -86,7 +96,7 @@ export function ERVisitHeader({ visit }: ERVisitHeaderProps) {
                 </>
               )}
 
-              <span>•</span>
+              <span>|</span>
               <div className="flex items-center gap-1">
                 <span className="font-medium">Jenis Kelamin:</span>
                 <span>{getGenderLabel(visit.patient.gender)}</span>
@@ -126,6 +136,14 @@ export function ERVisitHeader({ visit }: ERVisitHeaderProps) {
           <div className="bg-muted mt-4 rounded-md p-3">
             <p className="text-muted-foreground text-sm font-medium">Keluhan Utama:</p>
             <p className="mt-1 text-sm">{visit.chiefComplaint}</p>
+          </div>
+        )}
+
+        {visit.disposition && (
+          <div className="mt-4 rounded-md border p-3">
+            <p className="text-muted-foreground mt-2 text-xs">
+              {dispositionOptions.find((o) => o.value === visit.disposition)?.description}
+            </p>
           </div>
         )}
       </CardHeader>

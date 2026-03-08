@@ -1,3 +1,6 @@
+import { Patient } from "./registration"
+import { Visit } from "./visit"
+
 export interface DoctorStats {
   today: {
     total: number
@@ -15,16 +18,9 @@ export interface QueuePatient {
   name: string
 }
 
-export interface QueueVisit {
-  id: string
-  visitNumber: string
-  visitType: string
-  status: string
-  queueNumber: number | null
-}
-
 export interface QueuePoli {
   name: string
+  id: string
 }
 
 export interface QueueMedicalRecord {
@@ -33,8 +29,8 @@ export interface QueueMedicalRecord {
 }
 
 export interface QueueItem {
-  visit: QueueVisit
-  patient: QueuePatient | null
+  visit: Visit
+  patient: Patient | null
   poli: QueuePoli | null
   medicalRecord: QueueMedicalRecord | null
 }

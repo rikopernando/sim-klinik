@@ -4,7 +4,8 @@
  */
 
 import { alias } from "drizzle-orm/pg-core"
-import { and, eq, desc, or, ilike, inArray } from "drizzle-orm"
+import { and, eq, desc, or, ilike, inArray, gte, lt, sql } from "drizzle-orm"
+// Note: date-fns startOfDay/endOfDay removed - dates from frontend are already timezone-correct
 import { db } from "@/db"
 import {
   labTests,
@@ -35,6 +36,7 @@ import {
   CreateLabResultInput,
   CreateLabTestInput,
   LabOrderFilters,
+  ParameterResultInput,
   UpdateLabTestInput,
 } from "./validation"
 
@@ -255,12 +257,28 @@ export async function getLabTestPanelsWithTests(filters: { isActive?: boolean } 
 // ============================================================================
 
 /**
- * Get list of lab orders with filters and relations
+ * Pagination result interface
+ */
+export interface LabOrdersPaginatedResult {
+  orders: LabOrderWithRelations[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+  }
+}
+
+/**
+ * Get list of lab orders with filters, pagination, and relations
  */
 export async function getLabOrders(
-  filters: LabOrderFilters = {}
-): Promise<LabOrderWithRelations[]> {
+  filters: LabOrderFilters & { page?: number; limit?: number } = {}
+): Promise<LabOrdersPaginatedResult> {
   const conditions = []
+  const page = filters.page ?? 1
+  const limit = filters.limit ?? 10
+  const offset = (page - 1) * limit
 
   if (filters.visitId) {
     conditions.push(eq(labOrders.visitId, filters.visitId))
@@ -278,6 +296,41 @@ export async function getLabOrders(
       conditions.push(eq(labOrders.status, filters.status))
     }
   }
+
+  // Date filtering
+  // Note: dates from frontend are already in correct timezone (sent as ISO strings)
+  // We should NOT apply startOfDay/endOfDay here as it would shift to server timezone
+  if (filters.dateFrom) {
+    const dateFrom = new Date(filters.dateFrom)
+    conditions.push(gte(labOrders.orderedAt, dateFrom))
+  }
+
+  if (filters.dateTo) {
+    const dateTo = new Date(filters.dateTo)
+    // Add 24 hours to include the entire day (dateTo is start of day, so we need end of day)
+    const endDate = new Date(dateTo.getTime() + 24 * 60 * 60 * 1000)
+    conditions.push(lt(labOrders.orderedAt, endDate))
+  }
+
+  // Department filtering (done in query for efficiency)
+  if (filters.department) {
+    // We need to join with labTests first, so this will be applied after the query
+  }
+
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+
+  // Get total count for pagination
+  const countResult = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(labOrders)
+    .leftJoin(labTests, eq(labOrders.testId, labTests.id))
+    .where(
+      filters.department
+        ? and(whereClause, eq(labTests.department, filters.department))
+        : whereClause
+    )
+
+  const total = Number(countResult[0]?.count ?? 0)
 
   const result = await db
     .select({
@@ -344,18 +397,17 @@ export async function getLabOrders(
     .leftJoin(patients, eq(labOrders.patientId, patients.id))
     .leftJoin(user, eq(labOrders.orderedBy, user.id))
     .leftJoin(labResults, eq(labOrders.id, labResults.orderId))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
+    .where(
+      filters.department
+        ? and(whereClause, eq(labTests.department, filters.department))
+        : whereClause
+    )
     .orderBy(desc(labOrders.orderedAt))
-    .limit(100)
-
-  // Filter by department if specified (after join)
-  let filteredResult = result
-  if (filters.department) {
-    filteredResult = result.filter((order) => order.test?.department === filters.department)
-  }
+    .limit(limit)
+    .offset(offset)
 
   // Fetch parameters for all results that have them
-  const resultIds = filteredResult
+  const resultIds = result
     .map((order) => order.result?.id)
     .filter((id): id is string => id !== null && id !== undefined)
 
@@ -380,7 +432,7 @@ export async function getLabOrders(
   }
 
   // Map results with parameters and convert null to undefined for optional relations
-  const ordersWithResults = filteredResult.map((order) => {
+  const ordersWithResults = result.map((order) => {
     const mappedOrder = {
       ...order,
       test: order.test?.id ? (order.test as LabTest) : undefined,
@@ -396,7 +448,15 @@ export async function getLabOrders(
     return mappedOrder
   })
 
-  return ordersWithResults as LabOrderWithRelations[]
+  return {
+    orders: ordersWithResults as LabOrderWithRelations[],
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  }
 }
 
 /**
@@ -695,11 +755,15 @@ export async function createLabResult(
 
   // Insert parameters if provided
   // resultData can be labParameterSchema which contains parameters
-  if ("parameters" in data.resultData && data.resultData.parameters) {
+  if (
+    "parameters" in data.resultData &&
+    data.resultData.parameters &&
+    Array.isArray(data.resultData.parameters)
+  ) {
     const params = data.resultData.parameters
     if (params.length > 0) {
       await db.insert(labResultParameters).values(
-        params.map((param) => ({
+        params.map((param: ParameterResultInput) => ({
           resultId: newResult.id,
           parameterName: param.name,
           parameterValue: param.value,

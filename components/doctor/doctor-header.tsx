@@ -15,7 +15,7 @@ export function DoctorHeader({ lastRefresh, onRefresh }: DoctorHeaderProps) {
   return (
     <div className="flex items-center justify-between">
       <div>
-        <h1 className="text-3xl font-bold">Dashboard Dokter</h1>
+        <h1 className="text-3xl font-bold">Antrian Poli</h1>
         <p className="text-muted-foreground">Kelola antrian pasien dan rekam medis</p>
       </div>
       <div className="flex items-center gap-4">

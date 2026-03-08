@@ -4,8 +4,9 @@
 
 import axios from "axios"
 import { type VisitFormData, type RegisteredVisit } from "@/types/registration"
-import { type ResponseApi } from "@/types/api"
+import { type ResponseApi, type Pagination } from "@/types/api"
 import { handleApiError, ApiServiceError } from "./api.service"
+import { type VisitHistoryItem, type VisitHistoryFilters } from "@/types/visit-history"
 
 /**
  * Register a new visit
@@ -67,6 +68,97 @@ export async function updateVisitStatus(
       newStatus,
       reason,
     })
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get a single visit by ID with patient data
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getVisit(visitId: string): Promise<any> {
+  try {
+    const response = await axios.get(`/api/visits/${visitId}`)
+    return response.data
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Update visit details (PATCH)
+ */
+export async function updateVisit(visitId: string, data: Record<string, unknown>): Promise<void> {
+  try {
+    await axios.patch(`/api/visits/${visitId}`, data)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Get latest vitals for a visit
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function getVisitVitals(visitId: string): Promise<any | null> {
+  try {
+    const response = await axios.get<ResponseApi<unknown>>(`/api/visits/${visitId}/vitals`)
+    return response.data.data || null
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Record new vitals for a visit
+ */
+export async function recordVisitVitals(
+  visitId: string,
+  data: Record<string, unknown>
+): Promise<void> {
+  try {
+    await axios.post(`/api/visits/${visitId}/vitals`, data)
+  } catch (error) {
+    handleApiError(error)
+  }
+}
+
+/**
+ * Fetch visit history with filters and pagination
+ */
+export interface FetchVisitHistoryParams {
+  filters?: VisitHistoryFilters
+  page?: number
+  limit?: number
+}
+
+export interface FetchVisitHistoryResult {
+  visits: VisitHistoryItem[]
+  pagination: Pagination
+}
+
+export async function fetchVisitHistory(
+  params?: FetchVisitHistoryParams
+): Promise<FetchVisitHistoryResult> {
+  try {
+    const response = await axios.get<ResponseApi<VisitHistoryItem[]>>("/api/visits/history", {
+      params: {
+        ...params?.filters,
+        page: params?.page || 1,
+        limit: params?.limit || 10,
+      },
+    })
+
+    return {
+      visits: response.data.data || [],
+      pagination: response.data.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      },
+    }
   } catch (error) {
     handleApiError(error)
   }

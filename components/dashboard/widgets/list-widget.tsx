@@ -22,6 +22,11 @@ export interface ListWidgetItem {
   action?: {
     label: string
     onClick: () => void
+    disabled?: boolean
+  }
+  secondaryAction?: {
+    label: string
+    onClick: () => void
   }
 }
 
@@ -61,8 +66,8 @@ export function ListWidget({
           {emptyMessage}
         </div>
       ) : (
-        <ScrollArea style={{ maxHeight }}>
-          <div className="space-y-2">
+        <ScrollArea className="h-full" style={{ maxHeight }}>
+          <div className="space-y-2 pb-6">
             {items.map((item) => {
               const ItemIcon = item.icon
               return (
@@ -101,10 +106,22 @@ export function ListWidget({
                         {item.badge.label}
                       </span>
                     )}
+                    {item.secondaryAction && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          item.secondaryAction?.onClick()
+                        }}
+                      >
+                        {item.secondaryAction.label}
+                      </Button>
+                    )}
                     {item.action && (
                       <Button
-                        size="sm"
                         variant="ghost"
+                        disabled={item.action.disabled}
                         onClick={(e) => {
                           e.stopPropagation()
                           item.action?.onClick()

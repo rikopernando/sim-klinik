@@ -6,12 +6,15 @@
  */
 
 import { useParams, useRouter } from "next/navigation"
+import { PageGuard } from "@/components/auth/page-guard"
 import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
 import { usePatientDetail } from "@/hooks/use-patient-detail"
 import { usePermission } from "@/hooks/use-permission"
 import { PatientInfoCard } from "@/components/inpatient/patient-info-card"
@@ -38,6 +41,14 @@ import { useSession } from "@/lib/auth-client"
 import { CreateLabOrderDialog, LabOrdersList } from "@/components/laboratory"
 
 export default function PatientDetailPage() {
+  return (
+    <PageGuard permissions={["inpatient:read"]}>
+      <PatientDetailPageContent />
+    </PageGuard>
+  )
+}
+
+function PatientDetailPageContent() {
   const { data: session } = useSession()
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
@@ -45,11 +56,15 @@ export default function PatientDetailPage() {
   const { patientDetail, isLoading, refresh } = usePatientDetail(visitId)
   const { hasPermission } = usePermission()
 
-  // Check if visit is locked (billed status)
+  // Check if visit is cancelled
+  const isCancelled = patientDetail?.patient.status === "cancelled"
+
+  // Check if visit is locked (billed status or cancelled)
   const isLocked =
     patientDetail?.patient.status === "billed" ||
     patientDetail?.patient.status === "ready_for_billing" ||
-    patientDetail?.patient.status === "completed"
+    patientDetail?.patient.status === "completed" ||
+    isCancelled
 
   const isAbleToFillTheDischargeSummary =
     !patientDetail?.dischargeSummary &&
@@ -110,13 +125,26 @@ export default function PatientDetailPage() {
           </Button>
         </div>
 
+        {/* Cancelled Visit Banner */}
+        {isCancelled && (
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center gap-2">
+              <Badge variant="destructive">Dibatalkan</Badge>
+              Kunjungan rawat inap ini telah dibatalkan. Data hanya dapat dilihat dan tidak dapat
+              diubah.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Lock Banner */}
-        <VisitLockBanner
-          visitStatus={patientDetail.patient.status}
-          visitId={visitId}
-          patientName={patientDetail.patient.patientName}
-          onUnlockSuccess={refresh}
-        />
+        {!isCancelled && (
+          <VisitLockBanner
+            visitStatus={patientDetail.patient.status}
+            visitId={visitId}
+            patientName={patientDetail.patient.patientName}
+            onUnlockSuccess={refresh}
+          />
+        )}
 
         {/* Patient Info Card */}
         <PatientInfoCard data={patientDetail} />
@@ -380,7 +408,7 @@ export default function PatientDetailPage() {
 
         {/* Final Discharge Section */}
         {patientDetail.dischargeSummary &&
-          patientDetail.patient.status === "billed" &&
+          patientDetail.patient.status === "paid" &&
           hasPermission("discharge:write") && (
             <>
               <Separator />

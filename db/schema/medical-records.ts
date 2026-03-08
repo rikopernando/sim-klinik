@@ -52,10 +52,10 @@ export const medicalRecords = pgTable("medical_records", {
   isDraft: boolean("is_draft").notNull().default(true), // Draft status
 
   // Timestamps
-  lockedAt: timestamp("locked_at"),
+  lockedAt: timestamp("locked_at", { withTimezone: true }),
   lockedBy: text("locked_by").references(() => user.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**
@@ -72,7 +72,7 @@ export const diagnoses = pgTable("diagnoses", {
   icd10Code: text("icd10_code"), // ICD-10 code
   description: text("description").notNull(), // Diagnosis description
   diagnosisType: text("diagnosis_type").notNull().default("primary"), // primary, secondary
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
 })
 
 /**

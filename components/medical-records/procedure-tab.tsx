@@ -16,12 +16,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
 
 import { deleteProcedure } from "@/lib/services/medical-record.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { formatDate } from "@/lib/utils/date"
 import { type Procedure } from "@/types/medical-record"
 import { canEditMedicalRecord } from "@/lib/utils/medical-record"
+import { useProcedures } from "@/hooks/use-procedures"
 
 import { SectionCard } from "./section-card"
 import { ListItem } from "./list-item"
@@ -29,18 +31,14 @@ import { EmptyState } from "./empty-state"
 import { AddProcedureDialog } from "./add-procedure-dialog"
 
 interface ProcedureTabProps {
+  visitId: string
   medicalRecordId: string
-  procedures: Procedure[]
-  onUpdate: () => void
   isLocked: boolean
 }
 
-export function ProcedureTab({
-  medicalRecordId,
-  procedures,
-  onUpdate,
-  isLocked,
-}: ProcedureTabProps) {
+export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTabProps) {
+  const { procedures, isLoading, refetch } = useProcedures({ visitId })
+
   const [isDeleting, setDeleting] = useState(false)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -80,19 +78,29 @@ export function ProcedureTab({
 
     try {
       setError(null)
-      setDeleting(false)
+      setDeleting(true)
       await deleteProcedure(procedureToDelete)
       setDeleteDialogOpen(false)
       setProcedureToDelete(null)
-      onUpdate()
+      await refetch()
       toast.success("Tindakan berhasil dihapus!")
     } catch (err) {
       setError(getErrorMessage(err))
-      toast.error(`Gagal menghapus resep`)
+      toast.error(`Gagal menghapus tindakan`)
     } finally {
       setDeleting(false)
     }
-  }, [procedureToDelete, onUpdate])
+  }, [procedureToDelete, refetch])
+
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        {[...Array(3)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -182,7 +190,7 @@ export function ProcedureTab({
         open={isDialogOpen}
         onOpenChange={handleCloseDialog}
         medicalRecordId={medicalRecordId}
-        onSuccess={onUpdate}
+        onSuccess={refetch}
         procedure={procedureToEdit}
         existingProcedures={procedures}
       />

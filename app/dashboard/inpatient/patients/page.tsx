@@ -4,6 +4,7 @@
  */
 
 "use client"
+import { PageGuard } from "@/components/auth/page-guard"
 import { RefreshCw } from "lucide-react"
 
 import {
@@ -22,6 +23,14 @@ import { InpatientPagination } from "@/components/inpatient/inpatient-pagination
 import { Button } from "@/components/ui/button"
 
 export default function InpatientPatientsPage() {
+  return (
+    <PageGuard permissions={["inpatient:read"]}>
+      <InpatientPatientsPageContent />
+    </PageGuard>
+  )
+}
+
+function InpatientPatientsPageContent() {
   const filterHook = useInpatientFilters()
   const { patients, pagination, isLoading, handlePageChange, refresh } = useInpatientList(
     filterHook.filters
