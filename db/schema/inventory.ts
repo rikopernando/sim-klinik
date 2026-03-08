@@ -7,6 +7,7 @@ import {
   boolean,
   integer,
   index,
+  json,
 } from "drizzle-orm/pg-core"
 import { medicalRecords } from "./medical-records"
 import { visits } from "./visits"
@@ -81,6 +82,39 @@ export const inventoryBatches = pgTable("drug_inventory", {
 export const drugInventory = inventoryBatches
 
 /**
+ * Compound Ingredient Interface
+ * Used in compoundRecipes.composition JSON field
+ */
+export interface CompoundIngredient {
+  drugId: string
+  drugName: string
+  quantity: number
+  unit: string
+}
+
+/**
+ * Compound Recipes Table (Master Data)
+ * Templates for compound medications (obat racik)
+ * Pharmacist/admin creates recipes, doctors select when prescribing
+ */
+export const compoundRecipes = pgTable("compound_recipes", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  code: varchar("code", { length: 50 }).notNull().unique(), // e.g., "CR-001"
+  name: varchar("name", { length: 255 }).notNull(), // e.g., "Puyer Batuk Anak"
+  description: text("description"),
+  composition: json("composition").$type<CompoundIngredient[]>().notNull(),
+  defaultInstructions: text("default_instructions"),
+  defaultFrequency: varchar("default_frequency", { length: 100 }),
+  price: decimal("price", { precision: 12, scale: 2 }), // Per unit price
+  isActive: boolean("is_active").notNull().default(true),
+  createdBy: text("created_by").references(() => user.id),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+})
+
+/**
  * Prescriptions Table
  * Digital prescriptions from doctors
  * Supports both OUTPATIENT (one-time) and INPATIENT (recurring) prescriptions
@@ -103,8 +137,11 @@ export const prescriptions = pgTable(
     visitId: text("visit_id").references(() => visits.id, { onDelete: "cascade" }),
 
     drugId: text("drug_id") // Keep original column name for compatibility
-      .notNull()
-      .references(() => inventoryItems.id),
+      .references(() => inventoryItems.id), // Not required for compound prescriptions
+
+    // Compound prescription fields
+    isCompound: boolean("is_compound").notNull().default(false),
+    compoundRecipeId: text("compound_recipe_id").references(() => compoundRecipes.id),
 
     // Prescription details
     dosage: varchar("dosage", { length: 100 }), // e.g., "500mg"

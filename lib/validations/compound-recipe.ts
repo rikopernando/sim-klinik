@@ -1,0 +1,82 @@
+/**
+ * Compound Recipe Validation Schemas
+ * Zod schemas for compound medication feature
+ */
+
+import { z } from "zod"
+
+/**
+ * Schema for a single ingredient in compound recipe
+ */
+export const compoundIngredientSchema = z.object({
+  drugId: z.string().min(1, "Obat wajib dipilih"),
+  drugName: z.string().min(1, "Nama obat wajib diisi"),
+  quantity: z.number().min(0.001, "Jumlah minimal 0.001"),
+  unit: z.string().min(1, "Satuan wajib diisi"),
+})
+
+/**
+ * Schema for creating a compound recipe
+ */
+export const createCompoundRecipeSchema = z.object({
+  code: z
+    .string()
+    .min(1, "Kode wajib diisi")
+    .max(50, "Kode maksimal 50 karakter")
+    .regex(/^[A-Z0-9-]+$/, "Kode hanya boleh huruf kapital, angka, dan tanda hubung"),
+  name: z.string().min(1, "Nama wajib diisi").max(255, "Nama maksimal 255 karakter"),
+  description: z.string().optional(),
+  composition: z
+    .array(compoundIngredientSchema)
+    .min(2, "Minimal harus ada 2 bahan")
+    .max(20, "Maksimal 20 bahan"),
+  defaultInstructions: z.string().optional(),
+  defaultFrequency: z.string().optional(),
+  price: z.number().min(0, "Harga tidak boleh negatif").optional(),
+})
+
+/**
+ * Schema for updating a compound recipe
+ */
+export const updateCompoundRecipeSchema = z.object({
+  code: z
+    .string()
+    .min(1, "Kode wajib diisi")
+    .max(50, "Kode maksimal 50 karakter")
+    .regex(/^[A-Z0-9-]+$/, "Kode hanya boleh huruf kapital, angka, dan tanda hubung")
+    .optional(),
+  name: z.string().min(1, "Nama wajib diisi").max(255, "Nama maksimal 255 karakter").optional(),
+  description: z.string().nullable().optional(),
+  composition: z
+    .array(compoundIngredientSchema)
+    .min(2, "Minimal harus ada 2 bahan")
+    .max(20, "Maksimal 20 bahan")
+    .optional(),
+  defaultInstructions: z.string().nullable().optional(),
+  defaultFrequency: z.string().nullable().optional(),
+  price: z.number().min(0, "Harga tidak boleh negatif").nullable().optional(),
+  isActive: z.boolean().optional(),
+})
+
+/**
+ * Schema for compound recipe filters (query params)
+ */
+export const compoundRecipeFiltersSchema = z.object({
+  search: z.string().optional(),
+  isActive: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (val === "true") return true
+      if (val === "false") return false
+      return undefined
+    }),
+})
+
+/**
+ * Type exports from schemas
+ */
+export type CompoundIngredientInput = z.infer<typeof compoundIngredientSchema>
+export type CreateCompoundRecipeInput = z.infer<typeof createCompoundRecipeSchema>
+export type UpdateCompoundRecipeInput = z.infer<typeof updateCompoundRecipeSchema>
+export type CompoundRecipeFiltersInput = z.infer<typeof compoundRecipeFiltersSchema>

@@ -10,8 +10,8 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 interface PrescriptionWithDetails {
   id: string
   medicalRecordId: string | null
-  drugId: string
-  drugName: string
+  drugId: string | null
+  drugName: string | null
   drugPrice: string | null
   dosage: string | null
   frequency: string | null
@@ -31,6 +31,8 @@ interface PrescriptionWithDetails {
   approvedBy: string | null
   approvedAt: Date | null
   pharmacistNote: string | null
+  isCompound: boolean | null
+  compoundRecipeId: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -100,11 +102,13 @@ export const GET = withRBAC(
           approvedBy: prescriptions.approvedBy,
           approvedAt: prescriptions.approvedAt,
           pharmacistNote: prescriptions.pharmacistNote,
+          isCompound: prescriptions.isCompound,
+          compoundRecipeId: prescriptions.compoundRecipeId,
           createdAt: prescriptions.createdAt,
           updatedAt: prescriptions.updatedAt,
         })
         .from(prescriptions)
-        .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+        .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
         .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
         .where(eq(prescriptions.medicalRecordId, record.id))
 
