@@ -5,7 +5,7 @@
  */
 
 import { z } from "zod"
-import { eq, and, or, ilike, count, desc } from "drizzle-orm"
+import { eq, and, or, ilike, count, desc, sql } from "drizzle-orm"
 import { NextRequest, NextResponse } from "next/server"
 
 import { db } from "@/db"
@@ -16,6 +16,27 @@ import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac/middleware"
 import type { CompoundRecipeWithCreator } from "@/types/compound-recipe"
+
+/**
+ * Generate next compound recipe code (CR-001, CR-002, etc.)
+ */
+async function generateNextCode(): Promise<string> {
+  const [lastRecipe] = await db
+    .select({ code: compoundRecipes.code })
+    .from(compoundRecipes)
+    .where(sql`${compoundRecipes.code} LIKE 'CR-%'`)
+    .orderBy(desc(compoundRecipes.code))
+    .limit(1)
+
+  if (!lastRecipe) {
+    return "CR-001"
+  }
+
+  // Extract number from code (e.g., "CR-001" → 1)
+  const match = lastRecipe.code.match(/CR-(\d+)/)
+  const nextNumber = match ? parseInt(match[1], 10) + 1 : 1
+  return `CR-${nextNumber.toString().padStart(3, "0")}`
+}
 
 /**
  * Get all compound recipes with pagination, search, and filters
@@ -142,24 +163,6 @@ export const POST = withRBAC(
       // Validate request body
       const validated = createCompoundRecipeSchema.parse(body)
 
-      // Check if code already exists
-      const existingCode = await db
-        .select()
-        .from(compoundRecipes)
-        .where(ilike(compoundRecipes.code, validated.code))
-        .limit(1)
-
-      if (existingCode.length > 0) {
-        const response: ResponseError<null> = {
-          error: null,
-          message: "Kode obat racik sudah digunakan",
-          status: HTTP_STATUS_CODES.CONFLICT,
-        }
-        return NextResponse.json(response, {
-          status: HTTP_STATUS_CODES.CONFLICT,
-        })
-      }
-
       // Check if name already exists
       const existingName = await db
         .select()
@@ -178,11 +181,14 @@ export const POST = withRBAC(
         })
       }
 
+      // Auto-generate code
+      const generatedCode = await generateNextCode()
+
       // Create new compound recipe
       const [newRecipe] = await db
         .insert(compoundRecipes)
         .values({
-          code: validated.code,
+          code: generatedCode,
           name: validated.name,
           description: validated.description,
           composition: validated.composition,

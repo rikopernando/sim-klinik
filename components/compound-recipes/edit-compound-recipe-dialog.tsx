@@ -1,11 +1,11 @@
 /**
  * Edit Compound Recipe Dialog
+ * 2-step wizard for editing compound medications
  */
 
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -17,7 +17,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
+import { CurrencyInput } from "@/components/ui/currency-input"
+import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { FormStepIndicator } from "@/components/patients/form-step-indicator"
+import { WizardNavigation } from "@/components/patients/wizard-navigation"
 import { CompositionBuilder } from "./composition-builder"
 import { useUpdateCompoundRecipe } from "@/hooks/use-compound-recipes"
 import type {
@@ -33,21 +37,27 @@ interface EditCompoundRecipeDialogProps {
   onSuccess?: () => void
 }
 
+const STEPS = [
+  { number: 1, label: "Informasi Dasar" },
+  { number: 2, label: "Komposisi" },
+]
+
 export function EditCompoundRecipeDialog({
   recipe,
   open,
   onOpenChange,
   onSuccess,
 }: EditCompoundRecipeDialogProps) {
+  const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<UpdateCompoundRecipeInput>({})
   const [compositionError, setCompositionError] = useState<string | null>(null)
+  const [priceError, setPriceError] = useState<string | null>(null)
   const { updateRecipe, isUpdating, error } = useUpdateCompoundRecipe()
 
   // Initialize form data when recipe changes
   useEffect(() => {
     if (recipe) {
       setFormData({
-        code: recipe.code,
         name: recipe.name,
         description: recipe.description,
         composition: recipe.composition,
@@ -59,10 +69,28 @@ export function EditCompoundRecipeDialog({
     }
   }, [recipe])
 
+  // Step 1 validation
+  const isStep1Valid = (formData.name || "").trim() !== ""
+
+  const handleNext = () => {
+    if (currentStep === 1 && isStep1Valid) {
+      setCurrentStep(2)
+    }
+  }
+
+  const handleBack = () => {
+    setCurrentStep(1)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!recipe) return
+
+    // Only submit on step 2
+    if (currentStep !== 2) {
+      return
+    }
 
     // Validate composition
     if (formData.composition && formData.composition.length < 2) {
@@ -70,11 +98,19 @@ export function EditCompoundRecipeDialog({
       return
     }
 
+    // Validate price
+    if (formData.price !== undefined && formData.price !== null && formData.price < 100) {
+      setPriceError("Harga minimal Rp 100")
+      return
+    }
+
     setCompositionError(null)
+    setPriceError(null)
 
     try {
       await updateRecipe({ id: recipe.id, data: formData })
       toast.success("Obat racik berhasil diperbarui!")
+      setCurrentStep(1)
       onOpenChange(false)
       onSuccess?.()
     } catch (err) {
@@ -93,6 +129,8 @@ export function EditCompoundRecipeDialog({
   const handleClose = (open: boolean) => {
     if (!open) {
       setCompositionError(null)
+      setPriceError(null)
+      setCurrentStep(1)
     }
     onOpenChange(open)
   }
@@ -101,126 +139,131 @@ export function EditCompoundRecipeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Edit Obat Racik</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            Edit Obat Racik
+            <Badge variant="outline" className="font-mono">
+              {recipe.code}
+            </Badge>
+          </DialogTitle>
           <DialogDescription>Edit resep obat racik {recipe.name}</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-code">
-                Kode <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="edit-code"
-                value={formData.code || ""}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                placeholder="Contoh: CR-001"
-                required
-              />
-              <p className="text-muted-foreground text-xs">
-                Hanya huruf kapital, angka, dan tanda hubung
-              </p>
+        <FormStepIndicator steps={STEPS} currentStep={currentStep} />
+
+        <form onSubmit={handleSubmit} className="mt-4 space-y-6">
+          {/* Step 1: Basic Info */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">
+                  Nama Obat Racik <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name || ""}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Contoh: Puyer Batuk Anak"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-description">Deskripsi (opsional)</Label>
+                <Textarea
+                  id="edit-description"
+                  value={formData.description || ""}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  placeholder="Deskripsi singkat obat racik"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Switch
+                  id="edit-isActive"
+                  checked={formData.isActive ?? true}
+                  onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+                />
+                <Label htmlFor="edit-isActive">Aktif</Label>
+              </div>
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">
-                Nama <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="edit-name"
-                value={formData.name || ""}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Contoh: Puyer Batuk Anak"
-                required
+          {/* Step 2: Composition & Details */}
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              <CompositionBuilder
+                value={formData.composition || []}
+                onChange={handleCompositionChange}
+                error={compositionError || undefined}
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-defaultFrequency">Frekuensi Default</Label>
+                  <Input
+                    id="edit-defaultFrequency"
+                    value={formData.defaultFrequency || ""}
+                    onChange={(e) => setFormData({ ...formData, defaultFrequency: e.target.value })}
+                    placeholder="Contoh: 3 x 1"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-price">
+                    Harga per Unit <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <span className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 text-sm">
+                      Rp
+                    </span>
+                    <CurrencyInput
+                      id="edit-price"
+                      value={formData.price ? formData.price.toString() : ""}
+                      onValueChange={(value) => {
+                        const numValue = value ? parseInt(value, 10) : 0
+                        setFormData({ ...formData, price: numValue })
+                        if (numValue >= 100) {
+                          setPriceError(null)
+                        }
+                      }}
+                      className="pl-10"
+                      placeholder="15.000"
+                    />
+                  </div>
+                  {priceError && <p className="text-destructive text-sm">{priceError}</p>}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-defaultInstructions">Aturan Pakai Default</Label>
+                <Textarea
+                  id="edit-defaultInstructions"
+                  value={formData.defaultInstructions || ""}
+                  onChange={(e) =>
+                    setFormData({ ...formData, defaultInstructions: e.target.value })
+                  }
+                  placeholder="Contoh: Diminum setelah makan"
+                  rows={2}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-description">Deskripsi</Label>
-            <Textarea
-              id="edit-description"
-              value={formData.description || ""}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder="Deskripsi obat racik (opsional)"
-              rows={2}
-            />
-          </div>
-
-          <CompositionBuilder
-            value={formData.composition || []}
-            onChange={handleCompositionChange}
-            error={compositionError || undefined}
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-defaultFrequency">Frekuensi Default</Label>
-              <Input
-                id="edit-defaultFrequency"
-                value={formData.defaultFrequency || ""}
-                onChange={(e) => setFormData({ ...formData, defaultFrequency: e.target.value })}
-                placeholder="Contoh: 3 x 1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="edit-price">Harga per Unit</Label>
-              <Input
-                id="edit-price"
-                type="number"
-                min="0"
-                step="100"
-                value={formData.price || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    price: e.target.value ? parseFloat(e.target.value) : undefined,
-                  })
-                }
-                placeholder="Contoh: 15000"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="edit-defaultInstructions">Aturan Pakai Default</Label>
-            <Textarea
-              id="edit-defaultInstructions"
-              value={formData.defaultInstructions || ""}
-              onChange={(e) => setFormData({ ...formData, defaultInstructions: e.target.value })}
-              placeholder="Contoh: Diminum setelah makan"
-              rows={2}
-            />
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Switch
-              id="edit-isActive"
-              checked={formData.isActive ?? true}
-              onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-            />
-            <Label htmlFor="edit-isActive">Aktif</Label>
-          </div>
+          )}
 
           {error && <p className="text-destructive text-sm">{error}</p>}
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleClose(false)}
-              disabled={isUpdating}
-            >
-              Batal
-            </Button>
-            <Button type="submit" disabled={isUpdating}>
-              {isUpdating ? "Menyimpan..." : "Simpan Perubahan"}
-            </Button>
-          </div>
+          <WizardNavigation
+            currentStep={currentStep}
+            totalSteps={2}
+            isSubmitting={isUpdating}
+            isStep1Valid={isStep1Valid}
+            onNext={handleNext}
+            onBack={handleBack}
+            onCancel={() => handleClose(false)}
+            submitLabel="Simpan Perubahan"
+          />
         </form>
       </DialogContent>
     </Dialog>

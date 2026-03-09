@@ -84,8 +84,8 @@ export async function createService(data: ServiceInput) {
       name: data.name,
       serviceType: data.serviceType,
       price: data.price,
-      description: data.description || null,
-      category: data.category || null,
+      description: data.description || "",
+      category: data.category || "",
     })
     .returning()
 
