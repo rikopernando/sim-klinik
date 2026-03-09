@@ -1,5 +1,9 @@
 "use client"
 
+import { toast } from "sonner"
+import { useState } from "react"
+import { IconSearch, IconTool } from "@tabler/icons-react"
+
 import {
   Card,
   CardTitle,
@@ -18,14 +22,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { toast } from "sonner"
-import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useService } from "@/hooks/use-service"
 import { Pagination } from "@/components/users/pagination"
 import { PayloadServices, ResultService } from "@/types/services"
-import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
 import { ServicesTable } from "@/components/services/service-table"
 import { FormServiceDialog } from "@/components/services/form-service-dialog"
 
@@ -104,7 +105,7 @@ export default function ServicePage() {
             setMode("add")
           }}
         >
-          <IconCirclePlus2 size={20} className="mr-2" />
+          <IconTool size={20} className="mr-2" />
           Tambah Services
         </Button>
       </div>

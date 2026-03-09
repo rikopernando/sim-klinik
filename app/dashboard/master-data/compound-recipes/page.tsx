@@ -8,7 +8,7 @@
 import { useState } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
 import { toast } from "sonner"
-import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
+import { IconPill, IconSearch } from "@tabler/icons-react"
 
 import {
   Card,
@@ -137,7 +137,7 @@ function CompoundRecipesPageContent() {
           </p>
         </div>
         <Button onClick={() => setCreateDialogOpen(true)}>
-          <IconCirclePlus2 size={20} className="mr-2" />
+          <IconPill size={20} className="mr-2" />
           Tambah Obat Racik
         </Button>
       </div>
