@@ -70,6 +70,10 @@ export interface Prescription {
   // Compound prescription fields
   isCompound?: boolean
   compoundRecipeId?: string | null
+  // Compound recipe details (populated from API when fetching)
+  compoundRecipeName?: string | null
+  compoundRecipeCode?: string | null
+  compoundRecipePrice?: string | null
   // Pharmacist-added prescription fields
   addedByPharmacist: boolean
   addedByPharmacistId: string | null

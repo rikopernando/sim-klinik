@@ -204,11 +204,13 @@ export const PrescriptionFormItem = memo(function PrescriptionFormItem({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {MEDICATION_ROUTES.map((route) => (
-                        <SelectItem key={route.value} value={route.value}>
-                          {route.label}
-                        </SelectItem>
-                      ))}
+                      {MEDICATION_ROUTES.filter((route) => route.value !== "compounded").map(
+                        (route) => (
+                          <SelectItem key={route.value} value={route.value}>
+                            {route.label}
+                          </SelectItem>
+                        )
+                      )}
                     </SelectContent>
                   </Select>
                   {fieldState.error?.message && (

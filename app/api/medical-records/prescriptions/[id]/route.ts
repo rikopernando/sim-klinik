@@ -62,8 +62,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       })
     }
 
-    // Update prescription
-    await db.update(prescriptions).set(validatedData).where(eq(prescriptions.id, id)).returning()
+    // Update prescription (supports both regular drugs and compound recipes)
+    const updateData = {
+      isCompound: validatedData.isCompound,
+      drugId: validatedData.isCompound ? null : validatedData.drugId,
+      compoundRecipeId: validatedData.isCompound ? validatedData.compoundRecipeId : null,
+      dosage: validatedData.dosage,
+      frequency: validatedData.frequency,
+      quantity: validatedData.quantity,
+      instructions: validatedData.instructions || null,
+      route: validatedData.route || null,
+    }
+
+    await db.update(prescriptions).set(updateData).where(eq(prescriptions.id, id)).returning()
 
     const response: ResponseApi = {
       message: "Prescription updated successfully",

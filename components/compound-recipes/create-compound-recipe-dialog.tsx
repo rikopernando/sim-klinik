@@ -22,12 +22,17 @@ import { FormStepIndicator } from "@/components/patients/form-step-indicator"
 import { WizardNavigation } from "@/components/patients/wizard-navigation"
 import { CompositionBuilder } from "./composition-builder"
 import { useCreateCompoundRecipe } from "@/hooks/use-compound-recipes"
-import type { CompoundIngredient, CreateCompoundRecipeInput } from "@/types/compound-recipe"
+import type {
+  CompoundIngredient,
+  CompoundRecipeWithCreator,
+  CreateCompoundRecipeInput,
+} from "@/types/compound-recipe"
 
 interface CreateCompoundRecipeDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSuccess?: () => void
+  onCreated?: (recipe: CompoundRecipeWithCreator) => void
 }
 
 const STEPS = [
@@ -48,6 +53,7 @@ export function CreateCompoundRecipeDialog({
   open,
   onOpenChange,
   onSuccess,
+  onCreated,
 }: CreateCompoundRecipeDialogProps) {
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState<CreateCompoundRecipeInput>(initialFormData)
@@ -92,8 +98,14 @@ export function CreateCompoundRecipeDialog({
     setPriceError(null)
 
     try {
-      await createRecipe(formData)
+      const createdRecipe = await createRecipe(formData)
       toast.success("Obat racik berhasil ditambahkan!")
+
+      // Call onCreated with the created recipe (cast to CompoundRecipeWithCreator)
+      if (onCreated && createdRecipe) {
+        onCreated(createdRecipe as CompoundRecipeWithCreator)
+      }
+
       setFormData(initialFormData)
       setCurrentStep(1)
       onOpenChange(false)

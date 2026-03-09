@@ -10,7 +10,8 @@ export interface NewPrescriptionData {
   prescriptionId: string
   patientName: string
   patientMRNumber: string
-  drugName: string
+  drugName: string // For compound prescriptions, this will be the recipe name
+  isCompound?: boolean
   dosage: string | null
   frequency: string
   quantity: number

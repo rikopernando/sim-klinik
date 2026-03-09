@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
-import { medicalRecords, prescriptions, drugs, user } from "@/db/schema"
+import { medicalRecords, prescriptions, drugs, user, compoundRecipes } from "@/db/schema"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
@@ -33,6 +33,9 @@ interface PrescriptionWithDetails {
   pharmacistNote: string | null
   isCompound: boolean | null
   compoundRecipeId: string | null
+  compoundRecipeName: string | null
+  compoundRecipeCode: string | null
+  compoundRecipePrice: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -76,7 +79,7 @@ export const GET = withRBAC(
         })
       }
 
-      // Get prescriptions with drug information and pharmacist info
+      // Get prescriptions with drug information, compound recipe details, and pharmacist info
       const prescriptionsList = await db
         .select({
           id: prescriptions.id,
@@ -104,11 +107,15 @@ export const GET = withRBAC(
           pharmacistNote: prescriptions.pharmacistNote,
           isCompound: prescriptions.isCompound,
           compoundRecipeId: prescriptions.compoundRecipeId,
+          compoundRecipeName: compoundRecipes.name,
+          compoundRecipeCode: compoundRecipes.code,
+          compoundRecipePrice: compoundRecipes.price,
           createdAt: prescriptions.createdAt,
           updatedAt: prescriptions.updatedAt,
         })
         .from(prescriptions)
         .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+        .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
         .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
         .where(eq(prescriptions.medicalRecordId, record.id))
 
