@@ -62,27 +62,48 @@ export function BulkFulfillmentDialog({
   // Memoized validation check
   const isFormValid = useMemo(() => {
     if (!fulfilledBy.trim()) return false
-    return !Object.values(fulfillmentData).some((d) => {
-      if (d.isLoading || d.allocatedBatches.length === 0) return true
-      const totalAllocated = d.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
-      return totalAllocated !== d.dispensedQuantity
-    })
-  }, [fulfilledBy, fulfillmentData])
+
+    // Check each prescription
+    for (const item of selectedGroup?.prescriptions || []) {
+      // Compound prescriptions are always valid (no batch needed)
+      if (item.prescription.isCompound) continue
+
+      // Regular drug prescriptions need valid batch allocation
+      const data = fulfillmentData[item.prescription.id]
+      if (!data || data.isLoading || data.allocatedBatches.length === 0) return false
+      const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
+      if (totalAllocated !== data.dispensedQuantity) return false
+    }
+    return true
+  }, [fulfilledBy, fulfillmentData, selectedGroup])
+
+  // Helper to get medication name (drug or compound recipe)
+  const getMedicationName = useCallback((item: PrescriptionQueueItem["prescriptions"][0]) => {
+    if (item.prescription.isCompound && item.compoundRecipe) {
+      return item.compoundRecipe.name
+    }
+    return item.drug?.name || "Unknown"
+  }, [])
 
   // Check for stock issues using total stock across all batches
+  // Skip compound prescriptions as they don't use inventory
   const stockIssues = useMemo(() => {
     const issues: string[] = []
     for (const item of selectedGroup?.prescriptions || []) {
+      // Skip compound prescriptions - they don't need batch allocation
+      if (item.prescription.isCompound) continue
+
       const data = fulfillmentData[item.prescription.id]
       if (data && !data.isLoading) {
+        const medicationName = getMedicationName(item)
         // No batches available
         if (data.availableBatches.length === 0) {
-          issues.push(`"${item.drug.name}" tidak memiliki stok tersedia`)
+          issues.push(`"${medicationName}" tidak memiliki stok tersedia`)
         }
         // Total stock across all batches is insufficient
         else if (data.totalAvailableStock < data.dispensedQuantity) {
           issues.push(
-            `"${item.drug.name}" total stok tidak cukup (tersedia: ${data.totalAvailableStock}, butuh: ${data.dispensedQuantity})`
+            `"${medicationName}" total stok tidak cukup (tersedia: ${data.totalAvailableStock}, butuh: ${data.dispensedQuantity})`
           )
         }
         // Allocated quantity doesn't match required
@@ -90,18 +111,18 @@ export function BulkFulfillmentDialog({
           const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
           if (totalAllocated < data.dispensedQuantity) {
             issues.push(
-              `"${item.drug.name}" jumlah alokasi kurang (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+              `"${medicationName}" jumlah alokasi kurang (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
             )
           } else if (totalAllocated > data.dispensedQuantity) {
             issues.push(
-              `"${item.drug.name}" jumlah alokasi berlebih (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+              `"${medicationName}" jumlah alokasi berlebih (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
             )
           }
         }
       }
     }
     return issues
-  }, [selectedGroup, fulfillmentData])
+  }, [selectedGroup, fulfillmentData, getMedicationName])
 
   // Handlers
   const handleSubmit = useCallback(async () => {
@@ -125,18 +146,35 @@ export function BulkFulfillmentDialog({
       dispensedQuantity: number
       fulfilledBy: string
       notes?: string
+      isCompound?: boolean
     }> = []
 
     for (const item of selectedGroup?.prescriptions || []) {
+      const medicationName = getMedicationName(item)
+
+      // Handle compound prescriptions differently - no batch allocation needed
+      if (item.prescription.isCompound) {
+        prescriptionData.push({
+          prescriptionId: item.prescription.id,
+          inventoryId: "", // No inventory for compound
+          dispensedQuantity: item.prescription.quantity,
+          fulfilledBy: fulfilledBy.trim(),
+          notes: notes.trim() || undefined,
+          isCompound: true,
+        })
+        continue
+      }
+
+      // Regular drug prescription - needs batch allocation
       const data = fulfillmentData[item.prescription.id]
 
       if (!data || data.allocatedBatches.length === 0) {
-        setValidationError(`Batch untuk "${item.drug.name}" belum dipilih`)
+        setValidationError(`Batch untuk "${medicationName}" belum dipilih`)
         return
       }
 
       if (!data.dispensedQuantity || data.dispensedQuantity <= 0) {
-        setValidationError(`Jumlah untuk "${item.drug.name}" tidak valid`)
+        setValidationError(`Jumlah untuk "${medicationName}" tidak valid`)
         return
       }
 
@@ -144,7 +182,7 @@ export function BulkFulfillmentDialog({
       const totalAllocated = data.allocatedBatches.reduce((sum, a) => sum + a.quantity, 0)
       if (totalAllocated !== data.dispensedQuantity) {
         setValidationError(
-          `Jumlah alokasi "${item.drug.name}" tidak sesuai (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
+          `Jumlah alokasi "${medicationName}" tidak sesuai (dialokasikan: ${totalAllocated}, butuh: ${data.dispensedQuantity})`
         )
         return
       }
@@ -162,7 +200,7 @@ export function BulkFulfillmentDialog({
     }
 
     await onSubmit(prescriptionData)
-  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit, stockIssues])
+  }, [fulfilledBy, notes, selectedGroup, fulfillmentData, onSubmit, stockIssues, getMedicationName])
 
   const handleClose = useCallback(() => {
     if (!isSubmitting) {
@@ -220,17 +258,19 @@ export function BulkFulfillmentDialog({
               <PrescriptionItem
                 key={item.prescription.id}
                 index={idx}
-                drugId={item.drug.id}
-                drugName={item.drug.name}
+                drugId={item.drug?.id || ""}
+                drugName={getMedicationName(item)}
                 frequency={item.prescription.frequency}
                 quantity={item.prescription.quantity}
                 instructions={item.prescription.instructions}
-                unit={item.drug.unit}
+                unit={item.drug?.unit || "unit"}
                 fulfillmentData={fulfillmentData[item.prescription.id]}
                 onAllocationsChange={(allocs) =>
                   handleAllocationsChange(item.prescription.id, allocs)
                 }
                 showSeparator={idx > 0}
+                isCompound={item.prescription.isCompound}
+                compoundRecipe={item.compoundRecipe}
               />
             ))}
 

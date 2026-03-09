@@ -54,10 +54,26 @@ export function useBulkFulfillmentData(open: boolean, selectedGroup: Prescriptio
 
       setFulfillmentData(newData)
 
-      // Load batches for each drug
+      // Load batches for each drug (skip compound prescriptions)
       for (const item of selectedGroup.prescriptions) {
+        // Skip batch loading for compound prescriptions - they don't use inventory
+        if (item.prescription.isCompound) {
+          if (!ignore) {
+            setFulfillmentData((prev) => ({
+              ...prev,
+              [item.prescription.id]: {
+                ...prev[item.prescription.id],
+                isLoading: false,
+                // Compound prescriptions are ready without batches
+              },
+            }))
+          }
+          continue
+        }
+
+        // Regular drug prescriptions - load batches
         try {
-          const batches = await getAvailableBatches(item.drug.id)
+          const batches = await getAvailableBatches(item.drug?.id || "")
           const allocations = allocateBatchesForDispensing(batches, item.prescription.quantity)
           const totalStock = getAvailableStock(batches)
           const primaryBatch = allocations.length > 0 ? allocations[0].batch : null

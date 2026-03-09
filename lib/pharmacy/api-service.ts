@@ -6,7 +6,7 @@
 import { eq, sql, and, lt, gte, desc, ilike, or, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { drugs, drugInventory, prescriptions, stockMovements } from "@/db/schema"
+import { drugs, drugInventory, prescriptions, stockMovements, compoundRecipes } from "@/db/schema"
 import { medicalRecords } from "@/db/schema/medical-records"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
@@ -19,13 +19,22 @@ import type {
   DrugInventoryWithDetails,
   Drug,
   PrescriptionQueueItem,
+  CompoundRecipeBasic,
 } from "@/types/pharmacy"
 import { getSession } from "@/lib/rbac"
 import { Prescription } from "@/types/medical-record"
 import { Pagination } from "@/types/api"
 
 import { DrugInventoryInput, DrugUpdateInput } from "./validation"
-import { calculateDaysUntilExpiry, getExpiryAlertLevel, getStockAlertLevel } from "./stock-utils"
+import {
+  calculateDaysUntilExpiry,
+  getExpiryAlertLevel,
+  getStockAlertLevel,
+  allocateBatchesForDispensing,
+} from "./stock-utils"
+import type { CompoundIngredientAllocation } from "@/types/pharmacy"
+import type { CompoundIngredient } from "@/db/schema/inventory"
+import type { DrugInventoryWithDetails as ServiceDrugInventoryWithDetails } from "@/lib/services/inventory.service"
 
 /**
  * Get all drugs with total stock calculation
@@ -465,7 +474,8 @@ export async function getExpiringDrugs(): Promise<DrugInventoryWithDetails[]> {
 function groupPrescriptionsByVisit(
   pending: Array<{
     prescription: Prescription
-    drug: Drug
+    drug: Drug | null
+    compoundRecipe: CompoundRecipeBasic | null
     patient: { id: string; name: string; mrNumber: string }
     doctor: { id: string; name: string } | null
     visit: { id: string; visitNumber: string; visitType: "outpatient" | "inpatient" | "emergency" }
@@ -504,6 +514,7 @@ function groupPrescriptionsByVisit(
     group.prescriptions.push({
       prescription: item.prescription,
       drug: item.drug,
+      compoundRecipe: item.compoundRecipe,
     })
 
     // Update latest timestamp if this prescription is newer
@@ -539,6 +550,14 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
     .select({
       prescription: prescriptions,
       drug: drugs,
+      // Compound recipe info for compound prescriptions
+      compoundRecipe: {
+        id: compoundRecipes.id,
+        code: compoundRecipes.code,
+        name: compoundRecipes.name,
+        composition: compoundRecipes.composition,
+        price: compoundRecipes.price,
+      },
       patient: {
         id: patients.id,
         name: patients.name,
@@ -565,7 +584,10 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
       },
     })
     .from(prescriptions)
-    .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+    // LEFT JOIN drugs: NULL for compound prescriptions
+    .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+    // LEFT JOIN compoundRecipes: NULL for regular drug prescriptions
+    .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
     // LEFT JOIN medicalRecords: NULL for inpatient prescriptions
     .leftJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
     // Join visits: Either from medicalRecord (outpatient) or direct (inpatient)
@@ -590,23 +612,94 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
     .where(eq(prescriptions.isFulfilled, false))
     .orderBy(desc(prescriptions.createdAt))
 
-  // Cast visitType to the correct union type and group prescriptions by visit
+  // Cast visitType to the correct union type, process compound recipe, and group by visit
   const typedPending = pending.map((item) => ({
     ...item,
     visit: {
       ...item.visit,
       visitType: item.visit.visitType as "outpatient" | "inpatient" | "emergency",
     },
+    // Convert compound recipe composition from JSON or set null
+    compoundRecipe: item.compoundRecipe?.id
+      ? {
+          id: item.compoundRecipe.id,
+          code: item.compoundRecipe.code,
+          name: item.compoundRecipe.name,
+          composition: item.compoundRecipe.composition as CompoundRecipeBasic["composition"],
+          price: item.compoundRecipe.price,
+        }
+      : null,
   }))
 
   return groupPrescriptionsByVisit(typedPending)
 }
 
 /**
+ * Allocate batches for all compound ingredients using FEFO
+ * Validates ALL ingredients have sufficient stock before returning
+ * @throws Error if any ingredient has insufficient stock
+ */
+async function allocateCompoundIngredients(
+  composition: CompoundIngredient[],
+  prescribedQuantity: number
+): Promise<CompoundIngredientAllocation[]> {
+  const allocations: CompoundIngredientAllocation[] = []
+  const insufficientIngredients: string[] = []
+
+  for (const ingredient of composition) {
+    const requiredQty = ingredient.quantity * prescribedQuantity
+
+    // Get available batches for this drug
+    const batches = await getDrugInventoryByDrugId(ingredient.drugId)
+    const availableBatches = batches.filter(
+      (b) => b.expiryAlertLevel !== "expired" && b.stockQuantity > 0
+    )
+
+    // Check total available
+    const totalAvailable = availableBatches.reduce((sum, b) => sum + b.stockQuantity, 0)
+
+    if (totalAvailable < requiredQty) {
+      insufficientIngredients.push(
+        `${ingredient.drugName}: butuh ${requiredQty} ${ingredient.unit}, tersedia ${totalAvailable}`
+      )
+      continue
+    }
+
+    // Allocate using FEFO (cast to compatible type for stock-utils function)
+    const batchAllocations = allocateBatchesForDispensing(
+      availableBatches as unknown as ServiceDrugInventoryWithDetails[],
+      requiredQty
+    )
+
+    allocations.push({
+      drugId: ingredient.drugId,
+      drugName: ingredient.drugName,
+      requiredQuantity: requiredQty,
+      unit: ingredient.unit,
+      batches: batchAllocations.map((ba) => ({
+        inventoryId: ba.batch.id,
+        batchNumber: ba.batch.batchNumber,
+        quantity: ba.quantity,
+      })),
+    })
+  }
+
+  // Fail if any ingredient is insufficient
+  if (insufficientIngredients.length > 0) {
+    throw new Error(`Stok bahan tidak mencukupi:\n${insufficientIngredients.join("\n")}`)
+  }
+
+  return allocations
+}
+
+/**
  * Bulk fulfill multiple prescriptions atomically
  *
- * Supports multi-batch fulfillment: multiple entries with the same prescriptionId
- * but different inventoryId are grouped and processed together.
+ * Supports:
+ * - Multi-batch fulfillment: multiple entries with the same prescriptionId
+ *   but different inventoryId are grouped and processed together.
+ * - Compound prescriptions: prescriptions without inventoryId are fulfilled
+ *   without stock deduction (marked as compound with isCompound flag).
  *
  * Performance optimizations:
  * - Batch fetches all prescriptions and inventories upfront (reduces N+1 queries)
@@ -626,17 +719,23 @@ export async function bulkFulfillPrescriptions(
     return []
   }
 
-  // Group by prescriptionId for multi-batch support
+  // Separate compound and regular prescriptions
+  const compoundRequests = fulfillmentRequests.filter((req) => req.isCompound)
+  const regularRequests = fulfillmentRequests.filter((req) => !req.isCompound)
+
+  // Group regular requests by prescriptionId for multi-batch support
   const grouped = new Map<string, PrescriptionFulfillmentInput[]>()
-  for (const req of fulfillmentRequests) {
+  for (const req of regularRequests) {
     const existing = grouped.get(req.prescriptionId) || []
     existing.push(req)
     grouped.set(req.prescriptionId, existing)
   }
 
   // Extract all unique prescription and inventory IDs for batch fetching
-  const prescriptionIds = [...grouped.keys()]
-  const inventoryIds = [...new Set(fulfillmentRequests.map((req) => req.inventoryId))]
+  const allPrescriptionIds = [...grouped.keys(), ...compoundRequests.map((r) => r.prescriptionId)]
+  const inventoryIds = [
+    ...new Set(regularRequests.map((req) => req.inventoryId).filter(Boolean)),
+  ] as string[]
 
   // Batch fetch all prescriptions and inventories in parallel (performance optimization)
   const [allPrescriptions, allInventories] = await Promise.all([
@@ -645,19 +744,21 @@ export async function bulkFulfillPrescriptions(
       .from(prescriptions)
       .where(
         sql`${prescriptions.id} IN (${sql.join(
-          prescriptionIds.map((id) => sql`${id}`),
+          allPrescriptionIds.map((id) => sql`${id}`),
           sql`, `
         )})`
       ),
-    db
-      .select()
-      .from(drugInventory)
-      .where(
-        sql`${drugInventory.id} IN (${sql.join(
-          inventoryIds.map((id) => sql`${id}`),
-          sql`, `
-        )})`
-      ),
+    inventoryIds.length > 0
+      ? db
+          .select()
+          .from(drugInventory)
+          .where(
+            sql`${drugInventory.id} IN (${sql.join(
+              inventoryIds.map((id) => sql`${id}`),
+              sql`, `
+            )})`
+          )
+      : Promise.resolve([]),
   ])
 
   // Create lookup maps for O(1) access during validation
@@ -665,6 +766,20 @@ export async function bulkFulfillPrescriptions(
   const inventoryMap = new Map(allInventories.map((inv) => [inv.id, inv]))
 
   // Validate all requests before making any changes (fail-fast)
+  // Validate compound prescriptions
+  for (const req of compoundRequests) {
+    const prescription = prescriptionMap.get(req.prescriptionId)
+
+    if (!prescription) {
+      throw new Error(`Prescription ${req.prescriptionId} not found`)
+    }
+
+    if (prescription.isFulfilled) {
+      throw new Error(`Prescription ${req.prescriptionId} has already been fulfilled`)
+    }
+  }
+
+  // Validate regular drug prescriptions
   for (const [prescriptionId, requests] of grouped) {
     const prescription = prescriptionMap.get(prescriptionId)
 
@@ -680,7 +795,7 @@ export async function bulkFulfillPrescriptions(
 
     // Validate each batch allocation
     for (const req of requests) {
-      const inventory = inventoryMap.get(req.inventoryId)
+      const inventory = inventoryMap.get(req.inventoryId!)
 
       // Validate inventory exists
       if (!inventory) {
@@ -700,9 +815,70 @@ export async function bulkFulfillPrescriptions(
   return await db.transaction(async (tx) => {
     const results: Array<typeof prescriptions.$inferSelect> = []
 
+    // Fulfill compound prescriptions WITH inventory deduction for ingredients
+    for (const req of compoundRequests) {
+      const prescription = prescriptionMap.get(req.prescriptionId)!
+
+      // Fetch compound recipe with composition
+      const [recipe] = await tx
+        .select()
+        .from(compoundRecipes)
+        .where(eq(compoundRecipes.id, prescription.compoundRecipeId!))
+        .limit(1)
+
+      if (!recipe) {
+        throw new Error(`Compound recipe not found for prescription ${req.prescriptionId}`)
+      }
+
+      // Allocate batches for all ingredients (validates stock availability)
+      const ingredientAllocations = await allocateCompoundIngredients(
+        recipe.composition as CompoundIngredient[],
+        req.dispensedQuantity
+      )
+
+      // Update prescription status
+      const [updatedPrescription] = await tx
+        .update(prescriptions)
+        .set({
+          isFulfilled: true,
+          fulfilledBy: req.fulfilledBy,
+          fulfilledAt: sql`CURRENT_TIMESTAMP`,
+          dispensedQuantity: req.dispensedQuantity,
+          notes: req.notes || null,
+        })
+        .where(eq(prescriptions.id, req.prescriptionId))
+        .returning()
+
+      // Deduct stock for each ingredient
+      for (const ingredientAlloc of ingredientAllocations) {
+        for (const batchAlloc of ingredientAlloc.batches) {
+          // Deduct stock from batch
+          await tx
+            .update(drugInventory)
+            .set({
+              stockQuantity: sql`${drugInventory.stockQuantity} - ${batchAlloc.quantity}`,
+            })
+            .where(eq(drugInventory.id, batchAlloc.inventoryId))
+
+          // Record stock movement for audit trail
+          await tx.insert(stockMovements).values({
+            inventoryId: batchAlloc.inventoryId,
+            movementType: "out",
+            quantity: -batchAlloc.quantity,
+            reason: `Racikan: ${recipe.name} - ${ingredientAlloc.drugName}`,
+            referenceId: req.prescriptionId,
+            performedBy: req.fulfilledBy,
+          })
+        }
+      }
+
+      results.push(updatedPrescription)
+    }
+
+    // Fulfill regular drug prescriptions (with inventory deduction)
     for (const [prescriptionId, requests] of grouped) {
       const totalDispensed = requests.reduce((sum, r) => sum + r.dispensedQuantity, 0)
-      const primaryInventoryId = requests[0].inventoryId
+      const primaryInventoryId = requests[0].inventoryId!
 
       // Update prescription once with total dispensed quantity
       const [updatedPrescription] = await tx
@@ -725,11 +901,11 @@ export async function bulkFulfillPrescriptions(
           .set({
             stockQuantity: sql`${drugInventory.stockQuantity} - ${req.dispensedQuantity}`,
           })
-          .where(eq(drugInventory.id, req.inventoryId))
+          .where(eq(drugInventory.id, req.inventoryId!))
 
         // Record stock movement per batch for audit trail
         await tx.insert(stockMovements).values({
-          inventoryId: req.inventoryId,
+          inventoryId: req.inventoryId!,
           movementType: "out",
           quantity: -req.dispensedQuantity,
           reason: `Resep #${prescriptionId}`,
@@ -750,21 +926,13 @@ export async function bulkFulfillPrescriptions(
  * Uses transaction to ensure atomicity and parallel queries for better performance
  */
 export async function fulfillPrescription(data: PrescriptionFulfillmentInput) {
-  // Fetch prescription and inventory in parallel for better performance
-  const [prescription, inventory] = await Promise.all([
-    db
-      .select()
-      .from(prescriptions)
-      .where(eq(prescriptions.id, data.prescriptionId))
-      .limit(1)
-      .then((result) => result[0]),
-    db
-      .select()
-      .from(drugInventory)
-      .where(eq(drugInventory.id, data.inventoryId))
-      .limit(1)
-      .then((result) => result[0]),
-  ])
+  // Fetch prescription
+  const prescription = await db
+    .select()
+    .from(prescriptions)
+    .where(eq(prescriptions.id, data.prescriptionId))
+    .limit(1)
+    .then((result) => result[0])
 
   // Validate prescription exists and is not fulfilled
   if (!prescription) {
@@ -774,6 +942,80 @@ export async function fulfillPrescription(data: PrescriptionFulfillmentInput) {
   if (prescription.isFulfilled) {
     throw new Error(`Prescription ${data.prescriptionId} has already been fulfilled`)
   }
+
+  // Handle compound prescriptions WITH inventory deduction for ingredients
+  if (data.isCompound) {
+    // Fetch compound recipe with composition
+    const [recipe] = await db
+      .select()
+      .from(compoundRecipes)
+      .where(eq(compoundRecipes.id, prescription.compoundRecipeId!))
+      .limit(1)
+
+    if (!recipe) {
+      throw new Error(`Compound recipe not found for prescription ${data.prescriptionId}`)
+    }
+
+    // Allocate batches for all ingredients (validates stock availability)
+    const ingredientAllocations = await allocateCompoundIngredients(
+      recipe.composition as CompoundIngredient[],
+      data.dispensedQuantity
+    )
+
+    const result = await db.transaction(async (tx) => {
+      // Update prescription status
+      const [updatedPrescription] = await tx
+        .update(prescriptions)
+        .set({
+          isFulfilled: true,
+          fulfilledBy: data.fulfilledBy,
+          fulfilledAt: sql`CURRENT_TIMESTAMP`,
+          dispensedQuantity: data.dispensedQuantity,
+          notes: data.notes || null,
+        })
+        .where(eq(prescriptions.id, data.prescriptionId))
+        .returning()
+
+      // Deduct stock for each ingredient
+      for (const ingredientAlloc of ingredientAllocations) {
+        for (const batchAlloc of ingredientAlloc.batches) {
+          // Deduct stock from batch
+          await tx
+            .update(drugInventory)
+            .set({
+              stockQuantity: sql`${drugInventory.stockQuantity} - ${batchAlloc.quantity}`,
+            })
+            .where(eq(drugInventory.id, batchAlloc.inventoryId))
+
+          // Record stock movement for audit trail
+          await tx.insert(stockMovements).values({
+            inventoryId: batchAlloc.inventoryId,
+            movementType: "out",
+            quantity: -batchAlloc.quantity,
+            reason: `Racikan: ${recipe.name} - ${ingredientAlloc.drugName}`,
+            referenceId: data.prescriptionId,
+            performedBy: data.fulfilledBy,
+          })
+        }
+      }
+
+      return updatedPrescription
+    })
+
+    return result
+  }
+
+  // Regular drug prescription - validate inventory
+  if (!data.inventoryId) {
+    throw new Error("Inventory ID is required for regular drug prescriptions")
+  }
+
+  const inventory = await db
+    .select()
+    .from(drugInventory)
+    .where(eq(drugInventory.id, data.inventoryId))
+    .limit(1)
+    .then((result) => result[0])
 
   // Validate inventory exists and has sufficient stock
   if (!inventory) {
@@ -808,11 +1050,11 @@ export async function fulfillPrescription(data: PrescriptionFulfillmentInput) {
       .set({
         stockQuantity: sql`${drugInventory.stockQuantity} - ${data.dispensedQuantity}`,
       })
-      .where(eq(drugInventory.id, data.inventoryId))
+      .where(eq(drugInventory.id, data.inventoryId!))
 
     // Record stock movement for audit trail
     await tx.insert(stockMovements).values({
-      inventoryId: data.inventoryId,
+      inventoryId: data.inventoryId!,
       movementType: "out",
       quantity: -data.dispensedQuantity,
       reason: `Resep #${data.prescriptionId}`,

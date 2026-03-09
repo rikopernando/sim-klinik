@@ -174,13 +174,15 @@ export interface DrugInput {
 
 /**
  * Prescription Fulfillment Input
+ * Supports both regular drugs (with inventoryId) and compound recipes (without)
  */
 export interface PrescriptionFulfillmentInput {
   prescriptionId: string
-  inventoryId: string
+  inventoryId?: string // Optional for compound prescriptions
   dispensedQuantity: number
   fulfilledBy: string
   notes?: string
+  isCompound?: boolean // Flag for compound prescriptions
 }
 
 /**
@@ -275,6 +277,36 @@ export interface PrescriptionQueueItem {
   } | null
   prescriptions: {
     prescription: Prescription
-    drug: Drug
+    drug: Drug | null // Can be null for compound prescriptions
+    compoundRecipe: CompoundRecipeBasic | null // For compound prescriptions
   }[]
+}
+
+/**
+ * Compound Ingredient Allocation
+ * Tracks batch allocations for each ingredient when fulfilling compound prescriptions
+ */
+export interface CompoundIngredientAllocation {
+  drugId: string
+  drugName: string
+  requiredQuantity: number
+  unit: string
+  batches: {
+    inventoryId: string
+    batchNumber: string
+    quantity: number
+  }[]
+}
+
+/**
+ * Ingredient Stock Status
+ * Used to validate ingredient availability before fulfillment
+ */
+export interface IngredientStockStatus {
+  drugId: string
+  drugName: string
+  required: number
+  available: number
+  unit: string
+  hasSufficientStock: boolean
 }

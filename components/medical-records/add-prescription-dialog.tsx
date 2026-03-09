@@ -151,8 +151,6 @@ export function AddPrescriptionDialog({
       if (recipe.defaultInstructions) {
         form.setValue(`prescriptions.${index}.instructions`, recipe.defaultInstructions)
       }
-      // Set route to "compounded" for compound recipes
-      form.setValue(`prescriptions.${index}.route`, "compounded")
     },
     [form]
   )

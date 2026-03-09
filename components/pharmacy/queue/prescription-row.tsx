@@ -29,6 +29,10 @@ export const PrescriptionRow = memo(function PrescriptionRow({
         ? "secondary"
         : "destructive"
 
+  // Count compound prescriptions
+  const compoundCount = item.prescriptions.filter((p) => p.prescription.isCompound).length
+  const drugCount = item.prescriptions.length - compoundCount
+
   return (
     <TableRow>
       <TableCell className="font-medium">{index + 1}</TableCell>
@@ -56,9 +60,21 @@ export const PrescriptionRow = memo(function PrescriptionRow({
         </div>
       </TableCell>
       <TableCell>
-        <Badge variant="secondary" className="font-medium">
-          {item.prescriptions.length} Resep
-        </Badge>
+        <div className="flex flex-wrap gap-1">
+          {drugCount > 0 && (
+            <Badge variant="secondary" className="font-medium">
+              {drugCount} Obat
+            </Badge>
+          )}
+          {compoundCount > 0 && (
+            <Badge
+              variant="outline"
+              className="border-purple-300 bg-purple-50 font-medium text-purple-700"
+            >
+              {compoundCount} Racik
+            </Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <span className="whitespace-nowrap">{item.doctor?.name || "N/A"}</span>
