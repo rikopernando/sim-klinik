@@ -1,11 +1,12 @@
 /**
  * Composition Builder Component
  * For adding/removing drug ingredients in compound recipes
+ * Shows ingredient prices and calculates total cost
  */
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -15,16 +16,48 @@ import { Spinner } from "@/components/ui/spinner"
 import { useDrugSearch, type Drug } from "@/hooks/use-drug-search"
 import type { CompoundIngredient } from "@/types/compound-recipe"
 
+/**
+ * Format number to Indonesian Rupiah
+ */
+function formatRupiah(amount: number): string {
+  return `Rp ${amount.toLocaleString("id-ID")}`
+}
+
 interface CompositionBuilderProps {
   value: CompoundIngredient[]
   onChange: (value: CompoundIngredient[]) => void
+  onTotalChange?: (total: number) => void // Callback when total price changes
   error?: string
 }
 
-export function CompositionBuilder({ value, onChange, error }: CompositionBuilderProps) {
+export function CompositionBuilder({
+  value,
+  onChange,
+  onTotalChange,
+  error,
+}: CompositionBuilderProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showDropdown, setShowDropdown] = useState(false)
   const { drugs, isSearching } = useDrugSearch(searchQuery)
+
+  // Calculate total price of all ingredients
+  const totalPrice = useMemo(() => {
+    return value.reduce((sum, ingredient) => {
+      const price = ingredient.price || 0
+      return sum + price * ingredient.quantity
+    }, 0)
+  }, [value])
+
+  // Track previous total to avoid unnecessary callbacks
+  const prevTotalRef = useRef<number>(totalPrice)
+
+  // Emit total price only when it actually changes
+  useEffect(() => {
+    if (prevTotalRef.current !== totalPrice) {
+      prevTotalRef.current = totalPrice
+      onTotalChange?.(totalPrice)
+    }
+  }, [totalPrice, onTotalChange])
 
   const handleAddIngredient = (drug: Drug) => {
     // Check if drug already exists
@@ -37,6 +70,7 @@ export function CompositionBuilder({ value, onChange, error }: CompositionBuilde
       drugName: drug.name,
       quantity: 1,
       unit: drug.unit,
+      price: parseFloat(drug.price) || 0, // Store the drug price
     }
 
     onChange([...value, newIngredient])
@@ -122,44 +156,68 @@ export function CompositionBuilder({ value, onChange, error }: CompositionBuilde
       {/* Ingredient List */}
       {value.length > 0 ? (
         <div className="space-y-2">
-          {value.map((ingredient, index) => (
-            <div
-              key={ingredient.drugId}
-              className="bg-muted/50 flex items-center gap-3 rounded-lg border p-3"
-            >
-              <span className="text-muted-foreground text-sm font-medium">{index + 1}.</span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{ingredient.drugName}</p>
+          {value.map((ingredient, index) => {
+            const subtotal = (ingredient.price || 0) * ingredient.quantity
+            return (
+              <div key={ingredient.drugId} className="bg-muted/50 rounded-lg border p-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground text-sm font-medium">{index + 1}.</span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{ingredient.drugName}</p>
+                    {ingredient.price !== undefined && ingredient.price > 0 && (
+                      <p className="text-muted-foreground text-xs">
+                        @ {formatRupiah(ingredient.price)}/{ingredient.unit}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      step="0.001"
+                      min="0.001"
+                      value={ingredient.quantity}
+                      onChange={(e) =>
+                        handleUpdateQuantity(ingredient.drugId, parseFloat(e.target.value) || 0.001)
+                      }
+                      className="w-24"
+                    />
+                    <Input
+                      value={ingredient.unit}
+                      onChange={(e) => handleUpdateUnit(ingredient.drugId, e.target.value)}
+                      className="w-20"
+                      placeholder="Unit"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleRemoveIngredient(ingredient.drugId)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                {/* Subtotal per ingredient */}
+                {ingredient.price !== undefined && ingredient.price > 0 && (
+                  <div className="mt-1 ml-6 text-right">
+                    <span className="text-muted-foreground text-xs">
+                      Subtotal:{" "}
+                      <span className="text-foreground font-medium">{formatRupiah(subtotal)}</span>
+                    </span>
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
-                <Input
-                  type="number"
-                  step="0.001"
-                  min="0.001"
-                  value={ingredient.quantity}
-                  onChange={(e) =>
-                    handleUpdateQuantity(ingredient.drugId, parseFloat(e.target.value) || 0.001)
-                  }
-                  className="w-24"
-                />
-                <Input
-                  value={ingredient.unit}
-                  onChange={(e) => handleUpdateUnit(ingredient.drugId, e.target.value)}
-                  className="w-20"
-                  placeholder="Unit"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveIngredient(ingredient.drugId)}
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+            )
+          })}
+
+          {/* Total Price */}
+          {totalPrice > 0 && (
+            <div className="bg-primary/5 flex items-center justify-between rounded-lg border border-dashed p-3">
+              <span className="text-sm font-medium">Total Harga Bahan:</span>
+              <span className="text-primary text-lg font-semibold">{formatRupiah(totalPrice)}</span>
             </div>
-          ))}
+          )}
         </div>
       ) : (
         <div className="text-muted-foreground rounded-lg border border-dashed py-8 text-center text-sm">

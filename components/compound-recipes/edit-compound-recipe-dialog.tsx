@@ -5,7 +5,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
   Dialog,
   DialogContent,
@@ -126,6 +126,14 @@ export function EditCompoundRecipeDialog({
     }
   }
 
+  const handleTotalPriceChange = useCallback((total: number) => {
+    // Auto-fill price field when ingredients change
+    setFormData((prev) => ({ ...prev, price: total }))
+    if (total >= 100) {
+      setPriceError(null)
+    }
+  }, [])
+
   const handleClose = (open: boolean) => {
     if (!open) {
       setCompositionError(null)
@@ -197,6 +205,7 @@ export function EditCompoundRecipeDialog({
               <CompositionBuilder
                 value={formData.composition || []}
                 onChange={handleCompositionChange}
+                onTotalChange={handleTotalPriceChange}
                 error={compositionError || undefined}
               />
 

@@ -11,6 +11,7 @@ export interface CompoundIngredient {
   drugName: string
   quantity: number
   unit: string
+  price?: number // Drug price per unit (for cost calculation, optional)
 }
 
 /**
