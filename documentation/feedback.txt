@@ -1,0 +1,6 @@
+Users Feedback
+1. Resep Obat Racik
+  - Saat ini belum ada fitur yang bisa memfasilitasi obat racik, farmasi harus input secara manual obat-obat yang harus diracik
+2. Fitur Stok Opname belum ada
+3. Transfer Rawat Jalan Ke Rawat Inap
+4. Master Data Belum Lengkap

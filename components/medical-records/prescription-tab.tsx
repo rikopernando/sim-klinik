@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import { Plus } from "lucide-react"
+import { Plus, Beaker, Pill } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -48,12 +48,16 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
 
   const canEdit = useMemo(() => canEditMedicalRecord(isLocked), [isLocked])
 
-  // Calculate subtotal of all prescriptions
+  // Calculate subtotal of all prescriptions (supports both drug and compound recipes)
   const subtotal = useMemo(() => {
     return prescriptions.reduce((total, prescription) => {
-      if (prescription.drugPrice) {
+      // Use compound recipe price or drug price depending on type
+      const price = prescription.isCompound
+        ? prescription.compoundRecipePrice
+        : prescription.drugPrice
+      if (price) {
         const quantity = prescription.dispensedQuantity || prescription.quantity
-        return total + parseFloat(prescription.drugPrice) * quantity
+        return total + parseFloat(price) * quantity
       }
       return total
     }, 0)
@@ -133,8 +137,15 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
               const medicationRoute = MEDICATION_ROUTES.find(
                 (item) => item.value === prescription.route
               )
+              // Get medication name and price based on prescription type
+              const medicationName = prescription.isCompound
+                ? prescription.compoundRecipeName
+                : prescription.drugName
+              const medicationPrice = prescription.isCompound
+                ? prescription.compoundRecipePrice
+                : prescription.drugPrice
               const itemSubtotal =
-                parseFloat(prescription.drugPrice || "0") *
+                parseFloat(medicationPrice || "0") *
                 (prescription.dispensedQuantity || prescription.quantity)
               return (
                 <ListItem
@@ -147,7 +158,23 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
                   <div className="space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-medium">{prescription.drugName}</span>
+                        {prescription.isCompound ? (
+                          <Badge
+                            variant="outline"
+                            className="gap-1 border-purple-300 bg-purple-50 text-purple-700"
+                          >
+                            <Beaker className="h-3 w-3" />
+                            Obat Racik
+                          </Badge>
+                        ) : (
+                          <Pill className="text-muted-foreground h-4 w-4" />
+                        )}
+                        <span className="font-medium">{medicationName}</span>
+                        {prescription.isCompound && prescription.compoundRecipeCode && (
+                          <Badge variant="secondary" className="font-mono text-xs">
+                            {prescription.compoundRecipeCode}
+                          </Badge>
+                        )}
                         {prescription.addedByPharmacist && (
                           <Badge
                             variant="outline"
@@ -176,11 +203,11 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
                           <span className="col-span-2">: {medicationRoute?.label}</span>
                         </div>
                       )}
-                      {prescription.drugPrice && (
+                      {medicationPrice && (
                         <div className="grid grid-cols-4 md:col-span-1">
                           <span className="col-span-2 font-medium">Harga</span>
                           <span className="col-span-2">
-                            : Rp {parseFloat(prescription.drugPrice).toLocaleString("id-ID")}
+                            : Rp {parseFloat(medicationPrice).toLocaleString("id-ID")}
                           </span>
                         </div>
                       )}
@@ -188,7 +215,7 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
                         <span className="col-span-2 font-medium">Instruksi Tambahan</span>
                         <span className="col-span-2">: {prescription.instructions || "-"}</span>
                       </div>
-                      {prescription.drugPrice && (
+                      {medicationPrice && (
                         <div className="grid grid-cols-4 md:col-span-1">
                           <span className="col-span-2 font-medium">Subtotal</span>
                           <span className="text-primary col-span-2 font-semibold">

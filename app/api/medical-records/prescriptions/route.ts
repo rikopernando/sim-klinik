@@ -3,7 +3,14 @@ import { eq } from "drizzle-orm"
 import { z } from "zod"
 
 import { db } from "@/db"
-import { prescriptions, medicalRecords, drugs, visits, patients } from "@/db/schema"
+import {
+  prescriptions,
+  medicalRecords,
+  drugs,
+  visits,
+  patients,
+  compoundRecipes,
+} from "@/db/schema"
 import { sendNotification } from "@/lib/notifications/sse-manager"
 import { createPrescriptionFormSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
@@ -46,13 +53,15 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Add prescription
+    // Add prescription (supports both regular drugs and compound recipes)
     const [newPrescription] = await db
       .insert(prescriptions)
       .values({
         visitId: validatedData.visitId,
         medicalRecordId: validatedData.medicalRecordId,
-        drugId: validatedData.drugId,
+        isCompound: validatedData.isCompound,
+        drugId: validatedData.isCompound ? null : validatedData.drugId,
+        compoundRecipeId: validatedData.isCompound ? validatedData.compoundRecipeId : null,
         dosage: validatedData.dosage,
         frequency: validatedData.frequency,
         quantity: validatedData.quantity,
@@ -67,12 +76,14 @@ export async function POST(request: NextRequest) {
       .select({
         prescription: prescriptions,
         drug: drugs,
+        compoundRecipe: compoundRecipes,
         medicalRecord: medicalRecords,
         visit: visits,
         patient: patients,
       })
       .from(prescriptions)
       .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+      .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
       .leftJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
       .leftJoin(visits, eq(medicalRecords.visitId, visits.id))
       .leftJoin(patients, eq(visits.patientId, patients.id))
@@ -82,11 +93,17 @@ export async function POST(request: NextRequest) {
     // Send real-time notification to pharmacy (H.1.1 Integration)
     if (prescriptionWithDetails.length > 0) {
       const data = prescriptionWithDetails[0]
+      // Get medication name based on prescription type
+      const medicationName = newPrescription.isCompound
+        ? data.compoundRecipe?.name || "Obat Racik"
+        : data.drug?.name || "Unknown"
+
       sendNotification("pharmacy", "new_prescription", {
         prescriptionId: newPrescription.id,
         patientName: data.patient?.name || "Unknown",
         patientMRNumber: data.patient?.mrNumber || "N/A",
-        drugName: data.drug?.name || "Unknown",
+        drugName: medicationName,
+        isCompound: newPrescription.isCompound,
         dosage: newPrescription.dosage || null,
         frequency: newPrescription.frequency,
         quantity: newPrescription.quantity,
@@ -101,7 +118,7 @@ export async function POST(request: NextRequest) {
     }
 
     const response: ResponseApi = {
-      message: "Diagnosis added successfully",
+      message: "Prescription added successfully",
       status: HTTP_STATUS_CODES.CREATED,
     }
 

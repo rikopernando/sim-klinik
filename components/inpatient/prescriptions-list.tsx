@@ -7,6 +7,7 @@
 
 import { memo, useMemo, useState } from "react"
 import { IconPill, IconTrash, IconCheck, IconClock } from "@tabler/icons-react"
+import { Beaker, Pill } from "lucide-react"
 import { toast } from "sonner"
 
 import {
@@ -64,9 +65,31 @@ const PrescriptionRow = memo(function PrescriptionRow({
   isLocked: boolean
 }) {
   const medicationRoute = MEDICATION_ROUTES.find((item) => item.value === prescription.route)
+  const medicationName = prescription.isCompound
+    ? prescription.compoundRecipeName
+    : prescription.drugName
+  const medicationPrice = prescription.isCompound
+    ? prescription.compoundRecipePrice
+    : prescription.drugPrice
+
   return (
     <TableRow>
-      <TableCell className="font-medium">{prescription.drugName || "-"}</TableCell>
+      <TableCell className="min-w-[220px]">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {prescription.isCompound ? (
+            <Badge
+              variant="outline"
+              className="gap-1 border-purple-300 bg-purple-50 text-purple-700"
+            >
+              <Beaker className="h-3 w-3" />
+              Obat Racik
+            </Badge>
+          ) : (
+            <Pill className="text-muted-foreground h-4 w-4 shrink-0" />
+          )}
+          <span className="font-medium">{medicationName || "-"}</span>
+        </div>
+      </TableCell>
       <TableCell>
         <div className="text-sm">
           <div>{prescription.dosage}</div>
@@ -76,10 +99,10 @@ const PrescriptionRow = memo(function PrescriptionRow({
       <TableCell>{medicationRoute?.label || "-"}</TableCell>
       <TableCell className="text-right">{prescription.quantity}</TableCell>
       <TableCell className="text-right">
-        {formatCurrency(parseFloat(prescription.drugPrice || "0"))}
+        {formatCurrency(parseFloat(medicationPrice || "0"))}
       </TableCell>
       <TableCell className="text-right font-medium">
-        {formatCurrency(parseFloat(prescription.drugPrice || "0") * prescription.quantity)}
+        {formatCurrency(parseFloat(medicationPrice || "0") * prescription.quantity)}
       </TableCell>
       <TableCell>
         {prescription.isRecurring ? (
@@ -167,12 +190,15 @@ export const PrescriptionsList = memo(function PrescriptionsList({
   const isNurse = session?.user?.role === "nurse"
   const [selectedPrescriptionId, setSelectedPrescriptionId] = useState("")
 
-  // Calculate subtotal of all prescriptions
+  // Calculate subtotal of all prescriptions (supports both drug and compound recipes)
   const subtotal = useMemo(() => {
     return prescriptions.reduce((total, prescription) => {
-      if (prescription.drugPrice) {
+      const price = prescription.isCompound
+        ? prescription.compoundRecipePrice
+        : prescription.drugPrice
+      if (price) {
         const quantity = prescription.dispensedQuantity || prescription.quantity
-        return total + parseFloat(prescription.drugPrice) * quantity
+        return total + parseFloat(price) * quantity
       }
       return total
     }, 0)

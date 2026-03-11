@@ -338,7 +338,18 @@ export const inpatientPrescriptionSchema = z
   .object({
     visitId: z.string().min(1, "Visit ID harus valid"),
     medicalRecordId: z.string().optional(), // Optional - which medical record ordered it
-    drugId: z.string().min(1, "Obat harus dipilih"),
+
+    // Drug fields (optional for compound prescriptions)
+    drugId: z.string().optional(),
+    drugName: z.string().optional(),
+    price: z.string().optional(),
+
+    // Compound recipe fields (optional for regular drug prescriptions)
+    isCompound: z.boolean().default(false),
+    compoundRecipeId: z.string().optional(),
+    compoundRecipeName: z.string().optional(),
+    compoundRecipeCode: z.string().optional(),
+    compoundRecipePrice: z.string().optional(),
 
     // Prescription details
     dosage: z.string().optional(),
@@ -358,6 +369,19 @@ export const inpatientPrescriptionSchema = z
 
     notes: z.string().optional(),
   })
+  .refine(
+    (data) => {
+      // Either drugId or compoundRecipeId must be provided
+      if (data.isCompound) {
+        return !!data.compoundRecipeId
+      }
+      return !!data.drugId
+    },
+    {
+      message: "Obat atau obat racik harus dipilih",
+      path: ["drugId"],
+    }
+  )
   .refine(
     (data) => {
       // If isRecurring is true, startDate must be provided
@@ -528,19 +552,41 @@ export const updateProcedureStatusSchema = z.object({
 
 export const prescriptionItemSchema = z
   .object({
-    drugId: z.string().min(1, "Obat harus dipilih"),
-    drugName: z.string().min(1),
+    // Drug fields (optional for compound prescriptions)
+    drugId: z.string().optional(),
+    drugName: z.string().optional(),
     drugPrice: z.string().optional(),
+
+    // Compound recipe fields (optional for regular drug prescriptions)
+    isCompound: z.boolean(), // Required field - explicitly set to true or false
+    compoundRecipeId: z.string().optional(),
+    compoundRecipeName: z.string().optional(),
+    compoundRecipeCode: z.string().optional(),
+    compoundRecipePrice: z.string().optional(),
+
     dosage: z.string().optional(),
     frequency: z.string().min(1, "Frekuensi harus diisi"),
     route: z.string().optional(),
     quantity: z.number().int().positive("Jumlah harus positif"),
     instructions: z.string().optional(),
-    isRecurring: z.boolean(),
+    isRecurring: z.boolean(), // Required field
     startDate: z.date().optional(),
     endDate: z.date().optional(),
     administrationSchedule: z.string().optional(),
   })
+  .refine(
+    (data) => {
+      // Either drugId or compoundRecipeId must be provided
+      if (data.isCompound) {
+        return !!data.compoundRecipeId
+      }
+      return !!data.drugId
+    },
+    {
+      message: "Obat atau obat racik harus dipilih",
+      path: ["drugId"],
+    }
+  )
   .refine(
     (data) => {
       // If isRecurring is true, startDate must be provided

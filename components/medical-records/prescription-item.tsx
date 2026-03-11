@@ -1,14 +1,17 @@
 /**
  * Prescription Item Component
- * Form fields for a single prescription
+ * Form fields for a single prescription (drug or compound recipe)
  */
 
+import { useState } from "react"
 import { UseFormReturn } from "react-hook-form"
-import { X } from "lucide-react"
+import { X, Pill, Beaker, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import {
   Select,
   SelectContent,
@@ -21,15 +24,24 @@ import { MEDICATION_ROUTES } from "@/types/medical-record"
 import { FREQUENCY_OPTIONS } from "@/lib/utils/prescription"
 import { type Drug } from "@/hooks/use-drug-search"
 import { PrescriptionFormBulkData } from "@/lib/validations/medical-record"
+import type { CompoundRecipeWithCreator } from "@/types/compound-recipe"
 
 import { DrugSearch } from "./drug-search"
+import { CompoundRecipeSearch } from "./compound-recipe-search"
+import { CreateCompoundRecipeDialog } from "@/components/compound-recipes/create-compound-recipe-dialog"
 
 interface PrescriptionItemProps {
   index: number
   form: UseFormReturn<PrescriptionFormBulkData>
+  // Drug search props
   drugSearch: string
   onDrugSearchChange: (value: string) => void
   onDrugSelect: (drug: Drug) => void
+  // Compound search props
+  compoundSearch: string
+  onCompoundSearchChange: (value: string) => void
+  onCompoundSelect: (recipe: CompoundRecipeWithCreator) => void
+  // UI props
   showHeader?: boolean
   showRemoveButton?: boolean
   onRemove?: () => void
@@ -41,10 +53,52 @@ export function PrescriptionItem({
   drugSearch,
   onDrugSearchChange,
   onDrugSelect,
+  compoundSearch,
+  onCompoundSearchChange,
+  onCompoundSelect,
   showHeader = false,
   showRemoveButton = false,
   onRemove,
 }: PrescriptionItemProps) {
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const isCompound = form.watch(`prescriptions.${index}.isCompound`)
+
+  // Handle when a new compound recipe is created via the shortcut button
+  const handleRecipeCreated = (recipe: CompoundRecipeWithCreator) => {
+    onCompoundSelect(recipe)
+  }
+
+  const handleToggle = (value: string) => {
+    if (!value) return
+    const newIsCompound = value === "compound"
+    form.setValue(`prescriptions.${index}.isCompound`, newIsCompound)
+
+    // Clear opposite type fields
+    if (newIsCompound) {
+      form.setValue(`prescriptions.${index}.drugId`, "")
+      form.setValue(`prescriptions.${index}.drugName`, "")
+      form.setValue(`prescriptions.${index}.drugPrice`, "")
+      onDrugSearchChange("")
+    } else {
+      form.setValue(`prescriptions.${index}.compoundRecipeId`, "")
+      form.setValue(`prescriptions.${index}.compoundRecipeName`, "")
+      form.setValue(`prescriptions.${index}.compoundRecipePrice`, "")
+      onCompoundSearchChange("")
+    }
+  }
+
+  const getPrice = () => {
+    if (isCompound) {
+      const price = form.watch(`prescriptions.${index}.compoundRecipePrice`) || "0"
+      return parseFloat(price)
+    }
+    const price = form.watch(`prescriptions.${index}.drugPrice`) || "0"
+    return parseFloat(price)
+  }
+
+  // Get selected recipe composition for display
+  const selectedRecipeName = form.watch(`prescriptions.${index}.compoundRecipeName`)
+
   return (
     <div className="space-y-4">
       {/* Item Header */}
@@ -66,25 +120,88 @@ export function PrescriptionItem({
         </div>
       )}
 
-      {/* Drug Search */}
+      {/* Prescription Type Toggle */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <ToggleGroup
+          type="single"
+          value={isCompound ? "compound" : "drug"}
+          onValueChange={handleToggle}
+          variant="outline"
+          size="lg"
+        >
+          <ToggleGroupItem value="drug" className="gap-1.5">
+            <Pill className="h-4 w-4" />
+            Obat Biasa
+          </ToggleGroupItem>
+          <ToggleGroupItem value="compound" className="gap-1.5">
+            <Beaker className="h-4 w-4" />
+            Obat Racik
+          </ToggleGroupItem>
+        </ToggleGroup>
+
+        {/* Shortcut to add new compound recipe */}
+        {isCompound && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Tambah Obat Racik Baru
+          </Button>
+        )}
+      </div>
+
+      {/* Drug or Compound Search */}
       <Field>
-        <DrugSearch
-          value={drugSearch}
-          onChange={onDrugSearchChange}
-          onSelect={onDrugSelect}
-          required
-        />
-        <FieldError>{form.formState.errors.prescriptions?.[index]?.drugId?.message}</FieldError>
+        {isCompound ? (
+          <>
+            <CompoundRecipeSearch
+              value={compoundSearch}
+              onChange={onCompoundSearchChange}
+              onSelect={onCompoundSelect}
+              required
+            />
+            <FieldError>
+              {form.formState.errors.prescriptions?.[index]?.compoundRecipeId?.message}
+            </FieldError>
+          </>
+        ) : (
+          <>
+            <DrugSearch
+              value={drugSearch}
+              onChange={onDrugSearchChange}
+              onSelect={onDrugSelect}
+              required
+            />
+            <FieldError>{form.formState.errors.prescriptions?.[index]?.drugId?.message}</FieldError>
+          </>
+        )}
       </Field>
+
+      {/* Selected Compound Recipe Info */}
+      {isCompound && selectedRecipeName && (
+        <div className="bg-muted/50 rounded-lg border p-3">
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="gap-1">
+              <Beaker className="h-3 w-3" />
+              Obat Racik
+            </Badge>
+            <span className="text-sm font-medium">{selectedRecipeName}</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Price Display (Read-only) */}
         <Field>
-          <FieldLabel htmlFor={`drugPrice-${index}`}>Harga Satuan</FieldLabel>
+          <FieldLabel htmlFor={`price-${index}`}>Harga Satuan</FieldLabel>
           <Input
-            id={`drugPrice-${index}`}
-            value={`Rp ${parseFloat(form.watch(`prescriptions.${index}.drugPrice`) || "0").toLocaleString("id-ID")}`}
-            placeholder="Otomatis terisi dari pilihan obat"
+            id={`price-${index}`}
+            value={`Rp ${getPrice().toLocaleString("id-ID")}`}
+            placeholder="Otomatis terisi dari pilihan"
             className="bg-muted font-medium"
             readOnly
           />
@@ -96,7 +213,7 @@ export function PrescriptionItem({
           <Input
             id={`dosage-${index}`}
             {...form.register(`prescriptions.${index}.dosage`)}
-            placeholder="Contoh: 500mg, 1 tablet"
+            placeholder={isCompound ? "Contoh: 1 bungkus" : "Contoh: 500mg, 1 tablet"}
           />
           <FieldError>{form.formState.errors.prescriptions?.[index]?.dosage?.message}</FieldError>
         </Field>
@@ -153,7 +270,7 @@ export function PrescriptionItem({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MEDICATION_ROUTES.map((route) => (
+              {MEDICATION_ROUTES.filter((route) => route.value !== "compounded").map((route) => (
                 <SelectItem key={route.value} value={route.value}>
                   {route.label}
                 </SelectItem>
@@ -173,6 +290,13 @@ export function PrescriptionItem({
           rows={2}
         />
       </Field>
+
+      {/* Create Compound Recipe Dialog (Shortcut) */}
+      <CreateCompoundRecipeDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onCreated={handleRecipeCreated}
+      />
     </div>
   )
 }

@@ -51,23 +51,60 @@ export type UpdateDiagnosisFormData = z.infer<typeof updateDiagnosisSchema>
 
 /**
  * Prescription Form Schema
+ * Supports both regular drugs and compound recipes (obat racik)
  */
-export const prescriptionFormSchema = z.object({
-  drugId: z.string().min(1, "Obat wajib dipilih"),
-  drugName: z.string().optional(),
-  drugPrice: z.string().optional(),
-  dosage: z.string().optional(), // Made optional per feedback 4.5
+
+// Base fields shared by both prescription types
+const basePrescriptionFields = {
+  dosage: z.string().optional(),
   frequency: z.string().min(1, "Frekuensi wajib diisi"),
   quantity: z.number().min(1, "Jumlah minimal 1"),
   instructions: z.string().optional(),
   route: z.string().optional(),
+}
+
+// Regular drug prescription schema
+const drugPrescriptionSchema = z.object({
+  isCompound: z.literal(false),
+  drugId: z.string().min(1, "Obat wajib dipilih"),
+  drugName: z.string().optional(),
+  drugPrice: z.string().optional(),
+  // Compound fields (empty for regular prescriptions)
+  compoundRecipeId: z.string().optional(),
+  compoundRecipeName: z.string().optional(),
+  compoundRecipePrice: z.string().optional(),
+  ...basePrescriptionFields,
 })
 
-export const createPrescriptionFormSchema = z.object({
-  ...prescriptionFormSchema.shape,
-  medicalRecordId: z.string(),
-  visitId: z.string(),
+// Compound prescription schema
+const compoundPrescriptionSchema = z.object({
+  isCompound: z.literal(true),
+  compoundRecipeId: z.string().min(1, "Obat racik wajib dipilih"),
+  compoundRecipeName: z.string().optional(),
+  compoundRecipePrice: z.string().optional(),
+  // Drug fields (empty for compound prescriptions)
+  drugId: z.string().optional(),
+  drugName: z.string().optional(),
+  drugPrice: z.string().optional(),
+  ...basePrescriptionFields,
 })
+
+// Combined using discriminated union
+export const prescriptionFormSchema = z.discriminatedUnion("isCompound", [
+  drugPrescriptionSchema,
+  compoundPrescriptionSchema,
+])
+
+export const createPrescriptionFormSchema = z.discriminatedUnion("isCompound", [
+  drugPrescriptionSchema.extend({
+    medicalRecordId: z.string(),
+    visitId: z.string(),
+  }),
+  compoundPrescriptionSchema.extend({
+    medicalRecordId: z.string(),
+    visitId: z.string(),
+  }),
+])
 
 // Schema for the entire form with array of prescriptions
 export const prescriptionFormBulkSchema = z.object({

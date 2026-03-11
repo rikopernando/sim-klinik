@@ -6,35 +6,73 @@
 import { Prescription } from "@/types/medical-record"
 
 /**
- * Check if a prescription drug already exists (for duplicate prevention)
+ * Check if a drug prescription already exists (for duplicate prevention)
  * @param drugId - Drug ID to check
  * @param existingPrescriptions - List of existing prescriptions
  * @param excludeId - Optional ID to exclude (for edit mode)
  * @returns The duplicate prescription if found, undefined otherwise
+ */
+export function findDuplicateDrugPrescription(
+  drugId: string,
+  existingPrescriptions: Prescription[],
+  excludeId?: string
+): Prescription | undefined {
+  return existingPrescriptions.find(
+    (p) => !p.isCompound && p.drugId === drugId && (!excludeId || p.id !== excludeId)
+  )
+}
+
+/**
+ * Check if a compound prescription already exists (for duplicate prevention)
+ * @param compoundRecipeId - Compound recipe ID to check
+ * @param existingPrescriptions - List of existing prescriptions
+ * @param excludeId - Optional ID to exclude (for edit mode)
+ * @returns The duplicate prescription if found, undefined otherwise
+ */
+export function findDuplicateCompoundPrescription(
+  compoundRecipeId: string,
+  existingPrescriptions: Prescription[],
+  excludeId?: string
+): Prescription | undefined {
+  return existingPrescriptions.find(
+    (p) =>
+      p.isCompound && p.compoundRecipeId === compoundRecipeId && (!excludeId || p.id !== excludeId)
+  )
+}
+
+/**
+ * Legacy function for backward compatibility
+ * @deprecated Use findDuplicateDrugPrescription instead
  */
 export function findDuplicatePrescription(
   drugId: string,
   existingPrescriptions: Prescription[],
   excludeId?: string
 ): Prescription | undefined {
-  return existingPrescriptions.find(
-    (p) => p.drugId === drugId && (!excludeId || p.id !== excludeId)
-  )
+  return findDuplicateDrugPrescription(drugId, existingPrescriptions, excludeId)
 }
 
 /**
  * Default prescription item for form initialization
+ * Supports both regular drugs and compound recipes
  */
 export const DEFAULT_PRESCRIPTION_ITEM = {
+  isCompound: false as const,
+  // Drug fields
   drugId: "",
   drugName: "",
   drugPrice: "",
+  // Compound fields
+  compoundRecipeId: "",
+  compoundRecipeName: "",
+  compoundRecipePrice: "",
+  // Common fields
   dosage: "",
   frequency: "",
   quantity: 1,
   instructions: "",
   route: "oral",
-} as const
+}
 
 /**
  * Create a new prescription item with default values

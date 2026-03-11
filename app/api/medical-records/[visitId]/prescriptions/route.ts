@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
-import { medicalRecords, prescriptions, drugs, user } from "@/db/schema"
+import { medicalRecords, prescriptions, drugs, user, compoundRecipes } from "@/db/schema"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
@@ -10,8 +10,8 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 interface PrescriptionWithDetails {
   id: string
   medicalRecordId: string | null
-  drugId: string
-  drugName: string
+  drugId: string | null
+  drugName: string | null
   drugPrice: string | null
   dosage: string | null
   frequency: string | null
@@ -31,6 +31,11 @@ interface PrescriptionWithDetails {
   approvedBy: string | null
   approvedAt: Date | null
   pharmacistNote: string | null
+  isCompound: boolean | null
+  compoundRecipeId: string | null
+  compoundRecipeName: string | null
+  compoundRecipeCode: string | null
+  compoundRecipePrice: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -74,7 +79,7 @@ export const GET = withRBAC(
         })
       }
 
-      // Get prescriptions with drug information and pharmacist info
+      // Get prescriptions with drug information, compound recipe details, and pharmacist info
       const prescriptionsList = await db
         .select({
           id: prescriptions.id,
@@ -100,11 +105,17 @@ export const GET = withRBAC(
           approvedBy: prescriptions.approvedBy,
           approvedAt: prescriptions.approvedAt,
           pharmacistNote: prescriptions.pharmacistNote,
+          isCompound: prescriptions.isCompound,
+          compoundRecipeId: prescriptions.compoundRecipeId,
+          compoundRecipeName: compoundRecipes.name,
+          compoundRecipeCode: compoundRecipes.code,
+          compoundRecipePrice: compoundRecipes.price,
           createdAt: prescriptions.createdAt,
           updatedAt: prescriptions.updatedAt,
         })
         .from(prescriptions)
-        .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+        .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+        .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
         .leftJoin(user, eq(prescriptions.addedByPharmacistId, user.id))
         .where(eq(prescriptions.medicalRecordId, record.id))
 

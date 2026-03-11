@@ -21,10 +21,12 @@ import { addPrescription, updatePrescription } from "@/lib/services/medical-reco
 import { getErrorMessage } from "@/lib/utils/error"
 import { type Prescription } from "@/types/medical-record"
 import { type Drug } from "@/hooks/use-drug-search"
+import { type CompoundRecipeWithCreator } from "@/types/compound-recipe"
 import {
   DEFAULT_PRESCRIPTION_ITEM,
   createPrescriptionItem,
-  findDuplicatePrescription,
+  findDuplicateDrugPrescription,
+  findDuplicateCompoundPrescription,
 } from "@/lib/utils/prescription"
 import {
   PrescriptionFormBulkData,
@@ -54,6 +56,7 @@ export function AddPrescriptionDialog({
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [drugSearches, setDrugSearches] = useState<Record<number, string>>({})
+  const [compoundSearches, setCompoundSearches] = useState<Record<number, string>>({})
   const isEditMode = !!prescription
 
   const form = useForm<PrescriptionFormBulkData>({
@@ -76,9 +79,16 @@ export function AddPrescriptionDialog({
           ? {
               prescriptions: [
                 {
-                  drugId: prescription.drugId,
-                  drugName: prescription.drugName,
+                  isCompound: prescription.isCompound || false,
+                  // Drug fields
+                  drugId: prescription.drugId || "",
+                  drugName: prescription.drugName || "",
                   drugPrice: prescription.drugPrice || "",
+                  // Compound fields
+                  compoundRecipeId: prescription.compoundRecipeId || "",
+                  compoundRecipeName: prescription.compoundRecipeName || "",
+                  compoundRecipePrice: prescription.compoundRecipePrice || "",
+                  // Common fields
                   dosage: prescription.dosage || "",
                   frequency: prescription.frequency,
                   quantity: prescription.quantity,
@@ -90,7 +100,21 @@ export function AddPrescriptionDialog({
           : { prescriptions: [DEFAULT_PRESCRIPTION_ITEM] }
 
       form.reset(initialData)
-      setDrugSearches(isEditMode && prescription ? { 0: prescription.drugName || "" } : {})
+
+      // Set search display values
+      if (isEditMode && prescription) {
+        if (prescription.isCompound) {
+          setCompoundSearches({ 0: prescription.compoundRecipeName || "" })
+          setDrugSearches({})
+        } else {
+          setDrugSearches({ 0: prescription.drugName || "" })
+          setCompoundSearches({})
+        }
+      } else {
+        setDrugSearches({})
+        setCompoundSearches({})
+      }
+
       setError(null)
     }
   }, [open, prescription, isEditMode, form])
@@ -98,6 +122,7 @@ export function AddPrescriptionDialog({
   const handleClose = useCallback(() => {
     form.reset()
     setDrugSearches({})
+    setCompoundSearches({})
     setError(null)
     onOpenChange(false)
   }, [form, onOpenChange])
@@ -108,6 +133,24 @@ export function AddPrescriptionDialog({
       form.setValue(`prescriptions.${index}.drugName`, drug.name)
       form.setValue(`prescriptions.${index}.drugPrice`, drug.price)
       setDrugSearches((prev) => ({ ...prev, [index]: drug.name }))
+    },
+    [form]
+  )
+
+  const handleCompoundSelect = useCallback(
+    (index: number, recipe: CompoundRecipeWithCreator) => {
+      form.setValue(`prescriptions.${index}.compoundRecipeId`, recipe.id)
+      form.setValue(`prescriptions.${index}.compoundRecipeName`, recipe.name)
+      form.setValue(`prescriptions.${index}.compoundRecipePrice`, recipe.price || "0")
+      setCompoundSearches((prev) => ({ ...prev, [index]: recipe.name }))
+
+      // Auto-fill defaults from recipe
+      if (recipe.defaultFrequency) {
+        form.setValue(`prescriptions.${index}.frequency`, recipe.defaultFrequency)
+      }
+      if (recipe.defaultInstructions) {
+        form.setValue(`prescriptions.${index}.instructions`, recipe.defaultInstructions)
+      }
     },
     [form]
   )
@@ -125,6 +168,11 @@ export function AddPrescriptionDialog({
           delete newSearches[index]
           return newSearches
         })
+        setCompoundSearches((prev) => {
+          const newSearches = { ...prev }
+          delete newSearches[index]
+          return newSearches
+        })
       }
     },
     [fields.length, remove]
@@ -137,60 +185,116 @@ export function AddPrescriptionDialog({
         setError(null)
 
         if (isEditMode && prescription) {
-          // Edit mode: Check for duplicate (excluding current prescription)
-          const duplicate = findDuplicatePrescription(
-            data.prescriptions[0].drugId,
-            existingPrescriptions,
-            prescription.id
-          )
+          const item = data.prescriptions[0]
 
-          if (duplicate) {
-            setError(
-              `Resep untuk obat "${data.prescriptions[0].drugName}" sudah ada dalam rekam medis ini`
+          // Edit mode: Check for duplicate (excluding current prescription)
+          if (item.isCompound) {
+            const duplicate = findDuplicateCompoundPrescription(
+              item.compoundRecipeId || "",
+              existingPrescriptions,
+              prescription.id
             )
-            return
+            if (duplicate) {
+              setError(
+                `Resep untuk obat racik "${item.compoundRecipeName}" sudah ada dalam rekam medis ini`
+              )
+              return
+            }
+          } else {
+            const duplicate = findDuplicateDrugPrescription(
+              item.drugId || "",
+              existingPrescriptions,
+              prescription.id
+            )
+            if (duplicate) {
+              setError(`Resep untuk obat "${item.drugName}" sudah ada dalam rekam medis ini`)
+              return
+            }
           }
 
-          await updatePrescription(prescription.id, {
-            medicalRecordId,
-            visitId,
-            drugId: data.prescriptions[0].drugId,
-            dosage: data.prescriptions[0].dosage || undefined,
-            frequency: data.prescriptions[0].frequency,
-            quantity: data.prescriptions[0].quantity,
-            instructions: data.prescriptions[0].instructions || undefined,
-            route: data.prescriptions[0].route || undefined,
-          })
+          // Construct payload based on prescription type
+          const updatePayload = item.isCompound
+            ? {
+                medicalRecordId,
+                visitId,
+                isCompound: true as const,
+                compoundRecipeId: item.compoundRecipeId || "",
+                dosage: item.dosage || undefined,
+                frequency: item.frequency,
+                quantity: item.quantity,
+                instructions: item.instructions || undefined,
+                route: item.route || undefined,
+              }
+            : {
+                medicalRecordId,
+                visitId,
+                isCompound: false as const,
+                drugId: item.drugId || "",
+                dosage: item.dosage || undefined,
+                frequency: item.frequency,
+                quantity: item.quantity,
+                instructions: item.instructions || undefined,
+                route: item.route || undefined,
+              }
+
+          await updatePrescription(prescription.id, updatePayload)
 
           toast.success("Resep berhasil diupdate!")
         } else {
           // Add mode: Check for duplicates
           for (const prescriptionItem of data.prescriptions) {
-            const duplicate = findDuplicatePrescription(
-              prescriptionItem.drugId,
-              existingPrescriptions
-            )
-
-            if (duplicate) {
-              setError(
-                `Resep untuk obat "${prescriptionItem.drugName}" sudah ada dalam rekam medis ini`
+            if (prescriptionItem.isCompound) {
+              const duplicate = findDuplicateCompoundPrescription(
+                prescriptionItem.compoundRecipeId || "",
+                existingPrescriptions
               )
-              return
+              if (duplicate) {
+                setError(
+                  `Resep untuk obat racik "${prescriptionItem.compoundRecipeName}" sudah ada dalam rekam medis ini`
+                )
+                return
+              }
+            } else {
+              const duplicate = findDuplicateDrugPrescription(
+                prescriptionItem.drugId || "",
+                existingPrescriptions
+              )
+              if (duplicate) {
+                setError(
+                  `Resep untuk obat "${prescriptionItem.drugName}" sudah ada dalam rekam medis ini`
+                )
+                return
+              }
             }
           }
 
           // Save all prescriptions sequentially
           for (const prescriptionItem of data.prescriptions) {
-            await addPrescription({
-              medicalRecordId,
-              visitId,
-              drugId: prescriptionItem.drugId,
-              dosage: prescriptionItem.dosage || undefined,
-              frequency: prescriptionItem.frequency,
-              quantity: prescriptionItem.quantity,
-              instructions: prescriptionItem.instructions || undefined,
-              route: prescriptionItem.route || undefined,
-            })
+            const addPayload = prescriptionItem.isCompound
+              ? {
+                  medicalRecordId,
+                  visitId,
+                  isCompound: true as const,
+                  compoundRecipeId: prescriptionItem.compoundRecipeId || "",
+                  dosage: prescriptionItem.dosage || undefined,
+                  frequency: prescriptionItem.frequency,
+                  quantity: prescriptionItem.quantity,
+                  instructions: prescriptionItem.instructions || undefined,
+                  route: prescriptionItem.route || undefined,
+                }
+              : {
+                  medicalRecordId,
+                  visitId,
+                  isCompound: false as const,
+                  drugId: prescriptionItem.drugId || "",
+                  dosage: prescriptionItem.dosage || undefined,
+                  frequency: prescriptionItem.frequency,
+                  quantity: prescriptionItem.quantity,
+                  instructions: prescriptionItem.instructions || undefined,
+                  route: prescriptionItem.route || undefined,
+                }
+
+            await addPrescription(addPayload)
           }
 
           toast.success(`${data.prescriptions.length} resep berhasil ditambahkan!`)
@@ -245,11 +349,19 @@ export function AddPrescriptionDialog({
                 <PrescriptionItem
                   index={index}
                   form={form}
+                  // Drug search props
                   drugSearch={drugSearches[index] || ""}
                   onDrugSearchChange={(value) =>
                     setDrugSearches((prev) => ({ ...prev, [index]: value }))
                   }
                   onDrugSelect={(drug) => handleDrugSelect(index, drug)}
+                  // Compound search props
+                  compoundSearch={compoundSearches[index] || ""}
+                  onCompoundSearchChange={(value) =>
+                    setCompoundSearches((prev) => ({ ...prev, [index]: value }))
+                  }
+                  onCompoundSelect={(recipe) => handleCompoundSelect(index, recipe)}
+                  // UI props
                   showHeader={!isEditMode}
                   showRemoveButton={!isEditMode && fields.length > 1}
                   onRemove={() => handleRemoveItem(index)}

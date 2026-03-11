@@ -14,7 +14,7 @@
 import { db } from "@/db"
 import { eq, and } from "drizzle-orm"
 import { bedAssignments, rooms, materialUsage } from "@/db/schema/inpatient"
-import { prescriptions, inventoryItems } from "@/db/schema/inventory"
+import { prescriptions, inventoryItems, compoundRecipes } from "@/db/schema/inventory"
 import { procedures } from "@/db/schema/medical-records"
 import { services } from "@/db/schema/billing"
 import { labOrders, labTests } from "@/db/schema/laboratory"
@@ -140,48 +140,73 @@ async function aggregateMaterialCharges(visitId: string): Promise<BillingItemInp
 
 /**
  * Aggregate medication charges from fulfilled prescriptions
- * Only includes prescriptions that have been dispensed by pharmacy
+ * Supports both regular drug prescriptions and compound recipe prescriptions (Obat Racik)
+ * Only includes prescriptions that have been dispensed by pharmacy (for inpatient)
  */
 async function aggregateMedicationCharges(
   visitId: string,
   visitType: string
 ): Promise<BillingItemInput[]> {
-  const conditions = [eq(prescriptions.visitId, visitId)]
+  const baseConditions = [eq(prescriptions.visitId, visitId)]
 
   if (visitType === "inpatient") {
-    conditions.push(eq(prescriptions.isFulfilled, true)) // Only fulfilled prescriptions
+    baseConditions.push(eq(prescriptions.isFulfilled, true))
   }
 
-  const medications = await db
+  // Query 1: Regular drug prescriptions (isCompound = false)
+  const drugMedications = await db
     .select({
       id: prescriptions.id,
-      drugName: inventoryItems.name,
+      name: inventoryItems.name,
       dosage: prescriptions.dosage,
       frequency: prescriptions.frequency,
       quantity: prescriptions.quantity,
       dispensedQuantity: prescriptions.dispensedQuantity,
-      drugPrice: inventoryItems.price,
+      price: inventoryItems.price,
     })
     .from(prescriptions)
     .innerJoin(inventoryItems, eq(prescriptions.drugId, inventoryItems.id))
-    .where(and(...conditions))
+    .where(and(...baseConditions, eq(prescriptions.isCompound, false)))
 
-  return medications.map((med) => {
-    const quantityDispensed = med.dispensedQuantity || med.quantity
-    const unitPrice = parseFloat(med.drugPrice)
-    const totalPrice = (unitPrice * quantityDispensed).toFixed(2)
+  // Query 2: Compound recipe prescriptions (isCompound = true)
+  const compoundMedications = await db
+    .select({
+      id: prescriptions.id,
+      name: compoundRecipes.name,
+      dosage: prescriptions.dosage,
+      frequency: prescriptions.frequency,
+      quantity: prescriptions.quantity,
+      dispensedQuantity: prescriptions.dispensedQuantity,
+      price: compoundRecipes.price,
+    })
+    .from(prescriptions)
+    .innerJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
+    .where(and(...baseConditions, eq(prescriptions.isCompound, true)))
 
+  const toItem = (med: {
+    id: string
+    name: string | null
+    dosage: string | null | undefined
+    frequency: string
+    quantity: number
+    dispensedQuantity: number | null | undefined
+    price: string | null
+  }): BillingItemInput => {
+    const qty = med.dispensedQuantity || med.quantity
+    const unitPrice = parseFloat(med.price ?? "0")
     return {
       itemType: "drug" as const,
       itemId: med.id,
-      itemName: med.drugName,
-      quantity: quantityDispensed,
-      unitPrice: med.drugPrice,
+      itemName: med.name ?? "",
+      quantity: qty,
+      unitPrice: med.price ?? "0",
       discount: "0",
-      totalPrice,
+      totalPrice: (unitPrice * qty).toFixed(2),
       description: `${med.dosage || ""} - ${med.frequency}`.trim(),
     }
-  })
+  }
+
+  return [...drugMedications.map(toItem), ...compoundMedications.map(toItem)]
 }
 
 /**

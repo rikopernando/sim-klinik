@@ -43,7 +43,8 @@ export function CreatePrescriptionDialog({
     addPrescription,
     removePrescription,
     handleDrugSelect,
-    handleSubmit,
+    handleCompoundSelect,
+    onSubmit,
     drugSearches,
     isEditMode,
     isSubmitting,
@@ -73,14 +74,15 @@ export function CreatePrescriptionDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <IconPill className="h-5 w-5" />
-            Tambah Resep Obat
+            Tambah Resep
           </DialogTitle>
           <DialogDescription>
-            Pasien: <strong>{patientName}</strong> • {fields.length} resep dalam daftar
+            Pasien: <strong>{patientName}</strong> • {fields.length} resep dalam daftar (obat atau
+            obat racik)
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4">
           {/* Prescription Items */}
           {fields.map((field, index) => (
             <div key={field.id}>
@@ -93,6 +95,7 @@ export function CreatePrescriptionDialog({
                   setDrugSearches((prev) => ({ ...prev, [index]: value }))
                 }
                 onDrugSelect={(drug) => handleDrugSelect(index, drug)}
+                onCompoundSelect={(recipe) => handleCompoundSelect(index, recipe)}
                 showHeader={!isEditMode}
                 showRemoveButton={!isEditMode && fields.length > 1}
                 onRemove={removePrescription}

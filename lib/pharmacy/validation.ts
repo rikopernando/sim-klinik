@@ -48,14 +48,26 @@ export const drugInventorySchema = z.object({
 
 /**
  * Prescription Fulfillment Schema (single)
+ * Supports both regular drugs (requires inventoryId) and compound recipes (no inventory)
  */
-export const prescriptionFulfillmentSchema = z.object({
-  prescriptionId: z.string().min(1, "Prescription ID harus valid"),
-  inventoryId: z.string().min(1, "Inventory ID harus valid"),
-  dispensedQuantity: z.number().int().positive("Jumlah yang diberikan harus positif"),
-  fulfilledBy: z.string().min(1, "Fulfilled by is required"),
-  notes: z.string().optional(),
-})
+export const prescriptionFulfillmentSchema = z
+  .object({
+    prescriptionId: z.string().min(1, "Prescription ID harus valid"),
+    inventoryId: z.string().optional(), // Optional for compound prescriptions
+    dispensedQuantity: z.number().int().positive("Jumlah yang diberikan harus positif"),
+    fulfilledBy: z.string().min(1, "Fulfilled by is required"),
+    notes: z.string().optional(),
+    isCompound: z.boolean().optional(), // Flag for compound prescriptions
+  })
+  .refine(
+    (data) => {
+      // Compound prescriptions don't need inventoryId
+      if (data.isCompound) return true
+      // Regular drugs need inventoryId
+      return data.inventoryId && data.inventoryId.length > 0
+    },
+    { message: "Inventory ID harus valid untuk obat biasa", path: ["inventoryId"] }
+  )
 
 /**
  * Bulk Prescription Fulfillment Schema
