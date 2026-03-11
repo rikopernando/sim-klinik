@@ -335,9 +335,18 @@ export interface InpatientPrescription {
   id: string
   visitId: string
   medicalRecordId: string | null // Reference to medical_records (can be progress_note or consultation)
-  drugId: string
-  drugName?: string
-  drugPrice?: string
+
+  // Drug fields (null for compound prescriptions)
+  drugId: string | null
+  drugName?: string | null
+  drugPrice?: string | null
+
+  // Compound recipe fields (null for regular drug prescriptions)
+  isCompound?: boolean
+  compoundRecipeId?: string | null
+  compoundRecipeName?: string | null
+  compoundRecipeCode?: string | null
+  compoundRecipePrice?: string | null
 
   // Prescription details
   dosage: string | null
@@ -413,8 +422,20 @@ export interface InpatientProcedure {
 export interface InpatientPrescriptionInput {
   visitId: string
   medicalRecordId?: string // Optional reference to the medical record that ordered it
-  drugId: string
-  dosage: string
+
+  // Drug fields (optional for compound prescriptions)
+  drugId?: string
+  drugName?: string
+  price?: string
+
+  // Compound recipe fields (optional for regular drug prescriptions)
+  isCompound?: boolean
+  compoundRecipeId?: string
+  compoundRecipeName?: string
+  compoundRecipeCode?: string
+  compoundRecipePrice?: string
+
+  dosage?: string
   frequency: string
   route?: string
   duration?: string

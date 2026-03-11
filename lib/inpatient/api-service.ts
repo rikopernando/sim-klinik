@@ -9,7 +9,7 @@ import { alias as aliasedTable, PgUpdateSetSource } from "drizzle-orm/pg-core"
 import { db } from "@/db"
 import { rooms, bedAssignments, vitalsHistory, materialUsage } from "@/db/schema/inpatient"
 import { medicalRecords, procedures } from "@/db/schema/medical-records"
-import { prescriptions, drugs } from "@/db/schema/inventory"
+import { prescriptions, drugs, compoundRecipes } from "@/db/schema/inventory"
 import { services, dischargeSummaries } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
@@ -768,7 +768,9 @@ export async function createInpatientPrescription(data: InpatientPrescriptionInp
   await db.insert(prescriptions).values({
     visitId: data.visitId,
     medicalRecordId: data.medicalRecordId || null,
-    drugId: data.drugId,
+    drugId: data.isCompound ? null : (data.drugId ?? null),
+    isCompound: data.isCompound || false,
+    compoundRecipeId: data.isCompound ? (data.compoundRecipeId ?? null) : null,
     dosage: data.dosage,
     frequency: data.frequency,
     route: data.route || null,
@@ -795,11 +797,13 @@ export async function getInpatientPrescriptions(visitId: string) {
     .select({
       prescription: prescriptions,
       drug: drugs,
+      compoundRecipe: compoundRecipes,
       administeredBy: administeredByUser,
       fulfilledBy: fulfilledByUser,
     })
     .from(prescriptions)
     .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+    .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
     .leftJoin(administeredByUser, eq(prescriptions.administeredBy, administeredByUser.id))
     .leftJoin(fulfilledByUser, eq(prescriptions.fulfilledBy, fulfilledByUser.id))
     .where(eq(prescriptions.visitId, visitId))
@@ -809,6 +813,9 @@ export async function getInpatientPrescriptions(visitId: string) {
     ...row.prescription,
     drugName: row.drug?.name,
     drugPrice: row.drug?.price,
+    compoundRecipeName: row.compoundRecipe?.name,
+    compoundRecipeCode: row.compoundRecipe?.code,
+    compoundRecipePrice: row.compoundRecipe?.price,
     administeredByName: row.administeredBy?.name,
     fulfilledByName: row.fulfilledBy?.name,
   }))
