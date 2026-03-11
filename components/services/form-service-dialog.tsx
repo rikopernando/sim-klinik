@@ -62,7 +62,7 @@ export function FormServiceDialog({
     if (open && data && mode === "edit") {
       setValue("name", data.name)
       setValue("code", data.code)
-      setValue("category", data.category, { shouldValidate: true })
+      setValue("category", data.category ?? "", { shouldValidate: true })
       setValue("serviceType", data.serviceType, { shouldValidate: true })
       setValue("price", String(parseFloat(data.price)))
       setValue("description", data.description || "")
@@ -193,7 +193,11 @@ export function FormServiceDialog({
                 control={control}
                 rules={{ required: "Kategori harus dipilih" }}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} value={field.value} key={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value || ""}
+                    key={field.value}
+                  >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Pilih Kategori" />
                     </SelectTrigger>

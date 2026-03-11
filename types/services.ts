@@ -4,7 +4,7 @@ export interface PayloadServices {
   serviceType: string
   price: string
   description: string
-  category: string
+  category: string | null
 }
 
 export interface ResultService extends PayloadServices {
