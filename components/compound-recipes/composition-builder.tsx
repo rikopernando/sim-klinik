@@ -9,6 +9,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { Search, X } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import { NumericFormat } from "react-number-format"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
@@ -83,13 +84,7 @@ export function CompositionBuilder({
   }
 
   const handleUpdateQuantity = (drugId: string, quantity: number) => {
-    onChange(
-      value.map((i) => (i.drugId === drugId ? { ...i, quantity: Math.max(0.001, quantity) } : i))
-    )
-  }
-
-  const handleUpdateUnit = (drugId: string, unit: string) => {
-    onChange(value.map((i) => (i.drugId === drugId ? { ...i, unit } : i)))
+    onChange(value.map((i) => (i.drugId === drugId ? { ...i, quantity } : i)))
   }
 
   return (
@@ -171,21 +166,25 @@ export function CompositionBuilder({
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      step="0.001"
-                      min="0.001"
+                    <NumericFormat
+                      customInput={Input}
                       value={ingredient.quantity}
-                      onChange={(e) =>
-                        handleUpdateQuantity(ingredient.drugId, parseFloat(e.target.value) || 0.001)
+                      onValueChange={({ floatValue }) =>
+                        handleUpdateQuantity(ingredient.drugId, floatValue ?? 1)
                       }
+                      decimalSeparator=","
+                      thousandSeparator="."
+                      decimalScale={3}
+                      allowNegative={false}
+                      isAllowed={({ floatValue }) => !floatValue || floatValue > 0}
                       className="w-24"
+                      placeholder="0"
                     />
                     <Input
                       value={ingredient.unit}
-                      onChange={(e) => handleUpdateUnit(ingredient.drugId, e.target.value)}
-                      className="w-20"
+                      className="w-20 disabled:cursor-default disabled:opacity-70"
                       placeholder="Unit"
+                      disabled
                     />
                     <Button
                       type="button"

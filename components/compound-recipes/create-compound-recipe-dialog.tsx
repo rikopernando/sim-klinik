@@ -143,7 +143,7 @@ export function CreateCompoundRecipeDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="h-[90vh] max-h-[90vh] max-w-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Tambah Obat Racik</DialogTitle>
           <DialogDescription>

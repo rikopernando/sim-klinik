@@ -75,14 +75,14 @@ export function PrescriptionItem({
 
     // Clear opposite type fields
     if (newIsCompound) {
-      form.setValue(`prescriptions.${index}.drugId`, "")
-      form.setValue(`prescriptions.${index}.drugName`, "")
-      form.setValue(`prescriptions.${index}.drugPrice`, "")
+      form.setValue(`prescriptions.${index}.drugId`, "", { shouldValidate: true })
+      form.setValue(`prescriptions.${index}.drugName`, "", { shouldValidate: true })
+      form.setValue(`prescriptions.${index}.drugPrice`, "", { shouldValidate: true })
       onDrugSearchChange("")
     } else {
-      form.setValue(`prescriptions.${index}.compoundRecipeId`, "")
-      form.setValue(`prescriptions.${index}.compoundRecipeName`, "")
-      form.setValue(`prescriptions.${index}.compoundRecipePrice`, "")
+      form.setValue(`prescriptions.${index}.compoundRecipeId`, "", { shouldValidate: true })
+      form.setValue(`prescriptions.${index}.compoundRecipeName`, "", { shouldValidate: true })
+      form.setValue(`prescriptions.${index}.compoundRecipePrice`, "", { shouldValidate: true })
       onCompoundSearchChange("")
     }
   }

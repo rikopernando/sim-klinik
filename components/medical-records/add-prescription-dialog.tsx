@@ -139,17 +139,25 @@ export function AddPrescriptionDialog({
 
   const handleCompoundSelect = useCallback(
     (index: number, recipe: CompoundRecipeWithCreator) => {
-      form.setValue(`prescriptions.${index}.compoundRecipeId`, recipe.id)
-      form.setValue(`prescriptions.${index}.compoundRecipeName`, recipe.name)
-      form.setValue(`prescriptions.${index}.compoundRecipePrice`, recipe.price || "0")
+      form.setValue(`prescriptions.${index}.compoundRecipeId`, recipe.id, { shouldValidate: true })
+      form.setValue(`prescriptions.${index}.compoundRecipeName`, recipe.name, {
+        shouldValidate: true,
+      })
+      form.setValue(`prescriptions.${index}.compoundRecipePrice`, recipe.price || "0", {
+        shouldValidate: true,
+      })
       setCompoundSearches((prev) => ({ ...prev, [index]: recipe.name }))
 
       // Auto-fill defaults from recipe
       if (recipe.defaultFrequency) {
-        form.setValue(`prescriptions.${index}.frequency`, recipe.defaultFrequency)
+        form.setValue(`prescriptions.${index}.frequency`, recipe.defaultFrequency, {
+          shouldValidate: true,
+        })
       }
       if (recipe.defaultInstructions) {
-        form.setValue(`prescriptions.${index}.instructions`, recipe.defaultInstructions)
+        form.setValue(`prescriptions.${index}.instructions`, recipe.defaultInstructions, {
+          shouldValidate: true,
+        })
       }
     },
     [form]
