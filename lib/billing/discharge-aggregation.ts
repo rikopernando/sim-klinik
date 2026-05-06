@@ -372,55 +372,49 @@ export async function aggregateDischargebilling(
   const calculateTotal = (items: BillingItemInput[]) =>
     items.reduce((sum, item) => sum + parseFloat(item.totalPrice || "0"), 0).toFixed(2)
 
-  const aggregatesData = [
+  const isInpatient = visit.visitType === "inpatient"
+
+  const aggregatesData: Promise<BillingItemInput[]>[] = [
     aggregateMedicationCharges(visitId, visit.visitType),
     aggregateProcedureCharges(visitId, visit.visitType),
     aggregateLabOrderCharges(visitId),
     aggregateServiceCharges(),
+    ...(isInpatient ? [aggregateRoomCharges(visitId), aggregateMaterialCharges(visitId)] : []),
   ]
 
-  if (visit.visitType === "inpatient") {
-    aggregatesData.push(aggregateRoomCharges(visitId))
-    aggregatesData.push(aggregateMaterialCharges(visitId))
-  }
-
   // Aggregate all charges in parallel for performance
-  const [medicationItems, procedureItems, labOrderItems, serviceItems] =
+  const [medicationItems, procedureItems, labOrderItems, serviceItems, roomItems, materialItems] =
     await Promise.all(aggregatesData)
 
-  // Combine all items
-  let allItems = [...medicationItems, ...procedureItems, ...labOrderItems, ...serviceItems]
+  const allItems = [
+    ...medicationItems,
+    ...procedureItems,
+    ...labOrderItems,
+    ...serviceItems,
+    ...(roomItems ?? []),
+    ...(materialItems ?? []),
+  ]
 
-  let breakdown: Breakdown = {
+  const breakdown: Breakdown = {
     medicationCharges: calculateTotal(medicationItems),
     procedureCharges: calculateTotal(procedureItems),
     laboratoryCharges: calculateTotal(labOrderItems),
     serviceCharges: calculateTotal(serviceItems),
+    ...(isInpatient && {
+      roomCharges: calculateTotal(roomItems ?? []),
+      materialCharges: calculateTotal(materialItems ?? []),
+    }),
   }
 
-  let counts: Counts = {
+  const counts: Counts = {
     medicationCount: medicationItems.length,
     procedureCount: procedureItems.length,
     laboratoryCount: labOrderItems.length,
     serviceCount: serviceItems.length,
-  }
-
-  if (visit.visitType === "inpatient") {
-    const roomItems = await aggregateRoomCharges(visitId)
-    const materialItems = await aggregateMaterialCharges(visitId)
-
-    allItems = [...allItems, ...roomItems, ...materialItems]
-    breakdown = {
-      ...breakdown,
-      roomCharges: calculateTotal(roomItems),
-      materialCharges: calculateTotal(materialItems),
-    }
-
-    counts = {
-      ...counts,
-      roomCount: roomItems.length,
-      materialCount: materialItems.length,
-    }
+    ...(isInpatient && {
+      roomCount: (roomItems ?? []).length,
+      materialCount: (materialItems ?? []).length,
+    }),
   }
 
   const subtotal = calculateTotal(allItems)

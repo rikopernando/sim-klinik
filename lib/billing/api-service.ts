@@ -7,7 +7,7 @@ import { db, type DbTransaction } from "@/db"
 import { services, billings, billingItems, payments, dischargeSummaries } from "@/db/schema/billing"
 import { visits } from "@/db/schema/visits"
 import { patients } from "@/db/schema/patients"
-import { prescriptions, drugs } from "@/db/schema/inventory"
+import { prescriptions, drugs, compoundRecipes } from "@/db/schema/inventory"
 import { medicalRecords, procedures } from "@/db/schema/medical-records"
 import { eq, sql, and, desc, or, inArray } from "drizzle-orm"
 import type { ServiceInput, ServiceUpdateInput } from "@/types/billing"
@@ -612,23 +612,50 @@ export async function calculateBillingForVisit(visitId: string) {
     }
   }
 
-  // 4. Add Medications (all prescribed medications, regardless of fulfillment status)
-  const prescriptionsList = await db
-    .select({
-      prescription: prescriptions,
-      drug: drugs,
-    })
-    .from(prescriptions)
-    .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
-    .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
-    .where(eq(medicalRecords.visitId, visitId))
+  // 4. Add Medications — regular drugs and compound recipes handled separately
+  const [regularPrescriptions, compoundPrescriptions] = await Promise.all([
+    db
+      .select({
+        prescription: prescriptions,
+        drug: drugs,
+      })
+      .from(prescriptions)
+      .innerJoin(drugs, eq(prescriptions.drugId, drugs.id))
+      .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+      .where(and(eq(medicalRecords.visitId, visitId), eq(prescriptions.isCompound, false))),
 
-  for (const { prescription, drug } of prescriptionsList) {
-    // Use prescribed quantity for billing (not dispensed quantity)
-    // Billing reflects what doctor prescribed, fulfillment is separate
+    db
+      .select({
+        prescription: prescriptions,
+        recipe: compoundRecipes,
+      })
+      .from(prescriptions)
+      .innerJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
+      .innerJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+      .where(and(eq(medicalRecords.visitId, visitId), eq(prescriptions.isCompound, true))),
+  ])
+
+  for (const { prescription, drug } of regularPrescriptions) {
     const quantity = prescription.quantity
     const description = `${prescription.dosage}, ${prescription.frequency}`
     addBillingItem(createDrugBillingItem(drug, quantity, description))
+  }
+
+  for (const { prescription, recipe } of compoundPrescriptions) {
+    const quantity = prescription.dispensedQuantity ?? prescription.quantity
+    const unitPrice = parseFloat(recipe.price ?? "0")
+    addBillingItem({
+      itemType: "drug",
+      itemId: recipe.id,
+      itemName: recipe.name ?? "",
+      itemCode: null,
+      quantity,
+      unitPrice: recipe.price ?? "0",
+      subtotal: (unitPrice * quantity).toFixed(2),
+      discount: "0.00",
+      totalPrice: (unitPrice * quantity).toFixed(2),
+      description: `${prescription.dosage || ""} - ${prescription.frequency}`.trim(),
+    })
   }
 
   // 5. Add Laboratory Tests (only verified lab orders)
