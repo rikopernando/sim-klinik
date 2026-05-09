@@ -72,14 +72,15 @@ export const GET = withRBAC(
           .innerJoin(billings, eq(payments.billingId, billings.id))
           .innerJoin(visits, eq(billings.visitId, visits.id))
           .innerJoin(patients, eq(visits.patientId, patients.id))
-          .where(and(gte(payments.receivedAt, from), lte(payments.receivedAt, to)))
+          .where(and(gte(billings.createdAt, from), lte(billings.createdAt, to)))
           .orderBy(desc(payments.receivedAt))
           .limit(100)
 
         const [ct] = await db
           .select({ c: count(payments.id) })
           .from(payments)
-          .where(and(gte(payments.receivedAt, from), lte(payments.receivedAt, to)))
+          .innerJoin(billings, eq(payments.billingId, billings.id))
+          .where(and(gte(billings.createdAt, from), lte(billings.createdAt, to)))
         total = ct?.c ?? 0
 
         items = rows.map((r) => ({
