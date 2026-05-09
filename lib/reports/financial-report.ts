@@ -29,11 +29,12 @@ async function getSummary(dateFrom: string, dateTo: string): Promise<ReportSumma
       .from(billings)
       .where(and(gte(billings.createdAt, from), lte(billings.createdAt, to))),
 
-    // Total collected in period (payments received in range)
+    // Total collected for billings created in this period (billing cohort, not payment date)
     db
       .select({ total: sum(payments.amount), txCount: count(payments.id) })
       .from(payments)
-      .where(and(gte(payments.receivedAt, from), lte(payments.receivedAt, to))),
+      .innerJoin(billings, eq(payments.billingId, billings.id))
+      .where(and(gte(billings.createdAt, from), lte(billings.createdAt, to))),
 
     // Outstanding: billings not fully paid, created in period
     db
@@ -139,7 +140,8 @@ async function getByPaymentMethod(dateFrom: string, dateTo: string): Promise<Pay
       count: count(payments.id),
     })
     .from(payments)
-    .where(and(gte(payments.receivedAt, from), lte(payments.receivedAt, to)))
+    .innerJoin(billings, eq(payments.billingId, billings.id))
+    .where(and(gte(billings.createdAt, from), lte(billings.createdAt, to)))
     .groupBy(payments.paymentMethod)
     .orderBy(sql`SUM(${payments.amount}) DESC`)
 
