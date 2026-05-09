@@ -13,6 +13,7 @@ Before implementing features, consult `/documentation/`:
 - **`tasks.md`**: Phase 1 MVP task breakdown (A-G modules with priorities)
 - **`app_flow_document.md`**: User stories for all 7 modules with role-based workflows
 - **`backend_structure_document.md`**: Database schema, API design
+- **`visit_status_lifecycle.md`**: Visit status state machine and valid transitions
 - **`security_guideline_document.md`**: Security practices
 
 ⚠️ Documentation references Prisma and NextAuth, but codebase uses **Drizzle ORM** and **Better Auth**. Prioritize actual implementation.
@@ -35,23 +36,28 @@ npm run build        # Production build
 npm run lint         # ESLint
 npm run lint:fix     # ESLint with auto-fix
 npm run format       # Prettier format
+npm run format:check # Check formatting without writing
 
-# Database
-npm run db:dev       # Start dev PostgreSQL (port 5433)
+# Database (postgres only — not full stack)
+npm run db:up        # Start dev PostgreSQL container (port 5433)
+npm run db:down      # Stop dev PostgreSQL container
 npm run db:push      # Push schema changes
 npm run db:generate  # Generate migrations
 npm run db:studio    # Drizzle Studio GUI
 npm run db:reset     # Drop and recreate tables
 
 # Seeders
-npm run db:seed            # Main seeder
-npm run db:seed:services   # Seed services/tariffs
-npm run db:seed:drugs      # Seed drug master data
-npm run db:seed:rooms      # Seed room/bed data
+npm run db:seed              # Main seeder (users, roles, polis)
+npm run db:seed:services     # Seed services/tariffs
+npm run db:seed:drugs        # Seed drug master data
+npm run db:seed:rooms        # Seed room/bed data
+npm run db:seed:material     # Seed medical materials
+npm run db:update-passwords  # Re-hash passwords after algorithm changes
 
-# Docker
-npm run docker:up    # Start full stack
+# Docker (full stack)
+npm run docker:up    # Start full stack (app + postgres)
 npm run docker:down  # Stop containers
+npm run docker:logs  # Tail container logs
 ```
 
 ## Architecture
@@ -65,16 +71,18 @@ Schemas are organized by domain:
 - `patients.ts` - Patient master data with MR numbers
 - `visits.ts` - Visit records, polis, services, doctors
 - `medical-records.ts` - SOAP notes, diagnoses (ICD-10), procedures (ICD-9), prescriptions
-- `inventory.ts` - Unified drugs and materials inventory
+- `inventory.ts` - Unified drugs and materials inventory (see note below)
 - `inpatient.ts` - Rooms, beds, vitals, CPPT notes
 - `billing.ts` - Billing, payments, discharge
 - `laboratory.ts` - Lab tests, orders, results
+
+**Inventory naming quirk**: The Drizzle export is `inventoryItems` but the underlying SQL table is named `"drugs"` (kept for backward compatibility). Both drugs and medical materials are stored here, distinguished by the `itemType` field (`"drug"` | `"material"`).
 
 ### RBAC System (`lib/rbac/` + `types/rbac.ts`)
 
 Role-based access control with 10 roles: `super_admin`, `admin`, `doctor`, `nurse`, `pharmacist`, `cashier`, `receptionist`, `lab_technician`, `lab_supervisor`, `radiologist`
 
-**API Route Protection**:
+**API Route Protection** (server-side):
 
 ```typescript
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -94,6 +102,48 @@ export const POST = withRBAC(handler, { roles: ["doctor", "nurse"] })
 
 ```typescript
 import { getSession, getUserRole, hasPermission } from "@/lib/rbac"
+```
+
+The session module maintains an in-memory role cache (60s TTL). Call `invalidateRoleCache(userId)` after changing a user's role to force a fresh lookup.
+
+**Client-side Page Protection**:
+
+```typescript
+import { usePagePermission, PAGE_PERMISSIONS } from "@/hooks/use-page-permission"
+
+// In a page component:
+const { isAuthorized, isLoading } = usePagePermission(PAGE_PERMISSIONS.cashier)
+// PAGE_PERMISSIONS has presets for: queue, doctor, pharmacy, cashier, laboratory,
+// inpatient, medicalRecords, users, registration, patients, emergency, masterData
+```
+
+**Auth Client** (`lib/auth-client.ts`) — use in client components:
+
+```typescript
+import { authClient, signIn, signOut, useSession } from "@/lib/auth-client"
+
+const { data: session } = useSession()
+```
+
+### Visit Status State Machine (`types/visit-status.ts`)
+
+Visits move through a defined state machine. The valid flow is:
+`registered` → `waiting` → `in_examination` → `examined` → `ready_for_billing` → `billed` → `paid` → `completed`
+
+Terminal states: `completed`, `cancelled` (reachable from any non-terminal status).
+
+Key integration points:
+
+- Locking a medical record **automatically** transitions the visit to `ready_for_billing`
+- Discharge is blocked until status is `paid`
+- Use utility functions from `types/visit-status.ts` to validate transitions:
+
+```typescript
+import {
+  isValidStatusTransition,
+  getAllowedNextStatuses,
+  canCreateBilling,
+} from "@/types/visit-status"
 ```
 
 ### API Pattern
@@ -119,22 +169,30 @@ const response: ResponseError<unknown> = {
 }
 ```
 
+**Server-side caching**: Use `ApiCache` from `lib/cache/api-cache.ts` for read-heavy endpoints:
+
+```typescript
+const cache = new ApiCache<MyData>(30_000) // 30s TTL
+const cached = cache.get("key")
+if (cached) return cached
+```
+
 ### Client Services (`lib/services/`)
 
-Services handle API calls from client components:
+Services handle API calls from client components. Key services: `patient.service.ts`, `visit.service.ts`, `pharmacy.service.ts`, `billing.service.ts`, `inpatient.service.ts`, `lab.service.ts`, `emergency.service.ts`, `inventory.service.ts`, `medical-record.service.ts`, `rooms.service.ts`, `compound-recipe.service.ts`, `poli.service.ts`, `user.service.ts`.
 
-- `patient.service.ts` - Patient CRUD
-- `visit.service.ts` - Visit management
-- `pharmacy.service.ts` - Pharmacy operations
-- `billing.service.ts` - Billing operations
-- `inpatient.service.ts` - Inpatient care
-- `lab.service.ts` - Laboratory orders
+### Custom Hooks (`hooks/`)
+
+The hooks directory contains domain-specific hooks that wrap service calls with React Query. Naming is `use-<domain>-<action>.ts`. Prefer using existing hooks before reaching into services directly.
+
+### Real-time Notifications (`lib/notifications/`)
+
+SSE-based notifications for pharmacy and emergency modules. The manager is in `lib/notifications/sse-manager.ts`. Client hooks: `use-pharmacy-notifications.ts`, `use-er-notifications.ts`.
 
 ### Type Definitions (`types/`)
 
-Domain types are in `/types/`:
-
 - `rbac.ts` - Roles, permissions, user types
+- `visit-status.ts` - Visit state machine, utility functions
 - `registration.ts` - Patient form types
 - `medical-record.ts` - EMR types
 - `billing.ts` - Billing types
@@ -144,13 +202,8 @@ Domain types are in `/types/`:
 ### Key Utilities
 
 ```typescript
-// Class name utility
 import { cn } from "@/lib/utils"
-
-// MR Number generation
 import { generateMRNumber } from "@/lib/generators"
-
-// Zod validations
 import { patientSchema } from "@/lib/validations/registration"
 ```
 
@@ -174,6 +227,7 @@ Implemented pages in `app/dashboard/`:
 - `/users` - User management (super_admin only)
 - `/master-data/polis` - Poli management
 - `/master-data/rooms` - Room configuration
+- `/services` - Service/tariff management
 
 ## Environment Variables
 
@@ -192,7 +246,7 @@ NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 - **Forms**: Use React Hook Form + Zod for all forms
 - **MR Numbers**: Auto-generated via `generateMRNumber()`
 - **Billing Gate**: Patients cannot be discharged until payment status is "LUNAS"
-- **Medical Records**: Can be locked after completion (only super_admin can unlock)
+- **Medical Records**: Can be locked after completion (only super_admin can unlock); locking auto-transitions visit to `ready_for_billing`
 - **Real-time**: SSE notifications for pharmacy prescriptions (`lib/notifications/`)
 - **Address Hierarchy**: Province → City → Subdistrict → Village (Indonesian format)
 
@@ -201,6 +255,7 @@ NEXT_PUBLIC_BETTER_AUTH_URL=http://localhost:3000
 ```typescript
 import { db } from "@/db"
 import { patients, visits } from "@/db/schema"
+import { inventoryItems } from "@/db/schema/inventory" // "drugs" table — holds drugs + materials
 import { withRBAC } from "@/lib/rbac"
 import { cn } from "@/lib/utils"
 import type { UserRole } from "@/types/rbac"
