@@ -246,9 +246,12 @@ export async function getPaginatedDrugInventory(
     .innerJoin(drugs, eq(drugInventory.drugId, drugs.id))
     .$dynamic()
 
-  // Apply search filter if provided
+  // Apply search filter if provided (drug name or batch number)
   if (search && search.trim()) {
-    baseQuery = baseQuery.where(ilike(drugs.name, `%${search.trim()}%`))
+    const pattern = `%${search.trim()}%`
+    baseQuery = baseQuery.where(
+      or(ilike(drugs.name, pattern), ilike(drugInventory.batchNumber, pattern))
+    )
   }
 
   // Get total count for pagination
@@ -260,7 +263,14 @@ export async function getPaginatedDrugInventory(
 
   // Apply same search filter to count query
   const finalCountQuery =
-    search && search.trim() ? countQuery.where(ilike(drugs.name, `%${search.trim()}%`)) : countQuery
+    search && search.trim()
+      ? countQuery.where(
+          or(
+            ilike(drugs.name, `%${search.trim()}%`),
+            ilike(drugInventory.batchNumber, `%${search.trim()}%`)
+          )
+        )
+      : countQuery
 
   const [countResult] = await finalCountQuery
   const total = countResult?.count || 0

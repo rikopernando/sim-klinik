@@ -24,6 +24,7 @@ import {
   IconCirclePlus2,
   IconHistory,
   IconTool,
+  IconPackage,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -141,6 +142,15 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Farmasi",
           url: "/dashboard/pharmacy",
           icon: IconPill,
+        },
+        {
+          title: "Stok Opname",
+          url: "/dashboard/pharmacy/stok-opname",
+          icon: IconPackage,
+          items: [
+            { title: "Opname", url: "/dashboard/pharmacy/stok-opname" },
+            { title: "Riwayat Opname", url: "/dashboard/pharmacy/stok-opname/history" },
+          ],
         },
         {
           title: "Kasir",
@@ -324,6 +334,15 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Farmasi",
           url: "/dashboard/pharmacy",
           icon: IconPill,
+        },
+        {
+          title: "Stok Opname",
+          url: "/dashboard/pharmacy/stok-opname",
+          icon: IconPackage,
+          items: [
+            { title: "Opname", url: "/dashboard/pharmacy/stok-opname" },
+            { title: "Riwayat Opname", url: "/dashboard/pharmacy/stok-opname/history" },
+          ],
         },
         {
           title: "Kasir",
@@ -586,6 +605,15 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Farmasi",
           url: "/dashboard/pharmacy",
           icon: IconPill,
+        },
+        {
+          title: "Stok Opname",
+          url: "/dashboard/pharmacy/stok-opname",
+          icon: IconPackage,
+          items: [
+            { title: "Opname", url: "/dashboard/pharmacy/stok-opname" },
+            { title: "Riwayat Opname", url: "/dashboard/pharmacy/stok-opname/history" },
+          ],
         },
       ],
     },

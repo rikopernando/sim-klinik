@@ -114,7 +114,7 @@ export const stockMovementSchema = z.object({
 export const inventoryQuerySchema = z.object({
   search: z.string().optional(),
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(10),
+  limit: z.coerce.number().int().positive().max(5000).default(10),
 })
 
 /**

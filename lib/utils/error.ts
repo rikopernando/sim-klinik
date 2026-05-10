@@ -10,6 +10,7 @@ interface ValidationError {
 
 interface ApiErrorResponse {
   error?: string
+  message?: string
   details?: ValidationError[]
 }
 
@@ -27,8 +28,13 @@ export function getErrorMessage(error: unknown): string {
     }
 
     // Handle general API errors
-    if (error.response?.data?.error) {
+    if (error.response?.data?.error && typeof error.response.data.error === "string") {
       return error.response.data.error
+    }
+
+    // Fall back to the top-level message field
+    if (error.response?.data?.message) {
+      return error.response.data.message
     }
 
     // Handle network errors

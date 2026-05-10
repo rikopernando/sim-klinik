@@ -7,7 +7,7 @@ Priority order from `documentation/priority-summary.png`:
 | P0       | Reports page with real financial data      | ✅ Done    |
 | P0       | Discharge management page                  | ✅ Done    |
 | P1       | Queue ticket print                         | ⬜ Pending |
-| P1       | Stok Opname                                | ⬜ Pending |
+| P1       | Stok Opname                                | ✅ Done    |
 | P1       | Dashboard home with real live stats        | ⬜ Pending |
 | P2       | Lab → Doctor notifications                 | ⬜ Pending |
 | P2       | Doctor schedule / jadwal                   | ⬜ Pending |
