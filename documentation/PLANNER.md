@@ -8,7 +8,7 @@ Priority order from `documentation/priority-summary.png`:
 | P0       | Discharge management page                  | ✅ Done    |
 | P1       | Queue ticket print                         | ⬜ Pending |
 | P1       | Stok Opname                                | ✅ Done    |
-| P1       | Dashboard home with real live stats        | ⬜ Pending |
+| P1       | Dashboard home with real live stats        | ✅ Done    |
 | P2       | Lab → Doctor notifications                 | ⬜ Pending |
 | P2       | Doctor schedule / jadwal                   | ⬜ Pending |
 | P2       | Drug purchase orders & supplier management | ⬜ Pending |
