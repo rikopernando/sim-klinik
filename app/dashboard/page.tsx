@@ -192,7 +192,7 @@ function StatCard({
 
 // ── Role stat groups ───────────────────────────────────────────────────────────
 
-async function AdminStatsCards(_: { userId: string }) {
+async function AdminStatsCards() {
   const stats = await getAdminStats()
   return (
     <>
