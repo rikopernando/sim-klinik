@@ -106,9 +106,7 @@ export default async function DashboardPage() {
 
       {/* ── KPI cards ── */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        {(user.role === "super_admin" || user.role === "admin") && (
-          <AdminStatsCards userId={user.id} />
-        )}
+        {(user.role === "super_admin" || user.role === "admin") && <AdminStatsCards />}
         {user.role === "doctor" && <DoctorStatsCards doctorId={user.id} />}
         {user.role === "nurse" && <NurseStatsCards />}
         {user.role === "pharmacist" && <PharmacistStatsCards />}
