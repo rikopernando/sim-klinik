@@ -8,7 +8,7 @@ Priority order from `documentation/priority-summary.png`:
 | P0       | Discharge management page                  | ✅ Done    |
 | P0       | Master Data Obat & Bahan Medis             | ✅ Done    |
 | P0       | Master Data Pemeriksaan Lab                | ✅ Done    |
-| P0       | Master Data Panel Lab                      | ⬜ Pending |
+| P0       | Master Data Panel Lab                      | ✅ Done    |
 | P1       | Queue ticket print                         | ⬜ Pending |
 | P1       | Stok Opname                                | ✅ Done    |
 | P1       | Dashboard home with real live stats        | ✅ Done    |

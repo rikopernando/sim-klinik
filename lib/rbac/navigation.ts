@@ -222,6 +222,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard/master-data/lab-tests",
           icon: IconFlask,
         },
+        {
+          title: "Panel Lab",
+          url: "/dashboard/master-data/lab-panels",
+          icon: IconFlask,
+        },
       ],
     },
     {
@@ -417,6 +422,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Pemeriksaan Lab",
           url: "/dashboard/master-data/lab-tests",
+          icon: IconFlask,
+        },
+        {
+          title: "Panel Lab",
+          url: "/dashboard/master-data/lab-panels",
           icon: IconFlask,
         },
       ],
@@ -802,6 +812,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         {
           title: "Pemeriksaan Lab",
           url: "/dashboard/master-data/lab-tests",
+          icon: IconFlask,
+        },
+        {
+          title: "Panel Lab",
+          url: "/dashboard/master-data/lab-panels",
           icon: IconFlask,
         },
       ],
