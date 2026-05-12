@@ -21,7 +21,7 @@ import { Pagination } from "@/components/users/pagination"
 import { LabPanelTable, LabPanelDialog } from "@/components/master-data/lab-panels"
 import { useLabPanels, useCreateLabPanel, useUpdateLabPanel } from "@/hooks/use-lab-panels"
 import { useDebounce } from "@/hooks/use-debounce"
-import type { LabPanelRecord } from "@/types/lab-panel"
+import type { LabPanelRecord, CreateLabPanelInput } from "@/types/lab-panel"
 
 export default function LabPanelsPage() {
   return (
@@ -53,23 +53,17 @@ function LabPanelsPageContent() {
   const { create, isCreating } = useCreateLabPanel()
   const { update, isUpdating } = useUpdateLabPanel()
 
-  const handleCreate = async (values: Parameters<typeof create>[0]) => {
+  const handleSubmit = async (values: CreateLabPanelInput) => {
     try {
-      await create(values)
-      toast.success("Panel berhasil ditambahkan")
+      if (selectedItem) {
+        await update({ id: selectedItem.id, input: values })
+        toast.success("Panel berhasil diperbarui")
+      } else {
+        await create(values)
+        toast.success("Panel berhasil ditambahkan")
+      }
     } catch {
-      toast.error("Gagal menambahkan panel")
-      throw new Error("failed")
-    }
-  }
-
-  const handleEdit = async (values: Parameters<typeof create>[0]) => {
-    if (!selectedItem) return
-    try {
-      await update({ id: selectedItem.id, input: values })
-      toast.success("Panel berhasil diperbarui")
-    } catch {
-      toast.error("Gagal memperbarui panel")
+      toast.error(selectedItem ? "Gagal memperbarui panel" : "Gagal menambahkan panel")
       throw new Error("failed")
     }
   }
@@ -189,7 +183,7 @@ function LabPanelsPageContent() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         item={selectedItem}
-        onSubmit={selectedItem ? handleEdit : handleCreate}
+        onSubmit={handleSubmit}
         isSubmitting={isCreating || isUpdating}
       />
 

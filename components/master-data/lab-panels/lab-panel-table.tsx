@@ -16,6 +16,33 @@ import { cn } from "@/lib/utils"
 import { formatCurrency } from "@/lib/billing/billing-utils"
 import type { LabPanelRecord } from "@/types/lab-panel"
 
+const deptBadgeClass = (department: string) =>
+  department === "LAB"
+    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+    : "bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
+
+function PanelTableHeader() {
+  return (
+    <TableHeader>
+      <TableRow className="bg-muted/40 hover:bg-muted/40">
+        <TableHead className="w-8 pl-0" />
+        <TableHead className="py-3 text-xs font-semibold tracking-wider uppercase">Kode</TableHead>
+        <TableHead className="text-xs font-semibold tracking-wider uppercase">Nama</TableHead>
+        <TableHead className="text-xs font-semibold tracking-wider uppercase">
+          Pemeriksaan
+        </TableHead>
+        <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+          Harga
+        </TableHead>
+        <TableHead className="text-xs font-semibold tracking-wider uppercase">Status</TableHead>
+        <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
+          Aksi
+        </TableHead>
+      </TableRow>
+    </TableHeader>
+  )
+}
+
 interface LabPanelTableProps {
   items: LabPanelRecord[]
   isLoading: boolean
@@ -43,25 +70,7 @@ export function LabPanelTable({ items, isLoading, onEdit, onToggleActive }: LabP
   return (
     <div className="overflow-hidden rounded-xl border">
       <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <TableHead className="w-8 pl-0" />
-            <TableHead className="py-3 text-xs font-semibold tracking-wider uppercase">
-              Kode
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">Nama</TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">
-              Pemeriksaan
-            </TableHead>
-            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-              Harga
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">Status</TableHead>
-            <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
-              Aksi
-            </TableHead>
-          </TableRow>
-        </TableHeader>
+        <PanelTableHeader />
         <TableBody>
           {items.map((item) => (
             <TableRow
@@ -104,12 +113,7 @@ export function LabPanelTable({ items, isLoading, onEdit, onToggleActive }: LabP
                         <Badge
                           key={t.id}
                           variant="secondary"
-                          className={cn(
-                            "text-xs",
-                            t.department === "LAB"
-                              ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                              : "bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
-                          )}
+                          className={cn("text-xs", deptBadgeClass(t.department))}
                         >
                           {t.code}
                         </Badge>
@@ -198,25 +202,7 @@ function SkeletonRows() {
   return (
     <div className="overflow-hidden rounded-xl border">
       <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <TableHead className="w-8 pl-0" />
-            <TableHead className="py-3 text-xs font-semibold tracking-wider uppercase">
-              Kode
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">Nama</TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">
-              Pemeriksaan
-            </TableHead>
-            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-              Harga
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">Status</TableHead>
-            <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
-              Aksi
-            </TableHead>
-          </TableRow>
-        </TableHeader>
+        <PanelTableHeader />
         <TableBody>
           {Array.from({ length: 6 }).map((_, i) => (
             <TableRow key={i} className="border-l-2 border-l-transparent">

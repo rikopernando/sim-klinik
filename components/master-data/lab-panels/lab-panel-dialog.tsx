@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { LayoutList, X, ChevronsUpDown, Check, Search } from "lucide-react"
+import { LayoutList, X, ChevronsUpDown, Check, Search, ChevronUp } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   Form,
@@ -20,14 +20,6 @@ import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { Badge } from "@/components/ui/badge"
 import { CurrencyInput } from "@/components/ui/currency-input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 import { createLabPanelSchema } from "@/lib/validations/lab-panel"
 import { getLabTests } from "@/lib/services/lab-test.service"
@@ -35,6 +27,11 @@ import type { LabPanelRecord } from "@/types/lab-panel"
 import type { LabTestRecord } from "@/types/lab-test"
 
 const formSchema = createLabPanelSchema.extend({ isActive: z.boolean().optional() })
+
+const deptBadgeClass = (department: string) =>
+  department === "LAB"
+    ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+    : "bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
 
 type FormValues = z.infer<typeof formSchema>
 
@@ -73,38 +70,26 @@ export function LabPanelDialog({
 
   const selectedTestIds = form.watch("testIds")
 
-  // Load active lab tests when dialog opens
   useEffect(() => {
-    if (open) {
-      getLabTests({ isActive: true, limit: 100 }).then((res) => {
-        setAvailableTests(res.data ?? [])
-      })
-    }
-  }, [open])
+    if (!open) return
 
-  useEffect(() => {
-    if (open) {
-      if (item) {
-        form.reset({
-          code: item.code,
-          name: item.name,
-          description: item.description ?? "",
-          price: parseFloat(item.price),
-          testIds: item.tests?.map((t) => t.id) ?? [],
-          isActive: item.isActive,
-        })
-      } else {
-        form.reset({
-          code: "",
-          name: "",
-          description: "",
-          price: 0,
-          testIds: [],
-          isActive: true,
-        })
-      }
-      setTestSearch("")
-    }
+    getLabTests({ isActive: true, limit: 100 }).then((res) => {
+      setAvailableTests(res.data ?? [])
+    })
+
+    form.reset(
+      item
+        ? {
+            code: item.code,
+            name: item.name,
+            description: item.description ?? "",
+            price: parseFloat(item.price),
+            testIds: item.tests?.map((t) => t.id) ?? [],
+            isActive: item.isActive,
+          }
+        : { code: "", name: "", description: "", price: 0, testIds: [], isActive: true }
+    )
+    setTestSearch("")
   }, [open, item, form])
 
   const handleSubmit = async (values: FormValues) => {
@@ -118,14 +103,6 @@ export function LabPanelDialog({
       ? current.filter((id) => id !== testId)
       : [...current, testId]
     form.setValue("testIds", next, { shouldValidate: true })
-  }
-
-  const removeTest = (testId: string) => {
-    form.setValue(
-      "testIds",
-      form.getValues("testIds").filter((id) => id !== testId),
-      { shouldValidate: true }
-    )
   }
 
   const filteredTests = availableTests.filter(
@@ -254,17 +231,12 @@ export function LabPanelDialog({
                         <Badge
                           key={t.id}
                           variant="secondary"
-                          className={cn(
-                            "gap-1 pr-1 text-xs",
-                            t.department === "LAB"
-                              ? "bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                              : "bg-violet-50 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300"
-                          )}
+                          className={cn("gap-1 pr-1 text-xs", deptBadgeClass(t.department))}
                         >
                           {t.code}
                           <button
                             type="button"
-                            onClick={() => removeTest(t.id)}
+                            onClick={() => toggleTest(t.id)}
                             className="hover:text-destructive ml-0.5 rounded-full"
                           >
                             <X className="h-3 w-3" />
@@ -274,20 +246,24 @@ export function LabPanelDialog({
                     </div>
                   )}
 
-                  {/* Combobox trigger */}
-                  <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full justify-between font-normal"
-                      >
-                        <span className="text-muted-foreground">Pilih pemeriksaan…</span>
+                  {/* Inline picker toggle + panel */}
+                  <div className="relative">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full justify-between font-normal"
+                      onClick={() => setPickerOpen((o) => !o)}
+                    >
+                      <span className="text-muted-foreground">Pilih pemeriksaan…</span>
+                      {pickerOpen ? (
+                        <ChevronUp className="h-4 w-4 opacity-50" />
+                      ) : (
                         <ChevronsUpDown className="h-4 w-4 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[400px] p-0" align="start">
-                      <Command>
+                      )}
+                    </Button>
+
+                    {pickerOpen && (
+                      <div className="bg-popover absolute top-full right-0 left-0 z-10 mt-1 overflow-hidden rounded-md border shadow-md">
                         <div className="flex items-center border-b px-3">
                           <Search className="text-muted-foreground mr-2 h-4 w-4 shrink-0" />
                           <input
@@ -297,21 +273,24 @@ export function LabPanelDialog({
                             onChange={(e) => setTestSearch(e.target.value)}
                           />
                         </div>
-                        <CommandList className="max-h-60">
-                          <CommandEmpty>Tidak ada pemeriksaan ditemukan</CommandEmpty>
-                          <CommandGroup>
-                            {filteredTests.map((t) => {
+                        <div className="max-h-48 overflow-y-auto overscroll-contain p-1">
+                          {filteredTests.length === 0 ? (
+                            <p className="text-muted-foreground py-6 text-center text-sm">
+                              Tidak ada pemeriksaan ditemukan
+                            </p>
+                          ) : (
+                            filteredTests.map((t) => {
                               const selected = selectedTestIds.includes(t.id)
                               return (
-                                <CommandItem
+                                <button
                                   key={t.id}
-                                  value={`${t.code} ${t.name}`}
-                                  onSelect={() => toggleTest(t.id)}
-                                  className="gap-2"
+                                  type="button"
+                                  onClick={() => toggleTest(t.id)}
+                                  className="hover:bg-accent flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm"
                                 >
                                   <div
                                     className={cn(
-                                      "flex h-4 w-4 items-center justify-center rounded border",
+                                      "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                                       selected
                                         ? "border-indigo-500 bg-indigo-500 text-white"
                                         : "border-muted-foreground"
@@ -321,12 +300,7 @@ export function LabPanelDialog({
                                   </div>
                                   <Badge
                                     variant="secondary"
-                                    className={cn(
-                                      "shrink-0 text-xs",
-                                      t.department === "LAB"
-                                        ? "bg-blue-50 text-blue-700"
-                                        : "bg-violet-50 text-violet-700"
-                                    )}
+                                    className={cn("shrink-0 text-xs", deptBadgeClass(t.department))}
                                   >
                                     {t.department}
                                   </Badge>
@@ -334,14 +308,14 @@ export function LabPanelDialog({
                                   <span className="text-muted-foreground truncate text-sm">
                                     {t.name}
                                   </span>
-                                </CommandItem>
+                                </button>
                               )
-                            })}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
+                            })
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
