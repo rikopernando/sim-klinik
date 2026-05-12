@@ -6,6 +6,9 @@ Priority order from `documentation/priority-summary.png`:
 | -------- | ------------------------------------------ | ---------- |
 | P0       | Reports page with real financial data      | ✅ Done    |
 | P0       | Discharge management page                  | ✅ Done    |
+| P0       | Master Data Obat & Bahan Medis             | ✅ Done    |
+| P0       | Master Data Pemeriksaan Lab                | ✅ Done    |
+| P0       | Master Data Panel Lab                      | ⬜ Pending |
 | P1       | Queue ticket print                         | ⬜ Pending |
 | P1       | Stok Opname                                | ✅ Done    |
 | P1       | Dashboard home with real live stats        | ✅ Done    |
@@ -120,3 +123,170 @@ On success for both: remove visit from list optimistically + sonner toast + trig
 4. Click "Selesaikan" on an outpatient visit → confirm → visit disappears from list.
 5. Click "Pulangkan Pasien" on an inpatient visit → FinalDischargeDialog opens → completes → bed freed in `/dashboard/inpatient/rooms`.
 6. Log in as `doctor` role → page is accessible. Log in as `pharmacist` → page is inaccessible.
+
+---
+
+## P0: Master Data Obat & Bahan Medis (`/dashboard/master-data/drugs`)
+
+### Context
+
+The `inventoryItems` table (SQL: `drugs`) holds the master catalog for all drugs and medical materials, distinguished by `itemType` (`"drug"` | `"material"`). Currently there is no UI to add/edit/deactivate items — pharmacists must use DB tooling. The pharmacy inventory page (`/dashboard/pharmacy/inventory`) only manages batches/stock, not the master drug records.
+
+### Table Fields
+
+| Field                 | Type     | Notes                                          |
+| --------------------- | -------- | ---------------------------------------------- |
+| `name`                | string   | Required                                       |
+| `genericName`         | string   | Optional, drugs only                           |
+| `itemType`            | enum     | `"drug"` \| `"material"` — toggle/select       |
+| `category`            | string   | e.g. "Antibiotik", "Analgesik", "Consumables"  |
+| `unit`                | string   | tablet, kapsul, ml, pcs, box, roll             |
+| `price`               | decimal  | Prescription price                             |
+| `generalPrice`        | decimal  | Optional general price                         |
+| `minimumStock`        | integer  | Alert threshold, default 10                    |
+| `requiresPrescription`| boolean  | TRUE for drugs, FALSE for materials            |
+| `isActive`            | boolean  | Soft delete via toggle                         |
+| `description`         | text     | Optional                                       |
+
+### Roles
+
+- **View:** `super_admin`, `admin`, `pharmacist`
+- **Create/Edit/Toggle Active:** `super_admin`, `admin`, `pharmacist`
+
+### Sidebar
+
+Add to Master Data section in `lib/rbac/navigation.ts`:
+```
+{ title: "Obat & Bahan Medis", url: "/dashboard/master-data/drugs", icon: Pill }
+```
+
+### Page Layout
+
+```
+DrugsPage (server, PageGuard roles=["super_admin","admin","pharmacist"])
+└── DrugsContent (client)
+    ├── Header: "Obat & Bahan Medis" + [+ Tambah] button
+    ├── Tabs: Semua | Obat | Bahan Medis  (client-side filter on itemType)
+    ├── Search input (debounced, server-side via query param)
+    ├── Table: Nama | Nama Generik | Tipe | Kategori | Satuan | Harga | Min Stok | Status | Aksi
+    │   - Status badge: Aktif (green) / Tidak Aktif (gray)
+    │   - Aksi: Edit | Toggle Active
+    └── Create/Edit Dialog (Sheet or Dialog)
+        - Form fields matching table above
+        - itemType toggle changes which fields are shown (genericName hidden for material)
+```
+
+### API
+
+- `GET /api/master-data/drugs?search=&itemType=&page=` — paginated list
+- `POST /api/master-data/drugs` — create
+- `PATCH /api/master-data/drugs/[id]` — update / toggle isActive
+
+---
+
+## P0: Master Data Pemeriksaan Lab (`/dashboard/master-data/lab-tests`)
+
+### Context
+
+The `labTests` table is the catalog for all lab and radiology tests. Doctors order from this catalog, and lab technicians use it to process results. Currently there is no UI — tests must be seeded directly. Proper management is required for the lab module to work end-to-end.
+
+### Table Fields
+
+| Field              | Type     | Notes                                          |
+| ------------------ | -------- | ---------------------------------------------- |
+| `code`             | string   | Unique, e.g. "CBC", "HBA1C", "XRAY-CHEST"     |
+| `name`             | string   | Full name                                      |
+| `category`         | string   | "Hematologi", "Kimia Klinik", "Radiologi", etc.|
+| `department`       | enum     | `"LAB"` \| `"RAD"`                             |
+| `price`            | decimal  | Test price                                     |
+| `specimenType`     | string   | "Darah", "Urin", etc. (optional)               |
+| `tatHours`         | integer  | Turnaround time in hours, default 24           |
+| `requiresFasting`  | boolean  | Patient prep flag                              |
+| `isActive`         | boolean  | Soft delete                                    |
+| `description`      | text     | Optional                                       |
+| `instructions`     | text     | Patient preparation instructions (optional)   |
+
+### Roles
+
+- **View:** `super_admin`, `admin`, `lab_technician`, `lab_supervisor`
+- **Create/Edit/Toggle:** `super_admin`, `admin`, `lab_supervisor`
+
+### Sidebar
+
+Add to Master Data section:
+```
+{ title: "Pemeriksaan Lab", url: "/dashboard/master-data/lab-tests", icon: FlaskConical }
+```
+
+### Page Layout
+
+```
+LabTestsPage (server, PageGuard)
+└── LabTestsContent (client)
+    ├── Header: "Pemeriksaan Lab" + [+ Tambah] button
+    ├── Tabs: Semua | LAB | RAD  (filter by department)
+    ├── Search input (debounced)
+    ├── Table: Kode | Nama | Kategori | Dept | Harga | TAT | Puasa | Status | Aksi
+    └── Create/Edit Dialog
+        - Full form for all fields above
+```
+
+### API
+
+- `GET /api/master-data/lab-tests?search=&department=&page=`
+- `POST /api/master-data/lab-tests`
+- `PATCH /api/master-data/lab-tests/[id]`
+
+---
+
+## P0: Master Data Panel Lab (`/dashboard/master-data/lab-panels`)
+
+### Context
+
+`labTestPanels` groups multiple tests into reusable panels (e.g., "Paket Diabetes" = HBA1C + FBS + Urine Routine) with a discounted combined price. The many-to-many link is via `labTestPanelItems`. No UI exists.
+
+### Table Fields
+
+| Field         | Type     | Notes                                          |
+| ------------- | -------- | ---------------------------------------------- |
+| `code`        | string   | Unique, e.g. "DIABETES-PANEL"                  |
+| `name`        | string   | e.g. "Paket Diabetes"                          |
+| `description` | text     | Optional                                       |
+| `price`       | decimal  | Discounted panel price                         |
+| `isActive`    | boolean  | Soft delete                                    |
+| `tests`       | relation | Many-to-many via `labTestPanelItems`           |
+
+### Roles
+
+Same as lab-tests: `super_admin`, `admin`, `lab_supervisor` for write.
+
+### Sidebar
+
+Add to Master Data section:
+```
+{ title: "Panel Lab", url: "/dashboard/master-data/lab-panels", icon: LayoutList }
+```
+
+### Page Layout
+
+```
+LabPanelsPage (server, PageGuard)
+└── LabPanelsContent (client)
+    ├── Header: "Panel Lab" + [+ Tambah] button
+    ├── Table: Kode | Nama | Jumlah Tes | Harga | Status | Aksi
+    │   - "Jumlah Tes" = count of linked labTestPanelItems
+    └── Create/Edit Dialog
+        - code, name, description, price, isActive
+        - Multi-select combobox: pick tests from labTests catalog
+        - Shows selected tests as badge list with remove button
+```
+
+### API
+
+- `GET /api/master-data/lab-panels?search=&page=`
+- `POST /api/master-data/lab-panels` — creates panel + inserts panel items
+- `PATCH /api/master-data/lab-panels/[id]` — update panel + replace panel items
+- `DELETE /api/master-data/lab-panels/[id]` — soft delete (set isActive=false)
+
+---
+

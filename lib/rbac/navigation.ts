@@ -25,6 +25,7 @@ import {
   IconHistory,
   IconTool,
   IconPackage,
+  IconMedicineSyrup,
 } from "@tabler/icons-react"
 
 export interface NavItem {
@@ -210,6 +211,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Obat Racik",
           url: "/dashboard/master-data/compound-recipes",
           icon: IconPill,
+        },
+        {
+          title: "Obat & Bahan Medis",
+          url: "/dashboard/master-data/drugs",
+          icon: IconMedicineSyrup,
+        },
+        {
+          title: "Pemeriksaan Lab",
+          url: "/dashboard/master-data/lab-tests",
+          icon: IconFlask,
         },
       ],
     },
@@ -397,6 +408,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Obat Racik",
           url: "/dashboard/master-data/compound-recipes",
           icon: IconPill,
+        },
+        {
+          title: "Obat & Bahan Medis",
+          url: "/dashboard/master-data/drugs",
+          icon: IconMedicineSyrup,
+        },
+        {
+          title: "Pemeriksaan Lab",
+          url: "/dashboard/master-data/lab-tests",
+          icon: IconFlask,
         },
       ],
     },
@@ -625,6 +646,11 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           url: "/dashboard/master-data/compound-recipes",
           icon: IconPill,
         },
+        {
+          title: "Obat & Bahan Medis",
+          url: "/dashboard/master-data/drugs",
+          icon: IconMedicineSyrup,
+        },
       ],
     },
   ],
@@ -727,6 +753,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
         },
       ],
     },
+    {
+      label: "Master Data",
+      items: [
+        {
+          title: "Pemeriksaan Lab",
+          url: "/dashboard/master-data/lab-tests",
+          icon: IconFlask,
+        },
+      ],
+    },
   ],
 
   lab_supervisor: [
@@ -757,6 +793,16 @@ export const ROLE_NAVIGATION_GROUPS: Record<UserRole, NavGroup[]> = {
           title: "Laporan",
           url: "/dashboard/reports",
           icon: IconReportMedical,
+        },
+      ],
+    },
+    {
+      label: "Master Data",
+      items: [
+        {
+          title: "Pemeriksaan Lab",
+          url: "/dashboard/master-data/lab-tests",
+          icon: IconFlask,
         },
       ],
     },
