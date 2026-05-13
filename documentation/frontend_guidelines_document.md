@@ -59,30 +59,46 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 
 **Color Palette**
 
-- **Primary Blue**: #1E90FF (buttons, highlights)
-- **Secondary Navy**: #2C3E50 (header, sidebar background)
-- **Accent Cyan**: #00CEC9 (links, hover states)
-- **Neutral Light**: #F8F9FA (page backgrounds)
-- **Neutral Dark**: #2D3436 (text, icons)
+Defined as CSS variables in `app/globals.css` (light mode):
+
+| Token                | Value     | Usage                                      |
+|----------------------|-----------|--------------------------------------------|
+| `--primary`          | `#5ca473` | Buttons, active states, highlights (green) |
+| `--secondary`        | `#d8a411` | Secondary actions, badges (amber/golden)   |
+| `--background`       | `#ffffff` | Page background                            |
+| `--foreground`       | `#0a0a0a` | Body text, icons                           |
+| `--muted`            | `#f5f5f5` | Subtle backgrounds, skeleton loaders       |
+| `--muted-foreground` | `#737373` | Placeholder text, secondary labels        |
+| `--border`           | `#e5e5e5` | Dividers, input borders                   |
+| `--destructive`      | `#e7000b` | Error states, delete actions               |
+| `--ring`             | `#8fae6e` | Focus rings (lighter green)                |
+
+Chart scale (green ramp): `#b8c7bb` → `#9cc3a6` → `#5ca473` → `#3f7d53` → `#3c724d`
 
 **Font**
 
-- **Inter** (sans-serif): Clean, modern, highly legible on screens. Fallback to system fonts like `-apple-system, BlinkMacSystemFont, sans-serif`.
+- **Geist Sans** (`--font-geist-sans`): Primary UI font — clean, modern, highly legible. Loaded via `next/font/google`.
+- **Geist Mono** (`--font-geist-mono`): Used for code, codes, and tabular data.
+- **Parkinsans** (`--font-parkinsans`): Accent/display font for headings and brand moments.
 
 **Theming**
 
-- To keep a consistent look, all colors and font sizes are defined in CSS variables in `globals.css`:
-  ```css
-  :root {
-    --color-primary: #1e90ff;
-    --color-secondary: #2c3e50;
-    --color-accent: #00cec9;
-    --color-bg: #f8f9fa;
-    --color-text: #2d3436;
-    --font-family: "Inter", sans-serif;
-  }
-  ```
-- Components consume these variables for backgrounds, borders, and text.
+All design tokens live in `app/globals.css` as CSS custom properties and are aliased into Tailwind v4 via `@theme inline`. Components use Tailwind utility classes that resolve to these tokens:
+
+```css
+:root {
+  --primary: #5ca473;          /* green — the dominant brand color */
+  --secondary: #d8a411;        /* amber — secondary accents */
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  --border: #e5e5e5;
+  --destructive: #e7000b;
+  --radius: 0.625rem;          /* base border-radius (10px) */
+}
+```
+
+Dark mode tokens are defined in the `.dark` class in the same file. Components consume these variables for backgrounds, borders, and text — never hardcoded hex values.
 
 ---
 
