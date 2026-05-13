@@ -53,11 +53,7 @@ import {
   createParameterKey,
 } from "@/types/lab-result-form"
 import { CreateLabResultInput, ParameterResultInput } from "@/lib/lab"
-import {
-  getAllowedMimeTypes,
-  getAttachmentType,
-  formatFileSize,
-} from "@/lib/utils/file-upload"
+import { getAllowedMimeTypes, getAttachmentType, formatFileSize } from "@/lib/utils/file-upload"
 import { toTitleCaseMap } from "@/lib/utils/string"
 
 import LabBadge from "./lab-badge"
