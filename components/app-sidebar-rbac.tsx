@@ -24,7 +24,6 @@ import {
 import { getNavigationGroupsForRole } from "@/lib/rbac/navigation"
 import type { UserRole } from "@/types/rbac"
 import { ROLE_INFO } from "@/types/rbac"
-import { Badge } from "@/components/ui/badge"
 
 export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession()
@@ -79,44 +78,87 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
 
   return (
     <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+      <SidebarHeader
+        style={{
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
+          padding: "1rem 0.875rem 0.875rem",
+        }}
+      >
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild className="data-[slot=sidebar-menu-button]:!p-1.5">
-              <Link href="/">
+            <SidebarMenuButton
+              asChild
+              className="h-auto hover:!bg-transparent focus-visible:!ring-0 active:!bg-transparent"
+              style={{ padding: "0.25rem 0.5rem" }}
+            >
+              <Link href="/" className="flex items-center gap-3">
                 <Image
-                  src="/bumi-andalas-logo-v2.png"
+                  src="/bumi-andalas-logo.jpg"
                   alt="Klinik Bumi Andalas"
-                  width={32}
-                  height={32}
-                  className="rounded-lg"
+                  width={36}
+                  height={36}
+                  className="flex-shrink-0 rounded-full"
+                  style={{ border: "2px solid rgba(255,255,255,0.4)" }}
                 />
-                <span className="font-parkinsans text-base font-semibold">Klinik Bumi Andalas</span>
+                <div className="flex min-w-0 flex-col">
+                  <span
+                    className="truncate text-sm leading-tight font-semibold text-white"
+                    style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}
+                  >
+                    Klinik Bumi Andalas
+                  </span>
+                  <span
+                    className="text-[10px] leading-tight font-semibold tracking-[0.06em] uppercase"
+                    style={{ color: "rgba(255,255,255,0.45)" }}
+                  >
+                    Sistem Informasi Klinik
+                  </span>
+                </div>
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
 
           {/* Role Badge */}
           {roleInfo && (
-            <SidebarMenuItem className="px-2 py-1">
-              <Badge className={`${roleInfo.color} w-full justify-center text-white`}>
+            <SidebarMenuItem className="px-2 pb-0.5">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold text-white"
+                style={{
+                  background: "rgba(255,255,255,0.1)",
+                  border: "1px solid rgba(255,255,255,0.15)",
+                }}
+              >
+                <span
+                  className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full"
+                  style={{ background: "#74c69d" }}
+                />
                 {roleInfo.label}
-              </Badge>
+              </span>
             </SidebarMenuItem>
           )}
 
           {/* Loading State */}
           {isLoadingRole && (
-            <SidebarMenuItem className="px-2 py-1">
-              <div className="text-muted-foreground text-center text-xs">Loading role...</div>
+            <SidebarMenuItem className="px-2 pb-0.5">
+              <div
+                className="h-6 w-24 animate-pulse rounded-full"
+                style={{ background: "rgba(255,255,255,0.1)" }}
+              />
             </SidebarMenuItem>
           )}
 
           {/* No Role Warning */}
           {!isLoadingRole && !userRole && session?.user && (
-            <SidebarMenuItem className="px-2 py-1">
-              <div className="rounded bg-orange-50 p-2 text-center text-xs text-orange-600">
-                No role assigned. Contact admin.
+            <SidebarMenuItem className="px-2 pb-0.5">
+              <div
+                className="rounded-lg p-2 text-[11px] font-medium"
+                style={{
+                  background: "rgba(216,164,17,0.15)",
+                  border: "1px solid rgba(216,164,17,0.2)",
+                  color: "#d8a411",
+                }}
+              >
+                Tidak ada role. Hubungi admin.
               </div>
             </SidebarMenuItem>
           )}
@@ -132,7 +174,7 @@ export function AppSidebarRBAC({ ...props }: React.ComponentProps<typeof Sidebar
         {/* Secondary Navigation */}
         {/* <NavSecondary items={staticSecondaryNav} className="mt-auto" /> */}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
         <NavUser user={userData} />
       </SidebarFooter>
     </Sidebar>

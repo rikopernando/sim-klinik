@@ -1,10 +1,9 @@
 "use client"
 
 import { useRouter, usePathname } from "next/navigation"
-import { IconCirclePlusFilled, IconMail, IconChevronRight, type Icon } from "@tabler/icons-react"
+import { IconChevronRight, type Icon } from "@tabler/icons-react"
 import type { NavGroup } from "@/lib/rbac/navigation"
 
-import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -18,7 +17,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
-// Support both flat items (legacy) and grouped structure (new)
 type NavMainProps =
   | {
       groups: NavGroup[]
@@ -37,7 +35,6 @@ export function NavMain(props: NavMainProps) {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Convert flat items to groups for consistent rendering
   const groups: NavGroup[] = props.groups || [
     {
       label: "",
@@ -45,12 +42,10 @@ export function NavMain(props: NavMainProps) {
     },
   ]
 
-  // Collect all navigation URLs for detecting more specific matches
   const allNavUrls = groups.flatMap((g) =>
     g.items.flatMap((i) => [i.url, ...(i.items?.map((s) => s.url) || [])])
   )
 
-  // Check if there's a more specific nav item that matches the current pathname
   const hasMoreSpecificMatch = (itemUrl: string) =>
     allNavUrls.some(
       (url) =>
@@ -61,52 +56,27 @@ export function NavMain(props: NavMainProps) {
 
   return (
     <>
-      {/* Quick Create Section */}
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem className="flex items-center gap-2">
-              <SidebarMenuButton
-                tooltip="Quick Create"
-                className="bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground min-w-8 duration-200 ease-linear"
-              >
-                <IconCirclePlusFilled />
-                <span>Quick Create</span>
-              </SidebarMenuButton>
-              <Button
-                size="icon"
-                className="size-8 group-data-[collapsible=icon]:opacity-0"
-                variant="outline"
-              >
-                <IconMail />
-                <span className="sr-only">Inbox</span>
-              </Button>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      {/* Grouped Navigation */}
       {groups.map((group, index) => (
-        <SidebarGroup key={group.label || `group-${index}`}>
-          {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+        <SidebarGroup key={group.label || `group-${index}`} className="pt-3 first:pt-0">
+          {group.label && (
+            <SidebarGroupLabel
+              className="mb-0.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
+              style={{ color: "rgba(255,255,255,0.6)" }}
+            >
+              {group.label}
+            </SidebarGroupLabel>
+          )}
           <SidebarGroupContent>
             <SidebarMenu>
               {group.items.map((item) => {
-                // Check if item has subitems
                 const hasSubitems = item.items && item.items.length > 0
 
-                // Special handling for dashboard: only active when exactly on /dashboard
-                // For other routes: active when pathname matches or starts with the route
-                // BUT not if there's a more specific sibling route that also matches
                 const isActive =
                   item.url === "/dashboard"
                     ? pathname === "/dashboard"
                     : !hasMoreSpecificMatch(item.url) &&
                       (pathname === item.url || pathname.startsWith(item.url + "/"))
 
-                // For items with subitems, check if any subitem is active
-                // Apply the same hasMoreSpecificMatch logic to subitems
                 const hasActiveSubitem = hasSubitems
                   ? item.items!.some(
                       (subitem) =>
@@ -116,7 +86,6 @@ export function NavMain(props: NavMainProps) {
                   : false
 
                 if (hasSubitems) {
-                  // Render collapsible menu for items with subitems
                   return (
                     <Collapsible
                       key={item.title}
@@ -126,10 +95,17 @@ export function NavMain(props: NavMainProps) {
                     >
                       <SidebarMenuItem>
                         <CollapsibleTrigger asChild>
-                          <SidebarMenuButton tooltip={item.title} isActive={hasActiveSubitem}>
+                          <SidebarMenuButton
+                            tooltip={item.title}
+                            isActive={hasActiveSubitem}
+                            className="[&>svg:first-child]:opacity-75 data-[active=true]:[&>svg:first-child]:opacity-100"
+                            style={
+                              hasActiveSubitem ? { borderLeft: "2px solid #74c69d" } : undefined
+                            }
+                          >
                             {item.icon && <item.icon />}
                             <span>{item.title}</span>
-                            <IconChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                            <IconChevronRight className="ml-auto opacity-40 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                           </SidebarMenuButton>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
@@ -145,6 +121,11 @@ export function NavMain(props: NavMainProps) {
                                     asChild
                                     isActive={isSubitemActive}
                                     className="cursor-pointer"
+                                    style={{
+                                      color: isSubitemActive
+                                        ? "rgba(255,255,255,0.95)"
+                                        : "rgba(255,255,255,0.55)",
+                                    }}
                                   >
                                     <a onClick={() => router.push(subitem.url)}>
                                       <span>{subitem.title}</span>
@@ -160,14 +141,14 @@ export function NavMain(props: NavMainProps) {
                   )
                 }
 
-                // Render regular menu item for items without subitems
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      className="cursor-pointer"
+                      className="cursor-pointer [&>svg]:opacity-75 data-[active=true]:[&>svg]:opacity-100"
                       onClick={() => router.push(item.url)}
                       tooltip={item.title}
                       isActive={isActive}
+                      style={isActive ? { borderLeft: "2px solid #74c69d" } : undefined}
                     >
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>

@@ -2,6 +2,18 @@ body {
   @apply overscroll-none bg-transparent;
 }
 
+/* ── Sidebar brand theme (overrides shadcn defaults for both modes) ── */
+:root,
+.dark {
+  --sidebar: #1a3d2e;
+  --sidebar-foreground: rgba(255, 255, 255, 0.85);
+  --sidebar-primary: rgba(255, 255, 255, 0.18);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.07);
+  --sidebar-accent-foreground: rgba(255, 255, 255, 0.9);
+  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-ring: rgba(255, 255, 255, 0.2);
+}
 
 :root {
   --font-sans: var(--font-inter);

@@ -61,17 +61,24 @@ export function NavUser({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="transition-colors hover:!bg-white/[0.07] data-[state=open]:!bg-white/[0.07]"
             >
-              <Avatar className="h-8 w-8 rounded-lg">
+              <Avatar className="h-8 w-8 rounded-full ring-2 ring-white/20">
                 <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                <AvatarFallback className="rounded-full bg-[#52b788]/50 text-xs font-semibold text-white">
+                  {userInitials}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{user.name}</span>
-                <span className="text-muted-foreground truncate text-xs">{user.email}</span>
+                <span className="truncate font-semibold text-white">{user.name}</span>
+                <span className="truncate text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>
+                  {user.email}
+                </span>
               </div>
-              <IconDotsVertical className="ml-auto size-4" />
+              <IconDotsVertical
+                className="ml-auto size-4"
+                style={{ color: "rgba(255,255,255,0.4)" }}
+              />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -84,7 +91,9 @@ export function NavUser({
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">{userInitials}</AvatarFallback>
+                  <AvatarFallback className="rounded-lg bg-[#52b788]/50 text-xs font-semibold text-white">
+                    {userInitials}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
