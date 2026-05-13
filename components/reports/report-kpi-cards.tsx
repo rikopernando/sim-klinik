@@ -185,7 +185,12 @@ export function ReportKpiCards({ summary, previousSummary, onCardClick }: Report
                 )}
               />
             </div>
-            <p className={cn("font-mono text-xl font-bold tracking-tight sm:text-2xl 2xl:text-xl", cfg.color)}>
+            <p
+              className={cn(
+                "font-mono text-xl font-bold tracking-tight sm:text-2xl 2xl:text-xl",
+                cfg.color
+              )}
+            >
               {cfg.format(current)}
             </p>
             <div className="mt-0.5 flex items-center gap-1.5">
