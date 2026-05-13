@@ -153,7 +153,7 @@ interface ReportKpiCardsProps {
 
 export function ReportKpiCards({ summary, previousSummary, onCardClick }: ReportKpiCardsProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 2xl:grid-cols-6">
       {KPI_CONFIGS.map((cfg) => {
         const current = cfg.getValue(summary)
         const previous = previousSummary ? cfg.getValue(previousSummary) : undefined
@@ -164,7 +164,7 @@ export function ReportKpiCards({ summary, previousSummary, onCardClick }: Report
             key={cfg.key}
             onClick={() => onCardClick(cfg.key)}
             className={cn(
-              "group bg-card relative overflow-hidden rounded-xl border-l-4 p-4 text-left shadow-sm",
+              "group bg-card relative overflow-hidden rounded-xl border-l-4 p-5 text-left shadow-sm",
               "transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
               "focus-visible:ring-ring focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
               "bg-gradient-to-br",
@@ -185,7 +185,7 @@ export function ReportKpiCards({ summary, previousSummary, onCardClick }: Report
                 )}
               />
             </div>
-            <p className={cn("font-mono text-xl font-bold tracking-tight", cfg.color)}>
+            <p className={cn("font-mono text-xl font-bold tracking-tight sm:text-2xl 2xl:text-xl", cfg.color)}>
               {cfg.format(current)}
             </p>
             <div className="mt-0.5 flex items-center gap-1.5">
