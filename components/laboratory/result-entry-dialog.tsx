@@ -54,7 +54,6 @@ import {
 } from "@/types/lab-result-form"
 import { CreateLabResultInput, ParameterResultInput } from "@/lib/lab"
 import {
-  uploadLabAttachment,
   getAllowedMimeTypes,
   getAttachmentType,
   formatFileSize,
@@ -296,16 +295,27 @@ export function ResultEntryDialog({ order, trigger, onSuccess }: ResultEntryDial
     // Upload file if selected
     if (selectedFile) {
       setIsUploading(true)
-      const uploadResult = await uploadLabAttachment(selectedFile, order.id)
+      try {
+        const formData = new FormData()
+        formData.append("file", selectedFile)
+        formData.append("orderId", order.id)
 
-      if ("error" in uploadResult) {
-        setUploadError(uploadResult.error)
+        const uploadRes = await fetch("/api/lab/upload", { method: "POST", body: formData })
+        const uploadResult = await uploadRes.json()
+
+        if (!uploadRes.ok || uploadResult.error) {
+          setUploadError(uploadResult.message || "Gagal mengunggah file")
+          setIsUploading(false)
+          return
+        }
+
+        attachmentUrl = uploadResult.data.url
+        attachmentType = uploadResult.data.type as AttachmentType
+      } catch {
+        setUploadError("Terjadi kesalahan saat mengunggah file. Silakan coba lagi.")
         setIsUploading(false)
         return
       }
-
-      attachmentUrl = uploadResult.url
-      attachmentType = uploadResult.type as AttachmentType
       setIsUploading(false)
     }
 

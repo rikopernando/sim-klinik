@@ -1,0 +1,46 @@
+-- Enable Row-Level Security on all tables
+-- Run this in the Supabase SQL editor (Dashboard > SQL Editor)
+--
+-- After enabling RLS with no policies, anon/authenticated roles have zero access.
+-- The service_role (used by our direct Drizzle ORM connection) bypasses RLS by
+-- default in Supabase, so no additional policies are needed for our app to work.
+
+ALTER TABLE "user" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "session" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "account" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "verification" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "patients" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "roles" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "user_roles" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "visits" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "polis" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "lab_tests" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lab_test_panels" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lab_test_panel_items" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lab_orders" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lab_results" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lab_result_parameters" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "lab_notifications" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "medical_records" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "diagnoses" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "procedures" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "rooms" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "vitals_history" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "bed_assignments" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "material_usage" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "services" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "billings" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "billing_items" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "payments" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "drugs" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "drug_inventory" ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE "icd10_codes" ENABLE ROW LEVEL SECURITY;

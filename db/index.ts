@@ -11,7 +11,8 @@ if (!connectionString) {
   throw new Error("Either SUPABASE_DATABASE_URL or DATABASE_URL must be set")
 }
 
-const client = postgres(connectionString)
+const isSupabase = connectionString.includes("supabase.com")
+const client = postgres(connectionString, isSupabase ? { ssl: "require" } : {})
 export const db = drizzle(client, { schema })
 
 // Export type for database instance and transactions
