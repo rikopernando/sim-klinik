@@ -1,6 +1,7 @@
 "use client"
 
-import { ne } from "drizzle-orm"
+import Image from "next/image"
+import NextLink from "next/link"
 import { FileText, Activity, TrendingUp } from "lucide-react"
 
 const FEATURES = [
@@ -33,8 +34,15 @@ export function BrandPanel() {
 
       <div className="sk-brand">
         <div className="sk-brand-mark">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/bumi-andalas-logo.jpg" alt="Klinik Bumi Andalas" className="sk-logo" />
+          <NextLink href="/" aria-label="Kembali ke beranda">
+            <Image
+              src="/bumi-andalas-logo.jpg"
+              alt="Klinik Bumi Andalas"
+              width={52}
+              height={52}
+              className="sk-logo"
+            />
+          </NextLink>
           <div>
             <div className="sk-brand-name">Klinik Bumi Andalas</div>
             <div className="sk-brand-tagline">Sistem Informasi Klinik</div>
