@@ -4,79 +4,21 @@
  */
 
 import { supabase, LAB_ATTACHMENTS_BUCKET, isSupabaseConfigured } from "@/lib/supabase"
+import {
+  ALLOWED_FILE_TYPES,
+  getAllowedMimeTypes,
+  getAttachmentType,
+  validateFileSize,
+  formatFileSize,
+} from "@/lib/utils/file-helpers"
 import { AttachmentType } from "@/types/lab"
 
-/**
- * Allowed file types and their MIME types
- */
-export const ALLOWED_FILE_TYPES: Record<AttachmentType, string[]> = {
-  PDF: ["application/pdf"],
-  JPEG: ["image/jpeg", "image/jpg"],
-  PNG: ["image/png"],
-  DICOM: ["application/dicom", "application/x-dicom", "image/dicom"],
-}
+export { ALLOWED_FILE_TYPES, getAllowedMimeTypes, getAttachmentType, validateFileSize, formatFileSize }
 
-/**
- * Get all allowed MIME types as flat array
- */
-export function getAllowedMimeTypes(): string[] {
-  return Object.values(ALLOWED_FILE_TYPES).flat()
-}
-
-/**
- * Get file extension from filename
- */
 function getFileExtension(filename: string): string {
   return filename.slice(filename.lastIndexOf(".")).toLowerCase()
 }
 
-/**
- * Determine attachment type from file MIME type or extension
- */
-export function getAttachmentType(file: File): AttachmentType | null {
-  // Check MIME type first
-  for (const [type, mimeTypes] of Object.entries(ALLOWED_FILE_TYPES)) {
-    if (mimeTypes.includes(file.type)) {
-      return type as AttachmentType
-    }
-  }
-
-  // Fallback to file extension
-  const extension = getFileExtension(file.name)
-  if (extension === ".pdf") return "PDF"
-  if ([".jpg", ".jpeg"].includes(extension)) return "JPEG"
-  if (extension === ".png") return "PNG"
-  if ([".dcm", ".dicom"].includes(extension)) return "DICOM"
-
-  return null
-}
-
-/**
- * Validate file size (max 10MB for images, 50MB for PDFs/DICOM)
- */
-export function validateFileSize(file: File): { valid: boolean; error?: string } {
-  const type = getAttachmentType(file)
-
-  if (!type) {
-    return { valid: false, error: "Tipe file tidak didukung" }
-  }
-
-  const maxSizeMB = type === "PDF" || type === "DICOM" ? 50 : 10
-  const maxSizeBytes = maxSizeMB * 1024 * 1024
-
-  if (file.size > maxSizeBytes) {
-    return {
-      valid: false,
-      error: `Ukuran file melebihi batas maksimal ${maxSizeMB}MB`,
-    }
-  }
-
-  return { valid: true }
-}
-
-/**
- * Generate unique filename for uploaded file
- */
 function generateUniqueFilename(orderId: string, originalFilename: string): string {
   const timestamp = Date.now()
   const extension = getFileExtension(originalFilename)
@@ -191,15 +133,3 @@ export async function deleteLabAttachment(fileUrl: string): Promise<boolean> {
   }
 }
 
-/**
- * Format file size for display (e.g., "2.5 MB")
- */
-export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return "0 Bytes"
-
-  const k = 1024
-  const sizes = ["Bytes", "KB", "MB", "GB"]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-
-  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i]
-}
