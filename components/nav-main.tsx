@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from "next/navigation"
 import { IconChevronRight, type Icon } from "@tabler/icons-react"
 import type { NavGroup } from "@/lib/rbac/navigation"
+import { cn } from "@/lib/utils"
 
 import {
   SidebarGroup,
@@ -57,11 +58,14 @@ export function NavMain(props: NavMainProps) {
   return (
     <>
       {groups.map((group, index) => (
-        <SidebarGroup key={group.label || `group-${index}`} className="pt-3 first:pt-0">
+        <SidebarGroup
+          key={group.label || `group-${index}`}
+          className={cn(index === 0 ? "pt-0" : "border-t border-white/[0.06] pt-3")}
+        >
           {group.label && (
             <SidebarGroupLabel
               className="mb-0.5 text-[10px] font-semibold tracking-[0.08em] uppercase"
-              style={{ color: "rgba(255,255,255,0.6)" }}
+              style={{ color: "rgba(255,255,255,0.45)" }}
             >
               {group.label}
             </SidebarGroupLabel>
@@ -93,15 +97,15 @@ export function NavMain(props: NavMainProps) {
                       defaultOpen={hasActiveSubitem}
                       className="group/collapsible"
                     >
-                      <SidebarMenuItem>
+                      <SidebarMenuItem className="relative">
+                        {hasActiveSubitem && (
+                          <span className="absolute top-1/2 left-0 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#74c69d]" />
+                        )}
                         <CollapsibleTrigger asChild>
                           <SidebarMenuButton
                             tooltip={item.title}
                             isActive={hasActiveSubitem}
                             className="[&>svg:first-child]:opacity-75 data-[active=true]:[&>svg:first-child]:opacity-100"
-                            style={
-                              hasActiveSubitem ? { borderLeft: "2px solid #74c69d" } : undefined
-                            }
                           >
                             {item.icon && <item.icon />}
                             <span>{item.title}</span>
@@ -142,13 +146,15 @@ export function NavMain(props: NavMainProps) {
                 }
 
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.title} className="relative">
+                    {isActive && (
+                      <span className="absolute top-1/2 left-0 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-[#74c69d]" />
+                    )}
                     <SidebarMenuButton
                       className="cursor-pointer [&>svg]:opacity-75 data-[active=true]:[&>svg]:opacity-100"
                       onClick={() => router.push(item.url)}
                       tooltip={item.title}
                       isActive={isActive}
-                      style={isActive ? { borderLeft: "2px solid #74c69d" } : undefined}
                     >
                       {item.icon && <item.icon />}
                       <span>{item.title}</span>
