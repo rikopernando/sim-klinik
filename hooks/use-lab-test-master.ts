@@ -8,6 +8,7 @@ export function useLabTestMaster(filters: LabTestFilters = {}) {
   const query = useQuery({
     queryKey: [QUERY_KEY, filters],
     queryFn: () => getLabTests(filters),
+    staleTime: 10 * 60 * 1000,
   })
 
   return {

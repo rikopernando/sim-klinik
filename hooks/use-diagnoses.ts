@@ -32,6 +32,7 @@ export function useDiagnoses({ visitId, enabled = true }: UseDiagnosesOptions): 
     queryKey: diagnosesKeys.byVisit(visitId),
     queryFn: () => getDiagnosesByVisit(visitId),
     enabled: !!visitId && enabled,
+    staleTime: 5 * 60 * 1000,
   })
 
   const refetch = useCallback(async () => {

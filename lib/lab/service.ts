@@ -699,22 +699,28 @@ export async function updateLabOrderStatus(
 export async function getLabResultsByOrderId(orderId: string) {
   const results = await db.select().from(labResults).where(eq(labResults.orderId, orderId))
 
-  // Get parameters for each result
-  const resultsWithParameters = await Promise.all(
-    results.map(async (result) => {
-      const parameters = await db
-        .select()
-        .from(labResultParameters)
-        .where(eq(labResultParameters.resultId, result.id))
+  if (results.length === 0) return []
 
-      return {
-        ...result,
-        parameters: parameters.length > 0 ? parameters : undefined,
-      }
-    })
+  // Batch-fetch all parameters in a single query instead of N+1
+  const resultIds = results.map((r) => r.id)
+  const allParameters = await db
+    .select()
+    .from(labResultParameters)
+    .where(inArray(labResultParameters.resultId, resultIds))
+
+  const paramsByResultId = allParameters.reduce(
+    (acc, p) => {
+      if (!acc[p.resultId]) acc[p.resultId] = []
+      acc[p.resultId].push(p)
+      return acc
+    },
+    {} as Record<string, typeof allParameters>
   )
 
-  return resultsWithParameters
+  return results.map((result) => ({
+    ...result,
+    parameters: paramsByResultId[result.id]?.length ? paramsByResultId[result.id] : undefined,
+  }))
 }
 
 /**

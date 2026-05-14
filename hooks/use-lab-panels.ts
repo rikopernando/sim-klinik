@@ -8,6 +8,7 @@ export function useLabPanels(filters: LabPanelFilters = {}) {
   const query = useQuery({
     queryKey: [QUERY_KEY, filters],
     queryFn: () => getLabPanels(filters),
+    staleTime: 10 * 60 * 1000,
   })
 
   return {

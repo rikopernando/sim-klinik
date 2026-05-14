@@ -68,6 +68,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     queryKey: medicalRecordKeys.core(visitId),
     queryFn: () => getMedicalRecordByVisit(visitId),
     enabled: !!visitId,
+    staleTime: 5 * 60 * 1000,
   })
 
   // State

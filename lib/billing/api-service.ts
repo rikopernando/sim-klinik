@@ -314,41 +314,6 @@ export async function getDischargeSummary(visitId: string) {
   return summary || null
 }
 
-/**
- * Get billing statistics
- */
-export async function getBillingStatistics() {
-  // Get all billings
-  const allBillings = await db.select().from(billings)
-
-  const stats = {
-    totalBillings: allBillings.length,
-    pendingBillings: allBillings.filter((b) => b.paymentStatus === "pending").length,
-    paidBillings: allBillings.filter((b) => b.paymentStatus === "paid").length,
-    partialBillings: allBillings.filter((b) => b.paymentStatus === "partial").length,
-    totalRevenue: allBillings.reduce((sum, b) => sum + parseFloat(b.totalAmount), 0).toFixed(2),
-    pendingRevenue: allBillings
-      .filter((b) => b.paymentStatus !== "paid")
-      .reduce((sum, b) => sum + parseFloat(b.remainingAmount || "0"), 0)
-      .toFixed(2),
-  }
-
-  // Get today's collections
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  const todaysPayments = await db
-    .select()
-    .from(payments)
-    .where(sql`DATE(${payments.receivedAt}) = CURRENT_DATE`)
-
-  const collectedToday = todaysPayments.reduce((sum, p) => sum + parseFloat(p.amount), 0).toFixed(2)
-
-  return {
-    ...stats,
-    collectedToday,
-  }
-}
 
 /**
  * Get visits ready for billing

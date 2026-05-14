@@ -42,7 +42,7 @@ export const DELETE = withRBAC(
       }
 
       // Get the vital signs record
-      const [vitalRecord] = await db.select().from(vitalsHistory).where(eq(vitalsHistory.id, id))
+      const [vitalRecord] = await db.select().from(vitalsHistory).where(eq(vitalsHistory.id, id)).limit(1)
 
       if (!vitalRecord) {
         const response: ResponseError<unknown> = {

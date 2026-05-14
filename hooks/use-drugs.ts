@@ -8,6 +8,7 @@ export function useDrugs(filters: InventoryItemFilters = {}) {
   const query = useQuery({
     queryKey: [QUERY_KEY, filters],
     queryFn: () => getDrugs(filters),
+    staleTime: 10 * 60 * 1000,
   })
 
   return {

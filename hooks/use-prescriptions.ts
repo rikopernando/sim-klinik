@@ -35,6 +35,7 @@ export function usePrescriptions({
     queryKey: prescriptionsKeys.byVisit(visitId),
     queryFn: () => getPrescriptionsByVisit(visitId),
     enabled: !!visitId && enabled,
+    staleTime: 5 * 60 * 1000,
   })
 
   const refetch = useCallback(async () => {

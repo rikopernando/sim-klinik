@@ -35,6 +35,7 @@ export function useProcedures({
     queryKey: proceduresKeys.byVisit(visitId),
     queryFn: () => getProceduresByVisit(visitId),
     enabled: !!visitId && enabled,
+    staleTime: 5 * 60 * 1000,
   })
 
   const refetch = useCallback(async () => {
