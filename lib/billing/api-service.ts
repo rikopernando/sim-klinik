@@ -314,7 +314,6 @@ export async function getDischargeSummary(visitId: string) {
   return summary || null
 }
 
-
 /**
  * Get visits ready for billing
  *

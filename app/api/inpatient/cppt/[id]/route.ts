@@ -52,7 +52,11 @@ export const PUT = withRBAC(
       }
 
       // Get the medical record
-      const [record] = await db.select().from(medicalRecords).where(eq(medicalRecords.id, id)).limit(1)
+      const [record] = await db
+        .select()
+        .from(medicalRecords)
+        .where(eq(medicalRecords.id, id))
+        .limit(1)
 
       if (!record) {
         const response: ResponseError<unknown> = {
@@ -166,7 +170,11 @@ export const DELETE = withRBAC(
       }
 
       // Get the medical record
-      const [record] = await db.select().from(medicalRecords).where(eq(medicalRecords.id, id)).limit(1)
+      const [record] = await db
+        .select()
+        .from(medicalRecords)
+        .where(eq(medicalRecords.id, id))
+        .limit(1)
 
       if (!record) {
         const response: ResponseError<unknown> = {
