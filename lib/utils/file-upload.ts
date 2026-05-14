@@ -13,7 +13,13 @@ import {
 } from "@/lib/utils/file-helpers"
 import { AttachmentType } from "@/types/lab"
 
-export { ALLOWED_FILE_TYPES, getAllowedMimeTypes, getAttachmentType, validateFileSize, formatFileSize }
+export {
+  ALLOWED_FILE_TYPES,
+  getAllowedMimeTypes,
+  getAttachmentType,
+  validateFileSize,
+  formatFileSize,
+}
 
 function getFileExtension(filename: string): string {
   return filename.slice(filename.lastIndexOf(".")).toLowerCase()
@@ -132,4 +138,3 @@ export async function deleteLabAttachment(fileUrl: string): Promise<boolean> {
     return false
   }
 }
-
