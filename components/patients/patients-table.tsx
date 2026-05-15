@@ -1,8 +1,3 @@
-/**
- * Patients Table Component
- * Displays list of patients with loading and empty states
- */
-
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { PatientsTableRow } from "./patients-table-row"
 
@@ -23,31 +18,31 @@ interface PatientsTableProps {
 }
 
 export function PatientsTable({ patients, onEditPatient }: PatientsTableProps) {
-  if (patients.length === 0) {
-    return <div className="text-muted-foreground py-12 text-center">Tidak ada data pasien</div>
-  }
-
   return (
-    <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>No. RM</TableHead>
-            <TableHead>NIK</TableHead>
-            <TableHead>Nama</TableHead>
-            <TableHead>Jenis Kelamin</TableHead>
-            <TableHead>Tanggal Lahir</TableHead>
-            <TableHead>Telepon</TableHead>
-            <TableHead>Jaminan</TableHead>
-            <TableHead className="text-right">Aksi</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {patients.map((patient) => (
-            <PatientsTableRow key={patient.id} patient={patient} onEdit={onEditPatient} />
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <Table>
+      <TableHeader>
+        <TableRow className="bg-muted/40 hover:bg-muted/40">
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">No. RM</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">NIK</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">Nama</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Jenis Kelamin
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Tanggal Lahir
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">Telepon</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">Jaminan</TableHead>
+          <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
+            Aksi
+          </TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {patients.map((patient) => (
+          <PatientsTableRow key={patient.id} patient={patient} onEdit={onEditPatient} />
+        ))}
+      </TableBody>
+    </Table>
   )
 }

@@ -29,6 +29,7 @@ interface PaginationInfo {
 interface UsePatientsResult {
   patients: Patient[]
   loading: boolean
+  isSearching: boolean
   searchQuery: string
   pagination: PaginationInfo
   setSearchQuery: (query: string) => void
@@ -105,6 +106,7 @@ export function usePatients(): UsePatientsResult {
   return {
     patients,
     loading,
+    isSearching: searchQuery !== debouncedSearch || loading,
     searchQuery,
     pagination,
     setSearchQuery,

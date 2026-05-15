@@ -134,19 +134,19 @@ The `inventoryItems` table (SQL: `drugs`) holds the master catalog for all drugs
 
 ### Table Fields
 
-| Field                 | Type     | Notes                                          |
-| --------------------- | -------- | ---------------------------------------------- |
-| `name`                | string   | Required                                       |
-| `genericName`         | string   | Optional, drugs only                           |
-| `itemType`            | enum     | `"drug"` \| `"material"` — toggle/select       |
-| `category`            | string   | e.g. "Antibiotik", "Analgesik", "Consumables"  |
-| `unit`                | string   | tablet, kapsul, ml, pcs, box, roll             |
-| `price`               | decimal  | Prescription price                             |
-| `generalPrice`        | decimal  | Optional general price                         |
-| `minimumStock`        | integer  | Alert threshold, default 10                    |
-| `requiresPrescription`| boolean  | TRUE for drugs, FALSE for materials            |
-| `isActive`            | boolean  | Soft delete via toggle                         |
-| `description`         | text     | Optional                                       |
+| Field                  | Type    | Notes                                         |
+| ---------------------- | ------- | --------------------------------------------- |
+| `name`                 | string  | Required                                      |
+| `genericName`          | string  | Optional, drugs only                          |
+| `itemType`             | enum    | `"drug"` \| `"material"` — toggle/select      |
+| `category`             | string  | e.g. "Antibiotik", "Analgesik", "Consumables" |
+| `unit`                 | string  | tablet, kapsul, ml, pcs, box, roll            |
+| `price`                | decimal | Prescription price                            |
+| `generalPrice`         | decimal | Optional general price                        |
+| `minimumStock`         | integer | Alert threshold, default 10                   |
+| `requiresPrescription` | boolean | TRUE for drugs, FALSE for materials           |
+| `isActive`             | boolean | Soft delete via toggle                        |
+| `description`          | text    | Optional                                      |
 
 ### Roles
 
@@ -156,6 +156,7 @@ The `inventoryItems` table (SQL: `drugs`) holds the master catalog for all drugs
 ### Sidebar
 
 Add to Master Data section in `lib/rbac/navigation.ts`:
+
 ```
 { title: "Obat & Bahan Medis", url: "/dashboard/master-data/drugs", icon: Pill }
 ```
@@ -192,19 +193,19 @@ The `labTests` table is the catalog for all lab and radiology tests. Doctors ord
 
 ### Table Fields
 
-| Field              | Type     | Notes                                          |
-| ------------------ | -------- | ---------------------------------------------- |
-| `code`             | string   | Unique, e.g. "CBC", "HBA1C", "XRAY-CHEST"     |
-| `name`             | string   | Full name                                      |
-| `category`         | string   | "Hematologi", "Kimia Klinik", "Radiologi", etc.|
-| `department`       | enum     | `"LAB"` \| `"RAD"`                             |
-| `price`            | decimal  | Test price                                     |
-| `specimenType`     | string   | "Darah", "Urin", etc. (optional)               |
-| `tatHours`         | integer  | Turnaround time in hours, default 24           |
-| `requiresFasting`  | boolean  | Patient prep flag                              |
-| `isActive`         | boolean  | Soft delete                                    |
-| `description`      | text     | Optional                                       |
-| `instructions`     | text     | Patient preparation instructions (optional)   |
+| Field             | Type    | Notes                                           |
+| ----------------- | ------- | ----------------------------------------------- |
+| `code`            | string  | Unique, e.g. "CBC", "HBA1C", "XRAY-CHEST"       |
+| `name`            | string  | Full name                                       |
+| `category`        | string  | "Hematologi", "Kimia Klinik", "Radiologi", etc. |
+| `department`      | enum    | `"LAB"` \| `"RAD"`                              |
+| `price`           | decimal | Test price                                      |
+| `specimenType`    | string  | "Darah", "Urin", etc. (optional)                |
+| `tatHours`        | integer | Turnaround time in hours, default 24            |
+| `requiresFasting` | boolean | Patient prep flag                               |
+| `isActive`        | boolean | Soft delete                                     |
+| `description`     | text    | Optional                                        |
+| `instructions`    | text    | Patient preparation instructions (optional)     |
 
 ### Roles
 
@@ -214,6 +215,7 @@ The `labTests` table is the catalog for all lab and radiology tests. Doctors ord
 ### Sidebar
 
 Add to Master Data section:
+
 ```
 { title: "Pemeriksaan Lab", url: "/dashboard/master-data/lab-tests", icon: FlaskConical }
 ```
@@ -247,14 +249,14 @@ LabTestsPage (server, PageGuard)
 
 ### Table Fields
 
-| Field         | Type     | Notes                                          |
-| ------------- | -------- | ---------------------------------------------- |
-| `code`        | string   | Unique, e.g. "DIABETES-PANEL"                  |
-| `name`        | string   | e.g. "Paket Diabetes"                          |
-| `description` | text     | Optional                                       |
-| `price`       | decimal  | Discounted panel price                         |
-| `isActive`    | boolean  | Soft delete                                    |
-| `tests`       | relation | Many-to-many via `labTestPanelItems`           |
+| Field         | Type     | Notes                                |
+| ------------- | -------- | ------------------------------------ |
+| `code`        | string   | Unique, e.g. "DIABETES-PANEL"        |
+| `name`        | string   | e.g. "Paket Diabetes"                |
+| `description` | text     | Optional                             |
+| `price`       | decimal  | Discounted panel price               |
+| `isActive`    | boolean  | Soft delete                          |
+| `tests`       | relation | Many-to-many via `labTestPanelItems` |
 
 ### Roles
 
@@ -263,6 +265,7 @@ Same as lab-tests: `super_admin`, `admin`, `lab_supervisor` for write.
 ### Sidebar
 
 Add to Master Data section:
+
 ```
 { title: "Panel Lab", url: "/dashboard/master-data/lab-panels", icon: LayoutList }
 ```
@@ -290,3 +293,111 @@ LabPanelsPage (server, PageGuard)
 
 ---
 
+## Design Enhancement Plan
+
+### What's Already Done
+
+| Area                                                                           | Status  |
+| ------------------------------------------------------------------------------ | ------- |
+| Dashboard home page (welcome banner, stat cards, quick actions, recent visits) | ✅ Done |
+| Dashboard page refactoring into `_components/`                                 | ✅ Done |
+| Reports page KPI cards layout (3-col → 6-col at 2xl)                           | ✅ Done |
+| Sidebar: active item pill indicator, group separators, site header date        | ✅ Done |
+
+---
+
+### D1: Shared `PageHeader` Component
+
+**File:** `components/ui/page-header.tsx`
+
+**Why:** Every page currently rolls its own inline header (`div.mb-6.flex.items-center.justify-between` + h1 + p). Extract this into one reusable component so all pages look consistent.
+
+**Props:**
+
+```typescript
+interface PageHeaderProps {
+  title: string
+  description?: string
+  children?: React.ReactNode // action buttons slot (right side)
+}
+```
+
+**Design:**
+
+- `container mx-auto max-w-5xl px-6 pt-6 pb-0` wrapper matching dashboard container
+- Left: `h1` (`text-2xl font-bold tracking-tight`) + optional `p` description (`text-sm text-muted-foreground`)
+- Right: `children` slot for buttons
+- No border, no card — just spacing and typography
+
+**Used by:** D2, D3, D4 and any future page that adopts it.
+
+---
+
+### D2: Patients Page Redesign
+
+**File:** `app/dashboard/patients/page.tsx`
+
+**Current issues:**
+
+- Inline header div (not `PageHeader`)
+- Entire table wrapped in a heavy `<Card>`
+- Search bar is inside `CardAction` — small and right-aligned
+
+**Changes:**
+
+1. Replace inline header with `<PageHeader title="Data Pasien" description="...">` + "Pasien Baru" button as `children`
+2. Remove outer `<Card>`. Replace with a flat `<div className="rounded-xl border bg-card shadow-sm overflow-hidden">` — same panel style as the dashboard's recent-visits section
+3. Move search input into a toolbar row between header and table — full-width on mobile, `max-w-sm` on desktop
+4. `PatientsTable`, `PatientsPagination`, `usePatients` unchanged — no logic changes
+
+---
+
+### D3: Queue Page Redesign
+
+**File:** `app/dashboard/queue/page.tsx`
+
+**Current issues:**
+
+- Inline header div
+- `TabsList` is `grid w-full grid-cols-3` — full-width, boxy
+- Filter controls loose inside `TabsContent` with no clear grouping
+- Emergency and Inpatient tabs wrap filters in an extra `<Card>`
+
+**Changes:**
+
+1. `<PageHeader title="Antrian Pasien" description="Pantau antrian per layanan">`
+2. `TabsList` → `inline-flex` (width fits content, not full-width)
+3. Move poli select + date filter into a `flex flex-wrap items-center gap-3` filter bar below tabs — remove the extra `<Card>` wrappers from Emergency/Inpatient tabs
+
+**No logic/API changes.**
+
+---
+
+### D4: Lab Queue Page Redesign
+
+**File:** `app/dashboard/laboratory/queue/page.tsx`
+
+**Current issues:** Same pattern as queue page — inline header, Card wrapper, boxy full-width tabs.
+
+**Changes (same pattern as D3):**
+
+1. `<PageHeader title="Antrian Pemeriksaan" description="Order laboratorium & radiologi masuk">` + refresh button as children
+2. `TabsList` → `inline-flex`
+3. Remove extra Card wrapper — flat panel for the table
+
+**No logic/API changes.**
+
+---
+
+### Implementation Order
+
+| Step | Task                         | Effort |
+| ---- | ---------------------------- | ------ |
+| D1   | Build `PageHeader` component | Small  |
+| D2   | Patients page                | Small  |
+| D3   | Queue page                   | Small  |
+| D4   | Lab queue page               | Small  |
+
+All four steps are pure frontend changes — no new APIs, no schema changes, no hook changes.
+
+---
