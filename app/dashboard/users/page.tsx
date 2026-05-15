@@ -1,24 +1,11 @@
-/**
- * User Management Page
- * CRUD interface for managing users (Super Admin only)
- */
-
 "use client"
 
 import { useEffect, useState } from "react"
+import { IconUserPlus, IconUsers } from "@tabler/icons-react"
 import { PageGuard } from "@/components/auth/page-guard"
-import { useUsers } from "@/hooks/use-users"
-import { useRoles } from "@/hooks/use-roles"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Item, ItemContent, ItemMedia, ItemTitle } from "@/components/ui/item"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { SearchInput } from "@/components/ui/search-input"
+import { TablePanel } from "@/components/ui/table-panel"
 import { Button } from "@/components/ui/button"
 import {
   AlertDialog,
@@ -30,14 +17,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { IconSearch, IconUserPlus } from "@tabler/icons-react"
 import { UserTable } from "@/components/users/user-table"
 import { CreateUserDialog } from "@/components/users/create-user-dialog"
 import { EditUserDialog } from "@/components/users/edit-user-dialog"
 import { ChangeRoleDialog } from "@/components/users/change-role-dialog"
 import { Pagination } from "@/components/users/pagination"
+import { useUsers } from "@/hooks/use-users"
+import { useRoles } from "@/hooks/use-roles"
+import { useDebounce } from "@/hooks/use-debounce"
 import { toast } from "sonner"
-import { Spinner } from "@/components/ui/spinner"
 
 interface User {
   id: string
@@ -67,50 +55,35 @@ function UsersPageContent() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
 
-  const { users, pagination, isLoading, error, fetchUsers, deleteUser, refreshUsers } = useUsers()
+  const debouncedSearch = useDebounce(search, 400)
+  const { users, pagination, isLoading, fetchUsers, deleteUser, refreshUsers } = useUsers()
   const { roles, fetchRoles } = useRoles()
 
-  // Fetch users and roles on mount
+  const isSearching = search !== debouncedSearch || isLoading
+
   useEffect(() => {
-    fetchUsers(search, currentPage, 10)
+    fetchUsers(debouncedSearch, currentPage, 10)
     fetchRoles()
-  }, [fetchUsers, fetchRoles, search, currentPage])
+  }, [fetchUsers, fetchRoles, debouncedSearch, currentPage])
 
-  // Handle search
-  const handleSearch = () => {
-    setCurrentPage(1)
-    fetchUsers(search, 1, 10)
-  }
-
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page)
-  }
-
-  // Handle edit user
   const handleEdit = (user: User) => {
     setSelectedUser(user)
     setEditDialogOpen(true)
   }
 
-  // Handle change role
   const handleChangeRole = (user: User) => {
     setSelectedUser(user)
     setRoleDialogOpen(true)
   }
 
-  // Handle delete user
   const handleDelete = (userId: string) => {
     setUserToDelete(userId)
     setDeleteDialogOpen(true)
   }
 
-  // Confirm delete
   const confirmDelete = async () => {
     if (!userToDelete) return
-
     const success = await deleteUser(userToDelete)
-
     if (success) {
       setDeleteDialogOpen(false)
       setUserToDelete(null)
@@ -120,119 +93,105 @@ function UsersPageContent() {
     }
   }
 
-  // Refresh data after successful operations
-  const handleSuccess = () => {
-    refreshUsers()
-  }
+  const total = pagination?.total ?? 0
+  const rangeStart = total === 0 ? 0 : (currentPage - 1) * 10 + 1
+  const rangeEnd = pagination ? Math.min(currentPage * 10, total) : 0
 
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Manajemen User</h1>
-          <p className="text-muted-foreground">Kelola user dan role sistem</p>
-        </div>
+    <div>
+      <PageHeader title="Manajemen User" description="Kelola user dan role sistem">
         <Button onClick={() => setCreateDialogOpen(true)}>
-          <IconUserPlus size={20} className="mr-2" />
+          <IconUserPlus size={16} className="mr-1.5" />
           Tambah User
         </Button>
+      </PageHeader>
+
+      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-6">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-3">
+          <SearchInput
+            value={search}
+            onChange={(v) => {
+              setSearch(v)
+              setCurrentPage(1)
+            }}
+            placeholder="Cari nama atau username..."
+            isSearching={isSearching}
+            className="max-w-sm flex-1"
+          />
+          {!isLoading && total > 0 && (
+            <p className="text-muted-foreground shrink-0 text-sm tabular-nums">
+              <span className="text-foreground font-medium">{total.toLocaleString("id-ID")}</span>{" "}
+              user
+            </p>
+          )}
+        </div>
+
+        <TablePanel
+          label="Daftar User"
+          total={total}
+          isLoading={users.length === 0 && isLoading}
+          loadingMessage="Memuat data user..."
+          isEmpty={users.length === 0 && !isLoading}
+          emptyIcon={<IconUsers size={22} className="text-[#52b788]" />}
+          emptyTitle={search ? "User tidak ditemukan" : "Belum ada user"}
+          emptyDescription={
+            search ? `Tidak ada hasil untuk "${search}"` : "Mulai dengan menambahkan user baru"
+          }
+          emptyAction={
+            !search ? (
+              <Button size="sm" variant="outline" onClick={() => setCreateDialogOpen(true)}>
+                <IconUserPlus size={14} className="mr-1.5" />
+                Tambah User
+              </Button>
+            ) : undefined
+          }
+          paginationRange={
+            pagination && pagination.totalPages > 1
+              ? `Menampilkan ${rangeStart.toLocaleString("id-ID")}–${rangeEnd.toLocaleString("id-ID")} dari ${total.toLocaleString("id-ID")} user`
+              : undefined
+          }
+          pagination={
+            pagination && pagination.totalPages > 1 ? (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={setCurrentPage}
+              />
+            ) : undefined
+          }
+        >
+          <UserTable
+            users={users}
+            onEdit={handleEdit}
+            onChangeRole={handleChangeRole}
+            onDelete={handleDelete}
+          />
+        </TablePanel>
       </div>
 
-      {/* Error Message */}
-      {error && (
-        <Card className="mb-6 border-red-500 bg-red-50">
-          <CardContent className="pt-6">
-            <p className="text-red-600">{error}</p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar User</CardTitle>
-          {users.length > 0 && !isLoading && (
-            <CardDescription>Total: {pagination?.total || 0} user</CardDescription>
-          )}
-          <CardAction>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <IconSearch
-                  className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 transform"
-                  size={20}
-                />
-                <Input
-                  placeholder="Cari berdasarkan nama atau username"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="min-w-[304px] pl-10"
-                />
-              </div>
-            </div>
-          </CardAction>
-        </CardHeader>
-        {users.length === 0 && isLoading ? (
-          <div className="mx-auto flex w-full max-w-xs flex-col gap-4 [--radius:1rem]">
-            <Item variant="outline">
-              <ItemMedia>
-                <Spinner />
-              </ItemMedia>
-              <ItemContent>
-                <ItemTitle className="line-clamp-1">Memuat data user...</ItemTitle>
-              </ItemContent>
-            </Item>
-          </div>
-        ) : (
-          <CardContent>
-            <UserTable
-              users={users}
-              onEdit={handleEdit}
-              onChangeRole={handleChangeRole}
-              onDelete={handleDelete}
-            />
-
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
-              <div className="mt-4">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={pagination.totalPages}
-                  onPageChange={handlePageChange}
-                />
-              </div>
-            )}
-          </CardContent>
-        )}
-      </Card>
-
-      {/* Create User Dialog */}
       <CreateUserDialog
         roles={roles}
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
-        onSuccess={handleSuccess}
+        onSuccess={() => refreshUsers()}
       />
 
-      {/* Edit User Dialog */}
       <EditUserDialog
         user={selectedUser}
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
-        onSuccess={handleSuccess}
+        onSuccess={() => refreshUsers()}
       />
 
-      {/* Change Role Dialog */}
       <ChangeRoleDialog
         user={selectedUser}
         roles={roles}
         open={roleDialogOpen}
         onOpenChange={setRoleDialogOpen}
-        onSuccess={handleSuccess}
+        onSuccess={() => refreshUsers()}
       />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -243,7 +202,10 @@ function UsersPageContent() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
