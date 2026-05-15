@@ -1,23 +1,11 @@
-/**
- * Polis Management Page
- */
-
 "use client"
 
 import { useState } from "react"
+import { IconCirclePlus2, IconLayoutGrid } from "@tabler/icons-react"
 import { PageGuard } from "@/components/auth/page-guard"
-import { toast } from "sonner"
-import { IconCirclePlus2, IconSearch } from "@tabler/icons-react"
-
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { PageHeader } from "@/components/ui/page-header"
+import { SearchInput } from "@/components/ui/search-input"
+import { TablePanel } from "@/components/ui/table-panel"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Pagination } from "@/components/users/pagination"
@@ -36,8 +24,9 @@ import { CreatePolisDialog } from "@/components/polis/create-polis-dialog"
 import { PolisTable } from "@/components/polis/polis-table"
 import { usePoli } from "@/hooks/use-poli"
 import { ResultPoli, PayloadPoli } from "@/types/poli"
+import { toast } from "sonner"
 
-export default function UsersPage() {
+export default function PolisPage() {
   return (
     <PageGuard roles={["super_admin", "admin"]}>
       <PolisPageContent />
@@ -54,21 +43,22 @@ function PolisPageContent() {
 
   const {
     polis,
-    createPoli,
-    updatePoli,
-    deletePoli,
     isLoading,
-    errorMessage,
+    isSearching,
     pagination,
     searchQuery,
     setSearchQuery,
     includeInactive,
     setIncludeInactive,
     handlePageChange,
+    createPoli,
+    updatePoli,
+    deletePoli,
+    errorMessage,
   } = usePoli()
 
-  const handleEdit = (polis: ResultPoli) => {
-    setSelectedPolis(polis)
+  const handleEdit = (p: ResultPoli) => {
+    setSelectedPolis(p)
     setEditDialogOpen(true)
   }
 
@@ -79,9 +69,7 @@ function PolisPageContent() {
 
   const confirmDelete = async () => {
     if (!poliToDelete) return
-
     const success = await deletePoli(poliToDelete)
-
     if (success) {
       setDeleteDialogOpen(false)
       setPoliToDelete(null)
@@ -91,77 +79,91 @@ function PolisPageContent() {
     }
   }
 
-  const handleSuccess = () => {}
+  const rangeStart = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1
+  const rangeEnd = Math.min(pagination.page * pagination.limit, pagination.total)
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Manajemen Poli</h1>
-          <p className="text-muted-foreground">Kelola Poli</p>
-        </div>
+    <div>
+      <PageHeader title="Manajemen Poli" description="Kelola data poli klinik">
         <Button onClick={() => setCreateDialogOpen(true)}>
-          <IconCirclePlus2 size={20} className="mr-2" />
+          <IconCirclePlus2 size={16} className="mr-1.5" />
           Tambah Poli
         </Button>
-      </div>
+      </PageHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Polis</CardTitle>
-          {pagination.total > 0 && !isLoading && (
-            <CardDescription>Total: {pagination.total} polis</CardDescription>
+      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-6">
+        {/* Toolbar */}
+        <div className="flex items-center gap-3">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Cari nama atau kode poli..."
+            isSearching={isSearching}
+            className="max-w-sm flex-1"
+          />
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="include-inactive"
+              checked={includeInactive}
+              onCheckedChange={(v) => setIncludeInactive(Boolean(v))}
+            />
+            <label
+              htmlFor="include-inactive"
+              className="text-muted-foreground cursor-pointer text-sm"
+            >
+              Tampilkan nonaktif
+            </label>
+          </div>
+          {!isLoading && pagination.total > 0 && (
+            <p className="text-muted-foreground ml-auto shrink-0 text-sm tabular-nums">
+              <span className="text-foreground font-medium">
+                {pagination.total.toLocaleString("id-ID")}
+              </span>{" "}
+              poli
+            </p>
           )}
-          <CardAction>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <IconSearch
-                  className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 transform"
-                  size={20}
-                />
-                <Input
-                  placeholder="Cari berdasarkan nama atau kode"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="min-w-[304px] pl-10"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="include-inactive"
-                    checked={includeInactive}
-                    onCheckedChange={(v) => setIncludeInactive(Boolean(v))}
-                  />
-                  <label htmlFor="include-inactive" className="muted-foreground text-sm">
-                    Tampilkan non-aktif
-                  </label>
-                </div>
-              </div>
-            </div>
-          </CardAction>
-        </CardHeader>
+        </div>
 
-        <CardContent>
-          {isLoading && polis.length === 0 ? (
-            <div className="text-muted-foreground py-12 text-center">Memuat data poli...</div>
-          ) : (
-            <PolisTable polis={polis} onEdit={handleEdit} onDelete={handleDelete} />
-          )}
-
-          {pagination.totalPages > 1 && (
-            <div className="mt-4">
+        <TablePanel
+          label="Daftar Poli"
+          total={pagination.total}
+          isLoading={polis.length === 0 && isLoading}
+          loadingMessage="Memuat data poli..."
+          isEmpty={polis.length === 0 && !isLoading}
+          emptyIcon={<IconLayoutGrid size={22} className="text-[#52b788]" />}
+          emptyTitle={searchQuery ? "Poli tidak ditemukan" : "Belum ada data poli"}
+          emptyDescription={
+            searchQuery
+              ? `Tidak ada hasil untuk "${searchQuery}"`
+              : "Mulai dengan menambahkan poli baru"
+          }
+          emptyAction={
+            !searchQuery ? (
+              <Button size="sm" variant="outline" onClick={() => setCreateDialogOpen(true)}>
+                <IconCirclePlus2 size={14} className="mr-1.5" />
+                Tambah Poli
+              </Button>
+            ) : undefined
+          }
+          paginationRange={
+            pagination.totalPages > 1
+              ? `Menampilkan ${rangeStart.toLocaleString("id-ID")}–${rangeEnd.toLocaleString("id-ID")} dari ${pagination.total.toLocaleString("id-ID")} poli`
+              : undefined
+          }
+          pagination={
+            pagination.totalPages > 1 ? (
               <Pagination
                 currentPage={pagination.page}
                 totalPages={pagination.totalPages}
                 onPageChange={handlePageChange}
               />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : undefined
+          }
+        >
+          <PolisTable polis={polis} onEdit={handleEdit} onDelete={handleDelete} />
+        </TablePanel>
+      </div>
 
-      {/* Create Polis Dialog */}
       <CreatePolisDialog
         error={errorMessage}
         open={createDialogOpen}
@@ -171,18 +173,16 @@ function PolisPageContent() {
         }}
       />
 
-      {/* Edit Polis Dialog */}
       <EditPolisDialog
         polis={selectedPolis}
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
-        onSuccess={handleSuccess}
+        onSuccess={() => {}}
         onSubmit={async (id: string, payload: PayloadPoli) => {
           await updatePoli(id, payload)
         }}
       />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -193,7 +193,10 @@ function PolisPageContent() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -19,6 +19,7 @@ interface PaginationInfo {
 
 interface UseServiceResult {
   isLoading: boolean
+  isSearching: boolean
   refetch: () => void
   searchQuery: string
   services: ResultService[]
@@ -163,6 +164,7 @@ export function useService(): UseServiceResult {
     refetch,
     services,
     isLoading,
+    isSearching: searchQuery !== debouncedSearch || isLoading,
     pagination,
     searchQuery,
     errorMessage,

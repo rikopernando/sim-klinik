@@ -1,12 +1,6 @@
-/**
- * Polis Table Component
- * Displays Polis in a table with actions
- */
-
 "use client"
 
 import { format } from "date-fns"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Table,
@@ -17,6 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 import { IconTrash, IconEdit } from "@tabler/icons-react"
 import { ResultPoli } from "@/types/poli"
 
@@ -26,72 +21,102 @@ interface PolisTableProps {
   onDelete?: (polisId: string) => void
 }
 
-export function PolisTable({ polis, onEdit, onDelete }: PolisTableProps) {
-  if (polis.length === 0) {
-    return <div className="text-muted-foreground py-12 text-center">Tidak ada polis ditemukan</div>
-  }
-
+function StatusBadge({ isActive }: { isActive: string }) {
+  const active = isActive === "active"
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nama</TableHead>
-          <TableHead>Kode</TableHead>
-          <TableHead>Deskirpsi</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Terdaftar</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {polis.map((p) => (
-          <TableRow key={p.id}>
-            <TableCell className="font-medium">{p.name}</TableCell>
-            <TableCell>{p.code}</TableCell>
-            <TableCell>{p.description}</TableCell>
-            <TableCell>
-              {p.isActive === "active" ? (
-                <Badge className={`text-white`}>{p.isActive}</Badge>
-              ) : (
-                <Badge variant="destructive">{p.isActive}</Badge>
-              )}
-            </TableCell>
-            <TableCell>{format(new Date(p.createdAt), "dd MMM yyyy")}</TableCell>
-            <TableCell className="text-right">
-              <TooltipProvider>
-                <div className="flex justify-end gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={() => onEdit(p)}>
-                        <IconEdit size={16} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Edit polis</p>
-                    </TooltipContent>
-                  </Tooltip>
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+        active
+          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+          : "bg-muted text-muted-foreground"
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          active ? "bg-emerald-500" : "bg-muted-foreground/50"
+        )}
+      />
+      {active ? "Aktif" : "Nonaktif"}
+    </span>
+  )
+}
 
+export function PolisTable({ polis, onEdit, onDelete }: PolisTableProps) {
+  return (
+    <TooltipProvider>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Nama</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Kode</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Deskripsi
+            </TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Status</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Terdaftar
+            </TableHead>
+            <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
+              Aksi
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {polis.map((p) => (
+            <TableRow key={p.id} className="group transition-colors">
+              <TableCell className="py-3 font-medium">{p.name}</TableCell>
+              <TableCell className="py-3">
+                <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold">
+                  {p.code}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground max-w-xs truncate py-3 text-sm">
+                {p.description || "—"}
+              </TableCell>
+              <TableCell className="py-3">
+                <StatusBadge isActive={p.isActive} />
+              </TableCell>
+              <TableCell className="text-muted-foreground py-3 text-sm">
+                {format(new Date(p.createdAt), "dd MMM yyyy")}
+              </TableCell>
+              <TableCell className="pr-4 text-right">
+                <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:bg-red-50"
-                        onClick={() => onDelete && onDelete(p.id)}
+                        className="h-7 w-7 p-0"
+                        onClick={() => onEdit(p)}
                       >
-                        <IconTrash size={16} />
+                        <IconEdit size={14} />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Hapus polis</p>
-                    </TooltipContent>
+                    <TooltipContent>Edit Poli</TooltipContent>
                   </Tooltip>
+                  {onDelete && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:text-destructive h-7 w-7 p-0"
+                          onClick={() => onDelete(p.id)}
+                        >
+                          <IconTrash size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Hapus Poli</TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
-              </TooltipProvider>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TooltipProvider>
   )
 }

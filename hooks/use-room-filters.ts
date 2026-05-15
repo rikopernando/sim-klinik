@@ -37,21 +37,15 @@ export function useRoomFilters() {
   }
 
   return {
-    // State values
     search,
+    debouncedSearch,
     roomType,
     building,
-
-    // Setters
     setSearch,
     setRoomType,
     setBuilding,
-
-    // Computed values
     filters,
     hasActiveFilters,
-
-    // Actions
     clearFilters,
   }
 }

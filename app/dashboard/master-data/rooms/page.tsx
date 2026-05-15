@@ -1,22 +1,11 @@
 "use client"
 
-/**
- * Master Data - Rooms Page
- * Manage hospital rooms (CRUD operations)
- */
-
 import { useState } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
+import { PageHeader } from "@/components/ui/page-header"
+import { SearchInput } from "@/components/ui/search-input"
+import { TablePanel } from "@/components/ui/table-panel"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
 import {
   Select,
   SelectContent,
@@ -24,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { PlusCircle, Search } from "lucide-react"
+import { PlusCircle, BedDouble } from "lucide-react"
 import type { Room, RoomCreateInput } from "@/types/rooms"
 import { useRoomFilters } from "@/hooks/use-room-filters"
 import { useRoomsList } from "@/hooks/use-rooms-list"
@@ -44,20 +33,19 @@ export default function RoomsPage() {
 }
 
 function RoomsPageContent() {
-  // Use modular hooks
   const filterHook = useRoomFilters()
   const { rooms, isLoading, pagination, handlePageChange, refresh } = useRoomsList(
     filterHook.filters
   )
   const mutations = useRoomMutations(refresh)
 
-  // Dialog states
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formMode, setFormMode] = useState<"create" | "edit">("create")
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false)
 
-  // Handlers
+  const isSearching = filterHook.search !== filterHook.debouncedSearch || isLoading
+
   const handleCreate = () => {
     setFormMode("create")
     setSelectedRoom(null)
@@ -85,101 +73,103 @@ function RoomsPageContent() {
     }
   }
 
-  const handleDeleteConfirm = async (roomId: string) => {
-    await mutations.remove(roomId)
-  }
+  const rangeStart =
+    !pagination || pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1
+  const rangeEnd = pagination ? Math.min(pagination.page * pagination.limit, pagination.total) : 0
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Master Data Kamar</h1>
-            <p className="text-muted-foreground">Kelola data kamar rawat inap</p>
-          </div>
-          <Button onClick={handleCreate}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Tambah Kamar
-          </Button>
+    <div>
+      <PageHeader title="Master Data Kamar" description="Kelola data kamar rawat inap">
+        <Button onClick={handleCreate}>
+          <PlusCircle className="mr-1.5 h-4 w-4" />
+          Tambah Kamar
+        </Button>
+      </PageHeader>
+
+      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-6">
+        {/* Toolbar */}
+        <div className="flex items-center gap-3">
+          <SearchInput
+            value={filterHook.search}
+            onChange={filterHook.setSearch}
+            placeholder="Cari nomor kamar..."
+            isSearching={isSearching}
+            className="max-w-sm flex-1"
+          />
+          <Select value={filterHook.roomType} onValueChange={filterHook.setRoomType}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Tipe Kamar" />
+            </SelectTrigger>
+            <SelectContent>
+              {ROOM_TYPE_FILTER_OPTIONS.map((type) => (
+                <SelectItem key={type.value} value={type.value}>
+                  {type.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!isLoading && pagination && pagination.total > 0 && (
+            <p className="text-muted-foreground ml-auto shrink-0 text-sm tabular-nums">
+              <span className="text-foreground font-medium">
+                {pagination.total.toLocaleString("id-ID")}
+              </span>{" "}
+              kamar
+            </p>
+          )}
         </div>
 
-        {/* Room List */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Daftar Kamar</CardTitle>
-            <CardDescription>
-              {isLoading
-                ? "Memuat data..."
-                : pagination.total > 0
-                  ? `Total: ${pagination.total} kamar`
-                  : "Tidak ada data kamar"}
-            </CardDescription>
-            <CardAction>
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                {/* Search */}
-                <div className="md:col-span-2">
-                  <div className="relative">
-                    <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                    <Input
-                      placeholder="Cari nomor kamar"
-                      value={filterHook.search}
-                      onChange={(e) => filterHook.setSearch(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
-                </div>
-
-                {/* Room Type Filter */}
-                <div>
-                  <Select value={filterHook.roomType} onValueChange={filterHook.setRoomType}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Tipe Kamar" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ROOM_TYPE_FILTER_OPTIONS.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardAction>
-          </CardHeader>
-          <CardContent>
-            <RoomListTable
-              rooms={rooms}
-              isLoading={isLoading}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-
-            {/* Pagination */}
-            {pagination && pagination.totalPages > 1 && (
+        <TablePanel
+          label="Daftar Kamar"
+          total={pagination?.total}
+          isLoading={rooms.length === 0 && isLoading}
+          loadingMessage="Memuat data kamar..."
+          isEmpty={rooms.length === 0 && !isLoading}
+          emptyIcon={<BedDouble size={22} className="text-[#52b788]" />}
+          emptyTitle={filterHook.search ? "Kamar tidak ditemukan" : "Belum ada data kamar"}
+          emptyDescription={
+            filterHook.search
+              ? `Tidak ada hasil untuk "${filterHook.search}"`
+              : "Mulai dengan menambahkan kamar baru"
+          }
+          emptyAction={
+            !filterHook.search ? (
+              <Button size="sm" variant="outline" onClick={handleCreate}>
+                <PlusCircle className="mr-1.5 h-3.5 w-3.5" />
+                Tambah Kamar
+              </Button>
+            ) : undefined
+          }
+          paginationRange={
+            pagination && pagination.totalPages > 1
+              ? `Menampilkan ${rangeStart.toLocaleString("id-ID")}–${rangeEnd.toLocaleString("id-ID")} dari ${pagination.total.toLocaleString("id-ID")} kamar`
+              : undefined
+          }
+          pagination={
+            pagination && pagination.totalPages > 1 ? (
               <RoomsPagination pagination={pagination} onPageChange={handlePageChange} />
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Form Dialog */}
-        <RoomFormDialog
-          open={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          onSubmit={handleFormSubmit}
-          room={selectedRoom}
-          mode={formMode}
-        />
-
-        {/* Delete Alert */}
-        <DeleteRoomAlert
-          open={isDeleteAlertOpen}
-          onOpenChange={setIsDeleteAlertOpen}
-          room={selectedRoom}
-          onConfirm={handleDeleteConfirm}
-        />
+            ) : undefined
+          }
+        >
+          <RoomListTable rooms={rooms} onEdit={handleEdit} onDelete={handleDelete} />
+        </TablePanel>
       </div>
+
+      <RoomFormDialog
+        open={isFormOpen}
+        onOpenChange={setIsFormOpen}
+        onSubmit={handleFormSubmit}
+        room={selectedRoom}
+        mode={formMode}
+      />
+
+      <DeleteRoomAlert
+        open={isDeleteAlertOpen}
+        onOpenChange={setIsDeleteAlertOpen}
+        room={selectedRoom}
+        onConfirm={async (roomId: string) => {
+          await mutations.remove(roomId)
+        }}
+      />
     </div>
   )
 }

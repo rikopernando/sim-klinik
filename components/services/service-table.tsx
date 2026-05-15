@@ -9,9 +9,10 @@ import {
   TableHeader,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { ResultService } from "@/types/services"
-import { IconTrash, IconEdit } from "@tabler/icons-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { IconTrash, IconEdit } from "@tabler/icons-react"
+import { ResultService } from "@/types/services"
+import { formatCurrency } from "@/lib/billing/billing-utils"
 
 interface ServicesTableProps {
   service: ResultService[]
@@ -20,78 +21,85 @@ interface ServicesTableProps {
 }
 
 export function ServicesTable({ service, onEdit, onDelete }: ServicesTableProps) {
-  if (service.length === 0) {
-    return (
-      <div className="text-muted-foreground py-12 text-center">Tidak ada Service ditemukan</div>
-    )
-  }
-
-  const formatRupiah = (price: number | string) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 2,
-    }).format(Number(price))
-  }
-
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nama</TableHead>
-          <TableHead>Kode</TableHead>
-          <TableHead>Tipe</TableHead>
-          <TableHead>Kategori</TableHead>
-          <TableHead>Deskripsi</TableHead>
-          <TableHead>Harga</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {service.map((s) => (
-          <TableRow key={s.id}>
-            <TableCell>{s.name}</TableCell>
-            <TableCell>{s.code}</TableCell>
-            <TableCell>{s.serviceType}</TableCell>
-            <TableCell>{s.category}</TableCell>
-            <TableCell>{s.description}</TableCell>
-            <TableCell>{formatRupiah(s.price)}</TableCell>
-            <TableCell className="text-right">
-              <TooltipProvider>
-                <div className="flex justify-end gap-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="outline" size="sm" onClick={() => onEdit(s)}>
-                        <IconEdit size={16} />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Edit Service</p>
-                    </TooltipContent>
-                  </Tooltip>
-
+    <TooltipProvider>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Nama</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Kode</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Tipe</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Kategori
+            </TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Deskripsi
+            </TableHead>
+            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+              Harga
+            </TableHead>
+            <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
+              Aksi
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {service.map((s) => (
+            <TableRow key={s.id} className="group transition-colors">
+              <TableCell className="py-3 font-medium">{s.name}</TableCell>
+              <TableCell className="py-3">
+                <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold">
+                  {s.code}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground py-3 text-sm">{s.serviceType}</TableCell>
+              <TableCell className="text-muted-foreground py-3 text-sm">
+                {s.category || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground max-w-xs truncate py-3 text-sm">
+                {s.description || "—"}
+              </TableCell>
+              <TableCell className="py-3 text-right">
+                <span className="font-mono text-sm font-semibold tabular-nums">
+                  {formatCurrency(Number(s.price))}
+                </span>
+              </TableCell>
+              <TableCell className="pr-4 text-right">
+                <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
-                        variant="outline"
+                        variant="ghost"
                         size="sm"
-                        className="text-red-600 hover:bg-red-50"
-                        onClick={() => onDelete && onDelete(s.id)}
+                        className="h-7 w-7 p-0"
+                        onClick={() => onEdit(s)}
                       >
-                        <IconTrash size={16} />
+                        <IconEdit size={14} />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Hapus Service</p>
-                    </TooltipContent>
+                    <TooltipContent>Edit Service</TooltipContent>
                   </Tooltip>
+                  {onDelete && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="hover:text-destructive h-7 w-7 p-0"
+                          onClick={() => onDelete(s.id)}
+                        >
+                          <IconTrash size={14} />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Hapus Service</TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
-              </TooltipProvider>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TooltipProvider>
   )
 }

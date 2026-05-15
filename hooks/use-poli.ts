@@ -15,6 +15,7 @@ interface PaginationInfo {
 interface UsePoliResult {
   polis: ResultPoli[]
   isLoading: boolean
+  isSearching: boolean
   refetch: () => void
   searchQuery: string
   includeInactive: boolean
@@ -149,6 +150,7 @@ export function usePoli(): UsePoliResult {
     polis,
     refetch,
     isLoading,
+    isSearching: searchQuery !== debouncedSearch || isLoading,
     fetchPolis,
     createPoli,
     updatePoli,

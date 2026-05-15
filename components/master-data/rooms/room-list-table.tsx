@@ -1,11 +1,7 @@
 "use client"
 
-/**
- * Room List Table Component
- * Displays list of rooms in a table format with actions
- */
-
-import { memo } from "react"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   Table,
   TableBody,
@@ -14,88 +10,108 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { Pencil, Trash2 } from "lucide-react"
-import type { Room } from "@/types/rooms"
-import Loader from "@/components/loader"
 import { formatCurrency } from "@/lib/inpatient/room-utils"
+import type { Room } from "@/types/rooms"
 
 interface RoomListTableProps {
   rooms: Room[]
-  isLoading: boolean
   onEdit: (room: Room) => void
   onDelete: (room: Room) => void
 }
 
-function RoomListTableComponent({ rooms, isLoading, onEdit, onDelete }: RoomListTableProps) {
-  if (isLoading) {
-    return <Loader message="Memuat data kamar..." />
-  }
-
-  if (rooms.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-muted-foreground mb-2">Belum ada data kamar</p>
-        <p className="text-muted-foreground text-sm">
-          Klik tombol &quot;Tambah Kamar&quot; untuk menambahkan kamar baru
-        </p>
-      </div>
-    )
-  }
-
+export function RoomListTable({ rooms, onEdit, onDelete }: RoomListTableProps) {
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nomor Kamar</TableHead>
-          <TableHead>Tipe</TableHead>
-          <TableHead>Lantai</TableHead>
-          <TableHead>Gedung</TableHead>
-          <TableHead className="text-center">Bed</TableHead>
-          <TableHead className="text-center">Tersedia</TableHead>
-          <TableHead className="text-right">Tarif/Hari</TableHead>
-          <TableHead className="text-right">Aksi</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {rooms.map((room) => (
-          <TableRow key={room.id}>
-            <TableCell className="font-medium">{room.roomNumber}</TableCell>
-            <TableCell>{room.roomType}</TableCell>
-            <TableCell>{room.floor || "-"}</TableCell>
-            <TableCell>{room.building || "-"}</TableCell>
-            <TableCell className="text-center">{room.bedCount}</TableCell>
-            <TableCell className="text-center">
-              <span
-                className={
-                  room.availableBeds > 0 ? "font-medium text-green-600" : "font-medium text-red-600"
-                }
-              >
-                {room.availableBeds}
-              </span>
-            </TableCell>
-            <TableCell className="text-right">{formatCurrency(room.dailyRate)}</TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-2">
-                <Button variant="outline" size="sm" onClick={() => onEdit(room)} title="Edit kamar">
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onDelete(room)}
-                  title="Hapus kamar"
-                >
-                  <Trash2 className="text-destructive h-4 w-4" />
-                </Button>
-              </div>
-            </TableCell>
+    <TooltipProvider>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              No. Kamar
+            </TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Tipe</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Lantai</TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">Gedung</TableHead>
+            <TableHead className="text-center text-xs font-semibold tracking-wider uppercase">
+              Bed
+            </TableHead>
+            <TableHead className="text-center text-xs font-semibold tracking-wider uppercase">
+              Tersedia
+            </TableHead>
+            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+              Tarif/Hari
+            </TableHead>
+            <TableHead className="pr-4 text-right text-xs font-semibold tracking-wider uppercase">
+              Aksi
+            </TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {rooms.map((room) => (
+            <TableRow key={room.id} className="group transition-colors">
+              <TableCell className="py-3">
+                <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold">
+                  {room.roomNumber}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground py-3 text-sm">{room.roomType}</TableCell>
+              <TableCell className="text-muted-foreground py-3 text-sm">
+                {room.floor || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground py-3 text-sm">
+                {room.building || "—"}
+              </TableCell>
+              <TableCell className="py-3 text-center font-mono text-sm">{room.bedCount}</TableCell>
+              <TableCell className="py-3 text-center">
+                <span
+                  className={cn(
+                    "font-mono text-sm font-semibold",
+                    room.availableBeds > 0 ? "text-emerald-600" : "text-destructive"
+                  )}
+                >
+                  {room.availableBeds}
+                </span>
+              </TableCell>
+              <TableCell className="py-3 text-right">
+                <span className="font-mono text-sm font-semibold tabular-nums">
+                  {formatCurrency(room.dailyRate)}
+                </span>
+              </TableCell>
+              <TableCell className="pr-4 text-right">
+                <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0"
+                        onClick={() => onEdit(room)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Edit Kamar</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="hover:text-destructive h-7 w-7 p-0"
+                        onClick={() => onDelete(room)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Hapus Kamar</TooltipContent>
+                  </Tooltip>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TooltipProvider>
   )
 }
-
-// Export memoized version for better performance
-export const RoomListTable = memo(RoomListTableComponent)

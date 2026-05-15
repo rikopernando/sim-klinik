@@ -1,17 +1,13 @@
 "use client"
 
-import { toast } from "sonner"
 import { useState } from "react"
-import { IconSearch, IconTool } from "@tabler/icons-react"
-
-import {
-  Card,
-  CardTitle,
-  CardAction,
-  CardHeader,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card"
+import { IconTool } from "@tabler/icons-react"
+import { Package } from "lucide-react"
+import { PageHeader } from "@/components/ui/page-header"
+import { SearchInput } from "@/components/ui/search-input"
+import { TablePanel } from "@/components/ui/table-panel"
+import { Button } from "@/components/ui/button"
+import { Pagination } from "@/components/users/pagination"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,13 +18,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { useService } from "@/hooks/use-service"
-import { Pagination } from "@/components/users/pagination"
-import { PayloadServices, ResultService } from "@/types/services"
 import { ServicesTable } from "@/components/services/service-table"
 import { FormServiceDialog } from "@/components/services/form-service-dialog"
+import { useService } from "@/hooks/use-service"
+import { PayloadServices, ResultService } from "@/types/services"
+import { toast } from "sonner"
 
 export default function ServicePage() {
   const [mode, setMode] = useState("")
@@ -40,6 +34,7 @@ export default function ServicePage() {
   const {
     services,
     isLoading,
+    isSearching,
     pagination,
     searchQuery,
     errorMessage,
@@ -52,12 +47,8 @@ export default function ServicePage() {
   } = useService()
 
   const handleEdit = async (service: ResultService) => {
-    const updatedService = await getServiceById(service.id)
-    if (updatedService) {
-      setSelectedService(updatedService)
-    } else {
-      setSelectedService(service)
-    }
+    const updated = await getServiceById(service.id)
+    setSelectedService(updated ?? service)
     setFormDialogOpen(true)
     setMode("edit")
   }
@@ -69,89 +60,108 @@ export default function ServicePage() {
 
   const confirmDelete = async () => {
     if (!serviceToDelete) return
-
     const success = await deleteService(serviceToDelete)
-
     if (success) {
       setDeleteDialogOpen(false)
       setServiceToDelete(null)
       toast.success("Service berhasil dihapus!")
     } else {
-      toast.error("Gagal menghapus services!")
+      toast.error("Gagal menghapus service!")
     }
   }
 
-  const formSubmit = async (mode: string, data: PayloadServices, id?: string) => {
+  const formSubmit = async (m: string, data: PayloadServices, id?: string) => {
     try {
-      if (mode === "add") {
-        await createService(data)
-      } else if (mode === "edit" && id) {
-        await updateService(id, data)
-      }
+      if (m === "add") await createService(data)
+      else if (m === "edit" && id) await updateService(id, data)
     } catch (error) {
       console.error("Error submitting form:", error)
     }
   }
+
+  const rangeStart = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1
+  const rangeEnd = Math.min(pagination.page * pagination.limit, pagination.total)
+
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Manajemen Services</h1>
-          <p className="text-muted-foreground">Kelola Services</p>
-        </div>
+    <div>
+      <PageHeader title="Manajemen Services" description="Kelola tarif dan layanan klinik">
         <Button
           onClick={() => {
             setFormDialogOpen(true)
             setMode("add")
           }}
         >
-          <IconTool size={20} className="mr-2" />
-          Tambah Services
+          <IconTool size={16} className="mr-1.5" />
+          Tambah Service
         </Button>
-      </div>
+      </PageHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Services</CardTitle>
-          {pagination.total > 0 && !isLoading && (
-            <CardDescription>Total: {pagination.total} Services</CardDescription>
+      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-6">
+        {/* Toolbar */}
+        <div className="flex items-center justify-between gap-3">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Cari nama, tipe, kategori atau kode..."
+            isSearching={isSearching}
+            className="max-w-sm flex-1"
+          />
+          {!isLoading && pagination.total > 0 && (
+            <p className="text-muted-foreground shrink-0 text-sm tabular-nums">
+              <span className="text-foreground font-medium">
+                {pagination.total.toLocaleString("id-ID")}
+              </span>{" "}
+              service
+            </p>
           )}
-          <CardAction>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <IconSearch
-                  className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 transform"
-                  size={20}
-                />
-                <Input
-                  placeholder="Cari berdasarkan nama, tipe, kategori atau kode"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="min-w-[304px] pl-10"
-                />
-              </div>
-            </div>
-          </CardAction>
-        </CardHeader>
+        </div>
 
-        <CardContent>
-          {isLoading && services.length === 0 ? (
-            <div className="text-muted-foreground py-12 text-center">Memuat data Service ...</div>
-          ) : (
-            <ServicesTable service={services} onEdit={handleEdit} onDelete={handleDelete} />
-          )}
-
-          {pagination.totalPages > 1 && (
-            <div className="mt-4">
+        <TablePanel
+          label="Daftar Services"
+          total={pagination.total}
+          isLoading={services.length === 0 && isLoading}
+          loadingMessage="Memuat data service..."
+          isEmpty={services.length === 0 && !isLoading}
+          emptyIcon={<Package size={22} className="text-[#52b788]" />}
+          emptyTitle={searchQuery ? "Service tidak ditemukan" : "Belum ada data service"}
+          emptyDescription={
+            searchQuery
+              ? `Tidak ada hasil untuk "${searchQuery}"`
+              : "Mulai dengan menambahkan service baru"
+          }
+          emptyAction={
+            !searchQuery ? (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setFormDialogOpen(true)
+                  setMode("add")
+                }}
+              >
+                <IconTool size={14} className="mr-1.5" />
+                Tambah Service
+              </Button>
+            ) : undefined
+          }
+          paginationRange={
+            pagination.totalPages > 1
+              ? `Menampilkan ${rangeStart.toLocaleString("id-ID")}–${rangeEnd.toLocaleString("id-ID")} dari ${pagination.total.toLocaleString("id-ID")} service`
+              : undefined
+          }
+          pagination={
+            pagination.totalPages > 1 ? (
               <Pagination
                 currentPage={pagination.page}
                 totalPages={pagination.totalPages}
                 onPageChange={handlePageChange}
               />
-            </div>
-          )}
-        </CardContent>
-      </Card>
+            ) : undefined
+          }
+        >
+          <ServicesTable service={services} onEdit={handleEdit} onDelete={handleDelete} />
+        </TablePanel>
+      </div>
 
       <FormServiceDialog
         data={selectedService}
@@ -162,7 +172,6 @@ export default function ServicePage() {
         onSubmit={formSubmit}
       />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -173,7 +182,10 @@ export default function ServicePage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive hover:bg-destructive/90"
+            >
               Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
