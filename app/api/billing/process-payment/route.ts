@@ -11,6 +11,7 @@ import { processPaymentWithDiscount } from "@/lib/billing/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
+import { shortCache } from "@/lib/cache/api-cache"
 
 /**
  * POST /api/billing/process-payment
@@ -45,7 +46,11 @@ export const POST = withRBAC(
       const validatedData = processPaymentSchema.parse(body)
 
       // Process payment with discount (atomic transaction)
-      await processPaymentWithDiscount(validatedData)
+      const result = await processPaymentWithDiscount(validatedData)
+
+      // Invalidate stale caches so subsequent reads reflect the new payment
+      shortCache.invalidate(`billing:details:${result.visitId}`)
+      shortCache.invalidate("billing:queue")
 
       const response: ResponseApi = {
         message: "Payment processed successfully",

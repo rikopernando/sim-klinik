@@ -10,6 +10,9 @@ import { getBillingDetails } from "@/lib/billing/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
+import { shortCache } from "@/lib/cache/api-cache"
+
+const CACHE_KEY_PREFIX = "billing:details:"
 
 export const GET = withRBAC(
   async (_request: NextRequest, context: { params: { visitId: string } }) => {
@@ -27,7 +30,13 @@ export const GET = withRBAC(
         })
       }
 
-      const billingDetails = await getBillingDetails(visitId)
+      const cacheKey = `${CACHE_KEY_PREFIX}${visitId}`
+      const cached = shortCache.get(cacheKey)
+      const billingDetails = cached ?? (await getBillingDetails(visitId))
+
+      if (!cached && billingDetails) {
+        shortCache.set(cacheKey, billingDetails)
+      }
 
       const response: ResponseApi<typeof billingDetails> = {
         data: billingDetails,

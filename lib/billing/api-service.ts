@@ -278,6 +278,7 @@ export async function processPaymentWithDiscount(data: ProcessPaymentInput) {
       remainingAmount: newRemainingAmount,
       paymentStatus: newPaymentStatus,
       change: changeGiven,
+      visitId: billing.visitId,
     }
   })
 }
@@ -415,8 +416,10 @@ export async function getBillingDetails(visitId: string) {
     db.select().from(billings).where(eq(billings.visitId, visitId)).limit(1),
     db
       .select({
-        visit: visits,
-        patient: patients,
+        visitNumber: visits.visitNumber,
+        visitCreatedAt: visits.createdAt,
+        patientName: patients.name,
+        patientMrNumber: patients.mrNumber,
       })
       .from(visits)
       .innerJoin(patients, eq(visits.patientId, patients.id))
@@ -430,7 +433,7 @@ export async function getBillingDetails(visitId: string) {
   }
 
   const billing = billingResult[0]
-  const { visit, patient } = visitResult[0]
+  const visitData = visitResult[0]
 
   // Fetch billing items and payments in parallel
   const [items, paymentHistory] = await Promise.all([
@@ -451,12 +454,12 @@ export async function getBillingDetails(visitId: string) {
     items,
     payments: paymentHistory,
     patient: {
-      name: patient.name,
-      mrNumber: patient.mrNumber,
+      name: visitData.patientName,
+      mrNumber: visitData.patientMrNumber,
     },
     visit: {
-      visitNumber: visit.visitNumber,
-      createdAt: visit.createdAt,
+      visitNumber: visitData.visitNumber,
+      createdAt: visitData.visitCreatedAt,
     },
   }
 }
