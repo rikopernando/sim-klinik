@@ -3,9 +3,6 @@
  * Centralized types for Billing, Cashier, and Patient Discharge
  */
 
-import { MedicalRecord } from "./medical-record"
-import { Patient } from "./registration"
-import { Visit } from "./visit"
 
 /**
  * Payment Status Types
@@ -307,10 +304,23 @@ export interface ReceiptData {
 }
 
 export interface BillingQueueItem {
-  visit: Visit
-  patient: Patient
-  billing: Billing | null
-  medicalRecord: MedicalRecord
+  visit: {
+    id: string
+    visitType: string
+    visitNumber: string
+    status: string
+    createdAt: Date
+  }
+  patient: {
+    id: string
+    name: string
+    mrNumber: string
+  }
+  billing: {
+    id: string
+    totalAmount: string
+    paymentStatus: PaymentStatus
+  } | null
 }
 
 interface BillingFull {

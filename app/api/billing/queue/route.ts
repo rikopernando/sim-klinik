@@ -8,15 +8,23 @@ import { NextResponse } from "next/server"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
+import { shortCache } from "@/lib/cache/api-cache"
 import { getVisitsReadyForBilling } from "@/lib/billing/api-service"
+
+const CACHE_KEY = "billing:queue"
 
 export const GET = withRBAC(
   async () => {
     try {
-      const visits = await getVisitsReadyForBilling()
+      const cached = shortCache.get(CACHE_KEY)
+      const queue = cached ?? (await getVisitsReadyForBilling())
 
-      const response: ResponseApi<typeof visits> = {
-        data: visits,
+      if (!cached) {
+        shortCache.set(CACHE_KEY, queue)
+      }
+
+      const response: ResponseApi<typeof queue> = {
+        data: queue,
         message: "Billing queue fetched successfully",
         status: HTTP_STATUS_CODES.OK,
       }

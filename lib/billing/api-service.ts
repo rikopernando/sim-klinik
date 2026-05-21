@@ -10,7 +10,7 @@ import { patients } from "@/db/schema/patients"
 import { prescriptions, drugs, compoundRecipes } from "@/db/schema/inventory"
 import { medicalRecords, procedures } from "@/db/schema/medical-records"
 import { eq, sql, and, desc, or, inArray } from "drizzle-orm"
-import type { ServiceInput, ServiceUpdateInput } from "@/types/billing"
+import type { PaymentStatus, ServiceInput, ServiceUpdateInput } from "@/types/billing"
 import {
   calculateDiscountFromPercentage,
   calculateTotalAmount,
@@ -339,40 +339,57 @@ export async function getDischargeSummary(visitId: string) {
  * - Ordered by creation date (newest first)
  */
 export async function getVisitsReadyForBilling() {
-  const result = await db
+  const rows = await db
     .select({
-      visit: visits,
-      patient: patients,
-      billing: billings,
-      medicalRecord: medicalRecords,
+      visitId: visits.id,
+      visitType: visits.visitType,
+      visitNumber: visits.visitNumber,
+      visitStatus: visits.status,
+      visitCreatedAt: visits.createdAt,
+      patientId: patients.id,
+      patientName: patients.name,
+      patientMrNumber: patients.mrNumber,
+      billingId: billings.id,
+      billingTotalAmount: billings.totalAmount,
+      billingPaymentStatus: billings.paymentStatus,
     })
     .from(visits)
     .innerJoin(patients, eq(visits.patientId, patients.id))
-    .leftJoin(medicalRecords, eq(visits.id, medicalRecords.visitId))
     .leftJoin(billings, eq(visits.id, billings.visitId))
     .where(
       and(
-        // Visit must be ready for billing
-        // or(
-        //   // OUTPATIENT: Medical record must be locked
-        //   and(eq(visits.visitType, "outpatient"), eq(medicalRecords.isLocked, true)),
-        //   // INPATIENT: Visit status must be ready_for_billing (billing already created)
-        //   and(eq(visits.visitType, "inpatient"), eq(visits.status, "ready_for_billing"))
-        // ),
-        // Payment must be incomplete (pending, partial, or no billing exists)
         eq(visits.status, "billed"),
         or(
-          // No billing exists yet (outpatient only - inpatient always has billing)
           sql`${billings.id} IS NULL`,
-          // Billing exists but not fully paid
           eq(billings.paymentStatus, "pending"),
           eq(billings.paymentStatus, "partial")
         )
       )
     )
     .orderBy(desc(visits.createdAt))
+    .limit(100)
 
-  return result
+  return rows.map((row) => ({
+    visit: {
+      id: row.visitId,
+      visitType: row.visitType,
+      visitNumber: row.visitNumber,
+      status: row.visitStatus,
+      createdAt: row.visitCreatedAt,
+    },
+    patient: {
+      id: row.patientId,
+      name: row.patientName,
+      mrNumber: row.patientMrNumber,
+    },
+    billing: row.billingId
+      ? {
+          id: row.billingId,
+          totalAmount: row.billingTotalAmount!,
+          paymentStatus: row.billingPaymentStatus! as PaymentStatus,
+        }
+      : null,
+  }))
 }
 
 /**

@@ -201,7 +201,12 @@ export const VISIT_TYPE_CONFIG: Record<string, { label: string; className: strin
 }
 
 export function getVisitTypeConfig(visitType: string): { label: string; className: string } {
-  return VISIT_TYPE_CONFIG[visitType] ?? { label: visitType, className: "bg-muted text-muted-foreground" }
+  return (
+    VISIT_TYPE_CONFIG[visitType] ?? {
+      label: visitType,
+      className: "bg-muted text-muted-foreground",
+    }
+  )
 }
 
 /**
