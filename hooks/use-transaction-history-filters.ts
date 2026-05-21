@@ -51,6 +51,7 @@ export function useTransactionHistoryFilters() {
 
   return {
     search,
+    debouncedSearch,
     paymentMethod,
     visitType,
     dateFrom,

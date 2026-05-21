@@ -1,17 +1,13 @@
-/**
- * Queue Sidebar Component
- * Displays the billing queue with selectable patient items and search functionality
- */
+"use client"
 
-import { RefreshCw, Search, X } from "lucide-react"
+import { RefreshCw } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
+import { SearchInput } from "@/components/ui/search-input"
 import { getPaymentStatusConfig } from "@/lib/billing/billing-utils"
 import { useQueueSearch } from "@/hooks/use-queue-search"
+import { cn } from "@/lib/utils"
 import type { BillingQueueItem } from "@/types/billing"
 
 interface QueueSidebarProps {
@@ -29,71 +25,78 @@ export function QueueSidebar({
   onSelectVisit,
   onRefresh,
 }: QueueSidebarProps) {
-  // Search functionality
   const { searchQuery, setSearchQuery, filteredQueue, resultCount } = useQueueSearch(queue)
 
   return (
-    <div className="bg-muted/30 flex w-96 flex-col border-r">
-      {/* Header */}
-      <div className="bg-background border-b p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Antrian Pembayaran</h2>
-          <Button variant="ghost" size="sm" onClick={onRefresh} disabled={isLoading}>
-            <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+    <div className="bg-muted/20 flex min-h-0 w-80 flex-col border-r">
+      {/* Fixed header */}
+      <div className="shrink-0 border-b px-4 py-3">
+        <div className="mb-1 flex items-center justify-between">
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-widest uppercase">
+            Antrian Pembayaran
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0"
+            onClick={onRefresh}
+            disabled={isLoading}
+          >
+            <RefreshCw className={cn("h-3.5 w-3.5", isLoading && "animate-spin")} />
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground mb-3 text-xs">
           {searchQuery
             ? `${resultCount} dari ${queue.length} pasien`
-            : `${queue.length} pasien menunggu pembayaran`}
+            : `${queue.length} pasien menunggu`}
         </p>
-
-        {/* Search Input */}
-        <div className="relative mt-3">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            type="text"
-            placeholder="Cari nama, No. RM, No. kunjungan..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pr-9 pl-9"
-          />
-          {searchQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSearchQuery("")}
-              className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
+        <SearchInput
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Cari nama, No. RM..."
+        />
       </div>
 
-      {/* Queue List */}
-      <ScrollArea className="flex-1">
-        {isLoading && queue.length === 0 ? (
-          <div className="text-muted-foreground p-8 text-center text-sm">Memuat antrian...</div>
-        ) : filteredQueue.length === 0 ? (
-          <div className="text-muted-foreground p-8 text-center text-sm">
-            {searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada pasien dalam antrian"}
-          </div>
-        ) : (
-          <div className="space-y-2 p-4">
-            {filteredQueue.map((item) => (
-              <QueueItemCard
-                key={item.visit.id}
-                item={item}
-                isSelected={selectedVisitId === item.visit.id}
-                onSelect={() => onSelectVisit(item.visit.id)}
-              />
-            ))}
-          </div>
-        )}
-      </ScrollArea>
+      {/* Scrollable queue list */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full">
+          {isLoading && queue.length === 0 ? (
+            <div className="text-muted-foreground p-8 text-center text-sm">Memuat antrian...</div>
+          ) : filteredQueue.length === 0 ? (
+            <div className="text-muted-foreground p-8 text-center text-sm">
+              {searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada pasien dalam antrian"}
+            </div>
+          ) : (
+            <div className="space-y-1.5 px-2 py-2">
+              {filteredQueue.map((item) => (
+                <QueueItemCard
+                  key={item.visit.id}
+                  item={item}
+                  isSelected={selectedVisitId === item.visit.id}
+                  onSelect={() => onSelectVisit(item.visit.id)}
+                />
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+      </div>
     </div>
   )
+}
+
+const VISIT_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
+  outpatient: {
+    label: "Rawat Jalan",
+    className: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+  },
+  inpatient: {
+    label: "Rawat Inap",
+    className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  },
+  emergency: {
+    label: "UGD",
+    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  },
 }
 
 interface QueueItemCardProps {
@@ -105,57 +108,58 @@ interface QueueItemCardProps {
 function QueueItemCard({ item, isSelected, onSelect }: QueueItemCardProps) {
   const paymentStatus = item.billing?.paymentStatus || "pending"
   const statusConfig = getPaymentStatusConfig(paymentStatus)
+  const visitConfig = VISIT_TYPE_CONFIG[item.visit.visitType] ?? {
+    label: item.visit.visitType,
+    className: "bg-muted text-muted-foreground",
+  }
 
   return (
-    <Card
-      className={`cursor-pointer py-0 transition-all hover:shadow-md ${
-        isSelected ? "ring-primary bg-primary/5 ring-2" : ""
-      }`}
+    <button
       onClick={onSelect}
+      className={cn(
+        "w-full rounded-lg border px-3 py-3 text-left transition-all",
+        isSelected
+          ? "border-[#52b788] bg-[#52b788]/10 shadow-sm"
+          : "border-border/60 bg-card hover:bg-muted/40 hover:border-[#52b788]/40 hover:shadow-sm"
+      )}
     >
-      <CardContent className="p-4">
-        {/* Patient Info */}
-        <div className="mb-2 flex items-start justify-between">
-          <div>
-            <p className="text-sm font-semibold">{item.patient.name}</p>
-            <p className="text-muted-foreground text-xs">{item.patient.mrNumber}</p>
-          </div>
-          <Badge>
-            {item.visit.visitType === "outpatient"
-              ? "Rawat Jalan"
-              : item.visit.visitType === "inpatient"
-                ? "Rawat Inap"
-                : "UGD"}
-          </Badge>
-        </div>
-
-        {/* Visit & Billing Info */}
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">No. Kunjungan</span>
-            <span className="font-mono">{item.visit.visitNumber}</span>
-          </div>
-
-          {item.billing && (
-            <>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Total</span>
-                <span className="font-semibold">
-                  Rp {parseFloat(item.billing.totalAmount).toLocaleString("id-ID")}
-                </span>
-              </div>
-              <div className="mt-2">
-                <Badge
-                  variant="secondary"
-                  className={`text-xs ${statusConfig.bgColor} ${statusConfig.color} border-0`}
-                >
-                  {statusConfig.label}
-                </Badge>
-              </div>
-            </>
+      {/* Name + visit type */}
+      <div className="mb-1.5 flex items-start justify-between gap-2">
+        <p className="text-sm leading-tight font-semibold">{item.patient.name}</p>
+        <span
+          className={cn(
+            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+            visitConfig.className
           )}
+        >
+          {visitConfig.label}
+        </span>
+      </div>
+
+      {/* MR + visit number */}
+      <div className="text-muted-foreground mb-2 flex items-center gap-1.5 text-xs">
+        <span>{item.patient.mrNumber}</span>
+        <span>·</span>
+        <span className="font-mono">{item.visit.visitNumber}</span>
+      </div>
+
+      {/* Total + payment status */}
+      {item.billing && (
+        <div className="flex items-center justify-between">
+          <span className="font-mono text-xs font-semibold">
+            Rp {parseFloat(item.billing.totalAmount).toLocaleString("id-ID")}
+          </span>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[10px] font-medium",
+              statusConfig.bgColor,
+              statusConfig.color
+            )}
+          >
+            {statusConfig.label}
+          </span>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </button>
   )
 }

@@ -1,12 +1,3 @@
-/**
- * Payment History Card Component
- * Displays a list of payment transactions with details
- */
-
-import { Calendar } from "lucide-react"
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { formatCurrency, getPaymentMethodLabel } from "@/lib/billing/billing-utils"
 
 interface Payment {
@@ -23,26 +14,19 @@ interface PaymentHistoryCardProps {
 }
 
 export function PaymentHistoryCard({ payments }: PaymentHistoryCardProps) {
-  if (payments.length === 0) {
-    return null
-  }
+  if (payments.length === 0) return null
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <Calendar className="h-5 w-5" />
-          Riwayat Pembayaran
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          {payments.map((payment) => (
-            <PaymentHistoryItem key={payment.id} payment={payment} />
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="px-5 py-4">
+      <p className="text-muted-foreground mb-3 text-[11px] font-semibold tracking-widest uppercase">
+        Riwayat Pembayaran
+      </p>
+      <div className="space-y-2">
+        {payments.map((payment) => (
+          <PaymentHistoryItem key={payment.id} payment={payment} />
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -55,12 +39,12 @@ function PaymentHistoryItem({ payment }: PaymentHistoryItemProps) {
   const receivedDate = new Date(payment.receivedAt)
 
   return (
-    <div className="bg-muted/50 flex items-start justify-between rounded-lg p-3">
-      <div className="space-y-1">
-        <p className="text-sm font-medium">{formatCurrency(payment.amount)}</p>
+    <div className="bg-muted/40 flex items-start justify-between rounded-lg px-3 py-2.5">
+      <div className="space-y-0.5">
+        <p className="text-sm font-semibold tabular-nums">{formatCurrency(payment.amount)}</p>
         <p className="text-muted-foreground text-xs capitalize">
           {getPaymentMethodLabel(payment.paymentMethod)}
-          {payment.paymentReference && ` • ${payment.paymentReference}`}
+          {payment.paymentReference && ` · ${payment.paymentReference}`}
         </p>
         <p className="text-muted-foreground text-xs">
           {receivedDate.toLocaleString("id-ID", {
@@ -73,9 +57,9 @@ function PaymentHistoryItem({ payment }: PaymentHistoryItemProps) {
         </p>
       </div>
       {hasChange && (
-        <Badge variant="secondary" className="text-xs">
+        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-xs font-medium">
           Kembalian: {formatCurrency(payment.changeGiven!)}
-        </Badge>
+        </span>
       )}
     </div>
   )

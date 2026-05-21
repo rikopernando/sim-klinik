@@ -1,21 +1,17 @@
-/**
- * Transaction History Page
- * Display payment transaction history with filters and pagination
- */
-
 "use client"
-import { PageGuard } from "@/components/auth/page-guard"
-import { RefreshCw, Search } from "lucide-react"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Receipt, RefreshCw } from "lucide-react"
+import { PageGuard } from "@/components/auth/page-guard"
+import { PageHeader } from "@/components/ui/page-header"
+import { SearchInput } from "@/components/ui/search-input"
+import { TablePanel } from "@/components/ui/table-panel"
+import { Button } from "@/components/ui/button"
+import { FilterDrawer } from "@/components/ui/filter-drawer"
+import { Pagination } from "@/components/users/pagination"
 import { useTransactionHistory } from "@/hooks/use-transaction-history"
 import { useTransactionHistoryFilters } from "@/hooks/use-transaction-history-filters"
 import { TransactionHistoryTable } from "@/components/billing/transaction-history-table"
 import { TransactionHistoryFilters } from "@/components/billing/transaction-history-filters"
-import { TransactionHistoryPagination } from "@/components/billing/transaction-history-pagination"
-import { FilterDrawer } from "@/components/ui/filter-drawer"
-import { Button } from "@/components/ui/button"
 
 export default function TransactionHistoryPage() {
   return (
@@ -31,80 +27,86 @@ function TransactionHistoryPageContent() {
     filterHook.filters
   )
 
+  const isSearching = filterHook.search !== filterHook.debouncedSearch || isLoading
+
+  const rangeStart = pagination.total === 0 ? 0 : (pagination.page - 1) * pagination.limit + 1
+  const rangeEnd = Math.min(pagination.page * pagination.limit, pagination.total)
+
   return (
-    <div className="container mx-auto p-6">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Riwayat Transaksi</h1>
-            <p className="text-muted-foreground">Daftar pembayaran yang telah diproses</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <FilterDrawer
-              activeFilterCount={filterHook.activeFilterCount}
-              onReset={filterHook.resetFilters}
-              title="Filter Transaksi"
-              description="Atur filter untuk menyaring data transaksi"
-            >
-              <TransactionHistoryFilters
-                paymentMethod={filterHook.paymentMethod}
-                visitType={filterHook.visitType}
-                dateFrom={filterHook.dateFrom}
-                dateTo={filterHook.dateTo}
-                onPaymentMethodChange={filterHook.setPaymentMethod}
-                onVisitTypeChange={filterHook.setVisitType}
-                onDateFromChange={filterHook.setDateFrom}
-                onDateToChange={filterHook.setDateTo}
-              />
-            </FilterDrawer>
-            <Button onClick={refresh} variant="outline" disabled={isLoading}>
-              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
-              Refresh
-            </Button>
-          </div>
+    <div>
+      <PageHeader title="Riwayat Transaksi" description="Daftar pembayaran yang telah diproses">
+        <FilterDrawer
+          activeFilterCount={filterHook.activeFilterCount}
+          onReset={filterHook.resetFilters}
+          title="Filter Transaksi"
+          description="Atur filter untuk menyaring data transaksi"
+        >
+          <TransactionHistoryFilters
+            paymentMethod={filterHook.paymentMethod}
+            visitType={filterHook.visitType}
+            dateFrom={filterHook.dateFrom}
+            dateTo={filterHook.dateTo}
+            onPaymentMethodChange={filterHook.setPaymentMethod}
+            onVisitTypeChange={filterHook.setVisitType}
+            onDateFromChange={filterHook.setDateFrom}
+            onDateToChange={filterHook.setDateTo}
+          />
+        </FilterDrawer>
+        <Button onClick={refresh} variant="outline" disabled={isLoading}>
+          <RefreshCw className={`mr-1.5 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </PageHeader>
+
+      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-6">
+        <div className="flex items-center gap-3">
+          <SearchInput
+            value={filterHook.search}
+            onChange={filterHook.setSearch}
+            placeholder="Cari nama pasien, No. RM, No. Kunjungan..."
+            isSearching={isSearching}
+            className="max-w-sm flex-1"
+          />
+          {!isLoading && pagination.total > 0 && (
+            <p className="text-muted-foreground ml-auto shrink-0 text-sm tabular-nums">
+              <span className="text-foreground font-medium">
+                {pagination.total.toLocaleString("id-ID")}
+              </span>{" "}
+              transaksi
+            </p>
+          )}
         </div>
 
-        {/* Transaction List Card */}
-        <Card>
-          <CardHeader className="flex items-center justify-between">
-            <div>
-              <CardTitle>Daftar Transaksi</CardTitle>
-              <CardDescription>
-                {isLoading
-                  ? "Memuat data..."
-                  : pagination.total > 0
-                    ? `Total: ${pagination.total} transaksi`
-                    : "Tidak ada data transaksi"}
-              </CardDescription>
-            </div>
-
-            {/* Search */}
-            <div className="flex min-w-xs items-center gap-2">
-              <div className="relative max-w-sm flex-1">
-                <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-                <Input
-                  placeholder="Nama pasien, No. RM, No. Kunjungan..."
-                  value={filterHook.search}
-                  onChange={(e) => filterHook.setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Table */}
-            <TransactionHistoryTable transactions={transactions} isLoading={isLoading} />
-
-            {/* Pagination */}
-            {!isLoading && (
-              <TransactionHistoryPagination
-                pagination={pagination}
+        <TablePanel
+          label="Daftar Transaksi"
+          total={pagination.total}
+          isLoading={transactions.length === 0 && isLoading}
+          loadingMessage="Memuat riwayat transaksi..."
+          isEmpty={transactions.length === 0 && !isLoading}
+          emptyIcon={<Receipt size={22} className="text-[#52b788]" />}
+          emptyTitle={filterHook.search ? "Transaksi tidak ditemukan" : "Belum ada transaksi"}
+          emptyDescription={
+            filterHook.search
+              ? `Tidak ada hasil untuk "${filterHook.search}"`
+              : "Belum ada data transaksi yang diproses"
+          }
+          paginationRange={
+            pagination.totalPages > 1
+              ? `Menampilkan ${rangeStart.toLocaleString("id-ID")}–${rangeEnd.toLocaleString("id-ID")} dari ${pagination.total.toLocaleString("id-ID")} transaksi`
+              : undefined
+          }
+          pagination={
+            pagination.totalPages > 1 ? (
+              <Pagination
+                currentPage={pagination.page}
+                totalPages={pagination.totalPages}
                 onPageChange={handlePageChange}
               />
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        >
+          <TransactionHistoryTable transactions={transactions} />
+        </TablePanel>
       </div>
     </div>
   )
