@@ -185,6 +185,25 @@ export function getPaymentMethodLabel(method: string): string {
   }
 }
 
+export const VISIT_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
+  outpatient: {
+    label: "Rawat Jalan",
+    className: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+  },
+  inpatient: {
+    label: "Rawat Inap",
+    className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+  },
+  emergency: {
+    label: "UGD",
+    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+  },
+}
+
+export function getVisitTypeConfig(visitType: string): { label: string; className: string } {
+  return VISIT_TYPE_CONFIG[visitType] ?? { label: visitType, className: "bg-muted text-muted-foreground" }
+}
+
 /**
  * Format date for display
  */

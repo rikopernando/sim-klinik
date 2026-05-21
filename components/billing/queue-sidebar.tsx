@@ -5,7 +5,7 @@ import { RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SearchInput } from "@/components/ui/search-input"
-import { getPaymentStatusConfig } from "@/lib/billing/billing-utils"
+import { getPaymentStatusConfig, getVisitTypeConfig } from "@/lib/billing/billing-utils"
 import { useQueueSearch } from "@/hooks/use-queue-search"
 import { cn } from "@/lib/utils"
 import type { BillingQueueItem } from "@/types/billing"
@@ -84,21 +84,6 @@ export function QueueSidebar({
   )
 }
 
-const VISIT_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
-  outpatient: {
-    label: "Rawat Jalan",
-    className: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
-  },
-  inpatient: {
-    label: "Rawat Inap",
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  },
-  emergency: {
-    label: "UGD",
-    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  },
-}
-
 interface QueueItemCardProps {
   item: BillingQueueItem
   isSelected: boolean
@@ -108,10 +93,7 @@ interface QueueItemCardProps {
 function QueueItemCard({ item, isSelected, onSelect }: QueueItemCardProps) {
   const paymentStatus = item.billing?.paymentStatus || "pending"
   const statusConfig = getPaymentStatusConfig(paymentStatus)
-  const visitConfig = VISIT_TYPE_CONFIG[item.visit.visitType] ?? {
-    label: item.visit.visitType,
-    className: "bg-muted text-muted-foreground",
-  }
+  const visitConfig = getVisitTypeConfig(item.visit.visitType)
 
   return (
     <button

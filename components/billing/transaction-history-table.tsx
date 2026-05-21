@@ -16,7 +16,7 @@ import { format } from "date-fns"
 import { id } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import type { TransactionHistoryItem } from "@/types/transaction"
-import { formatCurrency } from "@/lib/billing/billing-utils"
+import { formatCurrency, getVisitTypeConfig } from "@/lib/billing/billing-utils"
 
 interface TransactionHistoryTableProps {
   transactions: TransactionHistoryItem[]
@@ -34,21 +34,6 @@ const PAYMENT_METHOD_CONFIG: Record<string, { label: string; className: string }
   card: {
     label: "Kartu",
     className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  },
-}
-
-const VISIT_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
-  outpatient: {
-    label: "Rawat Jalan",
-    className: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
-  },
-  inpatient: {
-    label: "Rawat Inap",
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  },
-  emergency: {
-    label: "UGD",
-    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
   },
 }
 
@@ -82,10 +67,7 @@ export function TransactionHistoryTable({ transactions }: TransactionHistoryTabl
               label: item.payment.paymentMethod,
               className: "bg-muted text-muted-foreground",
             }
-            const visitConfig = VISIT_TYPE_CONFIG[item.visit.visitType] ?? {
-              label: item.visit.visitType,
-              className: "bg-muted text-muted-foreground",
-            }
+            const visitConfig = getVisitTypeConfig(item.visit.visitType)
 
             return (
               <TableRow key={item.payment.id} className="group transition-colors">

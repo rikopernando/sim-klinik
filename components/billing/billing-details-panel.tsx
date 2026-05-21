@@ -13,7 +13,6 @@ import { ReceiptPrint } from "./receipt-print"
 interface BillingDetailsPanelProps {
   billingDetails: BillingDetails | null
   isLoading: boolean
-  onRefresh: () => void
   onProcessPaymentWithDiscount: () => void
   isSubmitting?: boolean
 }

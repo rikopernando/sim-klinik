@@ -2,36 +2,20 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { toast } from "sonner"
-import { format } from "date-fns"
-import { id as dateLocale } from "date-fns/locale"
 
 import { useBillingQueue } from "@/hooks/use-billing-queue"
 import { useBillingDetails } from "@/hooks/use-billing-details"
 import { useBillingCalculations } from "@/hooks/use-billing-calculations"
 import { useProcessPayment } from "@/hooks/use-process-payment"
 import { useSession } from "@/lib/auth-client"
-import { cn } from "@/lib/utils"
+import { getVisitTypeConfig } from "@/lib/billing/billing-utils"
 import { ProcessPaymentDialog } from "@/components/billing/process-payment-dialog"
 import { QueueSidebar } from "@/components/billing/queue-sidebar"
 import { BillingItemsPanel } from "@/components/billing/billing-items-panel"
 import { BillingDetailsPanel } from "@/components/billing/billing-details-panel"
+import { PatientHeader } from "@/components/billing/patient-header"
 import type { ProcessPaymentData } from "@/types/billing"
 import { PageGuard } from "@/components/auth/page-guard"
-
-const VISIT_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
-  outpatient: {
-    label: "Rawat Jalan",
-    className: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
-  },
-  inpatient: {
-    label: "Rawat Inap",
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-  },
-  emergency: {
-    label: "UGD",
-    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  },
-}
 
 export default function CashierDashboard() {
   return (
@@ -86,12 +70,6 @@ function CashierContent() {
     }
   }, [queue, selectedVisitId, handleSelectVisit])
 
-  const handleRefreshBillingDetails = useCallback(() => {
-    if (selectedVisitId) {
-      fetchBillingDetails(selectedVisitId)
-    }
-  }, [selectedVisitId, fetchBillingDetails])
-
   const handleProcessPaymentSubmit = useCallback(
     async (data: ProcessPaymentData) => {
       if (!billingDetails || !session?.user.id) {
@@ -104,12 +82,7 @@ function CashierContent() {
   )
 
   const selectedVisitType = queue.find((item) => item.visit.id === selectedVisitId)?.visit.visitType
-  const visitConfig = selectedVisitType
-    ? (VISIT_TYPE_CONFIG[selectedVisitType] ?? {
-        label: selectedVisitType,
-        className: "bg-muted text-muted-foreground",
-      })
-    : null
+  const visitConfig = selectedVisitType ? getVisitTypeConfig(selectedVisitType) : null
 
   return (
     <div
@@ -147,41 +120,7 @@ function CashierContent() {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {/* Patient header — spans full width of billing panel */}
           {billingDetails && !detailsLoading && (
-            <div className="bg-muted/20 shrink-0 border-b px-5 py-2.5">
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold">{billingDetails.patient.name}</p>
-                    {visitConfig && (
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                          visitConfig.className
-                        )}
-                      >
-                        {visitConfig.label}
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-muted-foreground mt-0.5 flex items-center gap-2 text-xs">
-                    <span>{billingDetails.patient.mrNumber}</span>
-                    <span>·</span>
-                    <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold">
-                      {billingDetails.visit.visitNumber}
-                    </span>
-                    <span>·</span>
-                    <span>
-                      {format(new Date(billingDetails.visit.createdAt), "dd MMM yyyy", {
-                        locale: dateLocale,
-                      })}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-muted-foreground shrink-0 text-[11px] font-semibold tracking-widest uppercase">
-                  {billingDetails.items.length} item
-                </p>
-              </div>
-            </div>
+            <PatientHeader billingDetails={billingDetails} visitConfig={visitConfig} />
           )}
 
           {/* Items — takes all available height */}
@@ -195,7 +134,6 @@ function CashierContent() {
             <BillingDetailsPanel
               billingDetails={billingDetails}
               isLoading={detailsLoading}
-              onRefresh={handleRefreshBillingDetails}
               onProcessPaymentWithDiscount={() => setProcessPaymentDialogOpen(true)}
               isSubmitting={isProcessing}
             />
