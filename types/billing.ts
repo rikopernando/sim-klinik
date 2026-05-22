@@ -315,6 +315,7 @@ export interface BillingQueueItem {
     id: string
     name: string
     mrNumber: string
+    nik?: string | null
   }
   billing: {
     id: string

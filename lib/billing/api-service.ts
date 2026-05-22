@@ -350,6 +350,7 @@ export async function getVisitsReadyForBilling() {
       patientId: patients.id,
       patientName: patients.name,
       patientMrNumber: patients.mrNumber,
+      patientNik: patients.nik,
       billingId: billings.id,
       billingTotalAmount: billings.totalAmount,
       billingPaymentStatus: billings.paymentStatus,
@@ -382,6 +383,7 @@ export async function getVisitsReadyForBilling() {
       id: row.patientId,
       name: row.patientName,
       mrNumber: row.patientMrNumber,
+      nik: row.patientNik,
     },
     billing: row.billingId
       ? {
