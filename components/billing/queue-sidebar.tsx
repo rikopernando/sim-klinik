@@ -3,6 +3,7 @@
 import { RefreshCw } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Chip } from "@/components/ui/chip"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { SearchInput } from "@/components/ui/search-input"
 import { getPaymentStatusConfig, getVisitTypeConfig } from "@/lib/billing/billing-utils"
@@ -25,7 +26,14 @@ export function QueueSidebar({
   onSelectVisit,
   onRefresh,
 }: QueueSidebarProps) {
-  const { searchQuery, setSearchQuery, filteredQueue, resultCount } = useQueueSearch(queue)
+  const {
+    searchQuery,
+    setSearchQuery,
+    visitTypeFilter,
+    setVisitTypeFilter,
+    filteredQueue,
+    resultCount,
+  } = useQueueSearch(queue)
 
   return (
     <div className="bg-muted/20 flex min-h-0 w-80 flex-col border-r">
@@ -50,6 +58,25 @@ export function QueueSidebar({
             ? `${resultCount} dari ${queue.length} pasien`
             : `${queue.length} pasien menunggu`}
         </p>
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {(["all", "outpatient", "inpatient", "emergency"] as const).map((type) => {
+            const labels = {
+              all: "Semua",
+              outpatient: "Rajal",
+              inpatient: "Ranap",
+              emergency: "UGD",
+            }
+            return (
+              <Chip
+                key={type}
+                variant={visitTypeFilter === type ? "active" : "default"}
+                onClick={() => setVisitTypeFilter(type)}
+              >
+                {labels[type]}
+              </Chip>
+            )
+          })}
+        </div>
         <SearchInput
           value={searchQuery}
           onChange={setSearchQuery}

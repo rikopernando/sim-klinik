@@ -7,9 +7,13 @@ import { useMemo, useState } from "react"
 
 import { BillingQueueItem } from "@/types/billing"
 
+type VisitTypeFilter = "all" | "outpatient" | "inpatient" | "emergency"
+
 interface UseQueueSearchReturn {
   searchQuery: string
   setSearchQuery: (query: string) => void
+  visitTypeFilter: VisitTypeFilter
+  setVisitTypeFilter: (filter: VisitTypeFilter) => void
   filteredQueue: BillingQueueItem[]
   resultCount: number
 }
@@ -33,37 +37,37 @@ interface UseQueueSearchReturn {
  */
 export function useQueueSearch(queue: BillingQueueItem[]): UseQueueSearchReturn {
   const [searchQuery, setSearchQuery] = useState("")
+  const [visitTypeFilter, setVisitTypeFilter] = useState<VisitTypeFilter>("all")
 
-  // Filter queue based on search query
   const filteredQueue = useMemo(() => {
+    let result = queue
+
+    if (visitTypeFilter !== "all") {
+      result = result.filter((item) => item.visit.visitType === visitTypeFilter)
+    }
+
     if (!searchQuery.trim()) {
-      return queue
+      return result
     }
 
     const query = searchQuery.toLowerCase().trim()
 
-    return queue.filter((item) => {
-      // Search in patient name
+    return result.filter((item) => {
       const nameMatch = item.patient.name.toLowerCase().includes(query)
-
-      // Search in MR number
       const mrMatch = item.patient.mrNumber.toLowerCase().includes(query)
-
-      // Search in visit number
       const visitMatch = item.visit.visitNumber.toLowerCase().includes(query)
-
-      // Search in NIK (if available)
       const nikMatch = item.patient.nik?.toLowerCase().includes(query) || false
-
       return nameMatch || mrMatch || visitMatch || nikMatch
     })
-  }, [queue, searchQuery])
+  }, [queue, searchQuery, visitTypeFilter])
 
   const resultCount = filteredQueue.length
 
   return {
     searchQuery,
     setSearchQuery,
+    visitTypeFilter,
+    setVisitTypeFilter,
     filteredQueue,
     resultCount,
   }
