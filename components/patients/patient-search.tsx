@@ -91,8 +91,18 @@ export function PatientSearch({ onSelectPatient, onNewPatient }: PatientSearchPr
         </div>
       )}
 
+      {!isLoading && query.length < 2 && (
+        <div className="flex flex-col items-center gap-2 py-10 text-center">
+          <Search className="text-muted-foreground/40 h-8 w-8" />
+          <p className="text-muted-foreground text-sm font-medium">Cari Pasien</p>
+          <p className="text-muted-foreground text-xs">
+            Ketik minimal 2 karakter — NIK, No. RM, atau nama
+          </p>
+        </div>
+      )}
+
       {!isLoading && query.length >= 2 && results.length === 0 && (
-        <div className="rounded-md border border-dashed p-8 text-center">
+        <div className="rounded-xl border border-dashed p-8 text-center">
           <p className="text-muted-foreground text-sm">
             Tidak ada pasien ditemukan dengan kata kunci &quot;{query}&quot;
           </p>

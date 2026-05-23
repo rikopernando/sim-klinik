@@ -1,6 +1,6 @@
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { ChevronRight } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { formatDateShort, calculateAge } from "@/lib/utils/date"
 import { type RegisteredPatient } from "@/types/registration"
@@ -12,45 +12,43 @@ interface PatientCardProps {
 
 export function PatientCard({ patient, onClick }: PatientCardProps) {
   return (
-    <Card className="hover:bg-accent cursor-pointer py-0 transition-colors" onClick={onClick}>
-      <CardContent className="p-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
+    <div
+      className="hover:bg-accent bg-card cursor-pointer rounded-xl border px-4 py-3 transition-colors"
+      onClick={onClick}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-semibold">{patient.name}</h3>
             {patient.gender && (
               <Badge variant="outline" className="text-xs">
                 {patient.gender === "male" ? "L" : "P"}
               </Badge>
             )}
+            {patient.insuranceType && (
+              <Badge variant="secondary" className="text-xs">
+                {patient.insuranceType}
+              </Badge>
+            )}
           </div>
-          <div className="text-muted-foreground grid grid-cols-1 gap-x-4 gap-y-1 text-sm md:grid-cols-2">
-            <div className="grid grid-cols-4 md:col-span-1">
-              <span className="col-span-1 font-medium">No. RM</span>
-              <span className="col-span-3">: {patient.mrNumber}</span>
-            </div>
-            <div className="grid grid-cols-4 md:col-span-1">
-              <span className="col-span-1 font-medium">NIK</span>
-              <span className="col-span-3">: {patient.nik}</span>
-            </div>
-            <div className="grid grid-cols-4 md:col-span-1">
-              <span className="col-span-1 font-medium">TTL</span>
-              <span className="col-span-3">
-                : {formatDateShort(patient.dateOfBirth)}
-                {patient.dateOfBirth && ` (${calculateAge(patient.dateOfBirth)} th)`}
-              </span>
-            </div>
-            <div className="grid grid-cols-4 md:col-span-1">
-              <span className="col-span-1 font-medium">Telp</span>
-              <span className="col-span-3">: {patient.phone}</span>
-            </div>
+          <div className="text-muted-foreground flex flex-wrap gap-x-6 gap-y-0.5 text-xs">
+            <span>
+              <span className="font-medium">No. RM</span>: {patient.mrNumber}
+            </span>
+            <span>
+              <span className="font-medium">NIK</span>: {patient.nik}
+            </span>
+            <span>
+              <span className="font-medium">TTL</span>: {formatDateShort(patient.dateOfBirth)}
+              {patient.dateOfBirth && ` (${calculateAge(patient.dateOfBirth)} th)`}
+            </span>
+            <span>
+              <span className="font-medium">Telp</span>: {patient.phone}
+            </span>
           </div>
-          {patient.insuranceType && (
-            <Badge variant="secondary" className="mt-1">
-              {patient.insuranceType}
-            </Badge>
-          )}
         </div>
-      </CardContent>
-    </Card>
+        <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
+      </div>
+    </div>
   )
 }

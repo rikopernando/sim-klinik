@@ -10,11 +10,14 @@ Priority order from `documentation/priority-summary.png`:
 | P0       | Master Data Pemeriksaan Lab                | ✅ Done    |
 | P0       | Master Data Panel Lab                      | ✅ Done    |
 | P1       | Queue ticket print                         | ⬜ Pending |
+| P1       | Design improvements (main pages)           | ⬜ Pending |
 | P1       | Stok Opname                                | ✅ Done    |
 | P1       | Dashboard home with real live stats        | ✅ Done    |
 | P2       | Lab → Doctor notifications                 | ⬜ Pending |
 | P2       | Doctor schedule / jadwal                   | ⬜ Pending |
 | P2       | Drug purchase orders & supplier management | ⬜ Pending |
+| P1       | DB query optimization                      | ⬜ Pending |
+| P1       | API fetching optimization                  | ⬜ Pending |
 | P3       | Referral letter                            | ⬜ Pending |
 | P3       | Medical record print                       | ⬜ Pending |
 | P3       | UGD quick-register in global header        | ⬜ Pending |
@@ -401,3 +404,114 @@ interface PageHeaderProps {
 All four steps are pure frontend changes — no new APIs, no schema changes, no hook changes.
 
 ---
+
+## P1: Design Improvements — Main Feature Pages
+
+### Approach
+
+Each page gets redesigned using the `frontend-design` skill. Pages are processed in priority order.
+After each page: verify in browser, no logic/API changes, only UI.
+
+### Priority Order
+
+| #   | Page               | Route                                | File                                             | Status |
+| --- | ------------------ | ------------------------------------ | ------------------------------------------------ | ------ |
+| 1   | Registration       | /dashboard/registration              | app/dashboard/registration/page.tsx              | ⬜     |
+| 2   | Medical Records    | /dashboard/medical-records/[visitId] | app/dashboard/medical-records/[visitId]/page.tsx | ⬜     |
+| 3   | Cashier            | /dashboard/cashier                   | app/dashboard/cashier/page.tsx                   | ⬜     |
+| 4   | Doctor Dashboard   | /dashboard/doctor                    | app/dashboard/doctor/page.tsx                    | ⬜     |
+| 5   | Pharmacy           | /dashboard/pharmacy                  | app/dashboard/pharmacy/page.tsx                  | ⬜     |
+| 6   | Emergency          | /dashboard/emergency                 | app/dashboard/emergency/page.tsx                 | ⬜     |
+| 7   | Queue              | /dashboard/queue                     | app/dashboard/queue/page.tsx                     | ⬜     |
+| 8   | Laboratory Queue   | /dashboard/laboratory/queue          | app/dashboard/laboratory/queue/page.tsx          | ⬜     |
+| 9   | Inpatient Patients | /dashboard/inpatient/patients        | app/dashboard/inpatient/patients/page.tsx        | ⬜     |
+
+### Rules
+
+- Use `frontend-design` skill for each page
+- Reuse `components/ui/page-header.tsx` (already built as D1)
+- No logic, hook, or API changes
+- Consistent: PageHeader, flat panels (not heavy Cards), inline-flex tabs
+
+---
+
+## P1: DB Query Optimization
+
+### Issues to Fix (by severity)
+
+#### CRITICAL — N+1 in `lib/lab/service.ts`
+
+**`getLabTestPanelsWithTests()` (lines 226–253)**
+
+- Problem: Loops over panels, fires one query per panel to fetch its tests → N+1
+- Fix: Single query joining `labTestPanels` → `labTestPanelItems` → `labTests`, group result in JS
+
+**`getLabTestPanelById()` (lines 192–221)**
+
+- Problem: Two sequential queries — panel first, then tests as separate roundtrip
+- Fix: Single JOIN query for both in one roundtrip
+
+#### HIGH — `app/api/medical-records/route.ts` POST (lines 36–70)
+
+- Problem: Visit existence check and existing-record check are two separate queries
+- Fix: Reorder or batch to reduce to one roundtrip
+
+#### MEDIUM — `lib/pharmacy/api-service.ts` `getPaginatedDrugInventory()` (lines 258–275)
+
+- Problem: WHERE clause built twice — once for data query, once for count query
+- Fix: Extract shared `whereConditions` variable, reuse in both
+
+#### Reference (best practice patterns — do not change)
+
+- `lib/pharmacy/api-service.ts:553–644` (`getPendingPrescriptions`) — exemplar single JOIN across multiple tables
+- `lib/lab/service.ts:409–432` — correct batch fetch with `inArray()`, use as template
+
+### Out of scope
+
+- Index additions (schema changes, separate task)
+- Billing transactions query (late date filter is acceptable at current scale)
+
+---
+
+## P1: API Fetching Optimization
+
+### Reference implementation
+
+`hooks/use-discharge-queue.ts` — correct pattern with AbortController + cleanup on unmount. Use as the model for all fixes.
+
+### Issues to Fix
+
+#### 1. Missing AbortController in polling hooks
+
+These hooks use `setInterval` but don't cancel in-flight requests when component unmounts:
+
+- `hooks/use-expiring-drugs.ts` (line 73)
+- `hooks/use-pharmacy-queue.ts` (line 71)
+- `hooks/use-doctor-queue.ts` (line 49)
+- `hooks/use-inventory.ts` (lines 56–57)
+
+Fix pattern (copied from `use-discharge-queue.ts`):
+
+```typescript
+const controller = new AbortController()
+// pass controller.signal to fetch call
+// in cleanup: controller.abort()
+```
+
+#### 2. Missing request cancellation in search hooks
+
+Stale requests not cancelled when user types fast or component unmounts:
+
+- `hooks/use-drug-search.ts` (line 26) — Axios: add `signal` option
+- `hooks/use-icd10-search.ts` (line 28) — fetch: add `signal` to options
+
+#### 3. Over-aggressive polling on Doctor page
+
+- `hooks/use-doctor-stats.ts` — 60s poll for slow-changing stats data
+- `hooks/use-doctor-queue.ts` — 30s poll running in parallel with stats = 2 independent intervals
+- Fix: Raise stats interval to 120s; keep queue at 30s but add AbortController
+
+#### 4. No action needed (already correct)
+
+- `hooks/use-diagnoses.ts` — React Query with 5 min stale time ✅
+- `hooks/use-discharge-queue.ts` — AbortController + proper cleanup ✅

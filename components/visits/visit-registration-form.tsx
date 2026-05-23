@@ -8,7 +8,6 @@ import { Loader2, Check, AlertCircle, ChevronDown, ChevronUp, HeartPulse } from 
 import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { VitalSignsFields } from "@/components/vitals/vital-signs-fields"
@@ -130,14 +129,14 @@ export function VisitRegistrationForm({
 
       {/* Visit Registration Form */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Registrasi Kunjungan</CardTitle>
-            <CardDescription>
+        <div className="bg-card rounded-xl border shadow-sm">
+          <div className="border-b px-6 py-4">
+            <h2 className="font-semibold">Registrasi Kunjungan</h2>
+            <p className="text-muted-foreground mt-0.5 text-sm">
               Pilih jenis kunjungan dan lengkapi informasi yang diperlukan
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="p-6">
             <FieldSet>
               {/* Visit Type Selection */}
               <VisitTypeSelector
@@ -200,8 +199,8 @@ export function VisitRegistrationForm({
                 </Field>
               </FieldGroup>
             </FieldSet>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Error Alert */}
         {combinedError && (
