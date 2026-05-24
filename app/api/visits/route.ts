@@ -9,6 +9,7 @@ import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { calculateBMI } from "@/lib/inpatient/vitals-utils"
 import { RegisteredVisit } from "@/types/registration"
+import { startOfDayWIB, endOfDayWIB, todayInWIB } from "@/lib/utils/date"
 
 /**
  * Visit Registration Schema
@@ -266,40 +267,24 @@ export const GET = withRBAC(
         conditions.push(eq(visits.visitType, visitType))
       }
 
-      console.log({ date })
-
       // Date filtering logic
       if (date) {
         // Specific date filter
-        const targetDate = new Date(date)
-        console.log({ date, targetDate })
-        targetDate.setHours(0, 0, 0, 0)
-        const nextDay = new Date(targetDate)
-        nextDay.setDate(nextDay.getDate() + 1)
-
-        conditions.push(gte(visits.arrivalTime, targetDate))
-        conditions.push(lt(visits.arrivalTime, nextDay))
+        conditions.push(gte(visits.arrivalTime, startOfDayWIB(date)))
+        conditions.push(lt(visits.arrivalTime, endOfDayWIB(date)))
       } else if (dateFrom || dateTo) {
         // Date range filter
         if (dateFrom) {
-          const fromDate = new Date(dateFrom)
-          fromDate.setHours(0, 0, 0, 0)
-          conditions.push(gte(visits.arrivalTime, fromDate))
+          conditions.push(gte(visits.arrivalTime, startOfDayWIB(dateFrom)))
         }
         if (dateTo) {
-          const toDate = new Date(dateTo)
-          toDate.setHours(23, 59, 59, 999)
-          conditions.push(lt(visits.arrivalTime, toDate))
+          conditions.push(lt(visits.arrivalTime, endOfDayWIB(dateTo)))
         }
       } else {
         // Default: today's visits only
-        const today = new Date()
-        today.setHours(0, 0, 0, 0)
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-
-        conditions.push(gte(visits.arrivalTime, today))
-        conditions.push(lt(visits.arrivalTime, tomorrow))
+        const todayStr = todayInWIB()
+        conditions.push(gte(visits.arrivalTime, startOfDayWIB(todayStr)))
+        conditions.push(lt(visits.arrivalTime, endOfDayWIB(todayStr)))
       }
 
       // Query visits with patient data

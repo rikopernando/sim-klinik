@@ -5,6 +5,23 @@
 import { format } from "date-fns"
 import { id as localeId } from "date-fns/locale"
 
+// Server-side date range helpers — always produce WIB (UTC+7) boundaries
+// so queries return consistent results regardless of server timezone.
+
+export function startOfDayWIB(dateStr: string): Date {
+  return new Date(`${dateStr}T00:00:00+07:00`)
+}
+
+export function endOfDayWIB(dateStr: string): Date {
+  return new Date(`${dateStr}T23:59:59.999+07:00`)
+}
+
+export function todayInWIB(): string {
+  const now = new Date()
+  const wibDate = new Date(now.getTime() + 7 * 60 * 60 * 1000)
+  return wibDate.toISOString().split("T")[0]
+}
+
 /**
  * Calculate age from date of birth
  * @param dateOfBirth - Date of birth as string or Date object

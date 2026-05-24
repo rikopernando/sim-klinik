@@ -7,6 +7,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { QueueItem } from "@/types/dashboard"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 /**
  * GET /api/dashboard/doctor/queue
@@ -24,11 +25,10 @@ export const GET = withRBAC(
       // Build date filter condition
       let dateCondition
       if (date) {
-        const startOfDay = new Date(date)
-        startOfDay.setHours(0, 0, 0, 0)
-        const endOfDay = new Date(date)
-        endOfDay.setHours(23, 59, 59, 999)
-        dateCondition = and(gte(visits.arrivalTime, startOfDay), lte(visits.arrivalTime, endOfDay))
+        dateCondition = and(
+          gte(visits.arrivalTime, startOfDayWIB(date)),
+          lte(visits.arrivalTime, endOfDayWIB(date))
+        )
       }
 
       let doctorCondition

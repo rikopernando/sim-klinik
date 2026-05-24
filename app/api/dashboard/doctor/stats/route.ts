@@ -6,6 +6,7 @@ import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { DoctorStats } from "@/types/dashboard"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { startOfDayWIB, todayInWIB } from "@/lib/utils/date"
 
 /**
  * GET /api/dashboard/doctor/stats
@@ -16,8 +17,7 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 export const GET = withRBAC(
   async (_request: NextRequest, { user }) => {
     try {
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
+      const today = startOfDayWIB(todayInWIB())
 
       // Get today's visits assigned to this doctor
       const todayVisits = await db

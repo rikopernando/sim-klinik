@@ -15,6 +15,7 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi } from "@/types/api"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { VisitStatus } from "@/types/visit-status"
+import { startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 const DEFAULT_PAGE = 1
 const DEFAULT_LIMIT = 10
@@ -81,15 +82,11 @@ export const GET = withRBAC(
 
       // Filter by date range (using medicalRecords.createdAt)
       if (filters.dateFrom) {
-        const dateFrom = new Date(filters.dateFrom)
-        dateFrom.setHours(0, 0, 0, 0)
-        conditions.push(gte(medicalRecords.createdAt, dateFrom))
+        conditions.push(gte(medicalRecords.createdAt, startOfDayWIB(filters.dateFrom)))
       }
 
       if (filters.dateTo) {
-        const dateTo = new Date(filters.dateTo)
-        dateTo.setHours(23, 59, 59, 999)
-        conditions.push(lte(medicalRecords.createdAt, dateTo))
+        conditions.push(lte(medicalRecords.createdAt, endOfDayWIB(filters.dateTo)))
       }
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined

@@ -6,6 +6,7 @@ import { user } from "@/db/schema/auth"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 export interface OpnameHistoryItem {
   id: string
@@ -32,13 +33,10 @@ export const GET = withRBAC(
       const conditions: SQL[] = [eq(stockMovements.movementType, "adjustment")]
 
       if (dateFrom) {
-        conditions.push(gte(stockMovements.createdAt, new Date(dateFrom)))
+        conditions.push(gte(stockMovements.createdAt, startOfDayWIB(dateFrom)))
       }
       if (dateTo) {
-        // Include full day by going to end of dateTo
-        const end = new Date(dateTo)
-        end.setHours(23, 59, 59, 999)
-        conditions.push(lte(stockMovements.createdAt, end))
+        conditions.push(lte(stockMovements.createdAt, endOfDayWIB(dateTo)))
       }
       if (search) {
         const pattern = `%${search}%`

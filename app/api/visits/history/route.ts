@@ -15,6 +15,7 @@ import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { ResponseApi } from "@/types/api"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { VisitHistoryItem } from "@/types/visit-history"
+import { startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 const DEFAULT_PAGE = 1
 const DEFAULT_LIMIT = 10
@@ -66,15 +67,11 @@ export const GET = withRBAC(
 
       // Filter by date range (using arrivalTime)
       if (filters.dateFrom) {
-        const dateFrom = new Date(filters.dateFrom)
-        dateFrom.setHours(0, 0, 0, 0)
-        conditions.push(gte(visits.arrivalTime, dateFrom))
+        conditions.push(gte(visits.arrivalTime, startOfDayWIB(filters.dateFrom)))
       }
 
       if (filters.dateTo) {
-        const dateTo = new Date(filters.dateTo)
-        dateTo.setHours(23, 59, 59, 999)
-        conditions.push(lte(visits.arrivalTime, dateTo))
+        conditions.push(lte(visits.arrivalTime, endOfDayWIB(filters.dateTo)))
       }
 
       // Filter by poli
