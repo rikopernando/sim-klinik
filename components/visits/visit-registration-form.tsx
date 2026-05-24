@@ -143,7 +143,6 @@ export function VisitRegistrationForm({
                 value={visitType}
                 onChange={(value) => setValue("visitType", value)}
               />
-
               {/* Conditional Fields Based on Visit Type */}
               {visitType === "outpatient" && (
                 <OutpatientFields
@@ -155,13 +154,10 @@ export function VisitRegistrationForm({
                   setValue={setValue}
                 />
               )}
-
               {visitType === "emergency" && (
                 <EmergencyFields register={register} errors={errors} setValue={setValue} />
               )}
-
               {visitType === "inpatient" && <InpatientFields />}
-
               {/* Vital Signs Section (Collapsible) */}
               <Collapsible open={vitalsOpen} onOpenChange={setVitalsOpen}>
                 <CollapsibleTrigger asChild>
@@ -185,7 +181,6 @@ export function VisitRegistrationForm({
                   <VitalSignsFields control={control} errors={errors} />
                 </CollapsibleContent>
               </Collapsible>
-
               {/* Common Notes Field */}
               <FieldGroup>
                 <Field className="gap-2">

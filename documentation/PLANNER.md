@@ -409,14 +409,13 @@ All four steps are pure frontend changes — no new APIs, no schema changes, no 
 
 ### Approach
 
-Each page gets redesigned using the `frontend-design` skill. Pages are processed in priority order.
-After each page: verify in browser, no logic/API changes, only UI.
+Each page gets a full redesign — page shell AND all child components — using the `frontend-design` skill. Pages are processed in priority order. After each page: verify in browser, no logic/API changes, only UI/UX.
 
 ### Priority Order
 
 | #   | Page               | Route                                | File                                             | Status |
 | --- | ------------------ | ------------------------------------ | ------------------------------------------------ | ------ |
-| 1   | Registration       | /dashboard/registration              | app/dashboard/registration/page.tsx              | ⬜     |
+| 1   | Registration       | /dashboard/registration              | app/dashboard/registration/page.tsx              | ✅ Done — full redesign (page + all child components) + UI/UX polish |
 | 2   | Medical Records    | /dashboard/medical-records/[visitId] | app/dashboard/medical-records/[visitId]/page.tsx | ⬜     |
 | 3   | Cashier            | /dashboard/cashier                   | app/dashboard/cashier/page.tsx                   | ⬜     |
 | 4   | Doctor Dashboard   | /dashboard/doctor                    | app/dashboard/doctor/page.tsx                    | ⬜     |
@@ -429,9 +428,11 @@ After each page: verify in browser, no logic/API changes, only UI.
 ### Rules
 
 - Use `frontend-design` skill for each page
+- Redesign page shell AND all relevant child components (not just the wrapper)
 - Reuse `components/ui/page-header.tsx` (already built as D1)
 - No logic, hook, or API changes
 - Consistent: PageHeader, flat panels (not heavy Cards), inline-flex tabs
+- Polish UX: empty states, loading states, confirmation dialogs, button hierarchy, context cues
 
 ---
 
