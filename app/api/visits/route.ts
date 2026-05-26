@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { eq, and, gte, lte, ne } from "drizzle-orm"
+import { eq, and, gte, lte, ne, inArray } from "drizzle-orm"
 import { z } from "zod"
 import { db } from "@/db"
 import { visits, patients, vitalsHistory, polis } from "@/db/schema"
@@ -254,7 +254,12 @@ export const GET = withRBAC(
       const dateTo = searchParams.get("dateTo")
 
       // Build query conditions
-      const conditions = [ne(visits.status, "cancelled"), ne(visits.status, "completed")]
+      // Outpatient and emergency: only show patients still waiting (not yet examined)
+      // Inpatient: show all active statuses (admitted patients have a longer stay flow)
+      const isQueueType = visitType === "outpatient" || visitType === "emergency"
+      const conditions = isQueueType
+        ? [inArray(visits.status, ["registered", "waiting"])]
+        : [ne(visits.status, "cancelled"), ne(visits.status, "completed")]
 
       if (poliId) {
         conditions.push(eq(visits.poliId, poliId))

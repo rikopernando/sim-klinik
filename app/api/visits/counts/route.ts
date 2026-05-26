@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { visits } from "@/db/schema"
-import { and, gte, lte, ne, sql } from "drizzle-orm"
+import { and, gte, lte, sql } from "drizzle-orm"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { startOfDayWIB, endOfDayWIB, todayInWIB } from "@/lib/utils/date"
 
@@ -16,11 +16,16 @@ export const GET = withRBAC(
       const date = searchParams.get("date")
 
       const dateStr = date ?? todayInWIB()
+      // Outpatient/emergency: count only registered+waiting (matches queue display filter)
+      // Inpatient: count all active statuses (admitted patients have a longer stay flow)
       const dateConditions = [
         gte(visits.arrivalTime, startOfDayWIB(dateStr)),
         lte(visits.arrivalTime, endOfDayWIB(dateStr)),
-        ne(visits.status, "cancelled"),
-        ne(visits.status, "completed"),
+        sql`(
+          (${visits.visitType} IN ('outpatient', 'emergency') AND ${visits.status} IN ('registered', 'waiting'))
+          OR
+          (${visits.visitType} = 'inpatient' AND ${visits.status} NOT IN ('cancelled', 'completed'))
+        )`,
       ]
 
       const rows = await db
