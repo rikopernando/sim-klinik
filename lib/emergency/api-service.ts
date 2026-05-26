@@ -186,11 +186,6 @@ export async function performHandover(data: HandoverInput) {
  * Fetch all pending emergency visits with patient data
  */
 export async function getERQueue() {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
-
   const queue = await db
     .select({
       visit: visits,

@@ -5,14 +5,15 @@ import { ApiCache } from "@/lib/cache/api-cache"
 import type { ResponseApi, ResponseError } from "@/types/api"
 import type { FinancialReportData } from "@/types/reports"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
+import { todayInWIB } from "@/lib/utils/date"
 
 const cache = new ApiCache<FinancialReportData>(60_000)
 
 function getDefaultDateRange() {
-  const now = new Date()
-  const dateFrom = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
-  const dateTo = now.toISOString().split("T")[0]
-  return { dateFrom, dateTo }
+  const today = todayInWIB()
+  const [year, month] = today.split("-")
+  const dateFrom = `${year}-${month}-01`
+  return { dateFrom, dateTo: today }
 }
 
 export const GET = withRBAC(

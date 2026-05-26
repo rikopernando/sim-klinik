@@ -6,13 +6,11 @@ import { medicalRecords } from "@/db/schema/medical-records"
 import { rooms } from "@/db/schema/inpatient"
 import { patients } from "@/db/schema/patients"
 import { and, count, eq, gte, lt, lte, ne, notInArray, or, sum } from "drizzle-orm"
+import { startOfDayWIB, endOfDayWIB, todayInWIB } from "@/lib/utils/date"
 
 function todayRange() {
-  const start = new Date()
-  start.setHours(0, 0, 0, 0)
-  const end = new Date()
-  end.setHours(23, 59, 59, 999)
-  return { start, end }
+  const todayStr = todayInWIB()
+  return { start: startOfDayWIB(todayStr), end: endOfDayWIB(todayStr) }
 }
 
 function toNumber(val: string | null | undefined): number {

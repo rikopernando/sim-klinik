@@ -9,18 +9,11 @@ import type {
   PaymentMethodItem,
   VisitTypeItem,
 } from "@/types/reports"
-
-function toDate(dateStr: string): Date {
-  return new Date(dateStr + "T00:00:00.000Z")
-}
-
-function toDateEnd(dateStr: string): Date {
-  return new Date(dateStr + "T23:59:59.999Z")
-}
+import { startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 async function getSummary(dateFrom: string, dateTo: string): Promise<ReportSummary> {
-  const from = toDate(dateFrom)
-  const to = toDateEnd(dateTo)
+  const from = startOfDayWIB(dateFrom)
+  const to = endOfDayWIB(dateTo)
 
   const [billedResult, collectedResult, outstandingResult, visitResult] = await Promise.all([
     // Total billed in period (billings created in range)
@@ -85,19 +78,19 @@ async function getSummary(dateFrom: string, dateTo: string): Promise<ReportSumma
 }
 
 async function getDailyTrend(dateFrom: string, dateTo: string): Promise<DailyTrendItem[]> {
-  const from = toDate(dateFrom)
-  const to = toDateEnd(dateTo)
+  const from = startOfDayWIB(dateFrom)
+  const to = endOfDayWIB(dateTo)
 
   const rows = await db
     .select({
-      date: sql<string>`DATE(${payments.receivedAt} AT TIME ZONE 'UTC')`.as("date"),
+      date: sql<string>`DATE(${payments.receivedAt} AT TIME ZONE 'Asia/Jakarta')`.as("date"),
       revenue: sum(payments.amount),
       transactions: count(payments.id),
     })
     .from(payments)
     .where(and(gte(payments.receivedAt, from), lte(payments.receivedAt, to)))
-    .groupBy(sql`DATE(${payments.receivedAt} AT TIME ZONE 'UTC')`)
-    .orderBy(sql`DATE(${payments.receivedAt} AT TIME ZONE 'UTC')`)
+    .groupBy(sql`DATE(${payments.receivedAt} AT TIME ZONE 'Asia/Jakarta')`)
+    .orderBy(sql`DATE(${payments.receivedAt} AT TIME ZONE 'Asia/Jakarta')`)
 
   return rows.map((r) => ({
     date: r.date,
@@ -107,8 +100,8 @@ async function getDailyTrend(dateFrom: string, dateTo: string): Promise<DailyTre
 }
 
 async function getByServiceType(dateFrom: string, dateTo: string): Promise<ServiceTypeItem[]> {
-  const from = toDate(dateFrom)
-  const to = toDateEnd(dateTo)
+  const from = startOfDayWIB(dateFrom)
+  const to = endOfDayWIB(dateTo)
 
   const rows = await db
     .select({
@@ -130,8 +123,8 @@ async function getByServiceType(dateFrom: string, dateTo: string): Promise<Servi
 }
 
 async function getByPaymentMethod(dateFrom: string, dateTo: string): Promise<PaymentMethodItem[]> {
-  const from = toDate(dateFrom)
-  const to = toDateEnd(dateTo)
+  const from = startOfDayWIB(dateFrom)
+  const to = endOfDayWIB(dateTo)
 
   const rows = await db
     .select({
@@ -153,8 +146,8 @@ async function getByPaymentMethod(dateFrom: string, dateTo: string): Promise<Pay
 }
 
 async function getByVisitType(dateFrom: string, dateTo: string): Promise<VisitTypeItem[]> {
-  const from = toDate(dateFrom)
-  const to = toDateEnd(dateTo)
+  const from = startOfDayWIB(dateFrom)
+  const to = endOfDayWIB(dateTo)
 
   const rows = await db
     .select({

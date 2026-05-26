@@ -9,6 +9,7 @@ import { labOrders } from "@/db/schema/laboratory"
 import type { OrderStatus, NumericResultData } from "@/types/lab"
 import { RESULT_FLAGS } from "@/types/lab"
 import { ResultData } from "./validation"
+import { todayInWIB } from "@/lib/utils/date"
 
 // ============================================================================
 // ORDER NUMBER GENERATION
@@ -19,8 +20,7 @@ import { ResultData } from "./validation"
  * Format: LAB-YYYYMMDD-0001
  */
 export async function generateLabOrderNumber(): Promise<string> {
-  const today = new Date()
-  const dateStr = today.toISOString().split("T")[0].replace(/-/g, "")
+  const dateStr = todayInWIB().replace(/-/g, "")
 
   // Get last order number for today
   const todayOrders = await db

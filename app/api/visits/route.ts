@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/db"
 import { visits, patients, vitalsHistory } from "@/db/schema"
-import { eq, and, gte, lt, ne } from "drizzle-orm"
+import { eq, and, gte, lt, lte, ne } from "drizzle-orm"
 import { z } from "zod"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -271,20 +271,20 @@ export const GET = withRBAC(
       if (date) {
         // Specific date filter
         conditions.push(gte(visits.arrivalTime, startOfDayWIB(date)))
-        conditions.push(lt(visits.arrivalTime, endOfDayWIB(date)))
+        conditions.push(lte(visits.arrivalTime, endOfDayWIB(date)))
       } else if (dateFrom || dateTo) {
         // Date range filter
         if (dateFrom) {
           conditions.push(gte(visits.arrivalTime, startOfDayWIB(dateFrom)))
         }
         if (dateTo) {
-          conditions.push(lt(visits.arrivalTime, endOfDayWIB(dateTo)))
+          conditions.push(lte(visits.arrivalTime, endOfDayWIB(dateTo)))
         }
       } else {
         // Default: today's visits only
         const todayStr = todayInWIB()
         conditions.push(gte(visits.arrivalTime, startOfDayWIB(todayStr)))
-        conditions.push(lt(visits.arrivalTime, endOfDayWIB(todayStr)))
+        conditions.push(lte(visits.arrivalTime, endOfDayWIB(todayStr)))
       }
 
       // Query visits with patient data

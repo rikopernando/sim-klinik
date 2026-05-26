@@ -1,7 +1,8 @@
-import { desc, like, and, eq, gte, lt } from "drizzle-orm"
+import { desc, like, and, eq, gte, lte } from "drizzle-orm"
 
 import { db } from "@/db"
 import { patients, visits } from "@/db/schema"
+import { todayInWIB, startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 /**
  * Generate unique Medical Record (MR) Number
@@ -9,11 +10,7 @@ import { patients, visits } from "@/db/schema"
  * Example: MR-20251113-0001
  */
 export async function generateMRNumber(): Promise<string> {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, "0")
-  const day = String(today.getDate()).padStart(2, "0")
-  const datePrefix = `${year}${month}${day}`
+  const datePrefix = todayInWIB().replace(/-/g, "")
 
   // Get the last MR number for today
   const lastPatient = await db
@@ -42,11 +39,7 @@ export async function generateMRNumber(): Promise<string> {
  * Example: V-20251113-0001
  */
 export async function generateVisitNumber(): Promise<string> {
-  const today = new Date()
-  const year = today.getFullYear()
-  const month = String(today.getMonth() + 1).padStart(2, "0")
-  const day = String(today.getDate()).padStart(2, "0")
-  const datePrefix = `${year}${month}${day}`
+  const datePrefix = todayInWIB().replace(/-/g, "")
 
   // Get the last visit number for today
   const lastVisit = await db
@@ -73,10 +66,7 @@ export async function generateVisitNumber(): Promise<string> {
  * Format: A001, A002, etc. per poli per day
  */
 export async function generateQueueNumber(poliId: string): Promise<string> {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const todayStr = todayInWIB()
 
   // Count visits for this poli today
   const todayVisits = await db
@@ -85,8 +75,8 @@ export async function generateQueueNumber(poliId: string): Promise<string> {
     .where(
       and(
         eq(visits.poliId, poliId),
-        gte(visits.arrivalTime, today),
-        lt(visits.arrivalTime, tomorrow)
+        gte(visits.arrivalTime, startOfDayWIB(todayStr)),
+        lte(visits.arrivalTime, endOfDayWIB(todayStr))
       )
     )
     .orderBy(desc(visits.queueNumber))

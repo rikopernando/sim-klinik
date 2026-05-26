@@ -8,13 +8,7 @@ import { and, count, desc, eq, gte, lte, ne, sql, sum } from "drizzle-orm"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import type { ResponseApi, ResponseError } from "@/types/api"
 import type { KpiDetailData, KpiKey } from "@/types/reports"
-
-function toDate(s: string) {
-  return new Date(s + "T00:00:00.000Z")
-}
-function toDateEnd(s: string) {
-  return new Date(s + "T23:59:59.999Z")
-}
+import { startOfDayWIB, endOfDayWIB } from "@/lib/utils/date"
 
 const VISIT_TYPE_LABELS: Record<string, string> = {
   outpatient: "Rawat Jalan",
@@ -50,8 +44,8 @@ export const GET = withRBAC(
         return NextResponse.json(err, { status: HTTP_STATUS_CODES.BAD_REQUEST })
       }
 
-      const from = toDate(dateFrom)
-      const to = toDateEnd(dateTo)
+      const from = startOfDayWIB(dateFrom)
+      const to = endOfDayWIB(dateTo)
 
       let items: KpiDetailData["items"] = []
       let total = 0

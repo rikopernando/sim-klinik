@@ -3,8 +3,8 @@
 import { useState, useMemo } from "react"
 import type { PeriodPreset, ReportFilters } from "@/types/reports"
 
-function isoDate(d: Date): string {
-  return d.toISOString().split("T")[0]
+function wibDate(d: Date): string {
+  return d.toLocaleDateString("en-CA", { timeZone: "Asia/Jakarta" })
 }
 
 function getPrevDateRange(
@@ -18,12 +18,12 @@ function getPrevDateRange(
   prevTo.setDate(prevTo.getDate() - 1)
   const prevFrom = new Date(prevTo)
   prevFrom.setDate(prevFrom.getDate() - days + 1)
-  return { prevDateFrom: isoDate(prevFrom), prevDateTo: isoDate(prevTo) }
+  return { prevDateFrom: wibDate(prevFrom), prevDateTo: wibDate(prevTo) }
 }
 
 function getDateRange(preset: PeriodPreset): { dateFrom: string; dateTo: string } {
   const now = new Date()
-  const today = now.toISOString().split("T")[0]
+  const today = wibDate(now)
 
   switch (preset) {
     case "today":
@@ -31,20 +31,20 @@ function getDateRange(preset: PeriodPreset): { dateFrom: string; dateTo: string 
     case "week": {
       const monday = new Date(now)
       monday.setDate(now.getDate() - now.getDay() + 1)
-      return { dateFrom: monday.toISOString().split("T")[0], dateTo: today }
+      return { dateFrom: wibDate(monday), dateTo: today }
     }
     case "month": {
       const firstDay = new Date(now.getFullYear(), now.getMonth(), 1)
-      return { dateFrom: firstDay.toISOString().split("T")[0], dateTo: today }
+      return { dateFrom: wibDate(firstDay), dateTo: today }
     }
     case "3months": {
       const threeMonthsAgo = new Date(now)
       threeMonthsAgo.setMonth(now.getMonth() - 3)
-      return { dateFrom: threeMonthsAgo.toISOString().split("T")[0], dateTo: today }
+      return { dateFrom: wibDate(threeMonthsAgo), dateTo: today }
     }
     case "year": {
       const firstDayOfYear = new Date(now.getFullYear(), 0, 1)
-      return { dateFrom: firstDayOfYear.toISOString().split("T")[0], dateTo: today }
+      return { dateFrom: wibDate(firstDayOfYear), dateTo: today }
     }
     default:
       return { dateFrom: today, dateTo: today }
