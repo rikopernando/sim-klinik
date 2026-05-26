@@ -215,9 +215,11 @@ export function TransferToInpatientDialog({
 
           {/* Room Facilities Info */}
           {selectedRoom?.facilities && (
-            <div className="bg-muted/50 rounded-lg border p-3">
-              <p className="text-sm font-medium">Fasilitas Kamar</p>
-              <p className="text-muted-foreground text-xs">{selectedRoom.facilities}</p>
+            <div className="bg-muted/40 rounded-xl border px-4 py-3">
+              <p className="text-muted-foreground mb-1 text-xs font-semibold tracking-wide uppercase">
+                Fasilitas Kamar
+              </p>
+              <p className="text-sm">{selectedRoom.facilities}</p>
             </div>
           )}
 

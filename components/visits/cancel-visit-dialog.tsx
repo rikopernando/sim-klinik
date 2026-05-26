@@ -81,18 +81,30 @@ export function CancelVisitDialog({
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle className="flex items-center gap-2">
+        <div className="bg-destructive/8 -mx-6 -mt-6 mb-4 flex items-center gap-3 rounded-t-lg border-b border-red-100 px-6 py-4 dark:border-red-900/40">
+          <div className="bg-destructive/10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
             <AlertTriangle className="text-destructive h-5 w-5" />
-            Batalkan Kunjungan?
-          </AlertDialogTitle>
+          </div>
+          <div>
+            <p className="text-destructive font-semibold">Batalkan Kunjungan?</p>
+            <p className="text-muted-foreground text-xs">Tindakan ini tidak dapat dibatalkan</p>
+          </div>
+        </div>
+        <AlertDialogHeader className="sr-only">
+          <AlertDialogTitle>Batalkan Kunjungan?</AlertDialogTitle>
           <AlertDialogDescription>
-            Anda akan membatalkan kunjungan untuk pasien <strong>{queueItem.patient?.name}</strong>{" "}
-            ({queueItem.patient?.mrNumber}).
-            <br />
-            Nomor kunjungan: <strong>{queueItem.visit.visitNumber}</strong>
+            Batalkan kunjungan untuk {queueItem.patient?.name}
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <div className="bg-muted/40 rounded-lg border px-4 py-3 text-sm">
+          <p>
+            Pasien: <span className="font-medium">{queueItem.patient?.name}</span>{" "}
+            <span className="text-muted-foreground">({queueItem.patient?.mrNumber})</span>
+          </p>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            No. Kunjungan: {queueItem.visit.visitNumber}
+          </p>
+        </div>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">

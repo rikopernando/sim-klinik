@@ -6,7 +6,7 @@ import { useState, useEffect } from "react"
 
 import { QueueDisplay } from "@/components/visits/queue-display"
 import { QueueDateFilter } from "@/components/visits/queue-date-filter"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageHeader } from "@/components/ui/page-header"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   Select,
@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Label } from "@/components/ui/label"
 import { Poli } from "@/types/poli"
 import { getPolisRequest } from "@/lib/services/poli.service"
 
@@ -31,8 +30,8 @@ function QueuePageContent() {
   const [selectedPoli, setSelectedPoli] = useState<number | undefined>(undefined)
   const [polis, setPolis] = useState<Poli[]>([])
   const [isLoadingPolis, setIsLoadingPolis] = useState(true)
+  const [counts, setCounts] = useState({ outpatient: 0, emergency: 0, inpatient: 0 })
 
-  // Date filter state
   const [dateFilter, setDateFilter] = useState<{
     date: string | undefined
     dateFrom: string | undefined
@@ -51,7 +50,6 @@ function QueuePageContent() {
     setDateFilter({ date, dateFrom, dateTo })
   }
 
-  // Fetch polis data from API using service
   useEffect(() => {
     const fetchPolis = async () => {
       try {
@@ -67,116 +65,139 @@ function QueuePageContent() {
     fetchPolis()
   }, [])
 
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const params = new URLSearchParams()
+        if (dateFilter.date) params.set("date", dateFilter.date)
+        const response = await fetch(`/api/visits/counts?${params.toString()}`)
+        if (!response.ok) return
+        const data = await response.json()
+        if (data.success) setCounts(data.data)
+      } catch {
+        // silently ignore count fetch errors
+      }
+    }
+
+    fetchCounts()
+  }, [dateFilter.date])
+
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Antrian Pasien</h1>
-          <p className="text-muted-foreground">Lihat antrian pasien untuk setiap layanan</p>
-        </div>
-      </div>
+    <div>
+      <PageHeader title="Antrian Pasien" description="Pantau antrian pasien per layanan" />
 
-      {/* Queue Tabs */}
-      <Tabs defaultValue="outpatient" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="outpatient">Rawat Jalan</TabsTrigger>
-          <TabsTrigger value="emergency">UGD</TabsTrigger>
-          <TabsTrigger value="inpatient">Rawat Inap</TabsTrigger>
-        </TabsList>
+      <div className="container mx-auto max-w-5xl space-y-6 px-6 py-6">
+        <Tabs defaultValue="outpatient" className="space-y-4">
+          <TabsList className="inline-flex">
+            <TabsTrigger value="outpatient" className="gap-1.5">
+              Rawat Jalan
+              {counts.outpatient > 0 && (
+                <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                  {counts.outpatient}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="emergency" className="gap-1.5">
+              UGD
+              {counts.emergency > 0 && (
+                <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                  {counts.emergency}
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="inpatient" className="gap-1.5">
+              Rawat Inap
+              {counts.inpatient > 0 && (
+                <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                  {counts.inpatient}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Outpatient Queue */}
-        <TabsContent value="outpatient" className="space-y-4">
-          <div className="flex gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="poli-filter">Poliklinik</Label>
-              <Select
-                value={selectedPoli?.toString()}
-                onValueChange={(value) =>
-                  setSelectedPoli(value === "all" ? undefined : parseInt(value))
-                }
-                disabled={isLoadingPolis}
-              >
-                <SelectTrigger className="w-[200px]" id="poli-filter">
-                  {isLoadingPolis ? (
-                    <div className="flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Memuat...</span>
-                    </div>
-                  ) : (
-                    <SelectValue placeholder="Semua Poli" />
-                  )}
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua Poli</SelectItem>
-                  {polis.map((poli) => (
-                    <SelectItem key={poli.id} value={poli.id.toString()}>
-                      {poli.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/* Outpatient Queue */}
+          <TabsContent value="outpatient" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground text-sm">Poli:</span>
+                <Select
+                  value={selectedPoli?.toString()}
+                  onValueChange={(value) =>
+                    setSelectedPoli(value === "all" ? undefined : parseInt(value))
+                  }
+                  disabled={isLoadingPolis}
+                >
+                  <SelectTrigger className="w-[180px]">
+                    {isLoadingPolis ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Memuat...</span>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder="Semua Poli" />
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Poli</SelectItem>
+                    {polis.map((poli) => (
+                      <SelectItem key={poli.id} value={poli.id.toString()}>
+                        {poli.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="bg-border h-5 w-px" />
+              <QueueDateFilter onDateChange={handleDateChange} />
             </div>
-            <QueueDateFilter onDateChange={handleDateChange} />
-          </div>
 
-          <QueueDisplay
-            visitType="outpatient"
-            poliId={selectedPoli}
-            autoRefresh={true}
-            refreshInterval={30000}
-            date={dateFilter.date}
-            dateFrom={dateFilter.dateFrom}
-            dateTo={dateFilter.dateTo}
-          />
-        </TabsContent>
+            <QueueDisplay
+              visitType="outpatient"
+              poliId={selectedPoli}
+              autoRefresh={true}
+              refreshInterval={30000}
+              date={dateFilter.date}
+              dateFrom={dateFilter.dateFrom}
+              dateTo={dateFilter.dateTo}
+            />
+          </TabsContent>
 
-        {/* Emergency Queue */}
-        <TabsContent value="emergency" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Antrian Unit Gawat Darurat (UGD)</CardTitle>
-              <CardDescription>
-                Pasien diurutkan berdasarkan tingkat kegawatan (triage)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          {/* Emergency Queue */}
+          <TabsContent value="emergency" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
               <QueueDateFilter onDateChange={handleDateChange} />
-            </CardContent>
-          </Card>
+            </div>
+            <p className="text-muted-foreground text-sm">
+              Diurutkan berdasarkan tingkat kegawatan (triage)
+            </p>
 
-          <QueueDisplay
-            visitType="emergency"
-            autoRefresh={true}
-            refreshInterval={15000} // Refresh faster for emergency
-            date={dateFilter.date}
-            dateFrom={dateFilter.dateFrom}
-            dateTo={dateFilter.dateTo}
-          />
-        </TabsContent>
+            <QueueDisplay
+              visitType="emergency"
+              autoRefresh={true}
+              refreshInterval={15000}
+              date={dateFilter.date}
+              dateFrom={dateFilter.dateFrom}
+              dateTo={dateFilter.dateTo}
+            />
+          </TabsContent>
 
-        {/* Inpatient Queue */}
-        <TabsContent value="inpatient" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Daftar Pasien Rawat Inap</CardTitle>
-              <CardDescription>Pasien yang sedang dirawat di rumah sakit</CardDescription>
-            </CardHeader>
-            <CardContent>
+          {/* Inpatient Queue */}
+          <TabsContent value="inpatient" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
               <QueueDateFilter onDateChange={handleDateChange} />
-            </CardContent>
-          </Card>
+            </div>
 
-          <QueueDisplay
-            visitType="inpatient"
-            autoRefresh={true}
-            refreshInterval={60000} // Refresh every minute for inpatient
-            date={dateFilter.date}
-            dateFrom={dateFilter.dateFrom}
-            dateTo={dateFilter.dateTo}
-          />
-        </TabsContent>
-      </Tabs>
+            <QueueDisplay
+              visitType="inpatient"
+              autoRefresh={true}
+              refreshInterval={60000}
+              date={dateFilter.date}
+              dateFrom={dateFilter.dateFrom}
+              dateTo={dateFilter.dateTo}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }

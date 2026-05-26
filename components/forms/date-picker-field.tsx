@@ -1,11 +1,11 @@
 import { format } from "date-fns"
+import { useState } from "react"
 import { CalendarIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { FormField } from "@/components/ui/form-field"
 import { cn } from "@/lib/utils"
-import { useState } from "react"
 
 interface DatePickerFieldProps {
   label?: string
@@ -18,6 +18,7 @@ interface DatePickerFieldProps {
   startMonth?: Date
   disabled?: boolean
   dateFormat?: string
+  className?: string
 }
 
 export function DatePickerField({
@@ -31,6 +32,7 @@ export function DatePickerField({
   startMonth = new Date("1900-01-01"),
   dateFormat = "dd MMMM yyyy",
   endMonth,
+  className,
 }: DatePickerFieldProps) {
   const [calendarOpen, setCalendarOpen] = useState(false)
 
@@ -40,7 +42,7 @@ export function DatePickerField({
   }
 
   return (
-    <FormField label={label} required={required} error={error}>
+    <FormField label={label} required={required} error={error} className={className}>
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger asChild>
           <Button

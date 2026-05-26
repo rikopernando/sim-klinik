@@ -236,7 +236,7 @@ export function EditVisitDialog({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <Tabs defaultValue="visit" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="inline-flex">
                 <TabsTrigger value="visit">Info Kunjungan</TabsTrigger>
                 <TabsTrigger value="vitals">Tanda Vital</TabsTrigger>
               </TabsList>

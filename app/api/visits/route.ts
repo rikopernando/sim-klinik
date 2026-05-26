@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/db"
-import { visits, patients, vitalsHistory } from "@/db/schema"
-import { eq, and, gte, lt, lte, ne } from "drizzle-orm"
+import { eq, and, gte, lte, ne } from "drizzle-orm"
 import { z } from "zod"
+import { db } from "@/db"
+import { visits, patients, vitalsHistory, polis } from "@/db/schema"
+import { user } from "@/db/schema/auth"
 import { generateVisitNumber, generateQueueNumber } from "@/lib/generators"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
@@ -287,14 +288,24 @@ export const GET = withRBAC(
         conditions.push(lte(visits.arrivalTime, endOfDayWIB(todayStr)))
       }
 
-      // Query visits with patient data
+      // Query visits with patient, poli, and doctor name in one join
       const visitQueue = await db
         .select({
           visit: visits,
           patient: patients,
+          poli: {
+            id: polis.id,
+            name: polis.name,
+          },
+          doctor: {
+            id: user.id,
+            name: user.name,
+          },
         })
         .from(visits)
         .leftJoin(patients, eq(visits.patientId, patients.id))
+        .leftJoin(polis, eq(visits.poliId, polis.id))
+        .leftJoin(user, eq(visits.doctorId, user.id))
         .where(and(...conditions))
         .orderBy(visits.arrivalTime)
 

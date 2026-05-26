@@ -28,9 +28,15 @@ export interface QueueMedicalRecord {
   isLocked: boolean
 }
 
+export interface QueueDoctor {
+  id: string
+  name: string
+}
+
 export interface QueueItem {
   visit: Visit
   patient: Patient | null
   poli: QueuePoli | null
+  doctor: QueueDoctor | null
   medicalRecord: QueueMedicalRecord | null
 }
