@@ -41,8 +41,10 @@ export function VisitLockBanner({
     return null
   }
 
-  // Only doctors can unlock
-  const canUnlock = hasPermission("inpatient:write") && session?.user?.role === "doctor"
+  // Only doctors and super admin can unlock
+  const isDoctor = session?.user?.role === "doctor"
+  const isSuperAdmin = session?.user?.role === "super_admin"
+  const canUnlock = hasPermission("inpatient:write") && (isDoctor || isSuperAdmin)
 
   const handleUnlock = async () => {
     setIsUnlocking(true)
