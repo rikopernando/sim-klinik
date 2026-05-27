@@ -31,7 +31,7 @@ export function useDoctorDashboard() {
     refresh: refreshStats,
   } = useDoctorStats({
     autoRefresh: true,
-    refreshInterval: 60000, // Refresh every 60 seconds
+    refreshInterval: 120000, // Stats change slowly — 2 min is sufficient
   })
 
   // Fetch patient queue with auto-refresh

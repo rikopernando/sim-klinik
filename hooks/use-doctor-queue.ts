@@ -1,9 +1,7 @@
-/**
- * Doctor Patient Queue Hook (H.3.3)
- * Fetch and manage doctor's patient queue
- */
+"use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import axios from "axios"
 import { getDoctorQueue } from "@/lib/services/doctor-dashboard.service"
 import { QueueItem } from "@/types/dashboard"
 import { getErrorMessage } from "@/lib/utils/error"
@@ -23,39 +21,47 @@ export function useDoctorQueue(options: UseDoctorQueueOptions = {}) {
   const [error, setError] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null)
 
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const hasLoaded = useRef(false)
+
   const fetchQueue = useCallback(async () => {
+    // Cancel any in-flight request before starting a new one
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = new AbortController()
+
+    // Only show loading skeleton on the first fetch — background polls are silent
+    if (!hasLoaded.current) setIsLoading(true)
+
     try {
-      setIsLoading(true)
-      setError(null)
-
-      // Only pass status if it's not "all"
       const filterStatus = status !== "all" ? status : undefined
-      const data = await getDoctorQueue(filterStatus, date)
-
+      const data = await getDoctorQueue(filterStatus, date, abortControllerRef.current.signal)
+      if (abortControllerRef.current.signal.aborted) return
       setQueue(data)
       setLastRefresh(new Date())
+      setError(null)
+      hasLoaded.current = true
     } catch (err) {
+      if (axios.isCancel(err)) return
       console.error("Fetch queue error:", err)
       setError(getErrorMessage(err))
     } finally {
-      setIsLoading(false)
+      if (!abortControllerRef.current.signal.aborted) setIsLoading(false)
     }
   }, [status, date])
 
   useEffect(() => {
     fetchQueue()
 
+    let interval: ReturnType<typeof setInterval> | null = null
     if (autoRefresh && refreshInterval > 0) {
-      const interval = setInterval(fetchQueue, refreshInterval)
-      return () => clearInterval(interval)
+      interval = setInterval(fetchQueue, refreshInterval)
+    }
+
+    return () => {
+      abortControllerRef.current?.abort()
+      if (interval) clearInterval(interval)
     }
   }, [fetchQueue, autoRefresh, refreshInterval])
 
-  return {
-    queue,
-    isLoading,
-    error,
-    lastRefresh,
-    refresh: fetchQueue,
-  }
+  return { queue, isLoading, error, lastRefresh, refresh: fetchQueue }
 }

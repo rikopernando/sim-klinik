@@ -6,13 +6,15 @@
  */
 
 import { PageGuard } from "@/components/auth/page-guard"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, RefreshCw } from "lucide-react"
+import { useState } from "react"
 import { useDoctorDashboard } from "@/hooks/use-doctor-dashboard"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/ui/page-header"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
 import { EditVisitDialog } from "@/components/visits/edit-visit-dialog"
 import { QueueDateFilter } from "@/components/visits/queue-date-filter"
-import { DoctorHeader } from "@/components/doctor/doctor-header"
 import { DoctorStatsSection } from "@/components/doctor/doctor-stats-section"
 import { DoctorQueueTabs } from "@/components/doctor/doctor-queue-tabs"
 import { DoctorStatsSkeleton } from "@/components/doctor/doctor-stats-skeleton"
@@ -28,7 +30,6 @@ export default function DoctorDashboard() {
 
 function DoctorDashboardContent() {
   const {
-    // State
     stats,
     statsLoading,
     queueLoading,
@@ -42,8 +43,6 @@ function DoctorDashboardContent() {
     lastRefresh,
     editVisitData,
     showEditDialog,
-
-    // Handlers
     handleRefreshAll,
     handleDateChange,
     handleStartExamination,
@@ -55,40 +54,57 @@ function DoctorDashboardContent() {
     handleEditSuccess,
   } = useDoctorDashboard()
 
+  const [activeTab, setActiveTab] = useState("waiting")
+
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+    <div>
+      <PageHeader title="Antrian Poli" description="Kelola antrian pasien dan rekam medis">
+        <div className="flex items-center gap-3">
+          {lastRefresh && (
+            <p className="text-muted-foreground text-sm">
+              Diperbarui: {lastRefresh.toLocaleTimeString("id-ID")}
+            </p>
+          )}
+          <Button variant="outline" size="sm" onClick={handleRefreshAll}>
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+            Refresh
+          </Button>
+        </div>
+      </PageHeader>
 
-      {/* Header */}
-      <DoctorHeader lastRefresh={lastRefresh} onRefresh={handleRefreshAll} />
+      <div className="container mx-auto max-w-5xl space-y-6 px-6 py-6">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      {/* Statistics Section */}
-      {statsLoading ? <DoctorStatsSkeleton /> : <DoctorStatsSection stats={stats} />}
+        {statsLoading ? (
+          <DoctorStatsSkeleton />
+        ) : (
+          <DoctorStatsSection stats={stats} onTabChange={setActiveTab} />
+        )}
 
-      {/* Patient Queue Section */}
-      {queueLoading ? (
-        <DoctorQueueSkeleton />
-      ) : (
-        <DoctorQueueTabs
-          waitingQueue={waitingQueue}
-          inProgressQueue={inProgressQueue}
-          unlockedQueue={unlockedQueue}
-          startingExamination={startingExamination}
-          onStartExamination={handleStartExamination}
-          onOpenMedicalRecord={handleOpenMedicalRecord}
-          onViewHistory={handleViewHistory}
-          onEditVisit={handleEditVisit}
-          headerAction={<QueueDateFilter onDateChange={handleDateChange} />}
-        />
-      )}
+        {queueLoading ? (
+          <DoctorQueueSkeleton />
+        ) : (
+          <DoctorQueueTabs
+            waitingQueue={waitingQueue}
+            inProgressQueue={inProgressQueue}
+            unlockedQueue={unlockedQueue}
+            startingExamination={startingExamination}
+            onStartExamination={handleStartExamination}
+            onOpenMedicalRecord={handleOpenMedicalRecord}
+            onViewHistory={handleViewHistory}
+            onEditVisit={handleEditVisit}
+            headerAction={<QueueDateFilter onDateChange={handleDateChange} />}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
+        )}
+      </div>
 
-      {/* Medical Record History Dialog */}
       {selectedPatient && (
         <MedicalRecordHistoryDialog
           open={showHistory}
@@ -97,7 +113,6 @@ function DoctorDashboardContent() {
         />
       )}
 
-      {/* Edit Visit Dialog */}
       <EditVisitDialog
         open={showEditDialog}
         onOpenChange={handleEditDialogClose}

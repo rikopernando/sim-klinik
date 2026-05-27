@@ -8,7 +8,6 @@ import { format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 
 import { MedicalRecordHistory } from "@/types/medical-record"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
@@ -32,25 +31,29 @@ const formatDate = (date: string | Date) => {
 
 export function HistoryRecordCard({ record, visitNumber }: HistoryRecordCardProps) {
   return (
-    <Card className="border-2">
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-base">Kunjungan #{visitNumber}</CardTitle>
-            <div className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
-              <Calendar className="h-3 w-3" />
-              {formatDate(record.medicalRecord.createdAt)}
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <Badge variant="outline">{record.visit.visitNumber}</Badge>
-            {record.medicalRecord.isLocked && <Badge variant="secondary">Terkunci</Badge>}
+    <div className="bg-card rounded-xl border shadow-sm">
+      <div className="flex items-start justify-between border-b px-4 py-3">
+        <div>
+          <p className="font-semibold">Kunjungan #{visitNumber}</p>
+          <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-xs">
+            <Calendar className="h-3 w-3" />
+            {formatDate(record.medicalRecord.createdAt)}
           </div>
         </div>
-      </CardHeader>
-      <CardContent>
+        <div className="flex items-center gap-1.5">
+          <Badge variant="outline" className="text-xs">
+            {record.visit.visitNumber}
+          </Badge>
+          {record.medicalRecord.isLocked && (
+            <Badge variant="secondary" className="text-xs">
+              Terkunci
+            </Badge>
+          )}
+        </div>
+      </div>
+      <div className="px-4 py-3">
         <Tabs defaultValue="soap" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="inline-flex">
             <TabsTrigger value="soap">SOAP</TabsTrigger>
             <TabsTrigger value="diagnosis">Diagnosis ({record.diagnoses.length})</TabsTrigger>
             <TabsTrigger value="procedures">Tindakan ({record.procedures.length})</TabsTrigger>
@@ -62,7 +65,7 @@ export function HistoryRecordCard({ record, visitNumber }: HistoryRecordCardProp
           <HistoryProceduresTab procedures={record.procedures} />
           <HistoryPrescriptionsTab prescriptions={record.prescriptions} />
         </Tabs>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

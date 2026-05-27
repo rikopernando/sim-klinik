@@ -16,9 +16,11 @@ export interface QueueResponse {
  * Get doctor dashboard statistics
  * @returns Doctor statistics
  */
-export async function getDoctorStats(): Promise<DoctorStats> {
+export async function getDoctorStats(signal?: AbortSignal): Promise<DoctorStats> {
   try {
-    const response = await axios.get<ResponseApi<DoctorStats>>("/api/dashboard/doctor/stats")
+    const response = await axios.get<ResponseApi<DoctorStats>>("/api/dashboard/doctor/stats", {
+      signal,
+    })
 
     if (!response.data.data) {
       throw new ApiServiceError("Invalid response: missing statistics data")
@@ -38,19 +40,17 @@ export async function getDoctorStats(): Promise<DoctorStats> {
  */
 export async function getDoctorQueue(
   status?: "waiting" | "in_examination",
-  date?: string
+  date?: string,
+  signal?: AbortSignal
 ): Promise<QueueItem[]> {
   try {
     const params: Record<string, string> = {}
-    if (status) {
-      params.status = status
-    }
-    if (date) {
-      params.date = date
-    }
+    if (status) params.status = status
+    if (date) params.date = date
 
     const response = await axios.get<ResponseApi<QueueResponse>>("/api/dashboard/doctor/queue", {
       params,
+      signal,
     })
 
     if (!response.data.data) {
