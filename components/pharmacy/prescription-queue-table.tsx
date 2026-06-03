@@ -1,13 +1,15 @@
 /**
- * Prescription Queue Table Component (Refactored)
- * Displays prescription queue grouped by visit with optimized rendering
+ * Prescription Queue Table Component
+ * Displays prescription queue grouped by visit with pagination
  */
 
 import { useMemo } from "react"
 
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { PrescriptionQueueItem } from "@/types/pharmacy"
+import { Pagination } from "@/types/api"
 
 import { PrescriptionRow } from "./queue/prescription-row"
 
@@ -16,6 +18,8 @@ interface PrescriptionQueueTableProps {
   isLoading: boolean
   error: string | null
   onProcess: (item: PrescriptionQueueItem) => void
+  pagination?: Pagination
+  onPageChange?: (page: number) => void
 }
 
 const LoadingState = () => (
@@ -43,8 +47,9 @@ export function PrescriptionQueueTable({
   isLoading,
   error,
   onProcess,
+  pagination,
+  onPageChange,
 }: PrescriptionQueueTableProps) {
-  // Memoize table rows to prevent unnecessary re-renders
   const tableRows = useMemo(
     () =>
       queue.map((item, index) => (
@@ -56,6 +61,8 @@ export function PrescriptionQueueTable({
   if (isLoading) return <LoadingState />
   if (error) return <ErrorState error={error} />
   if (queue.length === 0) return <EmptyState />
+
+  const showPagination = pagination && onPageChange && pagination.totalPages > 1
 
   return (
     <Card className="p-4">
@@ -76,6 +83,32 @@ export function PrescriptionQueueTable({
             </Table>
           </div>
         </div>
+
+        {showPagination && (
+          <div className="flex items-center justify-between px-2 pt-4">
+            <p className="text-muted-foreground text-sm">
+              Halaman {pagination.page} dari {pagination.totalPages} ({pagination.total} kunjungan)
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(pagination.page - 1)}
+                disabled={pagination.page <= 1}
+              >
+                Sebelumnya
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onPageChange(pagination.page + 1)}
+                disabled={pagination.page >= pagination.totalPages}
+              >
+                Selanjutnya
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

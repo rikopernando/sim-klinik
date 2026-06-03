@@ -1,11 +1,11 @@
 "use client"
 
 /**
- * Pharmacy Queue Dashboard (Refactored)
- * Displays pending prescriptions and expiring drugs with optimized performance
+ * Pharmacy Queue Dashboard
+ * Displays pending prescriptions and expiring drugs with pagination
  */
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback } from "react"
 import { toast } from "sonner"
 
 import { PageGuard } from "@/components/auth/page-guard"
@@ -38,8 +38,12 @@ export default function PharmacyDashboard() {
 }
 
 function PharmacyDashboardContent() {
+  const [visitTypeFilter, setVisitTypeFilter] = useState<VisitTypeFilter>("all")
+  const [page, setPage] = useState(1)
+
   const {
     queue,
+    pagination,
     queueLoading,
     queueError,
     expiringDrugs,
@@ -47,33 +51,31 @@ function PharmacyDashboardContent() {
     expiringError,
     lastRefresh,
     refresh,
-  } = usePharmacyDashboard()
+  } = usePharmacyDashboard({
+    page,
+    visitType: visitTypeFilter,
+  })
 
   const [selectedGroup, setSelectedGroup] = useState<PrescriptionQueueItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [visitTypeFilter, setVisitTypeFilter] = useState<VisitTypeFilter>("all")
 
-  // Filter queue by visit type
-  const filteredQueue = useMemo(() => {
-    if (visitTypeFilter === "all") return queue
-    return queue.filter((item) => item.visit.visitType === visitTypeFilter)
-  }, [queue, visitTypeFilter])
+  const handleVisitTypeChange = useCallback((value: string) => {
+    setVisitTypeFilter(value as VisitTypeFilter)
+    setPage(1)
+  }, [])
 
-  // Memoize handlers to prevent unnecessary re-renders
   const handleBulkFulfill = useCallback(
     async (prescriptions: PrescriptionFulfillmentInput[]) => {
       setIsSubmitting(true)
       try {
-        // Use service layer instead of direct axios call
         await bulkFulfillPrescriptions(prescriptions)
-
         toast.success("Semua resep berhasil diproses")
         setSelectedGroup(null)
         refresh()
       } catch (error) {
         const errorMessage = getErrorMessage(error)
         toast.error(errorMessage || "Gagal memproses resep")
-        throw error // Re-throw to let dialog handle it
+        throw error
       } finally {
         setIsSubmitting(false)
       }
@@ -87,9 +89,7 @@ function PharmacyDashboardContent() {
 
   const handleDialogClose = useCallback(
     (open: boolean) => {
-      if (!open && !isSubmitting) {
-        setSelectedGroup(null)
-      }
+      if (!open && !isSubmitting) setSelectedGroup(null)
     },
     [isSubmitting]
   )
@@ -98,53 +98,39 @@ function PharmacyDashboardContent() {
     <div className="container mx-auto space-y-6 p-6">
       <PharmacyHeader lastRefresh={lastRefresh} onRefresh={refresh} />
 
-      {/* Statistics Cards */}
-      <PharmacyStatsCards queueCount={filteredQueue.length} expiringDrugs={expiringDrugs} />
+      <PharmacyStatsCards queueCount={pagination.total} expiringDrugs={expiringDrugs} />
 
-      {/* Main Content */}
       <Tabs defaultValue="queue" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="queue">Antrian Resep ({filteredQueue.length})</TabsTrigger>
+          <TabsTrigger value="queue">Antrian Resep ({pagination.total})</TabsTrigger>
           <TabsTrigger value="expiring">Obat Kadaluarsa ({expiringDrugs.all.length})</TabsTrigger>
         </TabsList>
 
-        {/* Prescription Queue Tab */}
         <TabsContent value="queue" className="space-y-4">
-          {/* Visit Type Filter */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Filter Tipe Kunjungan:</label>
-              <Select
-                value={visitTypeFilter}
-                onValueChange={(value) => setVisitTypeFilter(value as VisitTypeFilter)}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Semua ({queue.length})</SelectItem>
-                  <SelectItem value="outpatient">
-                    Rawat Jalan (
-                    {queue.filter((item) => item.visit.visitType === "outpatient").length})
-                  </SelectItem>
-                  <SelectItem value="inpatient">
-                    Rawat Inap (
-                    {queue.filter((item) => item.visit.visitType === "inpatient").length})
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium">Filter Tipe Kunjungan:</label>
+            <Select value={visitTypeFilter} onValueChange={handleVisitTypeChange}>
+              <SelectTrigger className="w-[200px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua</SelectItem>
+                <SelectItem value="outpatient">Rawat Jalan</SelectItem>
+                <SelectItem value="inpatient">Rawat Inap</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <PrescriptionQueueTable
-            queue={filteredQueue}
+            queue={queue}
             isLoading={queueLoading}
             error={queueError}
             onProcess={handleProcessGroup}
+            pagination={pagination}
+            onPageChange={setPage}
           />
         </TabsContent>
 
-        {/* Expiring Drugs Tab */}
         <TabsContent value="expiring" className="space-y-4">
           <ExpiringDrugsList
             drugs={expiringDrugs.all}
@@ -154,7 +140,6 @@ function PharmacyDashboardContent() {
         </TabsContent>
       </Tabs>
 
-      {/* Bulk Fulfillment Dialog */}
       <BulkFulfillmentDialog
         open={!!selectedGroup}
         onOpenChange={handleDialogClose}

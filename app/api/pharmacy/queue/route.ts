@@ -6,26 +6,38 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { prescriptionFulfillmentSchema } from "@/lib/pharmacy/validation"
-import { getPendingPrescriptions, fulfillPrescription } from "@/lib/pharmacy/api-service"
+import { getPaginatedPendingPrescriptions, fulfillPrescription } from "@/lib/pharmacy/api-service"
 import { ResponseApi, ResponseError } from "@/types/api"
 import { PrescriptionQueueItem } from "@/types/pharmacy"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac"
 
+const VALID_VISIT_TYPES = ["outpatient", "inpatient", "emergency"] as const
+type VisitType = (typeof VALID_VISIT_TYPES)[number]
+
 /**
- * GET /api/pharmacy/queue
- * Get all pending prescriptions grouped by visit (not yet fulfilled)
- * Sorted by most recent prescription first
+ * GET /api/pharmacy/queue?page=1&limit=10&visitType=outpatient
+ * Get paginated pending prescriptions grouped by visit
  * Requires: pharmacy:read permission
  */
 export const GET = withRBAC(
-  async () => {
+  async (request: NextRequest) => {
     try {
-      const pendingPrescriptions = await getPendingPrescriptions()
+      const { searchParams } = new URL(request.url)
+      const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1)
+      const limit = Math.min(50, Math.max(1, parseInt(searchParams.get("limit") ?? "10", 10) || 10))
+      const visitTypeParam = searchParams.get("visitType")
+      const visitType =
+        visitTypeParam && VALID_VISIT_TYPES.includes(visitTypeParam as VisitType)
+          ? (visitTypeParam as VisitType)
+          : undefined
+
+      const { data, pagination } = await getPaginatedPendingPrescriptions(page, limit, visitType)
 
       const response: ResponseApi<PrescriptionQueueItem[]> = {
         message: "Pending prescriptions fetched successfully",
-        data: pendingPrescriptions,
+        data,
+        pagination,
         status: HTTP_STATUS_CODES.OK,
       }
 

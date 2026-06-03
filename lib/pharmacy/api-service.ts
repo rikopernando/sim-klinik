@@ -3,7 +3,7 @@
  * Database operations for pharmacy management
  */
 
-import { eq, sql, and, lt, gte, desc, ilike, or, isNull } from "drizzle-orm"
+import { eq, sql, and, lt, gte, desc, ilike, or, isNull, inArray } from "drizzle-orm"
 
 import { db } from "@/db"
 import { drugs, drugInventory, prescriptions, stockMovements, compoundRecipes } from "@/db/schema"
@@ -642,6 +642,128 @@ export async function getPendingPrescriptions(): Promise<PrescriptionQueueItem[]
   }))
 
   return groupPrescriptionsByVisit(typedPending)
+}
+
+/**
+ * Get pending prescriptions grouped by visit, with pagination and optional visit type filter.
+ *
+ * Two-step approach to paginate at the visit level:
+ * 1. Get paginated distinct visit IDs (ordered by most-recent prescription)
+ * 2. Fetch full prescription data for only those visit IDs
+ */
+export async function getPaginatedPendingPrescriptions(
+  page: number = 1,
+  limit: number = 10,
+  visitType?: "outpatient" | "inpatient" | "emergency"
+): Promise<{ data: PrescriptionQueueItem[]; pagination: Pagination }> {
+  const offset = (page - 1) * limit
+
+  const baseWhere = visitType
+    ? and(eq(prescriptions.isFulfilled, false), eq(visits.visitType, visitType))
+    : eq(prescriptions.isFulfilled, false)
+
+  // Step 1: count total distinct visits + get paginated visit IDs (both use prescriptions.visitId)
+  const [countResult, visitIdRows] = await Promise.all([
+    db
+      .select({ count: sql<number>`count(distinct ${prescriptions.visitId})::int` })
+      .from(prescriptions)
+      .leftJoin(visits, eq(prescriptions.visitId, visits.id))
+      .where(baseWhere),
+
+    db
+      .select({ visitId: prescriptions.visitId })
+      .from(prescriptions)
+      .leftJoin(visits, eq(prescriptions.visitId, visits.id))
+      .where(baseWhere)
+      .groupBy(prescriptions.visitId)
+      .orderBy(desc(sql`max(${prescriptions.createdAt})`))
+      .limit(limit)
+      .offset(offset),
+  ])
+
+  const total = countResult[0]?.count ?? 0
+  const totalPages = Math.ceil(total / limit)
+  const visitIds = visitIdRows.map((r) => r.visitId).filter(Boolean) as string[]
+
+  if (visitIds.length === 0) {
+    return { data: [], pagination: { page, limit, total, totalPages } }
+  }
+
+  // Step 2: fetch full prescription data for those visit IDs only
+  const pending = await db
+    .select({
+      prescription: prescriptions,
+      drug: drugs,
+      compoundRecipe: {
+        id: compoundRecipes.id,
+        code: compoundRecipes.code,
+        name: compoundRecipes.name,
+        composition: compoundRecipes.composition,
+        price: compoundRecipes.price,
+      },
+      patient: {
+        id: patients.id,
+        name: patients.name,
+        mrNumber: patients.mrNumber,
+      },
+      doctor: {
+        id: user.id,
+        name: user.name,
+      },
+      visit: {
+        id: visits.id,
+        visitNumber: visits.visitNumber,
+        visitType: visits.visitType,
+      },
+      medicalRecordId: medicalRecords.id,
+      room: {
+        id: rooms.id,
+        roomNumber: rooms.roomNumber,
+        roomType: rooms.roomType,
+      },
+      bedAssignment: {
+        bedNumber: bedAssignments.bedNumber,
+      },
+    })
+    .from(prescriptions)
+    .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
+    .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
+    .leftJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
+    .innerJoin(
+      visits,
+      or(eq(medicalRecords.visitId, visits.id), eq(prescriptions.visitId, visits.id))
+    )
+    .innerJoin(patients, eq(visits.patientId, patients.id))
+    .leftJoin(user, eq(medicalRecords.authorId, user.id))
+    .leftJoin(rooms, eq(visits.roomId, rooms.id))
+    .leftJoin(
+      bedAssignments,
+      and(eq(bedAssignments.visitId, visits.id), isNull(bedAssignments.dischargedAt))
+    )
+    .where(and(eq(prescriptions.isFulfilled, false), inArray(prescriptions.visitId, visitIds)))
+    .orderBy(desc(prescriptions.createdAt))
+
+  const typedPending = pending.map((item) => ({
+    ...item,
+    visit: {
+      ...item.visit,
+      visitType: item.visit.visitType as "outpatient" | "inpatient" | "emergency",
+    },
+    compoundRecipe: item.compoundRecipe?.id
+      ? {
+          id: item.compoundRecipe.id,
+          code: item.compoundRecipe.code,
+          name: item.compoundRecipe.name,
+          composition: item.compoundRecipe.composition as CompoundRecipeBasic["composition"],
+          price: item.compoundRecipe.price,
+        }
+      : null,
+  }))
+
+  return {
+    data: groupPrescriptionsByVisit(typedPending),
+    pagination: { page, limit, total, totalPages },
+  }
 }
 
 /**
