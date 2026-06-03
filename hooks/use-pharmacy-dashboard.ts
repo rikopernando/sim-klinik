@@ -5,17 +5,14 @@
 
 import { usePharmacyQueue } from "./use-pharmacy-queue"
 import { useExpiringDrugs } from "./use-expiring-drugs"
-import { Pagination } from "@/types/api"
 
 interface UsePharmacyDashboardOptions {
-  queueRefreshInterval?: number
   expiringRefreshInterval?: number
   page?: number
   visitType?: "outpatient" | "inpatient" | "emergency" | "all"
 }
 
 export function usePharmacyDashboard({
-  queueRefreshInterval = 30000,
   expiringRefreshInterval = 60000,
   page = 1,
   visitType,
@@ -28,8 +25,6 @@ export function usePharmacyDashboard({
     lastRefresh,
     refresh: refreshQueue,
   } = usePharmacyQueue({
-    autoRefresh: true,
-    refreshInterval: queueRefreshInterval,
     page,
     visitType,
   })
