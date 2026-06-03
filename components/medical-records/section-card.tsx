@@ -1,8 +1,4 @@
-/**
- * Reusable Section Card Component for RME
- */
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface SectionCardProps {
   title: string
@@ -13,12 +9,12 @@ interface SectionCardProps {
 
 export function SectionCard({ title, description, children, className }: SectionCardProps) {
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        {description && <CardDescription>{description}</CardDescription>}
-      </CardHeader>
-      <CardContent>{children}</CardContent>
-    </Card>
+    <div className={cn("bg-card rounded-xl border shadow-sm", className)}>
+      <div className="border-b px-5 py-3">
+        <p className="font-semibold">{title}</p>
+        {description && <p className="text-muted-foreground text-xs">{description}</p>}
+      </div>
+      <div className="px-5 py-4">{children}</div>
+    </div>
   )
 }

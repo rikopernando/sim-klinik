@@ -121,28 +121,30 @@ export function MedicalRecordTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
-      <TabsList className="grid w-full grid-cols-5">
-        <TabsTrigger value="soap" className="gap-2">
-          <FileText className="h-4 w-4" />
-          SOAP
-        </TabsTrigger>
-        <TabsTrigger value="diagnosis" className="gap-2">
-          <Stethoscope className="h-4 w-4" />
-          Diagnosis
-        </TabsTrigger>
-        <TabsTrigger value="prescription" className="gap-2">
-          <Pill className="h-4 w-4" />
-          Resep
-        </TabsTrigger>
-        <TabsTrigger value="procedure" className="gap-2">
-          <ClipboardList className="h-4 w-4" />
-          Tindakan
-        </TabsTrigger>
-        <TabsTrigger value="lab-orders" className="gap-2">
-          <IconFlask className="h-4 w-4" />
-          Pemeriksaan Penunjang
-        </TabsTrigger>
-      </TabsList>
+      <div className="overflow-x-auto">
+        <TabsList className="inline-flex">
+          <TabsTrigger value="soap" className="gap-2">
+            <FileText className="h-4 w-4" />
+            SOAP
+          </TabsTrigger>
+          <TabsTrigger value="diagnosis" className="gap-2">
+            <Stethoscope className="h-4 w-4" />
+            Diagnosis
+          </TabsTrigger>
+          <TabsTrigger value="prescription" className="gap-2">
+            <Pill className="h-4 w-4" />
+            Resep
+          </TabsTrigger>
+          <TabsTrigger value="procedure" className="gap-2">
+            <ClipboardList className="h-4 w-4" />
+            Tindakan
+          </TabsTrigger>
+          <TabsTrigger value="lab-orders" className="gap-2">
+            <IconFlask className="h-4 w-4" />
+            Pemeriksaan Penunjang
+          </TabsTrigger>
+        </TabsList>
+      </div>
 
       <TabsContent value="soap" className="mt-6">
         <SOAPTabContent

@@ -28,14 +28,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-
 // Hooks
 import { useERQueue } from "@/hooks/use-er-queue"
-import {
-  useERNotifications,
-  type ERNewPatientNotification,
-} from "@/lib/notifications/use-er-notifications"
 
 // Services
 import { updateVisitStatus } from "@/lib/services/visits.service"
@@ -93,42 +87,6 @@ function EmergencyQueueContent() {
   // Debounce search input (300ms)
   const debouncedSearch = useDebounce(searchInput, 300)
 
-  /**
-   * Handle new patient notification - play alert for Red triage
-   */
-  const handleNewPatient = useCallback(
-    (data: ERNewPatientNotification) => {
-      // Refresh queue when new patient arrives via SSE
-      refresh()
-
-      // Play alert sound for Red triage patients
-      if (data.triageStatus === "red" && soundEnabled && audioRef.current) {
-        audioRef.current.play().catch((err) => {
-          console.warn("Could not play alert sound:", err)
-        })
-      }
-
-      // Show toast notification
-      const triageLabel =
-        data.triageStatus === "red"
-          ? "MERAH - GAWAT"
-          : data.triageStatus === "yellow"
-            ? "KUNING"
-            : "HIJAU"
-      toast.info(`Pasien baru: ${data.patientName}`, {
-        description: `Triage: ${triageLabel} - ${data.chiefComplaint}`,
-        duration: 5000,
-      })
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [soundEnabled]
-  )
-
-  // Use ER Notifications hook with SSE
-  const { isConnected } = useERNotifications({
-    onNewPatient: handleNewPatient,
-  })
-
   // Toggle sound and save preference
   const toggleSound = useCallback(() => {
     setSoundEnabled((prev) => {
@@ -138,11 +96,9 @@ function EmergencyQueueContent() {
     })
   }, [])
 
-  // Use ER Queue hook with auto-refresh, status filter, and search
-  // With SSE, we can reduce polling interval or even disable it
   const { sortedQueue, queue, statistics, isLoading, lastRefresh, refresh } = useERQueue({
-    autoRefresh: !isConnected, // Only poll if SSE is not connected
-    refreshInterval: 60000, // Fallback: 60 seconds when polling
+    autoRefresh: false,
+    refreshInterval: 30000,
     status: activeStatus,
     search: debouncedSearch,
   })
@@ -204,12 +160,8 @@ function EmergencyQueueContent() {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold">Dashboard UGD</h1>
-            {/* SSE Connection Status */}
-            <Badge variant={isConnected ? "default" : "secondary"} className="text-xs">
-              {isConnected ? "Live" : "Polling"}
-            </Badge>
           </div>
-          <p className="text-muted-foreground">Antrian Unit Gawat Darurat - Real-time</p>
+          <p className="text-muted-foreground">Antrian Unit Gawat Darurat</p>
         </div>
 
         {/* Actions */}

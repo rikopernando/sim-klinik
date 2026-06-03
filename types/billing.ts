@@ -3,7 +3,6 @@
  * Centralized types for Billing, Cashier, and Patient Discharge
  */
 
-
 /**
  * Payment Status Types
  */

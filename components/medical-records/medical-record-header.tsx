@@ -1,13 +1,11 @@
-/**
- * Medical Record Header Component
- * Displays title, visit information, and status badges
- */
+"use client"
 
 import { useCallback, useState } from "react"
 import { Lock, History } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/ui/page-header"
 import { MedicalRecordHistoryDialog } from "@/components/medical-records/medical-record-history-dialog"
 import { Visit } from "@/types/medical-record"
 
@@ -25,12 +23,8 @@ export function MedicalRecordHeader({ visit, isLocked, isDraft }: MedicalRecordH
   }, [])
 
   return (
-    <div className="flex items-center justify-between">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Rekam Medis Elektronik</h1>
-        <p className="text-muted-foreground">Kunjungan #{visit.visitNumber}</p>
-      </div>
-      <div className="flex gap-2">
+    <>
+      <PageHeader title="Rekam Medis Elektronik" description={`Kunjungan #${visit.visitNumber}`}>
         {isLocked && (
           <Badge variant="secondary" className="gap-1">
             <Lock className="h-3 w-3" />
@@ -39,12 +33,11 @@ export function MedicalRecordHeader({ visit, isLocked, isDraft }: MedicalRecordH
         )}
         {isDraft && !isLocked && <Badge variant="outline">Draft</Badge>}
         <Button variant="outline" size="sm" onClick={() => setShowHistory(true)}>
-          <History className="mr-1 h-4 w-4" />
+          <History className="mr-1.5 h-3.5 w-3.5" />
           Riwayat
         </Button>
-      </div>
+      </PageHeader>
 
-      {/* Medical Record History Dialog */}
       {visit.patientId && (
         <MedicalRecordHistoryDialog
           open={showHistory}
@@ -52,6 +45,6 @@ export function MedicalRecordHeader({ visit, isLocked, isDraft }: MedicalRecordH
           patientId={visit.patientId}
         />
       )}
-    </div>
+    </>
   )
 }

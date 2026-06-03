@@ -13,7 +13,6 @@ import { PageGuard } from "@/components/auth/page-guard"
 import { useParams, useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -96,38 +95,38 @@ function MedicalRecordPageContent() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl space-y-6 p-6">
-      {/* Cancelled Visit Banner */}
-      {isCancelled && (
-        <Alert variant="destructive">
-          <AlertDescription className="flex items-center gap-2">
-            <Badge variant="destructive">Dibatalkan</Badge>
-            Kunjungan ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
-            diubah.
-          </AlertDescription>
-        </Alert>
-      )}
-
+    <div>
       {/* Header with visit info and status badges */}
       <MedicalRecordHeader visit={coreData.visit} isLocked={isLocked} isDraft={isDraft} />
 
-      {/* Error Alert (shows errors during operations) */}
-      {error && (
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+      <div className="container mx-auto max-w-6xl space-y-6 px-6 py-6">
+        {/* Cancelled Visit Banner */}
+        {isCancelled && (
+          <Alert variant="destructive">
+            <AlertDescription className="flex items-center gap-2">
+              <Badge variant="destructive">Dibatalkan</Badge>
+              Kunjungan ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
+              diubah.
+            </AlertDescription>
+          </Alert>
+        )}
 
-      {/* Main Content Card */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        {/* Error Alert (shows errors during operations) */}
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {/* Actions bar + Tabs */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <CardTitle>Catatan Medis</CardTitle>
-              <CardDescription>Dokumentasi pemeriksaan dan tindakan medis</CardDescription>
+              <p className="font-semibold">Catatan Medis</p>
+              <p className="text-muted-foreground text-sm">
+                Dokumentasi pemeriksaan dan tindakan medis
+              </p>
             </div>
-
-            {/* Action Buttons (Save Draft / Lock & Finish / Unlock) - Hidden when cancelled */}
             {!isCancelled && (
               <MedicalRecordActions
                 isLocked={isLocked}
@@ -139,10 +138,7 @@ function MedicalRecordPageContent() {
               />
             )}
           </div>
-        </CardHeader>
 
-        <CardContent>
-          {/* Tabs with lazy loading - each tab fetches its own data when activated */}
           <MedicalRecordTabs
             coreData={coreData}
             activeTab={activeTab}
@@ -151,8 +147,8 @@ function MedicalRecordPageContent() {
             onUpdateRecord={updateRecord}
             onSaveSOAP={saveSOAP}
           />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

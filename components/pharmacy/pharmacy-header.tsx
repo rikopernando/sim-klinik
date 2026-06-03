@@ -5,7 +5,6 @@
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Package } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { PharmacyNotificationPopover } from "@/components/notifications/pharmacy-notification-popover"
 
 interface PharmacyHeaderProps {
   lastRefresh?: Date | null
@@ -27,7 +26,6 @@ export function PharmacyHeader({ lastRefresh, onRefresh }: PharmacyHeaderProps) 
             Terakhir diperbarui: {lastRefresh.toLocaleTimeString("id-ID")}
           </p>
         )}
-        <PharmacyNotificationPopover />
         <Button onClick={() => router.push("/dashboard/pharmacy/inventory")} variant="default">
           <Package className="mr-2 h-4 w-4" />
           Kelola Stok

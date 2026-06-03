@@ -3,15 +3,7 @@ import { eq } from "drizzle-orm"
 import { z } from "zod"
 
 import { db } from "@/db"
-import {
-  prescriptions,
-  medicalRecords,
-  drugs,
-  visits,
-  patients,
-  compoundRecipes,
-} from "@/db/schema"
-import { sendNotification } from "@/lib/notifications/sse-manager"
+import { prescriptions, medicalRecords } from "@/db/schema"
 import { createPrescriptionFormSchema } from "@/lib/validations/medical-record"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
@@ -54,68 +46,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Add prescription (supports both regular drugs and compound recipes)
-    const [newPrescription] = await db
-      .insert(prescriptions)
-      .values({
-        visitId: validatedData.visitId,
-        medicalRecordId: validatedData.medicalRecordId,
-        isCompound: validatedData.isCompound,
-        drugId: validatedData.isCompound ? null : validatedData.drugId,
-        compoundRecipeId: validatedData.isCompound ? validatedData.compoundRecipeId : null,
-        dosage: validatedData.dosage,
-        frequency: validatedData.frequency,
-        quantity: validatedData.quantity,
-        instructions: validatedData.instructions || null,
-        route: validatedData.route || null,
-        isFulfilled: false,
-      })
-      .returning()
-
-    // Fetch complete prescription data for notification (H.1.1)
-    const prescriptionWithDetails = await db
-      .select({
-        prescription: prescriptions,
-        drug: drugs,
-        compoundRecipe: compoundRecipes,
-        medicalRecord: medicalRecords,
-        visit: visits,
-        patient: patients,
-      })
-      .from(prescriptions)
-      .leftJoin(drugs, eq(prescriptions.drugId, drugs.id))
-      .leftJoin(compoundRecipes, eq(prescriptions.compoundRecipeId, compoundRecipes.id))
-      .leftJoin(medicalRecords, eq(prescriptions.medicalRecordId, medicalRecords.id))
-      .leftJoin(visits, eq(medicalRecords.visitId, visits.id))
-      .leftJoin(patients, eq(visits.patientId, patients.id))
-      .where(eq(prescriptions.id, newPrescription.id))
-      .limit(1)
-
-    // Send real-time notification to pharmacy (H.1.1 Integration)
-    if (prescriptionWithDetails.length > 0) {
-      const data = prescriptionWithDetails[0]
-      // Get medication name based on prescription type
-      const medicationName = newPrescription.isCompound
-        ? data.compoundRecipe?.name || "Obat Racik"
-        : data.drug?.name || "Unknown"
-
-      sendNotification("pharmacy", "new_prescription", {
-        prescriptionId: newPrescription.id,
-        patientName: data.patient?.name || "Unknown",
-        patientMRNumber: data.patient?.mrNumber || "N/A",
-        drugName: medicationName,
-        isCompound: newPrescription.isCompound,
-        dosage: newPrescription.dosage || null,
-        frequency: newPrescription.frequency,
-        quantity: newPrescription.quantity,
-        visitNumber: data.visit?.visitNumber || "N/A",
-        visitType: data.visit?.visitType || "unknown",
-        createdAt: newPrescription.createdAt,
-      })
-
-      console.log(
-        `[Notification] New prescription notification sent for patient: ${data.patient?.name}`
-      )
-    }
+    await db.insert(prescriptions).values({
+      visitId: validatedData.visitId,
+      medicalRecordId: validatedData.medicalRecordId,
+      isCompound: validatedData.isCompound,
+      drugId: validatedData.isCompound ? null : validatedData.drugId,
+      compoundRecipeId: validatedData.isCompound ? validatedData.compoundRecipeId : null,
+      dosage: validatedData.dosage,
+      frequency: validatedData.frequency,
+      quantity: validatedData.quantity,
+      instructions: validatedData.instructions || null,
+      route: validatedData.route || null,
+      isFulfilled: false,
+    })
 
     const response: ResponseApi = {
       message: "Prescription added successfully",

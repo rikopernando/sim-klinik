@@ -9,7 +9,6 @@ import { quickERRegistrationSchema } from "@/lib/emergency/validation"
 import { createQuickERRegistration } from "@/lib/emergency/api-service"
 import { APIResponse } from "@/types/emergency"
 import { withRBAC } from "@/lib/rbac/middleware"
-import { sendNotification } from "@/lib/notifications/sse-manager"
 
 /**
  * POST /api/emergency/quick-register
@@ -27,16 +26,6 @@ export const POST = withRBAC(
 
       // Create registration
       const result = await createQuickERRegistration(validatedData)
-
-      // Broadcast SSE notification for new ER patient
-      sendNotification("emergency", "er_new_patient", {
-        visitId: result.visit.id,
-        patientName: result.patient.name,
-        patientMRNumber: result.patient.mrNumber,
-        triageStatus: validatedData.triageStatus,
-        chiefComplaint: validatedData.chiefComplaint,
-        arrivalTime: new Date(),
-      })
 
       // Return success response
       const response: APIResponse = {

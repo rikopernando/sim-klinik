@@ -62,14 +62,14 @@ This document explains, in simple terms, how the frontend of the `Sim-Klinik` pr
 Defined as CSS variables in `app/globals.css` (light mode):
 
 | Token                | Value     | Usage                                      |
-|----------------------|-----------|--------------------------------------------|
+| -------------------- | --------- | ------------------------------------------ |
 | `--primary`          | `#5ca473` | Buttons, active states, highlights (green) |
 | `--secondary`        | `#d8a411` | Secondary actions, badges (amber/golden)   |
 | `--background`       | `#ffffff` | Page background                            |
 | `--foreground`       | `#0a0a0a` | Body text, icons                           |
 | `--muted`            | `#f5f5f5` | Subtle backgrounds, skeleton loaders       |
-| `--muted-foreground` | `#737373` | Placeholder text, secondary labels        |
-| `--border`           | `#e5e5e5` | Dividers, input borders                   |
+| `--muted-foreground` | `#737373` | Placeholder text, secondary labels         |
+| `--border`           | `#e5e5e5` | Dividers, input borders                    |
 | `--destructive`      | `#e7000b` | Error states, delete actions               |
 | `--ring`             | `#8fae6e` | Focus rings (lighter green)                |
 
@@ -87,14 +87,14 @@ All design tokens live in `app/globals.css` as CSS custom properties and are ali
 
 ```css
 :root {
-  --primary: #5ca473;          /* green — the dominant brand color */
-  --secondary: #d8a411;        /* amber — secondary accents */
+  --primary: #5ca473; /* green — the dominant brand color */
+  --secondary: #d8a411; /* amber — secondary accents */
   --background: #ffffff;
   --foreground: #0a0a0a;
   --muted: #f5f5f5;
   --border: #e5e5e5;
   --destructive: #e7000b;
-  --radius: 0.625rem;          /* base border-radius (10px) */
+  --radius: 0.625rem; /* base border-radius (10px) */
 }
 ```
 
