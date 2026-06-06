@@ -7,7 +7,7 @@
 import { toast } from "sonner"
 import { useParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
-import { Loader2, Save, Lock, Unlock, CheckCircle2, BedDouble } from "lucide-react"
+import { Loader2, Save, Lock, CheckCircle2, BedDouble, Check } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -31,7 +31,6 @@ import { TransferToInpatientDialog } from "@/components/visits/transfer-to-inpat
 import { BillingAdjustmentForm } from "./billing-adjustment-form"
 
 interface MedicalRecordActionsProps {
-  isLocked: boolean
   isSaving: boolean
   isLocking: boolean
   lastSavedAt?: Date | string
@@ -39,11 +38,9 @@ interface MedicalRecordActionsProps {
   patientName?: string
   onSave: () => Promise<void>
   onLock: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
-  onUnlock?: () => Promise<void>
 }
 
 export function MedicalRecordActions({
-  isLocked,
   isSaving,
   isLocking,
   lastSavedAt,
@@ -51,12 +48,10 @@ export function MedicalRecordActions({
   patientName,
   onSave,
   onLock,
-  onUnlock,
 }: MedicalRecordActionsProps) {
   const { visitId } = useParams<{ visitId: string }>()
   const router = useRouter()
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
-  const [unlockDialogOpen, setUnlockDialogOpen] = useState(false)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [adjustmentType, setAdjustmentType] = useState<"none" | "discount" | "surcharge">("none")
   const [adjustmentAmount, setAdjustmentAmount] = useState("")
@@ -90,13 +85,6 @@ export function MedicalRecordActions({
     resetAdjustmentForm()
   }, [calculateBillingAdjustment, adjustmentNote, onLock, resetAdjustmentForm])
 
-  const handleUnlockConfirm = useCallback(async () => {
-    setUnlockDialogOpen(false)
-    if (onUnlock) {
-      await onUnlock()
-    }
-  }, [onUnlock])
-
   const handleAdjustmentTypeChange = useCallback((type: "none" | "discount" | "surcharge") => {
     setAdjustmentType(type)
   }, [])
@@ -127,106 +115,68 @@ export function MedicalRecordActions({
     }
   }, [visitId])
 
-  if (isLocked) {
-    return (
-      <>
-        <Button
-          variant="outline"
-          onClick={() => setUnlockDialogOpen(true)}
-          disabled={isSaving || isLocking}
-        >
-          {isLocking ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Membuka kunci...
-            </>
-          ) : (
-            <>
-              <Unlock className="mr-2 h-4 w-4" />
-              Buka Kunci Rekam Medis
-            </>
-          )}
-        </Button>
-
-        {/* Unlock Confirmation Dialog */}
-        <AlertDialog open={unlockDialogOpen} onOpenChange={setUnlockDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Buka Kunci Rekam Medis?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Rekam medis akan dapat diedit kembali. Pastikan pasien belum pulang.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Batal</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleUnlockConfirm}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Ya, Buka Kunci
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </>
-    )
-  }
-
   const lastSavedText = lastSavedAt
     ? formatDistanceToNow(new Date(lastSavedAt), { addSuffix: true, locale: idLocale })
     : null
 
   return (
     <>
-      <div className="flex items-center gap-3">
-        {/* Last saved indicator — shown when not actively saving */}
+      <div className="flex items-center gap-2">
+        {/* Last saved indicator */}
         {!isSaving && lastSavedText && (
-          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-            Tersimpan {lastSavedText}
+          <span className="text-muted-foreground hidden flex-1 items-center gap-1.5 text-sm sm:flex">
+            <Check className="h-4 w-4 text-green-500" />
+            Update terakhir {lastSavedText}
+          </span>
+        )}
+        {isSaving && (
+          <span className="text-muted-foreground hidden flex-1 items-center gap-1.5 text-xs sm:flex">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Menyimpan...
           </span>
         )}
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onSave} disabled={isSaving || isLocking}>
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Simpan Draft
-              </>
-            )}
-          </Button>
-
-          {canTransfer && (
+        {canTransfer && (
+          <>
             <Button
               variant="outline"
+              size="sm"
               onClick={() => setTransferDialogOpen(true)}
               disabled={isSaving || isLocking}
+              className="border-emerald-300 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
             >
               <BedDouble className="mr-2 h-4 w-4" />
-              Rawat Inap
+              Pindahkan Ke Rawat Inap
             </Button>
+            <span className="bg-border h-4 w-px shrink-0" />
+          </>
+        )}
+        <Button variant="outline" size="sm" onClick={onSave} disabled={isSaving || isLocking}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Menyimpan...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Simpan Draft
+            </>
           )}
-
-          <Button onClick={handleOpenDialogLock} disabled={isSaving || isLocking}>
-            {isLocking ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Mengunci...
-              </>
-            ) : (
-              <>
-                <Lock className="mr-2 h-4 w-4" />
-                Kunci & Selesai
-              </>
-            )}
-          </Button>
-        </div>
+        </Button>
+        <Button size="sm" onClick={handleOpenDialogLock} disabled={isSaving || isLocking}>
+          {isLocking ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Mengunci...
+            </>
+          ) : (
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              Kunci & Selesai
+            </>
+          )}
+        </Button>
       </div>
 
       {/* Transfer to Inpatient Dialog */}
@@ -252,7 +202,6 @@ export function MedicalRecordActions({
           </AlertDialogHeader>
 
           <div className="my-4 space-y-4">
-            {/* Billing Preview */}
             <DischargeBillingPreviewSection
               type="Rawat Jalan"
               summary={summary}
@@ -260,10 +209,7 @@ export function MedicalRecordActions({
               adjustmentType={adjustmentType}
               adjustmentAmount={adjustmentAmount}
             />
-
             <Separator />
-
-            {/* Billing Adjustment Form */}
             <BillingAdjustmentForm
               adjustmentType={adjustmentType}
               adjustmentAmount={adjustmentAmount}

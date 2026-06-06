@@ -27,6 +27,7 @@ interface MedicalRecordTabsProps {
   isLocked: boolean
   onTabChange: (value: string) => void
   onUpdateRecord: (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => void
+  headerAction?: React.ReactNode
 }
 
 // Memoized SOAP tab to prevent re-renders when other tabs are active
@@ -100,6 +101,7 @@ export function MedicalRecordTabs({
   isLocked,
   onTabChange,
   onUpdateRecord,
+  headerAction,
 }: MedicalRecordTabsProps) {
   const { medicalRecord, visit } = coreData
 
@@ -110,8 +112,12 @@ export function MedicalRecordTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
+      {/* Row 1: action buttons — left aligned */}
+      {headerAction && <div className="mb-3">{headerAction}</div>}
+
+      {/* Row 2: tabs */}
       <div className="overflow-x-auto">
-        <TabsList className="inline-flex">
+        <TabsList className="inline-flex w-full">
           <TabsTrigger value="soap" className="gap-2">
             <FileText className="h-4 w-4" />
             SOAP
