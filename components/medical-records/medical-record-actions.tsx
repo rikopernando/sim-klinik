@@ -7,7 +7,7 @@
 import { toast } from "sonner"
 import { useParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
-import { Loader2, Save, Lock, CheckCircle2, BedDouble, Check } from "lucide-react"
+import { Loader2, Save, Lock, BedDouble, Check } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
