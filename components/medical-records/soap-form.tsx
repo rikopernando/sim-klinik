@@ -88,7 +88,7 @@ export function SoapForm({ medicalRecord, onUpdate, isLocked }: SoapFormProps) {
   )
 
   return (
-    <div className="space-y-6">
+    <div className="mb-10 space-y-6">
       {SOAP_SECTIONS.map((section) => (
         <SectionCard key={section.key} title={section.title} description={section.description}>
           <AutocompleteTextarea

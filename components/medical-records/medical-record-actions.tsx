@@ -7,7 +7,9 @@
 import { toast } from "sonner"
 import { useParams } from "next/navigation"
 import { useState, useCallback } from "react"
-import { Loader2, Save, Lock, Unlock } from "lucide-react"
+import { Loader2, Save, Lock, Unlock, CheckCircle2 } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import { id as idLocale } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -31,6 +33,7 @@ interface MedicalRecordActionsProps {
   isLocked: boolean
   isSaving: boolean
   isLocking: boolean
+  lastSavedAt?: Date | string
   onSave: () => Promise<void>
   onLock: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   onUnlock?: () => Promise<void>
@@ -40,6 +43,7 @@ export function MedicalRecordActions({
   isLocked,
   isSaving,
   isLocking,
+  lastSavedAt,
   onSave,
   onLock,
   onUnlock,
@@ -161,9 +165,22 @@ export function MedicalRecordActions({
     )
   }
 
+  const lastSavedText = lastSavedAt
+    ? formatDistanceToNow(new Date(lastSavedAt), { addSuffix: true, locale: idLocale })
+    : null
+
   return (
     <>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-3">
+        {/* Last saved indicator — shown when not actively saving */}
+        {!isSaving && lastSavedText && (
+          <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
+            Tersimpan {lastSavedText}
+          </span>
+        )}
+
+        <div className="flex gap-2">
         <Button variant="outline" onClick={onSave} disabled={isSaving || isLocking}>
           {isSaving ? (
             <>
@@ -190,6 +207,7 @@ export function MedicalRecordActions({
             </>
           )}
         </Button>
+        </div>
       </div>
 
       {/* Lock Confirmation Dialog */}

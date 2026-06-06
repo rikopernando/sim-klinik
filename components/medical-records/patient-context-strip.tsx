@@ -51,7 +51,7 @@ export function PatientContextStrip({ patient, visit }: PatientContextStripProps
 
   return (
     <div className="bg-muted/30 border-b">
-      <div className="container mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-20 py-2.5">
+      <div className="container mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-1 px-6 py-2.5">
         {/* Patient name */}
         <div className="flex items-center gap-1.5">
           <User className="text-muted-foreground h-3.5 w-3.5 shrink-0" />

@@ -135,6 +135,7 @@ function MedicalRecordPageContent() {
                 isLocked={isLocked}
                 isSaving={isSaving}
                 isLocking={isLocking}
+                lastSavedAt={coreData.medicalRecord.updatedAt}
                 onSave={saveDraft}
                 onLock={handleLock}
                 onUnlock={unlockRecord}

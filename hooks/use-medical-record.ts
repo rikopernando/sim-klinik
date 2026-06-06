@@ -71,8 +71,6 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     staleTime: 5 * 60 * 1000,
   })
 
-  console.log({ coreQuery: coreQuery.data?.medicalRecord })
-
   // State
   const [isSaving, setIsSaving] = useState(false)
   const [isLocking, setIsLocking] = useState(false)
@@ -111,13 +109,24 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     }
   }, [visitId, coreQuery.data, refetch])
 
-  // Lock record
+  // Lock record — saves SOAP first, then locks
   const lockRecord = useCallback(
     async (billingAdjustment?: number, adjustmentNote?: string) => {
       if (!coreQuery.data) return
 
       try {
         setIsLocking(true)
+
+        // Flush SOAP content from cache to server before locking
+        const { soapSubjective, soapObjective, soapAssessment, soapPlan } =
+          coreQuery.data.medicalRecord
+        await updateMedicalRecordByVisit(visitId, {
+          soapSubjective: soapSubjective ?? undefined,
+          soapObjective: soapObjective ?? undefined,
+          soapAssessment: soapAssessment ?? undefined,
+          soapPlan: soapPlan ?? undefined,
+        })
+
         await lockMedicalRecord({
           id: coreQuery.data.medicalRecord.id,
           billingAdjustment,
@@ -132,7 +141,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         setIsLocking(false)
       }
     },
-    [coreQuery.data, refetch]
+    [coreQuery.data, refetch, visitId]
   )
 
   // Unlock record
