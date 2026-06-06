@@ -98,10 +98,10 @@ export const vitalSignsSchema = z
         (val) => {
           if (!val) return true // Optional field
           const temp = parseFloat(val)
-          return !isNaN(temp) && temp >= 35 && temp <= 42
+          return !isNaN(temp) && temp >= 30 && temp <= 42
         },
         {
-          message: "Suhu harus antara 35-42°C",
+          message: "Suhu harus antara 30-42°C",
         }
       ),
 
