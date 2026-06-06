@@ -46,7 +46,6 @@ function MedicalRecordPageContent() {
     isSaving,
     isLocking,
     error,
-    saveSOAP,
     saveDraft,
     lockRecord,
     unlockRecord,
@@ -149,7 +148,6 @@ function MedicalRecordPageContent() {
             isLocked={isReadOnly}
             onTabChange={setActiveTab}
             onUpdateRecord={updateRecord}
-            onSaveSOAP={saveSOAP}
           />
         </div>
       </div>

@@ -1,3 +1,5 @@
+"use client"
+
 /**
  * Medical Record Tabs Component
  * Optimized tab rendering with React.memo to prevent unnecessary re-renders
@@ -9,6 +11,9 @@ import { FileText, Stethoscope, Pill, ClipboardList } from "lucide-react"
 import { IconFlask } from "@tabler/icons-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type MedicalRecordCoreData } from "@/types/medical-record"
+import { useDiagnoses } from "@/hooks/use-diagnoses"
+import { usePrescriptions } from "@/hooks/use-prescriptions"
+import { useProcedures } from "@/hooks/use-procedures"
 
 import { SoapForm } from "./soap-form"
 import { DiagnosisTab } from "./diagnosis-tab"
@@ -22,39 +27,19 @@ interface MedicalRecordTabsProps {
   isLocked: boolean
   onTabChange: (value: string) => void
   onUpdateRecord: (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => void
-  onSaveSOAP: (soapData: {
-    soapSubjective?: string
-    soapObjective?: string
-    soapAssessment?: string
-    soapPlan?: string
-  }) => Promise<void>
 }
 
 // Memoized SOAP tab to prevent re-renders when other tabs are active
 const SOAPTabContent = memo(function SOAPTabContent({
   medicalRecord,
   onUpdate,
-  onSave,
   isLocked,
 }: {
   medicalRecord: MedicalRecordCoreData["medicalRecord"]
   onUpdate: (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => void
-  onSave: (soapData: {
-    soapSubjective?: string
-    soapObjective?: string
-    soapAssessment?: string
-    soapPlan?: string
-  }) => Promise<void>
   isLocked: boolean
 }) {
-  return (
-    <SoapForm
-      medicalRecord={medicalRecord}
-      onUpdate={onUpdate}
-      onSave={onSave}
-      isLocked={isLocked}
-    />
-  )
+  return <SoapForm medicalRecord={medicalRecord} onUpdate={onUpdate} isLocked={isLocked} />
 })
 
 // Memoized Diagnosis tab - now fetches its own data
@@ -115,9 +100,13 @@ export function MedicalRecordTabs({
   isLocked,
   onTabChange,
   onUpdateRecord,
-  onSaveSOAP,
 }: MedicalRecordTabsProps) {
   const { medicalRecord, visit } = coreData
+
+  // Fetch counts — same query keys as child tabs, React Query deduplicates (no extra requests)
+  const { diagnoses } = useDiagnoses({ visitId: visit.id })
+  const { prescriptions } = usePrescriptions({ visitId: visit.id })
+  const { procedures } = useProcedures({ visitId: visit.id })
 
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
@@ -127,17 +116,32 @@ export function MedicalRecordTabs({
             <FileText className="h-4 w-4" />
             SOAP
           </TabsTrigger>
-          <TabsTrigger value="diagnosis" className="gap-2">
+          <TabsTrigger value="diagnosis" className="gap-1.5">
             <Stethoscope className="h-4 w-4" />
             Diagnosis
+            {diagnoses.length > 0 && (
+              <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                {diagnoses.length}
+              </span>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="prescription" className="gap-2">
+          <TabsTrigger value="prescription" className="gap-1.5">
             <Pill className="h-4 w-4" />
             Resep
+            {prescriptions.length > 0 && (
+              <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                {prescriptions.length}
+              </span>
+            )}
           </TabsTrigger>
-          <TabsTrigger value="procedure" className="gap-2">
+          <TabsTrigger value="procedure" className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             Tindakan
+            {procedures.length > 0 && (
+              <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                {procedures.length}
+              </span>
+            )}
           </TabsTrigger>
           <TabsTrigger value="lab-orders" className="gap-2">
             <IconFlask className="h-4 w-4" />
@@ -150,7 +154,6 @@ export function MedicalRecordTabs({
         <SOAPTabContent
           medicalRecord={medicalRecord}
           onUpdate={onUpdateRecord}
-          onSave={onSaveSOAP}
           isLocked={isLocked}
         />
       </TabsContent>

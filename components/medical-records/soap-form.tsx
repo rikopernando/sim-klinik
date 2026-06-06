@@ -1,10 +1,8 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import { Save, Loader2 } from "lucide-react"
 
 import { AutocompleteTextarea } from "@/components/ui/autocomplete-textarea"
-import { Button } from "@/components/ui/button"
 import { type MedicalRecord } from "@/types/medical-record"
 import { canEditMedicalRecord } from "@/lib/utils/medical-record"
 import {
@@ -19,12 +17,6 @@ import { SectionCard } from "./section-card"
 interface SoapFormProps {
   medicalRecord: MedicalRecord
   onUpdate: (updates: Partial<MedicalRecord>) => void
-  onSave: (data: {
-    soapSubjective?: string
-    soapObjective?: string
-    soapAssessment?: string
-    soapPlan?: string
-  }) => Promise<void>
   isLocked: boolean
 }
 
@@ -77,8 +69,7 @@ const SOAP_SECTIONS: SoapSection[] = [
   },
 ]
 
-export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapFormProps) {
-  const [isSaving, setIsSaving] = useState(false)
+export function SoapForm({ medicalRecord, onUpdate, isLocked }: SoapFormProps) {
   const [localData, setLocalData] = useState({
     soapSubjective: medicalRecord.soapSubjective || "",
     soapObjective: medicalRecord.soapObjective || "",
@@ -96,18 +87,6 @@ export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapForm
     [onUpdate]
   )
 
-  const handleSave = useCallback(async () => {
-    try {
-      setIsSaving(true)
-      await onSave(localData)
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
-      // Error handling is done in parent
-    } finally {
-      setIsSaving(false)
-    }
-  }, [onSave, localData])
-
   return (
     <div className="space-y-6">
       {SOAP_SECTIONS.map((section) => (
@@ -124,25 +103,6 @@ export function SoapForm({ medicalRecord, onUpdate, onSave, isLocked }: SoapForm
           />
         </SectionCard>
       ))}
-
-      {/* Save Button */}
-      {canEdit && (
-        <div className="flex justify-end">
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Menyimpan...
-              </>
-            ) : (
-              <>
-                <Save className="mr-2 h-4 w-4" />
-                Simpan SOAP
-              </>
-            )}
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

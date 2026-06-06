@@ -71,6 +71,8 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     staleTime: 5 * 60 * 1000,
   })
 
+  console.log({ coreQuery: coreQuery.data?.medicalRecord })
+
   // State
   const [isSaving, setIsSaving] = useState(false)
   const [isLocking, setIsLocking] = useState(false)
@@ -83,13 +85,21 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     await queryClient.invalidateQueries({ queryKey: medicalRecordKeys.core(visitId) })
   }, [queryClient, visitId])
 
-  // Save draft
+  // Save draft — persists current SOAP content from the cache (kept in sync by updateRecord)
   const saveDraft = useCallback(async () => {
     if (!coreQuery.data) return
 
     try {
       setIsSaving(true)
-      await updateMedicalRecordByVisit(visitId, { isDraft: true })
+      const { soapSubjective, soapObjective, soapAssessment, soapPlan } =
+        coreQuery.data.medicalRecord
+      await updateMedicalRecordByVisit(visitId, {
+        isDraft: true,
+        soapSubjective: soapSubjective ?? undefined,
+        soapObjective: soapObjective ?? undefined,
+        soapAssessment: soapAssessment ?? undefined,
+        soapPlan: soapPlan ?? undefined,
+      })
       await refetch()
       toast.success("Draft berhasil disimpan!")
     } catch (err) {

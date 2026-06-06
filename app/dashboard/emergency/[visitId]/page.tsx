@@ -64,7 +64,6 @@ function ERMedicalRecordContent() {
     isSaving,
     isLocking,
     error: recordError,
-    saveSOAP,
     saveDraft,
     lockRecord,
     unlockRecord,
@@ -221,7 +220,6 @@ function ERMedicalRecordContent() {
               isLocked={isReadOnly}
               onTabChange={setActiveTab}
               onUpdateRecord={updateRecord}
-              onSaveSOAP={saveSOAP}
             />
           ) : (
             <div className="text-muted-foreground py-8 text-center">
