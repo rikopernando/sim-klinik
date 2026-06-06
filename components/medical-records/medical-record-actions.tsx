@@ -5,9 +5,9 @@
  */
 
 import { toast } from "sonner"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
-import { Loader2, Save, Lock, Unlock, CheckCircle2 } from "lucide-react"
+import { Loader2, Save, Lock, Unlock, CheckCircle2, BedDouble } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ import { DischargeBillingSummary } from "@/types/billing"
 import { getDischargeBillingSummary } from "@/lib/services/billing.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { DischargeBillingPreviewSection } from "@/components/inpatient/discharge-billing-preview-section"
+import { TransferToInpatientDialog } from "@/components/visits/transfer-to-inpatient-dialog"
 
 import { BillingAdjustmentForm } from "./billing-adjustment-form"
 
@@ -34,6 +35,8 @@ interface MedicalRecordActionsProps {
   isSaving: boolean
   isLocking: boolean
   lastSavedAt?: Date | string
+  canTransfer?: boolean
+  patientName?: string
   onSave: () => Promise<void>
   onLock: (billingAdjustment?: number, adjustmentNote?: string) => Promise<void>
   onUnlock?: () => Promise<void>
@@ -44,13 +47,17 @@ export function MedicalRecordActions({
   isSaving,
   isLocking,
   lastSavedAt,
+  canTransfer,
+  patientName,
   onSave,
   onLock,
   onUnlock,
 }: MedicalRecordActionsProps) {
   const { visitId } = useParams<{ visitId: string }>()
+  const router = useRouter()
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [unlockDialogOpen, setUnlockDialogOpen] = useState(false)
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [adjustmentType, setAdjustmentType] = useState<"none" | "discount" | "surcharge">("none")
   const [adjustmentAmount, setAdjustmentAmount] = useState("")
   const [adjustmentNote, setAdjustmentNote] = useState("")
@@ -181,34 +188,57 @@ export function MedicalRecordActions({
         )}
 
         <div className="flex gap-2">
-        <Button variant="outline" onClick={onSave} disabled={isSaving || isLocking}>
-          {isSaving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Menyimpan...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Simpan Draft
-            </>
+          <Button variant="outline" onClick={onSave} disabled={isSaving || isLocking}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Simpan Draft
+              </>
+            )}
+          </Button>
+
+          {canTransfer && (
+            <Button
+              variant="outline"
+              onClick={() => setTransferDialogOpen(true)}
+              disabled={isSaving || isLocking}
+            >
+              <BedDouble className="mr-2 h-4 w-4" />
+              Rawat Inap
+            </Button>
           )}
-        </Button>
-        <Button onClick={handleOpenDialogLock} disabled={isSaving || isLocking}>
-          {isLocking ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Mengunci...
-            </>
-          ) : (
-            <>
-              <Lock className="mr-2 h-4 w-4" />
-              Kunci & Selesai
-            </>
-          )}
-        </Button>
+
+          <Button onClick={handleOpenDialogLock} disabled={isSaving || isLocking}>
+            {isLocking ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Mengunci...
+              </>
+            ) : (
+              <>
+                <Lock className="mr-2 h-4 w-4" />
+                Kunci & Selesai
+              </>
+            )}
+          </Button>
         </div>
       </div>
+
+      {/* Transfer to Inpatient Dialog */}
+      {canTransfer && (
+        <TransferToInpatientDialog
+          open={transferDialogOpen}
+          onOpenChange={setTransferDialogOpen}
+          visitId={visitId}
+          patientName={patientName ?? ""}
+          onSuccess={() => router.push("/dashboard/inpatient/patients")}
+        />
+      )}
 
       {/* Lock Confirmation Dialog */}
       <AlertDialog open={lockDialogOpen} onOpenChange={setLockDialogOpen}>

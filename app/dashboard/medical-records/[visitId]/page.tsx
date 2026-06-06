@@ -11,7 +11,7 @@
 import { useState } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, Lock } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -102,6 +102,18 @@ function MedicalRecordPageContent() {
       {/* Patient context strip */}
       <PatientContextStrip patient={coreData.patient} visit={coreData.visit} />
 
+      {/* Locked state banner */}
+      {isLocked && (
+        <div className="border-b border-amber-200 bg-amber-50/60 dark:border-amber-800/50 dark:bg-amber-950/20">
+          <div className="container mx-auto flex max-w-6xl items-center gap-2 px-6 py-2">
+            <Lock className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-medium text-amber-800 dark:text-amber-300">
+              Rekam medis ini dikunci — hanya dapat dilihat, tidak dapat diubah
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="container mx-auto max-w-6xl space-y-6 px-6 py-6">
         {/* Cancelled Visit Banner */}
         {isCancelled && (
@@ -136,6 +148,11 @@ function MedicalRecordPageContent() {
                 isSaving={isSaving}
                 isLocking={isLocking}
                 lastSavedAt={coreData.medicalRecord.updatedAt}
+                canTransfer={
+                  coreData.visit.visitType === "outpatient" &&
+                  coreData.visit.status === "in_examination"
+                }
+                patientName={coreData.patient.name}
                 onSave={saveDraft}
                 onLock={handleLock}
                 onUnlock={unlockRecord}
