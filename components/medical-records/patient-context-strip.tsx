@@ -81,7 +81,10 @@ export function PatientContextStrip({ patient, visit }: PatientContextStripProps
           const statusInfo = VISIT_STATUS_INFO[visit.status as VisitStatus]
           if (!statusInfo) return null
           return (
-            <Badge variant="outline" className={`text-xs ${statusInfo.color} ${statusInfo.bgColor} border-current/20`}>
+            <Badge
+              variant="outline"
+              className={`text-xs ${statusInfo.color} ${statusInfo.bgColor} border-current/20`}
+            >
               {statusInfo.label}
             </Badge>
           )

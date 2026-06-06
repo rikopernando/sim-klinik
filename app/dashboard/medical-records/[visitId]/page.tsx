@@ -15,7 +15,6 @@ import { Loader2, Lock, Unlock, Ban } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -131,9 +130,15 @@ function MedicalRecordPageContent() {
                 className="shrink-0 border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-700 dark:bg-transparent dark:text-amber-300 dark:hover:bg-amber-900/30"
               >
                 {isLocking ? (
-                  <><Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />Membuka kunci...</>
+                  <>
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                    Membuka kunci...
+                  </>
                 ) : (
-                  <><Unlock className="mr-2 h-3.5 w-3.5" />Buka Kunci</>
+                  <>
+                    <Unlock className="mr-2 h-3.5 w-3.5" />
+                    Buka Kunci
+                  </>
                 )}
               </Button>
             </div>
@@ -150,7 +155,10 @@ function MedicalRecordPageContent() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Batal</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={async () => { setUnlockDialogOpen(false); await unlockRecord() }}
+                  onClick={async () => {
+                    setUnlockDialogOpen(false)
+                    await unlockRecord()
+                  }}
                   className="bg-primary hover:bg-primary/90"
                 >
                   Ya, Buka Kunci
@@ -168,7 +176,8 @@ function MedicalRecordPageContent() {
             <div className="flex items-center gap-2 px-4 py-2.5">
               <Ban className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
               <span className="text-xs font-medium text-red-800 dark:text-red-300">
-                Kunjungan ini telah dibatalkan — data rekam medis hanya dapat dilihat, tidak dapat diubah
+                Kunjungan ini telah dibatalkan — data rekam medis hanya dapat dilihat, tidak dapat
+                diubah
               </span>
             </div>
           </div>
@@ -187,23 +196,24 @@ function MedicalRecordPageContent() {
           isLocked={isReadOnly}
           onTabChange={setActiveTab}
           onUpdateRecord={updateRecord}
-          headerAction={!isCancelled && !isLocked ? (
-            <MedicalRecordActions
-              isSaving={isSaving}
-              isLocking={isLocking}
-              lastSavedAt={coreData.medicalRecord.updatedAt}
-              canTransfer={
-                coreData.visit.visitType === "outpatient" &&
-                coreData.visit.status === "in_examination"
-              }
-              patientName={coreData.patient.name}
-              onSave={saveDraft}
-              onLock={lockRecord}
-            />
-          ) : undefined}
+          headerAction={
+            !isCancelled && !isLocked ? (
+              <MedicalRecordActions
+                isSaving={isSaving}
+                isLocking={isLocking}
+                lastSavedAt={coreData.medicalRecord.updatedAt}
+                canTransfer={
+                  coreData.visit.visitType === "outpatient" &&
+                  coreData.visit.status === "in_examination"
+                }
+                patientName={coreData.patient.name}
+                onSave={saveDraft}
+                onLock={lockRecord}
+              />
+            ) : undefined
+          }
         />
       </div>
-
     </div>
   )
 }

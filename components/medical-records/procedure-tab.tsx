@@ -154,7 +154,8 @@ export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTa
                       </span>
                     )}
                     <span>
-                      <span className="font-medium">Waktu:</span> {formatDate(procedure.performedAt)}
+                      <span className="font-medium">Waktu:</span>{" "}
+                      {formatDate(procedure.performedAt)}
                     </span>
                   </div>
                   {procedure.notes && (

@@ -25,8 +25,10 @@ export function ListItem({
   const hasActions = (showEdit && onEdit) || (showDelete && onDelete)
 
   return (
-    <div className={`flex items-start justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-muted/30 ${className || ""}`}>
-      <div className="flex-1 min-w-0">{children}</div>
+    <div
+      className={`hover:bg-muted/30 flex items-start justify-between gap-3 rounded-lg border p-3 transition-colors ${className || ""}`}
+    >
+      <div className="min-w-0 flex-1">{children}</div>
       {hasActions && (
         <div className="flex shrink-0 gap-1">
           {showEdit && onEdit && (

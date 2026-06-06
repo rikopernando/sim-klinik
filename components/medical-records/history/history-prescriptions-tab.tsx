@@ -26,7 +26,10 @@ const PrescriptionItem = ({ item }: { item: MedicalRecordPrescription }) => (
           </p>
         )}
       </div>
-      <Badge variant={item.prescription.isFulfilled ? "default" : "secondary"} className="shrink-0 text-xs">
+      <Badge
+        variant={item.prescription.isFulfilled ? "default" : "secondary"}
+        className="shrink-0 text-xs"
+      >
         {item.prescription.isFulfilled ? "Terpenuhi" : "Pending"}
       </Badge>
     </div>
