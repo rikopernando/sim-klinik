@@ -36,6 +36,7 @@ interface UseMedicalRecordReturn {
   coreData: MedicalRecordCoreData | null
   isLocked: boolean
   isDraft: boolean
+  hasUnsavedChanges: boolean
 
   // Loading states
   isLoading: boolean
@@ -74,6 +75,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
   // State
   const [isSaving, setIsSaving] = useState(false)
   const [isLocking, setIsLocking] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   // Error handling
   const error = coreQuery.error ? getErrorMessage(coreQuery.error) : null
@@ -99,6 +101,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
         soapPlan: soapPlan ?? undefined,
       })
       await refetch()
+      setHasUnsavedChanges(false)
       toast.success("Draft berhasil disimpan!")
     } catch (err) {
       const errorMessage = getErrorMessage(err)
@@ -133,6 +136,7 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
           adjustmentNote,
         })
         await refetch()
+        setHasUnsavedChanges(false)
         toast.success("Rekam medis berhasil dikunci!")
       } catch (err) {
         toast.error("Gagal mengunci rekam medis")
@@ -184,11 +188,12 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     [visitId, coreQuery.data, refetch]
   )
 
-  // Optimistic update for record
+  // Optimistic update for record — marks as having unsaved changes
   const updateRecord = useCallback(
     (updates: Partial<MedicalRecordCoreData["medicalRecord"]>) => {
       if (!coreQuery.data) return
 
+      setHasUnsavedChanges(true)
       queryClient.setQueryData(medicalRecordKeys.core(visitId), {
         ...coreQuery.data,
         medicalRecord: {
@@ -209,11 +214,12 @@ export function useMedicalRecord({ visitId }: UseMedicalRecordOptions): UseMedic
     coreData: coreQuery.data ?? null,
     isLocked: coreQuery.data?.medicalRecord.isLocked ?? false,
     isDraft: coreQuery.data?.medicalRecord.isDraft ?? true,
+    hasUnsavedChanges,
 
     // Loading states
     isLoading: coreQuery.isLoading,
-    isSaving, // Managed by mutations in the future
-    isLocking, // Managed by mutations in the future
+    isSaving,
+    isLocking,
 
     // Error handling
     error,

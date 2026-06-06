@@ -11,7 +11,7 @@
 import { useState } from "react"
 import { PageGuard } from "@/components/auth/page-guard"
 import { useParams, useRouter } from "next/navigation"
-import { Loader2, Lock, Unlock } from "lucide-react"
+import { Loader2, Lock, Unlock, Ban } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/alert-dialog"
 
 import { useMedicalRecord } from "@/hooks/use-medical-record"
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes"
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header"
 import { MedicalRecordActions } from "@/components/medical-records/medical-record-actions"
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
@@ -57,11 +58,14 @@ function MedicalRecordPageContent() {
     isSaving,
     isLocking,
     error,
+    hasUnsavedChanges,
     saveDraft,
     lockRecord,
     unlockRecord,
     updateRecord,
   } = useMedicalRecord({ visitId })
+
+  useUnsavedChanges(hasUnsavedChanges)
 
   // Loading state
   if (isLoading) {
@@ -99,11 +103,6 @@ function MedicalRecordPageContent() {
 
   // Treat cancelled visits as locked (read-only)
   const isReadOnly = isLocked || isCancelled
-
-  // Handle lock action
-  const handleLock = async (billingAdjustment?: number, adjustmentNote?: string) => {
-    await lockRecord(billingAdjustment, adjustmentNote)
-  }
 
   return (
     <div>
@@ -165,13 +164,14 @@ function MedicalRecordPageContent() {
       <div className="container mx-auto max-w-6xl space-y-6 px-6 py-6">
         {/* Cancelled Visit Banner */}
         {isCancelled && (
-          <Alert variant="destructive">
-            <AlertDescription className="flex items-center gap-2">
-              <Badge variant="destructive">Dibatalkan</Badge>
-              Kunjungan ini telah dibatalkan. Data rekam medis hanya dapat dilihat dan tidak dapat
-              diubah.
-            </AlertDescription>
-          </Alert>
+          <div className="rounded-xl border border-red-200 bg-red-50/60 dark:border-red-800/50 dark:bg-red-950/20">
+            <div className="flex items-center gap-2 px-4 py-2.5">
+              <Ban className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" />
+              <span className="text-xs font-medium text-red-800 dark:text-red-300">
+                Kunjungan ini telah dibatalkan — data rekam medis hanya dapat dilihat, tidak dapat diubah
+              </span>
+            </div>
+          </div>
         )}
 
         {/* Error Alert (shows errors during operations) */}
@@ -198,7 +198,7 @@ function MedicalRecordPageContent() {
               }
               patientName={coreData.patient.name}
               onSave={saveDraft}
-              onLock={handleLock}
+              onLock={lockRecord}
             />
           ) : undefined}
         />

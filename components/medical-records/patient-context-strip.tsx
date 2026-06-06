@@ -4,6 +4,7 @@ import { id as idLocale } from "date-fns/locale"
 
 import { Badge } from "@/components/ui/badge"
 import { type MedicalRecordPatient, type Visit } from "@/types/medical-record"
+import { VISIT_STATUS_INFO, type VisitStatus } from "@/types/visit-status"
 
 interface PatientContextStripProps {
   patient: MedicalRecordPatient
@@ -75,6 +76,16 @@ export function PatientContextStrip({ patient, visit }: PatientContextStripProps
         <Badge variant="outline" className={`text-xs ${config.badgeClass}`}>
           {config.label}
         </Badge>
+
+        {(() => {
+          const statusInfo = VISIT_STATUS_INFO[visit.status as VisitStatus]
+          if (!statusInfo) return null
+          return (
+            <Badge variant="outline" className={`text-xs ${statusInfo.color} ${statusInfo.bgColor} border-current/20`}>
+              {statusInfo.label}
+            </Badge>
+          )
+        })()}
 
         <span className="bg-border h-4 w-px shrink-0" />
 

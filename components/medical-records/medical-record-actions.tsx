@@ -7,7 +7,7 @@
 import { toast } from "sonner"
 import { useParams, useRouter } from "next/navigation"
 import { useState, useCallback } from "react"
-import { Loader2, Save, Lock, BedDouble, Check } from "lucide-react"
+import { Loader2, Save, Lock, BedDouble, CheckCircle2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
 import { Button } from "@/components/ui/button"
@@ -125,7 +125,7 @@ export function MedicalRecordActions({
         {/* Last saved indicator */}
         {!isSaving && lastSavedText && (
           <span className="text-muted-foreground hidden flex-1 items-center gap-1.5 text-sm sm:flex">
-            <Check className="h-4 w-4 text-green-500" />
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
             Update terakhir {lastSavedText}
           </span>
         )}
