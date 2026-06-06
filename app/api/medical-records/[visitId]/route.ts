@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { eq } from "drizzle-orm"
 
 import { db } from "@/db"
-import { medicalRecords, visits } from "@/db/schema"
+import { medicalRecords, visits, patients, polis } from "@/db/schema"
 import { withRBAC } from "@/lib/rbac/middleware"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
@@ -31,11 +31,26 @@ export const GET = withRBAC(
         })
       }
 
-      // Get medical record and visit info in parallel
-      const [[record], [visitInfo]] = await Promise.all([
+      // Get medical record and visit+patient+poli info in parallel
+      const [[record], visitRows] = await Promise.all([
         db.select().from(medicalRecords).where(eq(medicalRecords.visitId, visitId)).limit(1),
-        db.select().from(visits).where(eq(visits.id, visitId)).limit(1),
+        db
+          .select({
+            visit: visits,
+            patientName: patients.name,
+            patientMrNumber: patients.mrNumber,
+            patientDateOfBirth: patients.dateOfBirth,
+            patientGender: patients.gender,
+            poliName: polis.name,
+          })
+          .from(visits)
+          .innerJoin(patients, eq(visits.patientId, patients.id))
+          .leftJoin(polis, eq(visits.poliId, polis.id))
+          .where(eq(visits.id, visitId))
+          .limit(1),
       ])
+
+      const [visitRow] = visitRows
 
       if (!record) {
         const response: ResponseError<unknown> = {
@@ -52,7 +67,14 @@ export const GET = withRBAC(
         message: "Medical record fetched successfully",
         data: {
           medicalRecord: record,
-          visit: visitInfo,
+          visit: visitRow.visit,
+          patient: {
+            name: visitRow.patientName,
+            mrNumber: visitRow.patientMrNumber,
+            dateOfBirth: visitRow.patientDateOfBirth,
+            gender: visitRow.patientGender,
+            poliName: visitRow.poliName ?? null,
+          },
         },
         status: HTTP_STATUS_CODES.OK,
       }

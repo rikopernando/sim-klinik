@@ -21,6 +21,7 @@ import { useMedicalRecord } from "@/hooks/use-medical-record"
 import { MedicalRecordHeader } from "@/components/medical-records/medical-record-header"
 import { MedicalRecordActions } from "@/components/medical-records/medical-record-actions"
 import { MedicalRecordTabs } from "@/components/medical-records/medical-record-tabs"
+import { PatientContextStrip } from "@/components/medical-records/patient-context-strip"
 
 export default function MedicalRecordPage() {
   return (
@@ -98,6 +99,9 @@ function MedicalRecordPageContent() {
     <div>
       {/* Header with visit info and status badges */}
       <MedicalRecordHeader visit={coreData.visit} isLocked={isLocked} isDraft={isDraft} />
+
+      {/* Patient context strip */}
+      <PatientContextStrip patient={coreData.patient} visit={coreData.visit} />
 
       <div className="container mx-auto max-w-6xl space-y-6 px-6 py-6">
         {/* Cancelled Visit Banner */}

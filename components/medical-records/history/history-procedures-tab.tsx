@@ -17,12 +17,14 @@ interface HistoryProceduresTabProps {
 }
 
 const ProcedureItem = ({ procedure }: { procedure: Procedure }) => (
-  <div className="bg-muted rounded-md p-2">
-    <div className="flex items-center justify-between">
+  <div className="rounded-lg border p-3">
+    <div className="flex items-start justify-between gap-2">
       <p className="text-sm font-medium">{procedure.description}</p>
-      <Badge variant="outline" className="text-xs">
-        {procedure.icd9Code}
-      </Badge>
+      {procedure.icd9Code && (
+        <Badge variant="outline" className="shrink-0 font-mono text-xs">
+          {procedure.icd9Code}
+        </Badge>
+      )}
     </div>
   </div>
 )

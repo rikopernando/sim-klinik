@@ -116,22 +116,19 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
         </Alert>
       )}
 
-      {/* Add Button */}
-      {canEdit && (
-        <div className="flex">
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Resep
-          </Button>
-        </div>
-      )}
-
-      {/* Existing Prescriptions */}
-      {prescriptions.length > 0 && (
-        <SectionCard
-          title="Daftar Resep"
-          description="Resep obat yang telah diresepkan untuk pasien ini"
-        >
+      <SectionCard
+        title="Daftar Resep"
+        description="Resep obat yang telah diresepkan untuk pasien ini"
+        headerAction={
+          canEdit ? (
+            <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Tambah Resep
+            </Button>
+          ) : undefined
+        }
+      >
+        {prescriptions.length > 0 ? (
           <div className="space-y-3">
             {prescriptions.map((prescription) => {
               const medicationRoute = MEDICATION_ROUTES.find(
@@ -250,10 +247,10 @@ export function PrescriptionTab({ visitId, medicalRecordId, isLocked }: Prescrip
               </div>
             )}
           </div>
-        </SectionCard>
-      )}
-
-      {prescriptions.length === 0 && <EmptyState message="Belum ada resep yang ditambahkan" />}
+        ) : (
+          <EmptyState message="Belum ada resep yang ditambahkan" />
+        )}
+      </SectionCard>
 
       {/* Add/Edit Prescription Dialog */}
       <AddPrescriptionDialog

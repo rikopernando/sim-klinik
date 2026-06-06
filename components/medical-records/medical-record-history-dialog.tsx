@@ -26,22 +26,22 @@ interface MedicalRecordHistoryDialogProps {
 }
 
 const LoadingState = () => (
-  <div className="flex items-center justify-center py-12">
-    <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-    <span className="text-muted-foreground ml-2">Memuat riwayat...</span>
+  <div className="flex flex-col items-center justify-center gap-2 py-12">
+    <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+    <p className="text-muted-foreground text-sm">Memuat riwayat...</p>
   </div>
 )
 
 const ErrorState = ({ error }: { error: string }) => (
-  <div className="bg-destructive/10 border-destructive flex items-center gap-2 rounded-md border p-4">
-    <AlertCircle className="text-destructive h-5 w-5" />
+  <div className="bg-destructive/10 border-destructive flex items-center gap-2 rounded-xl border p-4">
+    <AlertCircle className="text-destructive h-4 w-4 shrink-0" />
     <p className="text-destructive text-sm">{error}</p>
   </div>
 )
 
 const EmptyHistoryState = () => (
-  <div className="flex flex-col items-center justify-center py-12 text-center">
-    <FileText className="text-muted-foreground mb-3 h-12 w-12" />
+  <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed py-10 text-center">
+    <FileText className="text-muted-foreground/40 h-8 w-8" />
     <p className="text-muted-foreground text-sm">Belum ada riwayat rekam medis untuk pasien ini</p>
   </div>
 )

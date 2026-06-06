@@ -111,23 +111,20 @@ export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTa
         </Alert>
       )}
 
-      {/* Add Button */}
-      {canEdit && (
-        <div className="flex">
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Tambah Tindakan
-          </Button>
-        </div>
-      )}
-
-      {/* Existing Procedures */}
-      {procedures.length > 0 && (
-        <SectionCard
-          title="Daftar Tindakan"
-          description="Tindakan medis yang telah dilakukan pada pasien ini"
-        >
-          <div className="space-y-3">
+      <SectionCard
+        title="Daftar Tindakan"
+        description="Tindakan medis yang telah dilakukan pada pasien ini"
+        headerAction={
+          canEdit ? (
+            <Button size="sm" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
+              Tambah Tindakan
+            </Button>
+          ) : undefined
+        }
+      >
+        {procedures.length > 0 ? (
+          <div className="space-y-2">
             {procedures.map((procedure) => (
               <ListItem
                 key={procedure.id}
@@ -135,9 +132,8 @@ export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTa
                 onDelete={() => handleDeleteClick(procedure.id)}
                 showEdit={canEdit}
                 showDelete={canEdit}
-                className="gap-4"
               >
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-sm font-medium">
                       {procedure.serviceName || procedure.description}
@@ -151,20 +147,18 @@ export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTa
                   {procedure.description !== procedure.serviceName && (
                     <p className="text-muted-foreground text-xs">{procedure.description}</p>
                   )}
-                  <div className="text-muted-foreground grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
                     {procedure.performedByName && (
-                      <div>
-                        <span className="font-medium">Dilakukan oleh:</span>{" "}
-                        {procedure.performedByName}
-                      </div>
+                      <span>
+                        <span className="font-medium">Oleh:</span> {procedure.performedByName}
+                      </span>
                     )}
-                    <div>
-                      <span className="font-medium">Waktu:</span>{" "}
-                      {formatDate(procedure.performedAt)}
-                    </div>
+                    <span>
+                      <span className="font-medium">Waktu:</span> {formatDate(procedure.performedAt)}
+                    </span>
                   </div>
                   {procedure.notes && (
-                    <p className="text-muted-foreground text-sm italic">{procedure.notes}</p>
+                    <p className="text-muted-foreground text-xs italic">{procedure.notes}</p>
                   )}
                 </div>
               </ListItem>
@@ -172,7 +166,7 @@ export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTa
 
             {/* Subtotal */}
             {subtotal > 0 && (
-              <div className="mt-4 flex items-center justify-between border-t pt-3">
+              <div className="mt-3 flex items-center justify-between border-t pt-3">
                 <span className="text-sm font-semibold">Subtotal Tindakan</span>
                 <span className="text-primary text-lg font-bold">
                   Rp {subtotal.toLocaleString("id-ID")}
@@ -180,10 +174,10 @@ export function ProcedureTab({ visitId, medicalRecordId, isLocked }: ProcedureTa
               </div>
             )}
           </div>
-        </SectionCard>
-      )}
-
-      {procedures.length === 0 && <EmptyState message="Belum ada tindakan yang ditambahkan" />}
+        ) : (
+          <EmptyState message="Belum ada tindakan yang ditambahkan" />
+        )}
+      </SectionCard>
 
       {/* Add/Edit Procedure Dialog */}
       <AddProcedureDialog

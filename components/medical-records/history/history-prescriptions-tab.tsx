@@ -12,21 +12,21 @@ interface HistoryPrescriptionsTabProps {
 }
 
 const PrescriptionItem = ({ item }: { item: MedicalRecordPrescription }) => (
-  <div className="bg-muted rounded-md p-2">
-    <div className="flex items-start justify-between">
-      <div>
+  <div className="rounded-lg border p-3">
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0">
         <p className="text-sm font-medium">{item.drug?.name || "Obat tidak diketahui"}</p>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <p className="text-muted-foreground mt-0.5 text-xs">
           {item.prescription.dosage} • {item.prescription.frequency}
           {item.prescription.duration && ` • ${item.prescription.duration}`}
         </p>
         {item.prescription.instructions && (
-          <p className="text-muted-foreground mt-1 text-xs italic">
+          <p className="text-muted-foreground mt-0.5 text-xs italic">
             {item.prescription.instructions}
           </p>
         )}
       </div>
-      <Badge variant={item.prescription.isFulfilled ? "default" : "secondary"} className="text-xs">
+      <Badge variant={item.prescription.isFulfilled ? "default" : "secondary"} className="shrink-0 text-xs">
         {item.prescription.isFulfilled ? "Terpenuhi" : "Pending"}
       </Badge>
     </div>

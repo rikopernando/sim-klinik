@@ -118,9 +118,18 @@ export interface MedicalRecordLabOrder {
   testCode: string | null
 }
 
+export interface MedicalRecordPatient {
+  name: string
+  mrNumber: string
+  dateOfBirth: Date | null
+  gender: string | null
+  poliName: string | null
+}
+
 export interface MedicalRecordCoreData {
   medicalRecord: MedicalRecord
   visit: Visit
+  patient: MedicalRecordPatient
 }
 
 export interface MedicalRecordData extends MedicalRecordCoreData {

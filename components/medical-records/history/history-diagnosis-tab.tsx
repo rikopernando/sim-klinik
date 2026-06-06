@@ -18,15 +18,15 @@ interface HistoryDiagnosisTabProps {
 }
 
 const DiagnosisItem = ({ diagnosis }: { diagnosis: Diagnosis }) => (
-  <div className="bg-muted rounded-md p-2">
-    <div className="flex items-center justify-between">
+  <div className="rounded-lg border p-3">
+    <div className="flex items-start justify-between gap-2">
       <p className="text-sm font-medium">{diagnosis.description}</p>
-      <Badge variant="outline" className="text-xs">
+      <Badge variant="outline" className="shrink-0 font-mono text-xs">
         {diagnosis.icd10Code}
       </Badge>
     </div>
     {diagnosis.diagnosisType === "primary" && (
-      <Badge variant="secondary" className="mt-1 text-xs">
+      <Badge variant="secondary" className="mt-1.5 text-xs">
         Diagnosis Utama
       </Badge>
     )}
