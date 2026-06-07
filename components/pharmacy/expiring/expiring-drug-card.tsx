@@ -1,11 +1,7 @@
-/**
- * Expiring Drug Card Component
- * Reusable card for displaying expiring drug information
- */
-
 import { memo } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { formatExpiryDate, getExpiryAlertColor } from "@/lib/pharmacy/stock-utils"
 import { DrugInventoryWithDetails, ExpiryAlertLevel } from "@/types/pharmacy"
 
@@ -13,56 +9,50 @@ interface ExpiringDrugCardProps {
   inventory: DrugInventoryWithDetails
 }
 
-const ExpiryBadge = ({ level }: { level: ExpiryAlertLevel }) => {
-  const labels = {
-    expired: "Kadaluarsa",
-    expiring_soon: "Segera Kadaluarsa",
-    warning: "Perhatian",
-  }
-
-  return (
-    <Badge className={getExpiryAlertColor(level).badge}>
-      {labels[level as keyof typeof labels]}
-    </Badge>
-  )
+const EXPIRY_LABELS: Record<ExpiryAlertLevel, string> = {
+  expired: "Kadaluarsa",
+  expiring_soon: "Segera Exp",
+  warning: "Perhatian",
+  safe: "Aman",
 }
 
 export const ExpiringDrugCard = memo(function ExpiringDrugCard({
   inventory,
 }: ExpiringDrugCardProps) {
   const colors = getExpiryAlertColor(inventory.expiryAlertLevel)
+  const label = EXPIRY_LABELS[inventory.expiryAlertLevel]
 
   return (
-    <Card className={`border-2 ${colors.border} ${colors.bg}`}>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="text-lg">{inventory.drug.name}</CardTitle>
-            <CardDescription>Batch: {inventory.batchNumber}</CardDescription>
-          </div>
-          <ExpiryBadge level={inventory.expiryAlertLevel} />
+    <div className="hover:bg-muted/30 flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors">
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="truncate text-sm font-medium">{inventory.drug.name}</p>
+          <Badge className={`${colors.badge} shrink-0 text-xs`}>{label}</Badge>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <p className="text-muted-foreground text-sm">Tanggal Kadaluarsa</p>
-            <p className={`font-medium ${colors.text}`}>
-              {formatExpiryDate(inventory?.expiryDate, inventory.daysUntilExpiry)}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-sm">Stok</p>
-            <p className="font-medium">
+        <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs">
+          <span>
+            Batch: <span className="text-foreground font-medium">{inventory.batchNumber}</span>
+          </span>
+          <span className={colors.text}>
+            Exp: {formatExpiryDate(inventory?.expiryDate, inventory.daysUntilExpiry)}
+          </span>
+          <span>
+            Stok:{" "}
+            <span className="text-foreground font-medium">
               {inventory.stockQuantity} {inventory.drug.unit}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground text-sm">Supplier</p>
-            <p className="font-medium">{inventory.supplier || "-"}</p>
-          </div>
+            </span>
+          </span>
+          {inventory.supplier && <span>Supplier: {inventory.supplier}</span>}
         </div>
-      </CardContent>
-    </Card>
+      </div>
+      <Link
+        href={`/dashboard/pharmacy/inventory?search=${encodeURIComponent(inventory.drug.name)}`}
+        target="_blank"
+      >
+        <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs">
+          Inventaris
+        </Button>
+      </Link>
+    </div>
   )
 })

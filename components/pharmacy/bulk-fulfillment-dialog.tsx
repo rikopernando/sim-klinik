@@ -227,7 +227,21 @@ export function BulkFulfillmentDialog({
       <Dialog open={open} onOpenChange={handleClose}>
         <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
           <DialogHeader>
-            <BulkFulfillmentHeader selectedGroup={selectedGroup} />
+            <div className="flex items-start justify-between gap-3">
+              <BulkFulfillmentHeader selectedGroup={selectedGroup} />
+              {medicalRecordId && selectedGroup?.doctor && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleOpenAddPrescription}
+                  disabled={isSubmitting}
+                  className="shrink-0"
+                >
+                  <Plus className="mr-1.5 h-3.5 w-3.5" />
+                  Tambah Resep
+                </Button>
+              )}
+            </div>
           </DialogHeader>
 
           {validationError && (
@@ -237,7 +251,6 @@ export function BulkFulfillmentDialog({
             </Alert>
           )}
 
-          {/* Stock Issues Warning */}
           {stockIssues.length > 0 && !validationError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
@@ -252,8 +265,7 @@ export function BulkFulfillmentDialog({
             </Alert>
           )}
 
-          <div className="space-y-6">
-            {/* Prescription Items */}
+          <div className="space-y-5">
             {selectedGroup?.prescriptions.map((item, idx) => (
               <PrescriptionItem
                 key={item.prescription.id}
@@ -276,20 +288,6 @@ export function BulkFulfillmentDialog({
 
             <Separator />
 
-            {/* Add Prescription Button */}
-            {medicalRecordId && selectedGroup?.doctor && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleOpenAddPrescription}
-                disabled={isSubmitting}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Tambah Resep
-              </Button>
-            )}
-
-            {/* Common Fields */}
             <FulfillmentFormFields
               notes={notes}
               fulfilledBy={fulfilledBy}
@@ -298,26 +296,25 @@ export function BulkFulfillmentDialog({
               onFulfilledByChange={setFulfilledBy}
               onNotesChange={setNotes}
             />
+          </div>
 
-            {/* Actions */}
-            <div className="flex justify-end gap-2 pt-4">
-              <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
-                Batal
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting || !isFormValid || stockIssues.length > 0}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Memproses...
-                  </>
-                ) : (
-                  `Proses ${selectedGroup?.prescriptions.length || 0} Resep`
-                )}
-              </Button>
-            </div>
+          <div className="mt-2 flex justify-end gap-2 border-t pt-4">
+            <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
+              Batal
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !isFormValid || stockIssues.length > 0}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Memproses...
+                </>
+              ) : (
+                `Proses ${selectedGroup?.prescriptions.length || 0} Resep`
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

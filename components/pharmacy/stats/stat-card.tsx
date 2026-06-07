@@ -1,9 +1,3 @@
-/**
- * Reusable Stat Card Component
- * Generic card for displaying statistics
- */
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import { type ReactNode } from "react"
 
@@ -17,22 +11,26 @@ interface StatCardProps {
 
 const variantStyles = {
   default: {
-    card: "",
-    value: "",
+    panel: "bg-card border",
+    iconBg: "bg-muted text-muted-foreground",
+    value: "text-foreground",
     description: "text-muted-foreground",
   },
   danger: {
-    card: "border-red-200 bg-red-50",
+    panel: "border-red-200 bg-red-50",
+    iconBg: "bg-red-100 text-red-600",
     value: "text-red-700",
-    description: "text-red-600",
+    description: "text-red-500",
   },
   warning: {
-    card: "border-orange-200 bg-orange-50",
+    panel: "border-orange-200 bg-orange-50",
+    iconBg: "bg-orange-100 text-orange-600",
     value: "text-orange-700",
-    description: "text-orange-600",
+    description: "text-orange-500",
   },
   caution: {
-    card: "border-yellow-200 bg-yellow-50",
+    panel: "border-yellow-200 bg-yellow-50",
+    iconBg: "bg-yellow-100 text-yellow-600",
     value: "text-yellow-700",
     description: "text-yellow-600",
   },
@@ -42,17 +40,18 @@ export function StatCard({ title, value, description, variant = "default", icon 
   const styles = variantStyles[variant]
 
   return (
-    <Card className={cn("gap-0", styles.card)}>
-      <CardHeader className="pb-0">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          {icon}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className={`text-2xl font-bold ${styles.value}`}>{value}</div>
-        <p className={`text-xs ${styles.description}`}>{description}</p>
-      </CardContent>
-    </Card>
+    <div
+      className={cn(
+        "flex items-start justify-between gap-3 rounded-xl border p-4 shadow-sm",
+        styles.panel
+      )}
+    >
+      <div className="min-w-0">
+        <p className="text-muted-foreground truncate text-sm font-medium">{title}</p>
+        <p className={cn("mt-0.5 text-2xl font-bold tabular-nums", styles.value)}>{value}</p>
+        <p className={cn("mt-0.5 text-xs", styles.description)}>{description}</p>
+      </div>
+      {icon && <div className={cn("shrink-0 rounded-lg p-2", styles.iconBg)}>{icon}</div>}
+    </div>
   )
 }

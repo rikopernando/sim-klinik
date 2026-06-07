@@ -1,9 +1,5 @@
-/**
- * Pharmacy Stats Cards Component (Refactored)
- * Displays statistics using reusable StatCard components
- */
-
 import { useMemo } from "react"
+import { ClipboardList, AlertTriangle, Clock, Eye } from "lucide-react"
 import { ExpiringDrugsData } from "@/types/pharmacy"
 
 import { StatCard } from "./stats/stat-card"
@@ -14,7 +10,6 @@ interface PharmacyStatsCardsProps {
 }
 
 export function PharmacyStatsCards({ queueCount, expiringDrugs }: PharmacyStatsCardsProps) {
-  // Memoize stats to prevent unnecessary recalculations
   const stats = useMemo(
     () => ({
       queue: queueCount,
@@ -26,33 +21,34 @@ export function PharmacyStatsCards({ queueCount, expiringDrugs }: PharmacyStatsC
   )
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
       <StatCard
         title="Resep Pending"
         value={stats.queue}
         description="Menunggu proses"
         variant="default"
+        icon={<ClipboardList className="h-4 w-4" />}
       />
-
       <StatCard
         title="Kadaluarsa"
         value={stats.expired}
         description="Sudah kadaluarsa"
         variant="danger"
+        icon={<AlertTriangle className="h-4 w-4" />}
       />
-
       <StatCard
         title="Segera Kadaluarsa"
         value={stats.expiringSoon}
-        description="< 30 hari"
+        description="Dalam 30 hari"
         variant="warning"
+        icon={<Clock className="h-4 w-4" />}
       />
-
       <StatCard
         title="Perhatian"
         value={stats.warning}
-        description="30-90 hari"
+        description="Dalam 30–90 hari"
         variant="caution"
+        icon={<Eye className="h-4 w-4" />}
       />
     </div>
   )

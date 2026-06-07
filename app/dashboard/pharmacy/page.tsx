@@ -1,17 +1,17 @@
 "use client"
 
-/**
- * Pharmacy Queue Dashboard
- * Displays pending prescriptions and expiring drugs with pagination
- */
-
 import { useState, useCallback } from "react"
 import { toast } from "sonner"
+import { Package, RefreshCw } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 import { PageGuard } from "@/components/auth/page-guard"
+import { PageHeader } from "@/components/ui/page-header"
 import { usePharmacyDashboard } from "@/hooks/use-pharmacy-dashboard"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { PharmacyHeader } from "@/components/pharmacy/pharmacy-header"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 import { PharmacyStatsCards } from "@/components/pharmacy/pharmacy-stats-cards"
 import { PrescriptionQueueTable } from "@/components/pharmacy/prescription-queue-table"
 import { ExpiringDrugsList } from "@/components/pharmacy/expiring-drugs-list"
@@ -19,15 +19,14 @@ import { BulkFulfillmentDialog } from "@/components/pharmacy/bulk-fulfillment-di
 import { bulkFulfillPrescriptions } from "@/lib/services/pharmacy.service"
 import { getErrorMessage } from "@/lib/utils/error"
 import { PrescriptionFulfillmentInput, PrescriptionQueueItem } from "@/types/pharmacy"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 type VisitTypeFilter = "all" | "outpatient" | "inpatient"
+
+const VISIT_FILTERS: { value: VisitTypeFilter; label: string }[] = [
+  { value: "all", label: "Semua" },
+  { value: "outpatient", label: "Rawat Jalan" },
+  { value: "inpatient", label: "Rawat Inap" },
+]
 
 export default function PharmacyDashboard() {
   return (
@@ -38,6 +37,7 @@ export default function PharmacyDashboard() {
 }
 
 function PharmacyDashboardContent() {
+  const router = useRouter()
   const [visitTypeFilter, setVisitTypeFilter] = useState<VisitTypeFilter>("all")
   const [page, setPage] = useState(1)
 
@@ -51,16 +51,13 @@ function PharmacyDashboardContent() {
     expiringError,
     lastRefresh,
     refresh,
-  } = usePharmacyDashboard({
-    page,
-    visitType: visitTypeFilter,
-  })
+  } = usePharmacyDashboard({ page, visitType: visitTypeFilter })
 
   const [selectedGroup, setSelectedGroup] = useState<PrescriptionQueueItem | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleVisitTypeChange = useCallback((value: string) => {
-    setVisitTypeFilter(value as VisitTypeFilter)
+  const handleVisitTypeChange = useCallback((value: VisitTypeFilter) => {
+    setVisitTypeFilter(value)
     setPage(1)
   }, [])
 
@@ -95,50 +92,86 @@ function PharmacyDashboardContent() {
   )
 
   return (
-    <div className="container mx-auto space-y-6 p-6">
-      <PharmacyHeader lastRefresh={lastRefresh} onRefresh={refresh} />
+    <>
+      <PageHeader title="Farmasi" description="Kelola resep dan stok obat">
+        {lastRefresh && (
+          <span className="text-muted-foreground hidden text-xs sm:inline">
+            {lastRefresh.toLocaleTimeString("id-ID")}
+          </span>
+        )}
+        <Button variant="outline" size="sm" onClick={refresh}>
+          <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+          Refresh
+        </Button>
+        <Button size="sm" onClick={() => router.push("/dashboard/pharmacy/inventory")}>
+          <Package className="mr-1.5 h-3.5 w-3.5" />
+          Kelola Stok
+        </Button>
+      </PageHeader>
 
-      <PharmacyStatsCards queueCount={pagination.total} expiringDrugs={expiringDrugs} />
+      <div className="container mx-auto max-w-5xl space-y-5 px-6 py-6">
+        <PharmacyStatsCards queueCount={pagination.total} expiringDrugs={expiringDrugs} />
 
-      <Tabs defaultValue="queue" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="queue">Antrian Resep ({pagination.total})</TabsTrigger>
-          <TabsTrigger value="expiring">Obat Kadaluarsa ({expiringDrugs.all.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="queue" className="space-y-4">
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-medium">Filter Tipe Kunjungan:</label>
-            <Select value={visitTypeFilter} onValueChange={handleVisitTypeChange}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Semua</SelectItem>
-                <SelectItem value="outpatient">Rawat Jalan</SelectItem>
-                <SelectItem value="inpatient">Rawat Inap</SelectItem>
-              </SelectContent>
-            </Select>
+        <Tabs defaultValue="queue" className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <TabsList className="inline-flex">
+              <TabsTrigger value="queue" className="gap-2">
+                Antrian Resep
+                {pagination.total > 0 && (
+                  <Badge className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                    {pagination.total}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="expiring" className="gap-2">
+                Obat Kadaluarsa
+                {expiringDrugs.all.length > 0 && (
+                  <Badge className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] leading-none font-semibold text-white tabular-nums">
+                    {expiringDrugs.all.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
           </div>
 
-          <PrescriptionQueueTable
-            queue={queue}
-            isLoading={queueLoading}
-            error={queueError}
-            onProcess={handleProcessGroup}
-            pagination={pagination}
-            onPageChange={setPage}
-          />
-        </TabsContent>
+          <TabsContent value="queue" className="space-y-3">
+            {/* Visit type pill filter */}
+            <div className="flex items-center gap-1.5">
+              {VISIT_FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => handleVisitTypeChange(f.value)}
+                  className={cn(
+                    "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                    visitTypeFilter === f.value
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
 
-        <TabsContent value="expiring" className="space-y-4">
-          <ExpiringDrugsList
-            drugs={expiringDrugs.all}
-            isLoading={expiringLoading}
-            error={expiringError}
-          />
-        </TabsContent>
-      </Tabs>
+            <PrescriptionQueueTable
+              queue={queue}
+              isLoading={queueLoading}
+              error={queueError}
+              onProcess={handleProcessGroup}
+              pagination={pagination}
+              onPageChange={setPage}
+            />
+          </TabsContent>
+
+          <TabsContent value="expiring">
+            <ExpiringDrugsList
+              data={expiringDrugs}
+              isLoading={expiringLoading}
+              error={expiringError}
+            />
+          </TabsContent>
+        </Tabs>
+      </div>
 
       <BulkFulfillmentDialog
         open={!!selectedGroup}
@@ -149,6 +182,6 @@ function PharmacyDashboardContent() {
         medicalRecordId={selectedGroup?.medicalRecordId}
         onPrescriptionAdded={refresh}
       />
-    </div>
+    </>
   )
 }
