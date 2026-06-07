@@ -124,56 +124,63 @@ export function AddInventoryDialog({ open, onOpenChange, onSuccess }: AddInvento
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto md:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle>Tambah Stok Obat</DialogTitle>
-          <DialogDescription>
-            Catat pemasukan stok obat baru dengan batch number dan tanggal kadaluarsa
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 p-0 md:max-w-[700px]">
+        {/* Non-scrollable header */}
+        <div className="shrink-0 border-b px-6 pt-6 pb-4">
+          <DialogHeader>
+            <DialogTitle>Tambah Stok Obat</DialogTitle>
+            <DialogDescription>
+              Catat pemasukan stok obat baru dengan batch number dan tanggal kadaluarsa
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {/* Drug Selection */}
-          <Field>
-            <FieldContent>
-              <DrugSearch
-                label="Nama Obat"
-                value={drugSearch}
-                onChange={setDrugSearch}
-                onSelect={handleDrugSelect}
-                required
-              />
-              <FieldError errors={[form.formState.errors.drugId]} />
-            </FieldContent>
-          </Field>
+        {/* Scrollable body */}
+        <form
+          id="add-inventory-form"
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex-1 overflow-y-auto px-6 py-4"
+        >
+          <div className="space-y-5">
+            <Field>
+              <FieldContent>
+                <DrugSearch
+                  label="Nama Obat"
+                  value={drugSearch}
+                  onChange={setDrugSearch}
+                  onSelect={handleDrugSelect}
+                  required
+                />
+                <FieldError errors={[form.formState.errors.drugId]} />
+              </FieldContent>
+            </Field>
 
-          {/* Inventory Form Fields */}
-          <InventoryFormFields
-            control={form.control}
-            errors={form.formState.errors}
-            disabled={isSubmitting}
-          />
-
-          {/* Duplicate Warning */}
-          {isDuplicate && duplicateCheck && (
-            <BatchDuplicateWarning duplicateCheck={duplicateCheck} />
-          )}
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+            <InventoryFormFields
+              control={form.control}
+              errors={form.formState.errors}
               disabled={isSubmitting}
-            >
-              Batal
-            </Button>
-            <Button type="submit" disabled={isSubmitting || isChecking}>
-              {isSubmitting ? "Menyimpan..." : "Simpan"}
-            </Button>
+            />
+
+            {isDuplicate && duplicateCheck && (
+              <BatchDuplicateWarning duplicateCheck={duplicateCheck} />
+            )}
           </div>
         </form>
+
+        {/* Sticky footer */}
+        <div className="bg-background flex shrink-0 justify-end gap-2 border-t px-6 py-4">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Batal
+          </Button>
+          <Button type="submit" form="add-inventory-form" disabled={isSubmitting || isChecking}>
+            {isSubmitting ? "Menyimpan..." : "Simpan"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

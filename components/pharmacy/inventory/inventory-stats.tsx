@@ -1,9 +1,5 @@
-/**
- * Inventory Statistics Cards Component
- */
-
-import { Card, CardContent } from "@/components/ui/card"
-import { Package } from "lucide-react"
+import { Package, AlertTriangle, Clock, TrendingDown } from "lucide-react"
+import { StatCard } from "@/components/pharmacy/stats/stat-card"
 
 interface InventoryStatsProps {
   totalBatches: number
@@ -19,45 +15,35 @@ export function InventoryStats({
   lowStockCount,
 }: InventoryStatsProps) {
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-      <Card className="py-0">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-2">
-            <Package className="text-muted-foreground h-8 w-8" />
-            <div>
-              <p className="text-muted-foreground text-sm">Total Batch</p>
-              <p className="text-2xl font-bold">{totalBatches}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-red-200 bg-red-50 py-0">
-        <CardContent className="p-4">
-          <div>
-            <p className="text-sm text-red-600">Kadaluarsa</p>
-            <p className="text-2xl font-bold text-red-700">{expiredCount}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-orange-200 bg-orange-50 py-0">
-        <CardContent className="p-4">
-          <div>
-            <p className="text-sm text-orange-600">Segera Kadaluarsa</p>
-            <p className="text-2xl font-bold text-orange-700">{expiringSoonCount}</p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-yellow-200 bg-yellow-50 py-0">
-        <CardContent className="p-4">
-          <div>
-            <p className="text-sm text-yellow-600">Stok Rendah</p>
-            <p className="text-2xl font-bold text-yellow-700">{lowStockCount}</p>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <StatCard
+        title="Total Batch"
+        value={totalBatches}
+        description="Batch terdaftar"
+        variant="default"
+        icon={<Package className="h-4 w-4" />}
+      />
+      <StatCard
+        title="Kadaluarsa"
+        value={expiredCount}
+        description="Halaman ini"
+        variant="danger"
+        icon={<AlertTriangle className="h-4 w-4" />}
+      />
+      <StatCard
+        title="Segera Kadaluarsa"
+        value={expiringSoonCount}
+        description="Dalam 30 hari"
+        variant="warning"
+        icon={<Clock className="h-4 w-4" />}
+      />
+      <StatCard
+        title="Stok Rendah"
+        value={lowStockCount}
+        description="Di bawah 10 unit"
+        variant="caution"
+        icon={<TrendingDown className="h-4 w-4" />}
+      />
     </div>
   )
 }
