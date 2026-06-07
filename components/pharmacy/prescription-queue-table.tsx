@@ -76,7 +76,7 @@ export function PrescriptionQueueTable({
               <TableHead className="min-w-[180px]">Pasien</TableHead>
               <TableHead className="min-w-[200px]">Resep</TableHead>
               <TableHead className="min-w-[150px]">Dokter</TableHead>
-              <TableHead className="min-w-[120px]">Waktu</TableHead>
+              <TableHead className="min-w-[120px]">Dibuat</TableHead>
               <TableHead className="min-w-[100px]">Aksi</TableHead>
             </TableRow>
           </TableHeader>

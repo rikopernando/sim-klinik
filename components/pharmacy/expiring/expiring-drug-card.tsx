@@ -49,7 +49,7 @@ export const ExpiringDrugCard = memo(function ExpiringDrugCard({
         href={`/dashboard/pharmacy/inventory?search=${encodeURIComponent(inventory.drug.name)}`}
         target="_blank"
       >
-        <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs">
+        <Button variant="outline" size="sm" className="h-7 shrink-0 px-3 text-xs">
           Inventaris
         </Button>
       </Link>

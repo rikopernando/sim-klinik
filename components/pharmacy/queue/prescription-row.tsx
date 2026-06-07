@@ -1,5 +1,5 @@
 import { memo } from "react"
-import { MapPin } from "lucide-react"
+import { MapPin, Play } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -38,7 +38,12 @@ export const PrescriptionRow = memo(function PrescriptionRow({
 
   const prescribedAt = item.prescriptions[0]?.prescription.createdAt
   const timeLabel = prescribedAt
-    ? new Date(prescribedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })
+    ? new Date(prescribedAt).toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
     : "-"
 
   return (
@@ -93,6 +98,7 @@ export const PrescriptionRow = memo(function PrescriptionRow({
 
       <TableCell>
         <Button size="sm" onClick={() => onProcess(item)}>
+          <Play className="mr-1.5 h-3.5 w-3.5" />
           Proses
         </Button>
       </TableCell>

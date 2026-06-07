@@ -126,7 +126,7 @@ function PharmacyDashboardContent() {
               <TabsTrigger value="expiring" className="gap-2">
                 Obat Kadaluarsa
                 {expiringDrugs.all.length > 0 && (
-                  <Badge className="rounded-full bg-orange-500 px-1.5 py-0.5 text-[10px] leading-none font-semibold text-white tabular-nums">
+                  <Badge className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums text-orange-700 dark:bg-orange-900/40 dark:text-orange-300">
                     {expiringDrugs.all.length}
                   </Badge>
                 )}

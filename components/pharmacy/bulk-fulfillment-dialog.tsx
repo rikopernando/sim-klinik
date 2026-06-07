@@ -8,7 +8,6 @@ import { AlertCircle, Loader2, Plus } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Separator } from "@/components/ui/separator"
 import { PrescriptionQueueItem } from "@/types/pharmacy"
 
 import { usePharmacists } from "./hooks/use-pharmacists"
@@ -225,80 +224,86 @@ export function BulkFulfillmentDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto">
-          <DialogHeader>
-            <div className="flex items-start justify-between gap-3">
+        <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col gap-0 p-0">
+          {/* Non-scrollable header */}
+          <div className="shrink-0 border-b px-6 pt-6 pb-4">
+            <DialogHeader>
               <BulkFulfillmentHeader selectedGroup={selectedGroup} />
-              {medicalRecordId && selectedGroup?.doctor && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleOpenAddPrescription}
-                  disabled={isSubmitting}
-                  className="shrink-0"
-                >
-                  <Plus className="mr-1.5 h-3.5 w-3.5" />
-                  Tambah Resep
-                </Button>
-              )}
-            </div>
-          </DialogHeader>
-
-          {validationError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{validationError}</AlertDescription>
-            </Alert>
-          )}
-
-          {stockIssues.length > 0 && !validationError && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="font-medium">Masalah Stok:</div>
-                <ul className="mt-1 list-inside list-disc text-sm">
-                  {stockIssues.map((issue, idx) => (
-                    <li key={idx}>{issue}</li>
-                  ))}
-                </ul>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="space-y-5">
-            {selectedGroup?.prescriptions.map((item, idx) => (
-              <PrescriptionItem
-                key={item.prescription.id}
-                index={idx}
-                drugId={item.drug?.id || ""}
-                drugName={getMedicationName(item)}
-                frequency={item.prescription.frequency}
-                quantity={item.prescription.quantity}
-                instructions={item.prescription.instructions}
-                unit={item.drug?.unit || "unit"}
-                fulfillmentData={fulfillmentData[item.prescription.id]}
-                onAllocationsChange={(allocs) =>
-                  handleAllocationsChange(item.prescription.id, allocs)
-                }
-                showSeparator={idx > 0}
-                isCompound={item.prescription.isCompound}
-                compoundRecipe={item.compoundRecipe}
-              />
-            ))}
-
-            <Separator />
-
-            <FulfillmentFormFields
-              notes={notes}
-              fulfilledBy={fulfilledBy}
-              pharmacists={pharmacists}
-              isLoadingPharmacists={isLoadingPharmacists}
-              onFulfilledByChange={setFulfilledBy}
-              onNotesChange={setNotes}
-            />
+            </DialogHeader>
           </div>
 
-          <div className="mt-2 flex justify-end gap-2 border-t pt-4">
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto px-6 py-4">
+            {validationError && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{validationError}</AlertDescription>
+              </Alert>
+            )}
+
+            {stockIssues.length > 0 && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="font-medium">Masalah Stok:</div>
+                  <ul className="mt-1 list-inside list-disc text-sm">
+                    {stockIssues.map((issue, idx) => (
+                      <li key={idx}>{issue}</li>
+                    ))}
+                  </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-5">
+              {selectedGroup?.prescriptions.map((item, idx) => (
+                <PrescriptionItem
+                  key={item.prescription.id}
+                  index={idx}
+                  drugId={item.drug?.id || ""}
+                  drugName={getMedicationName(item)}
+                  frequency={item.prescription.frequency}
+                  quantity={item.prescription.quantity}
+                  instructions={item.prescription.instructions}
+                  unit={item.drug?.unit || "unit"}
+                  fulfillmentData={fulfillmentData[item.prescription.id]}
+                  onAllocationsChange={(allocs) =>
+                    handleAllocationsChange(item.prescription.id, allocs)
+                  }
+                  showSeparator={idx > 0}
+                  isCompound={item.prescription.isCompound}
+                  compoundRecipe={item.compoundRecipe}
+                />
+              ))}
+            </div>
+
+            {medicalRecordId && selectedGroup?.doctor && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOpenAddPrescription}
+                disabled={isSubmitting}
+                className="mt-4 w-full border-dashed"
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Tambah Resep
+              </Button>
+            )}
+
+            <div className="mt-4 border-t pt-4">
+              <FulfillmentFormFields
+                notes={notes}
+                fulfilledBy={fulfilledBy}
+                pharmacists={pharmacists}
+                isLoadingPharmacists={isLoadingPharmacists}
+                onFulfilledByChange={setFulfilledBy}
+                onNotesChange={setNotes}
+              />
+            </div>
+          </div>
+
+          {/* Sticky footer */}
+          <div className="bg-background flex shrink-0 justify-end gap-2 border-t px-6 py-4">
             <Button variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Batal
             </Button>
