@@ -72,10 +72,97 @@ export function BillingDetailsPanel({
           </div>
         )}
 
-        {/* Main summary bar */}
-        <div className="flex items-center justify-between gap-6 px-5 py-3">
-          {/* Totals — horizontal */}
-          <div className="flex items-center gap-5">
+        {/* Mobile: receipt-style stacked summary */}
+        <div className="space-y-1.5 px-5 pt-3 pb-2 sm:hidden">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">Subtotal</span>
+            <span className="font-mono font-semibold tabular-nums">
+              {isReady ? formatCurrency(billing!.subtotal) : "—"}
+            </span>
+          </div>
+          {hasDiscount && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Diskon</span>
+              <span className="font-mono font-semibold text-red-500 tabular-nums">
+                − {formatCurrency(billing!.discount)}
+              </span>
+            </div>
+          )}
+          {hasInsurance && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Asuransi</span>
+              <span className="font-mono font-semibold text-blue-500 tabular-nums">
+                − {formatCurrency(billing!.insuranceCoverage)}
+              </span>
+            </div>
+          )}
+          <div className="flex items-center justify-between border-t pt-1.5">
+            <span className="font-semibold">Total</span>
+            <span
+              className={cn(
+                "font-mono text-base font-bold tabular-nums",
+                !isReady && "text-muted-foreground"
+              )}
+            >
+              {isReady ? formatCurrency(billing!.totalAmount) : "—"}
+            </span>
+          </div>
+          {hasPaidAmount && (
+            <>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Terbayar</span>
+                <span className="font-mono font-semibold text-emerald-600 tabular-nums">
+                  {formatCurrency(billing!.paidAmount)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-primary font-semibold">Sisa</span>
+                <span className="text-primary font-mono font-bold tabular-nums">
+                  {formatCurrency(billing!.remainingAmount)}
+                </span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Mobile CTA */}
+        <div className="px-5 pb-4 sm:hidden">
+          {isPaid ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 py-1.5 dark:bg-emerald-900/20">
+                <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-emerald-500">
+                  <svg className="h-2 w-2 text-white" fill="currentColor" viewBox="0 0 12 12">
+                    <path d="M10.28 2.28L3.989 8.575 1.695 6.28A1 1 0 00.28 7.695l3 3a1 1 0 001.414 0l7-7A1 1 0 0010.28 2.28z" />
+                  </svg>
+                </div>
+                <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400">Lunas</p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                className="w-full gap-1.5"
+              >
+                <Printer size={13} />
+                Cetak Kuitansi
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={onProcessPaymentWithDiscount}
+              disabled={isSubmitting || !isReady}
+              className="w-full gap-2"
+            >
+              <CreditCard size={14} />
+              {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+            </Button>
+          )}
+        </div>
+
+        {/* Desktop: compact horizontal bar */}
+        <div className="hidden items-center justify-between gap-6 px-5 py-3 sm:flex">
+          {/* Totals */}
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
             <div>
               <p className="text-muted-foreground text-[11px] font-semibold tracking-widest uppercase">
                 Subtotal

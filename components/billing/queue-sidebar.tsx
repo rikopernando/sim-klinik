@@ -36,7 +36,7 @@ export function QueueSidebar({
   } = useQueueSearch(queue)
 
   return (
-    <div className="bg-muted/20 flex min-h-0 w-80 flex-col border-r">
+    <div className="bg-muted/20 flex h-full min-h-0 w-full flex-col border-r">
       {/* Fixed header */}
       <div className="shrink-0 border-b px-4 py-3">
         <div className="mb-1 flex items-center justify-between">
