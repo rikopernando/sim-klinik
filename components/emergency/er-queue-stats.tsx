@@ -1,9 +1,3 @@
-/**
- * ER Queue Statistics Component
- * Displays triage statistics in card format
- */
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { TriageStatistics } from "@/types/emergency"
 
 interface ERQueueStatsProps {
@@ -12,54 +6,49 @@ interface ERQueueStatsProps {
 
 export function ERQueueStats({ statistics }: ERQueueStatsProps) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {/* Total Queue */}
-      <Card>
-        <CardHeader className="pb-0">
-          <CardTitle className="text-sm font-medium">Total Antrian</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{statistics.total}</div>
-          <p className="text-muted-foreground text-xs">Pasien menunggu</p>
-        </CardContent>
-      </Card>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="bg-card rounded-xl border p-4">
+        <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+          Total Antrian
+        </p>
+        <p className="mt-1 text-2xl font-bold">{statistics.total}</p>
+        <p className="text-muted-foreground text-xs">Pasien menunggu</p>
+      </div>
 
-      {/* Red - Critical */}
-      <Card className="border-red-200 bg-red-50">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-sm font-medium text-red-700">
-            🔴 Merah (Gawat Darurat)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-red-700">{statistics.red}</div>
-          <p className="text-xs text-red-600">Prioritas tertinggi</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950/30">
+        <div className="mb-1 flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-red-500" />
+          <p className="text-xs font-semibold tracking-wide text-red-700 uppercase dark:text-red-400">
+            Merah
+          </p>
+        </div>
+        <p className="text-2xl font-bold text-red-700 dark:text-red-400">{statistics.red}</p>
+        <p className="text-xs text-red-600 dark:text-red-500">Prioritas tertinggi</p>
+      </div>
 
-      {/* Yellow - Urgent */}
-      <Card className="border-yellow-200 bg-yellow-50">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-sm font-medium text-yellow-700">🟡 Kuning (Urgent)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-yellow-700">{statistics.yellow}</div>
-          <p className="text-xs text-yellow-600">Prioritas sedang</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4 dark:border-yellow-900 dark:bg-yellow-950/30">
+        <div className="mb-1 flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-yellow-500" />
+          <p className="text-xs font-semibold tracking-wide text-yellow-700 uppercase dark:text-yellow-400">
+            Kuning
+          </p>
+        </div>
+        <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">
+          {statistics.yellow}
+        </p>
+        <p className="text-xs text-yellow-600 dark:text-yellow-500">Prioritas sedang</p>
+      </div>
 
-      {/* Green - Non-Urgent */}
-      <Card className="border-green-200 bg-green-50">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-sm font-medium text-green-700">
-            🟢 Hijau (Non-Urgent)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-700">{statistics.green}</div>
-          <p className="text-xs text-green-600">Prioritas rendah</p>
-        </CardContent>
-      </Card>
+      <div className="rounded-xl border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
+        <div className="mb-1 flex items-center gap-1.5">
+          <div className="h-2 w-2 rounded-full bg-green-500" />
+          <p className="text-xs font-semibold tracking-wide text-green-700 uppercase dark:text-green-400">
+            Hijau
+          </p>
+        </div>
+        <p className="text-2xl font-bold text-green-700 dark:text-green-400">{statistics.green}</p>
+        <p className="text-xs text-green-600 dark:text-green-500">Prioritas rendah</p>
+      </div>
     </div>
   )
 }

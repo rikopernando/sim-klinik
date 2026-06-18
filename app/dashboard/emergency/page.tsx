@@ -42,6 +42,7 @@ import { ERQueueEmpty } from "@/components/emergency/er-queue-empty"
 import { ERQueueLoading } from "@/components/emergency/er-queue-loading"
 import { ERQueueTabs } from "@/components/emergency/er-queue-tabs"
 import { getErrorMessage } from "@/lib/utils/error"
+import { cn } from "@/lib/utils"
 
 import { PageGuard } from "@/components/auth/page-guard"
 
@@ -157,16 +158,15 @@ function EmergencyQueueContent() {
 
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold">Dashboard UGD</h1>
+        <div className="flex items-start gap-3">
+          <span className="bg-primary mt-1.5 h-5 w-1 shrink-0 rounded-full" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Dashboard UGD</h1>
+            <p className="text-muted-foreground mt-0.5 text-sm">Antrian Unit Gawat Darurat</p>
           </div>
-          <p className="text-muted-foreground">Antrian Unit Gawat Darurat</p>
         </div>
 
-        {/* Actions */}
         <div className="flex gap-2">
-          {/* Sound Toggle */}
           <Button
             variant="outline"
             size="icon"
@@ -177,25 +177,30 @@ function EmergencyQueueContent() {
           </Button>
 
           <Button variant="outline" onClick={refresh} disabled={isLoading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
             Refresh
           </Button>
 
           <Dialog open={showQuickRegister} onOpenChange={setShowQuickRegister}>
             <DialogTrigger asChild>
-              <Button className="bg-red-600 hover:bg-red-700">
+              <Button variant="destructive">
                 <AlertCircle className="mr-2 h-4 w-4" />
-                Pendaftaran Cepat UGD
+                <span className="hidden sm:inline">Pendaftaran Cepat UGD</span>
+                <span className="sm:hidden">Daftar UGD</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Pendaftaran Cepat UGD</DialogTitle>
-              </DialogHeader>
-              <QuickRegistrationForm
-                onSuccess={handleQuickRegisterSuccess}
-                onCancel={() => setShowQuickRegister(false)}
-              />
+            <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 p-0">
+              <div className="shrink-0 border-b px-6 pt-6 pb-4">
+                <DialogHeader>
+                  <DialogTitle>Pendaftaran Cepat UGD</DialogTitle>
+                </DialogHeader>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-4">
+                <QuickRegistrationForm
+                  onSuccess={handleQuickRegisterSuccess}
+                  onCancel={() => setShowQuickRegister(false)}
+                />
+              </div>
             </DialogContent>
           </Dialog>
         </div>
