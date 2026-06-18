@@ -11,6 +11,7 @@ Priority order from `documentation/priority-summary.png`:
 | P0       | Master Data Panel Lab                      | ✅ Done    |
 | P1       | Queue ticket print                         | ⬜ Pending |
 | P1       | Design improvements (main pages)           | ⬜ Pending |
+| P1       | Mobile & tablet responsive (all pages)     | ⬜ Pending |
 | P1       | Stok Opname                                | ✅ Done    |
 | P1       | Dashboard home with real live stats        | ✅ Done    |
 | P2       | Lab → Doctor notifications                 | ⬜ Pending |
@@ -516,3 +517,55 @@ Stale requests not cancelled when user types fast or component unmounts:
 
 - `hooks/use-diagnoses.ts` — React Query with 5 min stale time ✅
 - `hooks/use-discharge-queue.ts` — AbortController + proper cleanup ✅
+
+---
+
+## P1: Mobile & Tablet Responsive
+
+### Strategy
+
+Two layout categories need different treatment:
+
+**Split-layout pages** (full-height, sidebar + detail): Master-detail pattern — on mobile, show one panel at a time with a `mobileView` state toggle. On tablet (`md`), show both panels side by side with a narrower sidebar.
+
+**Standard pages** (PageHeader + scrollable content): Already reasonably mobile-friendly. Needs touch-friendly table rows, responsive toolbars, and full-width CTAs.
+
+### Rules
+
+- No logic, hook, or API changes — UI only
+- Use `frontend-design` skill for each page
+- `sm` breakpoint (640px) = tablet portrait / large phone landscape
+- `md` breakpoint (768px) = tablet landscape / small desktop
+- Full-width buttons on mobile (`w-full sm:w-auto`)
+- Responsive toolbars: stack vertically on mobile (`flex-col sm:flex-row`)
+- Touch targets: minimum `py-3` on interactive rows
+- Use `frontend-design` skill, same treatment as cashier
+
+### Priority Order
+
+| #   | Page               | Route                                | File                                             | Layout Type  | Status                                                                                         |
+| --- | ------------------ | ------------------------------------ | ------------------------------------------------ | ------------ | ---------------------------------------------------------------------------------------------- |
+| 1   | Cashier            | /dashboard/cashier                   | app/dashboard/cashier/page.tsx                   | Split layout | ✅ Done — master-detail toggle, merged mobile nav bar, stacked item rows, receipt-style footer |
+| 2   | Emergency          | /dashboard/emergency                 | app/dashboard/emergency/page.tsx                 | Standard     | ⬜                                                                                             |
+| 3   | Doctor Dashboard   | /dashboard/doctor                    | app/dashboard/doctor/page.tsx                    | Standard     | ⬜                                                                                             |
+| 4   | Pharmacy           | /dashboard/pharmacy                  | app/dashboard/pharmacy/page.tsx                  | Standard     | ⬜                                                                                             |
+| 5   | Laboratory Queue   | /dashboard/laboratory/queue          | app/dashboard/laboratory/queue/page.tsx          | Standard     | ⬜                                                                                             |
+| 6   | Inpatient Patients | /dashboard/inpatient/patients        | app/dashboard/inpatient/patients/page.tsx        | Standard     | ⬜                                                                                             |
+| 7   | Registration       | /dashboard/registration              | app/dashboard/registration/page.tsx              | Standard     | ⬜                                                                                             |
+| 8   | Medical Records    | /dashboard/medical-records/[visitId] | app/dashboard/medical-records/[visitId]/page.tsx | Standard     | ⬜                                                                                             |
+
+### Per-page Notes
+
+**Emergency (#2)** — Already has partial `sm:flex-row` in toolbar. Needs: responsive action buttons, touch-friendly triage cards, mobile-friendly triage dialog.
+
+**Doctor Dashboard (#3)** — Has patient queue + stats cards. Needs: responsive stat grid, touch-friendly queue rows, full-width action buttons on mobile.
+
+**Pharmacy (#4)** — PageHeader + tabs + table. Needs: responsive pill filters, touch-friendly prescription rows, full-width "Proses" button on mobile. Fulfillment dialog already has sticky footer.
+
+**Lab Queue (#5)** — Has old-style custom header (no PageHeader). Needs: convert to PageHeader, responsive toolbar, touch-friendly test order rows.
+
+**Inpatient Patients (#6)** — Standard list. Needs: responsive stat cards (`grid-cols-2` on mobile), touch-friendly patient rows.
+
+**Registration (#7)** — Multi-step form. Needs: responsive form layout (single column on mobile), touch-friendly step indicators.
+
+**Medical Records (#8)** — Tab-heavy EMR. Needs: tab scroll on mobile, responsive SOAP form fields, full-width lock/save buttons on mobile.
