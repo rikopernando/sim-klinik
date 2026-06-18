@@ -13,8 +13,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { Field, FieldGroup, FieldSet } from "@/components/ui/field"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { useDiscountCalculation, type DiscountType } from "@/hooks/use-discount-calculation"
 import type { ProcessPaymentData, PaymentMethod } from "@/types/billing"
 import { DiscountSection } from "./process-payment/discount-section"
@@ -134,88 +132,82 @@ export function ProcessPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-h-165 max-w-4xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Proses Pembayaran</DialogTitle>
-          <DialogDescription>
-            {hasPartialPayment
-              ? "Lanjutkan pembayaran untuk sisa tagihan"
-              : "Proses pembayaran dengan atau tanpa diskon dalam satu langkah"}
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col gap-0 p-0">
+        {/* Non-scrollable header */}
+        <div className="shrink-0 border-b px-6 pt-6 pb-4">
+          <DialogHeader>
+            <DialogTitle>Proses Pembayaran</DialogTitle>
+            <DialogDescription>
+              {hasPartialPayment
+                ? "Lanjutkan pembayaran untuk sisa tagihan"
+                : "Proses pembayaran dengan atau tanpa diskon dalam satu langkah"}
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-        <ScrollArea>
-          <FieldGroup>
-            <FieldSet>
-              <FieldGroup className="gap-4">
-                {/* Discount Section (Only shown for new payments, not partial) */}
-                {!hasPartialPayment && (
-                  <DiscountSection
-                    isOpen={isDiscountOpen}
-                    onOpenChange={setIsDiscountOpen}
-                    discountType={discountType}
-                    onDiscountTypeChange={setDiscountType}
-                    discount={discount}
-                    onDiscountChange={setDiscount}
-                    discountPercentage={discountPercentage}
-                    onDiscountPercentageChange={setDiscountPercentage}
-                    insuranceCoverage={insuranceCoverage}
-                    onInsuranceCoverageChange={setInsuranceCoverage}
-                    discountAmount={discountAmount}
-                    currentTotal={currentTotal}
-                    totalAfterDiscount={totalAfterDiscount}
-                    drugsSubtotal={drugsSubtotal}
-                    proceduresSubtotal={proceduresSubtotal}
-                    isValidDiscount={isValidDiscount}
-                    isValidInsurance={isValidInsurance}
-                    isSubmitting={isSubmitting}
-                  />
-                )}
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <div className="space-y-4">
+            {/* Discount Section (Only shown for new payments, not partial) */}
+            {!hasPartialPayment && (
+              <DiscountSection
+                isOpen={isDiscountOpen}
+                onOpenChange={setIsDiscountOpen}
+                discountType={discountType}
+                onDiscountTypeChange={setDiscountType}
+                discount={discount}
+                onDiscountChange={setDiscount}
+                discountPercentage={discountPercentage}
+                onDiscountPercentageChange={setDiscountPercentage}
+                insuranceCoverage={insuranceCoverage}
+                onInsuranceCoverageChange={setInsuranceCoverage}
+                discountAmount={discountAmount}
+                currentTotal={currentTotal}
+                totalAfterDiscount={totalAfterDiscount}
+                drugsSubtotal={drugsSubtotal}
+                proceduresSubtotal={proceduresSubtotal}
+                isValidDiscount={isValidDiscount}
+                isValidInsurance={isValidInsurance}
+                isSubmitting={isSubmitting}
+              />
+            )}
 
-                {/* Payment Method Section */}
-                <PaymentMethodSection
-                  paymentMethod={paymentMethod}
-                  onPaymentMethodChange={setPaymentMethod}
-                  amountReceived={amountReceived}
-                  onAmountReceivedChange={setAmountReceived}
-                  paymentReference={paymentReference}
-                  onPaymentReferenceChange={setPaymentReference}
-                  notes={notes}
-                  onNotesChange={setNotes}
-                  changeAmount={changeAmount}
-                  isSubmitting={isSubmitting}
-                />
+            {/* Payment Method Section */}
+            <PaymentMethodSection
+              paymentMethod={paymentMethod}
+              onPaymentMethodChange={setPaymentMethod}
+              amountReceived={amountReceived}
+              onAmountReceivedChange={setAmountReceived}
+              paymentReference={paymentReference}
+              onPaymentReferenceChange={setPaymentReference}
+              notes={notes}
+              onNotesChange={setNotes}
+              changeAmount={changeAmount}
+              isSubmitting={isSubmitting}
+            />
 
-                {/* Billing Summary */}
-                <BillingSummarySection
-                  subtotal={subtotal}
-                  discountType={discountType}
-                  discountAmount={discountAmount}
-                  insurance={insurance}
-                  paidAmount={paidAmount}
-                  finalTotal={finalTotal}
-                  isValidTotal={isValidTotal}
-                />
+            {/* Billing Summary */}
+            <BillingSummarySection
+              subtotal={subtotal}
+              discountType={discountType}
+              discountAmount={discountAmount}
+              insurance={insurance}
+              paidAmount={paidAmount}
+              finalTotal={finalTotal}
+              isValidTotal={isValidTotal}
+            />
+          </div>
+        </div>
 
-                {/* Action Buttons */}
-                <Field orientation="horizontal">
-                  <div className="flex w-full gap-2">
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={isSubmitting || !isValid}
-                      className="flex-1"
-                    >
-                      {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
-                    </Button>
-                    <Button onClick={handleClose} variant="outline" disabled={isSubmitting}>
-                      Batal
-                    </Button>
-                  </div>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
-          </FieldGroup>
-        </ScrollArea>
+        {/* Sticky footer */}
+        <div className="bg-background flex shrink-0 justify-end gap-2 border-t px-6 py-4">
+          <Button onClick={handleClose} variant="outline" disabled={isSubmitting}>
+            Batal
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting || !isValid}>
+            {isSubmitting ? "Memproses..." : "Proses Pembayaran"}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

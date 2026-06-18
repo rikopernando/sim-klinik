@@ -99,7 +99,7 @@ function CashierContent() {
           </div>
           {lastRefresh && (
             <div className="bg-muted text-muted-foreground flex items-center gap-1.5 rounded-full px-3 py-1 text-xs">
-              <div className="h-1.5 w-1.5 rounded-full bg-[#52b788]" />
+              <div className="bg-primary h-1.5 w-1.5 rounded-full" />
               <span>Diperbarui {new Date(lastRefresh).toLocaleTimeString("id-ID")}</span>
             </div>
           )}

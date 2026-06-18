@@ -1,6 +1,6 @@
 "use client"
 
-import { RefreshCw } from "lucide-react"
+import { RefreshCw, Users } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Chip } from "@/components/ui/chip"
@@ -88,10 +88,27 @@ export function QueueSidebar({
       <div className="flex-1 overflow-hidden">
         <ScrollArea className="h-full">
           {isLoading && queue.length === 0 ? (
-            <div className="text-muted-foreground p-8 text-center text-sm">Memuat antrian...</div>
+            <div className="space-y-1.5 px-2 py-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="rounded-lg border px-3 py-3">
+                  <div className="mb-1.5 flex items-start justify-between gap-2">
+                    <div className="bg-muted h-4 w-32 animate-pulse rounded" />
+                    <div className="bg-muted h-4 w-12 animate-pulse rounded-full" />
+                  </div>
+                  <div className="bg-muted mb-2 h-3 w-40 animate-pulse rounded" />
+                  <div className="flex items-center justify-between">
+                    <div className="bg-muted h-3 w-24 animate-pulse rounded" />
+                    <div className="bg-muted h-4 w-14 animate-pulse rounded-full" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : filteredQueue.length === 0 ? (
-            <div className="text-muted-foreground p-8 text-center text-sm">
-              {searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada pasien dalam antrian"}
+            <div className="flex flex-col items-center justify-center gap-2 p-8 text-center">
+              <Users size={32} className="text-muted-foreground/30" />
+              <p className="text-muted-foreground text-sm">
+                {searchQuery ? "Tidak ada hasil pencarian" : "Tidak ada pasien dalam antrian"}
+              </p>
             </div>
           ) : (
             <div className="space-y-1.5 px-2 py-2">
@@ -128,8 +145,8 @@ function QueueItemCard({ item, isSelected, onSelect }: QueueItemCardProps) {
       className={cn(
         "w-full rounded-lg border px-3 py-3 text-left transition-all",
         isSelected
-          ? "border-[#52b788] bg-[#52b788]/10 shadow-sm"
-          : "border-border/60 bg-card hover:bg-muted/40 hover:border-[#52b788]/40 hover:shadow-sm"
+          ? "border-primary bg-primary/10 shadow-sm"
+          : "border-border/60 bg-card hover:bg-muted/40 hover:border-primary/40 hover:shadow-sm"
       )}
     >
       {/* Name + visit type */}

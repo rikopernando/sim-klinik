@@ -24,7 +24,7 @@ export function BillingItemsPanel({ billingDetails, isLoading }: BillingItemsPan
   if (isLoading) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <RefreshCw size={22} className="animate-spin text-[#52b788]" />
+        <RefreshCw size={22} className="text-primary animate-spin" />
         <p className="text-muted-foreground text-sm">Memuat detail tagihan...</p>
       </div>
     )
@@ -33,8 +33,8 @@ export function BillingItemsPanel({ billingDetails, isLoading }: BillingItemsPan
   if (!billingDetails) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#52b788]/10">
-          <CreditCard size={28} className="text-[#52b788]/50" />
+        <div className="bg-primary/10 flex h-16 w-16 items-center justify-center rounded-full">
+          <CreditCard size={28} className="text-primary/50" />
         </div>
         <div className="text-center">
           <p className="text-sm font-medium">Pilih pasien dari antrian</p>

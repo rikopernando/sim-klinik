@@ -139,10 +139,10 @@ export function BillingDetailsPanel({
                   </p>
                 </div>
                 <div>
-                  <p className="text-[11px] font-semibold tracking-widest text-[#2d6a4f] uppercase dark:text-[#74c69d]">
+                  <p className="text-primary text-[11px] font-semibold tracking-widest uppercase">
                     Sisa
                   </p>
-                  <p className="font-mono text-sm font-bold text-[#2d6a4f] tabular-nums dark:text-[#74c69d]">
+                  <p className="text-primary font-mono text-sm font-bold tabular-nums">
                     {formatCurrency(billing!.remainingAmount)}
                   </p>
                 </div>
@@ -164,13 +164,15 @@ export function BillingDetailsPanel({
                     Lunas
                   </p>
                 </div>
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={() => window.print()}
-                  className="flex items-center gap-1.5 rounded-xl border border-[#52b788]/30 bg-[#52b788]/10 px-4 py-2 text-sm font-semibold text-[#2d6a4f] transition-colors hover:bg-[#52b788]/20 dark:text-[#74c69d]"
+                  className="gap-1.5"
                 >
                   <Printer size={13} />
                   Cetak Kuitansi
-                </button>
+                </Button>
               </div>
             ) : (
               <Button
