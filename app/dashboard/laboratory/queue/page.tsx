@@ -45,22 +45,19 @@ function LabTechnicianQueuePageContent() {
   return (
     <div className="container mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-            <IconFlask className="h-8 w-8" />
-            Antrian Pemeriksaan Penunjang
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Worklist untuk teknisi laboratorium - {currentDateDisplay}
-          </p>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="bg-primary mt-1.5 h-5 w-1 shrink-0 rounded-full" />
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Antrian Pemeriksaan Penunjang</h1>
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              Worklist teknisi laboratorium — {currentDateDisplay}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-end gap-4">
-          {/* Date Filter */}
+        <div className="flex flex-wrap items-center gap-2">
           <LabDateFilter onDateChange={handleDateChange} initialDate={selectedDate} />
-
-          {/* Manual refresh button */}
           <Button onClick={handleManualRefresh} variant="outline" size="sm">
             <IconRefresh className="mr-2 h-4 w-4" />
             Refresh
@@ -70,20 +67,14 @@ function LabTechnicianQueuePageContent() {
 
       {/* Tabs for different status groups */}
       <Tabs defaultValue="actionable" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="actionable" className="gap-2">
-            🎯 Perlu Diproses
-          </TabsTrigger>
-          <TabsTrigger value="urgent" className="gap-2">
-            🚨 Urgent/STAT
-          </TabsTrigger>
-          <TabsTrigger value="in-progress" className="gap-2">
-            ⏳ Sedang Dikerjakan
-          </TabsTrigger>
-          <TabsTrigger value="completed" className="gap-2">
-            ✅ Selesai Hari Ini
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="inline-flex">
+            <TabsTrigger value="actionable">Perlu Diproses</TabsTrigger>
+            <TabsTrigger value="urgent">Urgent/STAT</TabsTrigger>
+            <TabsTrigger value="in-progress">Sedang Dikerjakan</TabsTrigger>
+            <TabsTrigger value="completed">Selesai Hari Ini</TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Actionable Orders (Ordered + Specimen Collected) */}
         <TabsContent value="actionable" className="space-y-4">

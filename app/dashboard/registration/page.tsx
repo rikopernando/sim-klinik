@@ -260,7 +260,7 @@ function RegistrationPageContent() {
       <div className="container mx-auto max-w-4xl space-y-6 px-6 py-6">
         {/* Change 6: always show step indicator (shows all ✓ on success) */}
         {/* Change 3: patient context next to indicator on visit-registration step */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <StepIndicator step={step} />
           {step === "visit-registration" && selectedPatient && (
             <p className="text-muted-foreground text-sm">

@@ -72,11 +72,27 @@ export function getTriageBadgeColor(status: TriageStatus | null): string {
 }
 
 /**
- * Get triage label with emoji
+ * Get triage label with emoji (full form for display/stats)
  */
 export function getTriageLabel(status: TriageStatus | null): string {
   const config = getTriageConfig(status)
   return `${config.emoji} ${config.label}`
+}
+
+/**
+ * Get short triage label for badges (e.g. "Merah", "Kuning", "Hijau")
+ */
+export function getTriageLabelShort(status: TriageStatus | null): string {
+  switch (status) {
+    case "red":
+      return "Merah"
+    case "yellow":
+      return "Kuning"
+    case "green":
+      return "Hijau"
+    default:
+      return "Belum Triage"
+  }
 }
 
 /**
@@ -89,12 +105,19 @@ export function getTriagePriority(status: TriageStatus | null): number {
 
 /**
  * Get triage card classes (for highlighting queue items)
+ * Uses explicit static classes for Tailwind dark-mode compatibility
  */
 export function getTriageCardClasses(status: TriageStatus | null): string {
-  if (!status) return ""
-
-  const config = getTriageConfig(status)
-  return `border-l-4 ${config.borderColor} ${config.bgColor}/50`
+  switch (status) {
+    case "red":
+      return "border-l-4 border-red-600 bg-red-50/50 dark:bg-red-950/20"
+    case "yellow":
+      return "border-l-4 border-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20"
+    case "green":
+      return "border-l-4 border-green-600 bg-green-50/50 dark:bg-green-950/20"
+    default:
+      return ""
+  }
 }
 
 /**

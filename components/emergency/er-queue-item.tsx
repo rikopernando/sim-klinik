@@ -1,12 +1,26 @@
 import { useState, memo, useEffect } from "react"
-import { Clock, FileText, User, ArrowRight, AlertTriangle, Pencil } from "lucide-react"
+import {
+  Clock,
+  FileText,
+  User,
+  ArrowRight,
+  AlertTriangle,
+  MoreHorizontal,
+  Pencil,
+} from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { ERQueueItem } from "@/types/emergency"
 import {
   getTriageBadgeColor,
-  getTriageLabel,
+  getTriageLabelShort,
   getTriageCardClasses,
   calculateWaitTimeMinutes,
   formatWaitTime,
@@ -51,6 +65,7 @@ function ERQueueItemCardComponent({
   const isIncompleteRegistration = !item.patient.nik
   const waitTimeAlert = getWaitTimeAlertLevel(item.visit.arrivalTime, item.visit.triageStatus)
   const isCritical = item.visit.triageStatus === "red"
+  const isActionable = item.visit.status === "in_examination" || item.visit.status === "registered"
 
   return (
     <>
@@ -81,7 +96,7 @@ function ERQueueItemCardComponent({
 
           <div className="flex shrink-0 flex-col items-end gap-1.5">
             <Badge className={getTriageBadgeColor(item.visit.triageStatus)}>
-              {getTriageLabel(item.visit.triageStatus)}
+              {getTriageLabelShort(item.visit.triageStatus)}
             </Badge>
             {isIncompleteRegistration && (
               <Badge variant="outline" className="border-orange-500 bg-orange-50 text-orange-700">
@@ -102,52 +117,11 @@ function ERQueueItemCardComponent({
           </div>
         )}
 
-        {/* Bottom row: wait time + action buttons */}
-        {(item.visit.status === "in_examination" || item.visit.status === "registered") && (
-          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div
-              className={cn(
-                "flex items-center gap-1.5 text-sm",
-                waitTimeAlert === "critical" && "font-semibold text-red-600",
-                waitTimeAlert === "warning" && "text-orange-600",
-                waitTimeAlert === "normal" && "text-muted-foreground"
-              )}
-            >
-              {waitTimeAlert !== "normal" && <AlertTriangle className="h-3.5 w-3.5" />}
-              <Clock className="h-3.5 w-3.5" />
-              <span>Menunggu: {formatWaitTime(waitTimeMinutes)}</span>
-            </div>
-
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => setShowEditDialog(true)}>
-                <Pencil className="mr-1.5 h-3.5 w-3.5" />
-                Edit
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1 sm:flex-none"
-                onClick={() => onStartExamination?.(item.visit.id, item.visit.status)}
-              >
-                {item.visit.status === "registered" ? (
-                  <User className="mr-1.5 h-3.5 w-3.5" />
-                ) : (
-                  <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                {item.visit.status === "registered" ? "Mulai Pemeriksaan" : "Lanjutkan"}
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setShowHandoverDialog(true)}>
-                <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
-                Handover
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Wait time only (no actions) for examined status */}
-        {item.visit.status !== "in_examination" && item.visit.status !== "registered" && (
+        {/* Bottom row: wait time + actions */}
+        <div className="mt-3 flex items-center justify-between gap-2">
           <div
             className={cn(
-              "mt-3 flex items-center gap-1.5 text-sm",
+              "flex items-center gap-1.5 text-sm",
               waitTimeAlert === "critical" && "font-semibold text-red-600",
               waitTimeAlert === "warning" && "text-orange-600",
               waitTimeAlert === "normal" && "text-muted-foreground"
@@ -157,7 +131,43 @@ function ERQueueItemCardComponent({
             <Clock className="h-3.5 w-3.5" />
             <span>Menunggu: {formatWaitTime(waitTimeMinutes)}</span>
           </div>
-        )}
+
+          {isActionable && (
+            <div className="flex shrink-0 gap-2">
+              {/* Primary CTA */}
+              <Button
+                size="sm"
+                onClick={() => onStartExamination?.(item.visit.id, item.visit.status)}
+              >
+                {item.visit.status === "registered" ? (
+                  <User className="mr-1.5 h-3.5 w-3.5" />
+                ) : (
+                  <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                {item.visit.status === "registered" ? "Mulai Pemeriksaan" : "Lanjutkan"}
+              </Button>
+
+              {/* Secondary actions in dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="outline" className="px-2">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setShowEditDialog(true)}>
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Edit Kunjungan
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setShowHandoverDialog(true)}>
+                    <ArrowRight className="mr-2 h-3.5 w-3.5" />
+                    Handover
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+        </div>
       </div>
 
       <HandoverDialog

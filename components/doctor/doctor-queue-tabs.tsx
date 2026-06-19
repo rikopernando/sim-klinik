@@ -59,35 +59,37 @@ export function DoctorQueueTabs({
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <TabsList className="inline-flex">
-            <TabsTrigger value="waiting" className="gap-1.5">
-              <Clock className="h-3.5 w-3.5" />
-              Menunggu
-              {waitingQueue.length > 0 && (
-                <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
-                  {waitingQueue.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="in_progress" className="gap-1.5">
-              <Activity className="h-3.5 w-3.5" />
-              Diperiksa
-              {inProgressQueue.length > 0 && (
-                <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
-                  {inProgressQueue.length}
-                </span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="unlocked" className="gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              RME Belum Dikunci
-              {unlockedQueue.length > 0 && (
-                <span className="bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
-                  {unlockedQueue.length}
-                </span>
-              )}
-            </TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto">
+            <TabsList className="inline-flex">
+              <TabsTrigger value="waiting" className="gap-1.5">
+                <Clock className="h-3.5 w-3.5" />
+                Menunggu
+                {waitingQueue.length > 0 && (
+                  <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                    {waitingQueue.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="in_progress" className="gap-1.5">
+                <Activity className="h-3.5 w-3.5" />
+                Diperiksa
+                {inProgressQueue.length > 0 && (
+                  <span className="bg-primary text-primary-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                    {inProgressQueue.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="unlocked" className="gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                Belum Dikunci
+                {unlockedQueue.length > 0 && (
+                  <span className="bg-destructive text-destructive-foreground rounded-full px-1.5 py-0.5 text-[10px] leading-none font-semibold tabular-nums">
+                    {unlockedQueue.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Date filter — fix: was silently dropped before */}
           {headerAction && <div>{headerAction}</div>}
@@ -129,7 +131,7 @@ export function DoctorQueueTabs({
                             </Badge>
                           )}
                           {index === 0 && (
-                            <span className="rounded-full bg-[#74c69d] px-2 py-0.5 text-[10px] font-medium text-white">
+                            <span className="bg-primary rounded-full px-2 py-0.5 text-[10px] font-medium text-white">
                               Sekarang
                             </span>
                           )}

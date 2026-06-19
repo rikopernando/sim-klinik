@@ -12,7 +12,7 @@ export function PageHeader({ title, description, children, className }: PageHead
     <div className={cn("border-b", className)}>
       <div className="container mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 pt-6 pb-4">
         <div className="flex items-start gap-3">
-          <span className="mt-1 h-6 w-1 shrink-0 rounded-full bg-[#74c69d]" />
+          <span className="bg-primary mt-1 h-6 w-1 shrink-0 rounded-full" />
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
             {description && <p className="text-muted-foreground mt-0.5 text-sm">{description}</p>}

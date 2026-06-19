@@ -6,6 +6,7 @@
 "use client"
 import { PageGuard } from "@/components/auth/page-guard"
 import { RefreshCw } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 import {
   Card,
@@ -40,13 +41,23 @@ function InpatientPatientsPageContent() {
     <div className="container mx-auto p-6">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Pasien Rawat Inap</h1>
-            <p className="text-muted-foreground">Daftar pasien rawat inap yang sedang aktif</p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="bg-primary mt-1.5 h-5 w-1 shrink-0 rounded-full" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Pasien Rawat Inap</h1>
+              <p className="text-muted-foreground mt-0.5 text-sm">
+                Daftar pasien rawat inap yang sedang aktif
+              </p>
+            </div>
           </div>
-          <Button onClick={refresh} variant="outline" disabled={isLoading}>
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+          <Button
+            onClick={refresh}
+            variant="outline"
+            disabled={isLoading}
+            className="self-start sm:self-auto"
+          >
+            <RefreshCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
             Refresh
           </Button>
         </div>
