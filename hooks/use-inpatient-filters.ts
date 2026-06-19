@@ -42,6 +42,7 @@ export function useInpatientFilters() {
 
   return {
     search,
+    debouncedSearch,
     roomType,
     admissionDateFrom,
     admissionDateTo,

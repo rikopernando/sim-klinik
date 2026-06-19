@@ -64,42 +64,40 @@ export function InpatientPagination({ pagination, onPageChange }: InpatientPagin
   const pageNumbers = generatePageNumbers(page, totalPages)
 
   return (
-    <div className="mt-4 flex items-center justify-between">
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              onClick={() => page > 1 && onPageChange(page - 1)}
-              className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
-          </PaginationItem>
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            onClick={() => page > 1 && onPageChange(page - 1)}
+            className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+          />
+        </PaginationItem>
 
-          {pageNumbers.map((pageNum, index) =>
-            pageNum === "ellipsis" ? (
-              <PaginationItem key={`ellipsis-${index}`}>
-                <PaginationEllipsis />
-              </PaginationItem>
-            ) : (
-              <PaginationItem key={pageNum}>
-                <PaginationLink
-                  onClick={() => onPageChange(pageNum)}
-                  isActive={pageNum === page}
-                  className="cursor-pointer"
-                >
-                  {pageNum}
-                </PaginationLink>
-              </PaginationItem>
-            )
-          )}
+        {pageNumbers.map((pageNum, index) =>
+          pageNum === "ellipsis" ? (
+            <PaginationItem key={`ellipsis-${index}`}>
+              <PaginationEllipsis />
+            </PaginationItem>
+          ) : (
+            <PaginationItem key={pageNum}>
+              <PaginationLink
+                onClick={() => onPageChange(pageNum)}
+                isActive={pageNum === page}
+                className="cursor-pointer"
+              >
+                {pageNum}
+              </PaginationLink>
+            </PaginationItem>
+          )
+        )}
 
-          <PaginationItem>
-            <PaginationNext
-              onClick={() => page < totalPages && onPageChange(page + 1)}
-              className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
+        <PaginationItem>
+          <PaginationNext
+            onClick={() => page < totalPages && onPageChange(page + 1)}
+            className={page === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+          />
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   )
 }
