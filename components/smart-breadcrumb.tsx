@@ -16,35 +16,40 @@ import {
 const routeLabels: Record<string, string> = {
   dashboard: "Dashboard",
   registration: "Pendaftaran",
-  patients: "Data Pasien",
+  patients: "Daftar Pasien",
   new: "Pasien Baru",
   edit: "Ubah Data Pasien",
   queue: "Antrian",
-  doctor: "Dokter",
-  emergency: "Emergency Room",
-  "medical-records": "Rekam Medik",
-  inpatient: "Rawat Jalan",
-  rooms: "Room",
+  doctor: "Rawat Jalan",
+  emergency: "UGD",
+  "medical-records": "Rekam Medis",
+  inpatient: "Rawat Inap",
+  rooms: "Manajemen Kamar",
   pharmacy: "Farmasi",
-  inventory: "Inventory",
+  inventory: "Inventaris",
   cashier: "Kasir",
-  users: "User",
-  discharge: "Patient Discharge",
-  example: "Example",
+  users: "Pengguna",
+  discharge: "Pasien Pulang",
+  laboratory: "Laboratorium",
+  services: "Tindakan",
+  "master-data": "Master Data",
+  reports: "Laporan",
 }
 
-// Dynamic segment handlers - for routes with [id], [visitId], etc.
-const dynamicSegmentHandlers: Record<string, (value: string) => string> = {
-  id: (value) => `Patient #${value}`,
-  visitId: (value) => `Visit #${value}`,
+function isUUID(segment: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment)
 }
 
 function formatSegment(segment: string): string {
   // Check if it's a dynamic segment like [id] or [visitId]
   const dynamicMatch = segment.match(/^\[(.+)\]$/)
   if (dynamicMatch) {
-    const key = dynamicMatch[1]
-    return dynamicSegmentHandlers[key]?.(key) || key
+    return dynamicMatch[1]
+  }
+
+  // UUID segments (e.g. visitId in URL) → generic label
+  if (isUUID(segment)) {
+    return "Detail Pasien"
   }
 
   // Check if we have a custom label

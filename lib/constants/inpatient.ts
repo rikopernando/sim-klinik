@@ -13,8 +13,12 @@ export const SORT_OPTIONS = [
 ] as const
 
 /**
- * Days threshold for warning badge
+ * Amber warning: 7–13 days. Red critical: 14+ days.
  */
+export const LONG_STAY_WARNING_THRESHOLD = 7
+export const LONG_STAY_CRITICAL_THRESHOLD = 14
+
+/** @deprecated use LONG_STAY_WARNING_THRESHOLD */
 export const LONG_STAY_THRESHOLD = 7
 
 /**

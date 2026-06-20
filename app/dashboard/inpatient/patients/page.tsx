@@ -75,14 +75,6 @@ function InpatientPatientsPageContent() {
               ))}
             </SelectContent>
           </Select>
-          {!isLoading && pagination.total > 0 && (
-            <p className="text-muted-foreground ml-auto shrink-0 text-sm tabular-nums">
-              <span className="text-foreground font-medium">
-                {pagination.total.toLocaleString("id-ID")}
-              </span>{" "}
-              pasien
-            </p>
-          )}
         </div>
 
         <TablePanel

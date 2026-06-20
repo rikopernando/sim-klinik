@@ -67,16 +67,75 @@
 
 ### Files Changed
 
-| File | Change |
-|------|--------|
-| `app/dashboard/inpatient/patients/page.tsx` | Full rewrite: `PageHeader` + `SearchInput` + `TablePanel`; removed Card/CardAction/CardHeader; Refresh button in PageHeader children slot |
-| `components/inpatient/patient-list-table.tsx` | Stripped loading/empty state (now in TablePanel); updated header to `bg-muted/40` + `text-xs font-semibold tracking-wider uppercase`; merged Kamar + Bed into one column |
-| `components/inpatient/patient-list-row.tsx` | Mono `bg-muted` pill for MR number; room/bed shown as `ROOM · bed`; days stay as plain font-mono semibold (red when long stay, not Badge) |
-| `components/inpatient/inpatient-pagination.tsx` | Removed outer `div` wrapper — TablePanel provides the footer row |
-| `hooks/use-inpatient-filters.ts` | Exported `debouncedSearch` so page can compute `isSearching` for SearchInput spinner |
+| File                                            | Change                                                                                                                                                                   |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app/dashboard/inpatient/patients/page.tsx`     | Full rewrite: `PageHeader` + `SearchInput` + `TablePanel`; removed Card/CardAction/CardHeader; Refresh button in PageHeader children slot                                |
+| `components/inpatient/patient-list-table.tsx`   | Stripped loading/empty state (now in TablePanel); updated header to `bg-muted/40` + `text-xs font-semibold tracking-wider uppercase`; merged Kamar + Bed into one column |
+| `components/inpatient/patient-list-row.tsx`     | Mono `bg-muted` pill for MR number; room/bed shown as `ROOM · bed`; days stay as plain font-mono semibold (red when long stay, not Badge)                                |
+| `components/inpatient/inpatient-pagination.tsx` | Removed outer `div` wrapper — TablePanel provides the footer row                                                                                                         |
+| `hooks/use-inpatient-filters.ts`                | Exported `debouncedSearch` so page can compute `isSearching` for SearchInput spinner                                                                                     |
 
 ### What Improved
 
 - **Consistent table chrome** — same header style, panel, loading/empty states as Rooms, Patients, Services pages
 - **Cleaner row layout** — 6 columns instead of 7; Kamar + Bed merged into one compact cell
 - **No more Badge overuse** — MR uses mono pill (like room numbers), days stay uses colored text (not a badge chip)
+
+---
+
+## Inpatient Detail Page — Phase 1 Fixes + Tab Layout
+
+### Files Changed
+
+| File | Change |
+| ---- | ------ |
+| `components/smart-breadcrumb.tsx` | UUID segment detection: raw visit UUID → "Detail Pasien" in breadcrumb |
+| `components/inpatient/bed-assignment-history.tsx` | "1 total assignment" → "1 riwayat penempatan" |
+| `components/inpatient/patient-info-card.tsx` | Added `ROOM_TYPE_LABELS` map ("Class 1" → "Kelas 1"); two-tier "Rawat Lama" badge (amber 7–13 days, red 14+); replaced `IconCurrencyDollar` with `IconReceipt`; hide null demographic fields (Jenis Kelamin, DOB, NIK, Telepon, Alamat) instead of showing "-" |
+| `app/dashboard/inpatient/patients/[visitId]/page.tsx` | Full rewrite: PageHeader-style header with green accent bar + status badge + Kembali/Refresh buttons; 4-tab layout (Ringkasan / Klinis / Tindakan & Obat / Pemulangan); Grafik & Analisis inside Card (no more floating h2); fixed typo "lat kesehatan" → "alat kesehatan"; shortened CPPT card title; `max-w-5xl` container to match PageHeader |
+
+### What Improved
+
+- **Breadcrumb** — "Detail Pasien" instead of the raw UUID
+- **Status badge** — visit status shown inline with patient name (color-coded by state)
+- **Tab navigation** — 10+ scroll sections collapsed into 4 purposeful tabs; a nurse can jump straight to Klinis or Tindakan & Obat without scrolling past everything
+- **Grafik & Analisis** — now inside a Card, consistent with other sections (was a free-floating h2)
+- **Room type localized** — "Class 1" → "Kelas 1" in patient info card (fixes same bug that was already fixed on the list)
+- **Two-tier long-stay badge** — amber for 7–13 days, red for 14+ (matches list page, was always destructive-red before)
+- **Empty demographics hidden** — left card no longer shows 5 dashes for seed patients with missing data
+- **Currency icon** — `IconCurrencyDollar` (USD) replaced with `IconReceipt` for Rupiah fields
+
+---
+
+## Inpatient Detail Page — Design Improvements
+
+### Files Changed
+
+| File | Change |
+| ---- | ------ |
+| `app/dashboard/inpatient/patients/[visitId]/page.tsx` | Clinical context strip in header; underline tab style replacing default pill tabs; ROOM_TYPE_LABELS + inpatient constants imported |
+| `components/inpatient/patient-info-card.tsx` | Right card restructured from vertical icon+label list to 3-col × 2-row stats grid; days-in-hospital as 2xl hero number; removed unused icon imports (`IconBed`, `IconReceipt`, `IconCalendarEvent`) and `formatDateTime` |
+
+### What Improved
+
+- **Clinical context strip** — room number, bed, type, and days-in-hospital appear in the header below the MR/Visit line. Stays visible on every tab so nurses never lose patient orientation when switching between Klinis and Tindakan & Obat
+- **Underline tabs** — replaced shadcn's default pill/rounded tab buttons with a border-bottom style. Active tab gets a green underline; inactive tabs are plain text. Feels like a medical chart file divider rather than a generic UI filter
+- **Stats grid on right card** — "Informasi Rawat Inap" changed from a list of 6 icon+label+value rows to two compact rows: (Tanggal Masuk / Kamar & Bed / Tipe) and (Hari Rawat / Tarif/Hari / Total Biaya). The day count is now a large `text-2xl` number colored amber/red by severity — scannable in under 2 seconds
+- **Left card with real data** — with a patient who has demographics filled in (DOB, NIK, phone), the left card now shows all those fields naturally since empty fields are hidden rather than showing dashes
+
+---
+
+## Inpatient Detail Page — Round 3 Design Refinements
+
+### Files Changed
+
+| File | Change |
+| ---- | ------ |
+| `app/dashboard/inpatient/patients/[visitId]/page.tsx` | Fixed tab active-state border (box → clean underline); Pemulangan section wrapped in Card for consistency |
+| `components/inpatient/patient-info-card.tsx` | Left card: replaced icon+label+value rows with compact `dl` definition-list; removed all icon imports |
+
+### What Improved
+
+- **Tab underline fixed** — The base shadcn `TabsTrigger` has `border border-transparent` on all 4 sides. Changing `data-[state=active]:border-primary` (all sides) → `data-[state=active]:border-b-primary` (bottom only) eliminates the box outline. Active tab now shows a single clean underline.
+- **Informasi Pasien compact dl** — Removed 6 icon imports and the verbose icon+label+value row pattern (2 DOM lines per field). Replaced with a `<dl>` where each entry is `<dt className="text-muted-foreground shrink-0 text-sm">` left-aligned and `<dd className="text-right text-sm font-medium">` right-aligned. NIK rendered in `font-mono`. Left card now matches the right card's height, the two-column layout looks balanced.
+- **Pemulangan in Card** — The free-standing `h2` + naked `div` was inconsistent with all other tabs using `Card > CardHeader > CardTitle`. Replaced with a single Card: header always shows title + description, empty state renders as `CardContent` text, `DischargeSummaryCard` renders below when present.

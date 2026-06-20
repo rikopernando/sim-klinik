@@ -32,9 +32,10 @@ function PatientListTableComponent({ patients }: PatientListTableProps) {
           <TableHead className="text-xs font-semibold tracking-wider uppercase">
             Tanggal Masuk
           </TableHead>
-          <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
             Hari Rawat
           </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">Aksi</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

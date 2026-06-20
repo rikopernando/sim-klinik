@@ -59,8 +59,8 @@ export function BedAssignmentHistory({
           <div>
             <CardTitle>Riwayat Bed</CardTitle>
             <CardDescription>
-              {history.length} total assignment{history.length > 1 ? "s" : ""}{" "}
-              {pastAssignments.length > 0 && `(${pastAssignments.length} transfer)`}
+              {history.length} riwayat penempatan
+              {pastAssignments.length > 0 && ` (${pastAssignments.length} transfer)`}
             </CardDescription>
           </div>
           <div className="text-right">

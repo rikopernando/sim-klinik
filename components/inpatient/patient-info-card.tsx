@@ -1,25 +1,24 @@
-/**
- * Patient Info Card Component
- * Displays patient demographic and admission information
- */
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { PatientDetail } from "@/types/inpatient"
-import {
-  IconUser,
-  IconCalendar,
-  IconMapPin,
-  IconPhone,
-  IconGenderMale,
-  IconGenderFemale,
-  IconBed,
-  IconCurrencyDollar,
-  IconCalendarEvent,
-} from "@tabler/icons-react"
-import { formatDate, formatDateTime, getAgeDisplay } from "@/lib/utils/date"
+import { formatDate, getAgeDisplay } from "@/lib/utils/date"
 import { formatCurrency } from "@/lib/utils/billing"
+import { cn } from "@/lib/utils"
+import {
+  LONG_STAY_WARNING_THRESHOLD,
+  LONG_STAY_CRITICAL_THRESHOLD,
+} from "@/lib/constants/inpatient"
+
+const ROOM_TYPE_LABELS: Record<string, string> = {
+  VIP: "VIP",
+  "Class 1": "Kelas 1",
+  "Class 2": "Kelas 2",
+  "Class 3": "Kelas 3",
+  ICU: "ICU",
+  NICU: "NICU",
+  Isolation: "Isolasi",
+}
 
 interface PatientInfoCardProps {
   data: PatientDetail
@@ -28,6 +27,11 @@ interface PatientInfoCardProps {
 export function PatientInfoCard({ data }: PatientInfoCardProps) {
   const { patient, bedAssignment, daysInHospital, totalRoomCost } = data
 
+  const isWarning =
+    daysInHospital >= LONG_STAY_WARNING_THRESHOLD &&
+    daysInHospital < LONG_STAY_CRITICAL_THRESHOLD
+  const isCritical = daysInHospital >= LONG_STAY_CRITICAL_THRESHOLD
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       {/* Patient Demographics */}
@@ -35,80 +39,57 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
         <CardHeader>
           <CardTitle className="text-base">Informasi Pasien</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3">
-            <div className="flex items-start gap-3">
-              <IconUser className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Nama Lengkap</p>
-                <p className="font-medium">{patient.patientName}</p>
-              </div>
+        <CardContent>
+          <dl className="space-y-3">
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground shrink-0 text-sm">Nama</dt>
+              <dd className="text-right text-sm font-medium">{patient.patientName}</dd>
             </div>
 
-            <div className="flex items-start gap-3">
-              <div className="text-muted-foreground mt-0.5 h-4 w-4">
-                {patient.gender === "M" ? (
-                  <IconGenderMale className="h-4 w-4" />
-                ) : (
-                  <IconGenderFemale className="h-4 w-4" />
-                )}
+            {(patient.gender === "M" || patient.gender === "F") && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground shrink-0 text-sm">Kelamin</dt>
+                <dd className="text-right text-sm font-medium">
+                  {patient.gender === "M" ? "Laki-laki" : "Perempuan"}
+                </dd>
               </div>
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Jenis Kelamin</p>
-                <p className="font-medium">
-                  {patient.gender === "M"
-                    ? "Laki-laki"
-                    : patient.gender === "F"
-                      ? "Perempuan"
-                      : "-"}
-                </p>
-              </div>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <IconCalendar className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Tanggal Lahir / Usia</p>
-                <p className="font-medium">
-                  {patient.dateOfBirth
-                    ? `${formatDate(patient.dateOfBirth)} (${getAgeDisplay(patient.dateOfBirth)})`
-                    : "-"}
-                </p>
+            {patient.dateOfBirth && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground shrink-0 text-sm">Tgl Lahir</dt>
+                <dd className="text-right text-sm font-medium">
+                  {formatDate(patient.dateOfBirth)} · {getAgeDisplay(patient.dateOfBirth)}
+                </dd>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <IconUser className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">NIK</p>
-                <p className="font-medium">{patient.nik || "-"}</p>
+            {patient.nik && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground shrink-0 text-sm">NIK</dt>
+                <dd className="font-mono text-right text-sm font-medium">{patient.nik}</dd>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <IconPhone className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Telepon</p>
-                <p className="font-medium">{patient.phone || "-"}</p>
+            {patient.phone && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground shrink-0 text-sm">Telepon</dt>
+                <dd className="text-right text-sm font-medium">{patient.phone}</dd>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <IconMapPin className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Alamat</p>
-                <p className="font-medium">{patient.address || "-"}</p>
+            {patient.address && (
+              <div className="flex items-baseline justify-between gap-4">
+                <dt className="text-muted-foreground shrink-0 text-sm">Alamat</dt>
+                <dd className="text-right text-sm font-medium">{patient.address}</dd>
               </div>
-            </div>
+            )}
 
-            <div className="flex items-start gap-3">
-              <IconUser className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Asuransi</p>
-                <p className="font-medium">{patient.insurance || "Umum"}</p>
-              </div>
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground shrink-0 text-sm">Asuransi</dt>
+              <dd className="text-right text-sm font-medium">{patient.insurance || "Umum"}</dd>
             </div>
-          </div>
+          </dl>
         </CardContent>
       </Card>
 
@@ -117,96 +98,118 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
         <CardHeader>
           <CardTitle className="text-base">Informasi Rawat Inap</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3">
-            <div className="flex items-start gap-3">
-              <IconCalendarEvent className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Tanggal Masuk</p>
-                <p className="font-medium">
-                  {patient.admissionDate ? formatDateTime(patient.admissionDate) : "-"}
-                </p>
-              </div>
+        <CardContent>
+          {/* Row 1: location facts */}
+          <div className="grid grid-cols-3 gap-4 pb-4">
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Tanggal Masuk
+              </p>
+              <p className="text-sm font-medium">
+                {patient.admissionDate ? formatDate(patient.admissionDate) : "—"}
+              </p>
             </div>
-
-            <div className="flex items-start gap-3">
-              <IconCalendar className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Lama Rawat Inap</p>
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{daysInHospital} hari</p>
-                  {daysInHospital > 7 && (
-                    <Badge variant="destructive" className="text-xs">
-                      Rawat Lama
-                    </Badge>
-                  )}
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Kamar & Bed
+              </p>
+              {bedAssignment ? (
+                <div className="flex items-baseline gap-1">
+                  <span className="font-mono text-sm font-semibold">
+                    {bedAssignment.roomNumber}
+                  </span>
+                  <span className="text-muted-foreground text-xs">
+                    · Bed {bedAssignment.bedNumber}
+                  </span>
                 </div>
-              </div>
+              ) : (
+                <p className="text-muted-foreground text-sm">—</p>
+              )}
             </div>
-
-            <Separator />
-
-            {bedAssignment ? (
-              <>
-                <div className="flex items-start gap-3">
-                  <IconBed className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Ruang & Tempat Tidur</p>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline">{bedAssignment.roomNumber}</Badge>
-                      <span className="text-sm">•</span>
-                      <Badge variant="secondary">Bed {bedAssignment.bedNumber}</Badge>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <IconBed className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Tipe Ruangan</p>
-                    <Badge>{bedAssignment.roomType}</Badge>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <IconCurrencyDollar className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Tarif Ruangan per Hari</p>
-                    <p className="font-medium">
-                      {formatCurrency(parseFloat(bedAssignment.dailyRate))}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <IconCurrencyDollar className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Total Biaya Ruangan</p>
-                    <p className="text-lg font-semibold">
-                      {formatCurrency(parseFloat(totalRoomCost))}
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      {daysInHospital} hari × {formatCurrency(parseFloat(bedAssignment.dailyRate))}
-                    </p>
-                  </div>
-                </div>
-
-                {bedAssignment.notes && (
-                  <div className="flex items-start gap-3">
-                    <IconUser className="text-muted-foreground mt-0.5 h-4 w-4" />
-                    <div className="flex-1 space-y-1">
-                      <p className="text-muted-foreground text-sm">Catatan</p>
-                      <p className="text-sm">{bedAssignment.notes}</p>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-muted-foreground py-4 text-center">
-                Pasien belum ditempatkan di kamar
-              </div>
-            )}
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Tipe Ruangan
+              </p>
+              <p className="text-sm font-medium">
+                {bedAssignment
+                  ? (ROOM_TYPE_LABELS[bedAssignment.roomType] ?? bedAssignment.roomType)
+                  : "—"}
+              </p>
+            </div>
           </div>
+
+          <Separator />
+
+          {/* Row 2: clinical numbers */}
+          <div className="grid grid-cols-3 gap-4 pt-4">
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Hari Rawat
+              </p>
+              <div className="flex items-baseline gap-1">
+                <span
+                  className={cn(
+                    "text-2xl font-bold",
+                    isCritical
+                      ? "text-destructive"
+                      : isWarning
+                        ? "text-amber-600 dark:text-amber-400"
+                        : "text-foreground"
+                  )}
+                >
+                  {daysInHospital}
+                </span>
+                <span className="text-muted-foreground text-sm">hari</span>
+              </div>
+              {(isWarning || isCritical) && (
+                <Badge
+                  className={cn(
+                    "mt-1 text-xs",
+                    isCritical
+                      ? "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
+                      : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                  )}
+                >
+                  Rawat Lama
+                </Badge>
+              )}
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Tarif / Hari
+              </p>
+              <p className="text-sm font-medium">
+                {bedAssignment ? formatCurrency(parseFloat(bedAssignment.dailyRate)) : "—"}
+              </p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Total Biaya
+              </p>
+              <p className="font-semibold">{formatCurrency(parseFloat(totalRoomCost))}</p>
+              {bedAssignment && (
+                <p className="text-muted-foreground text-xs">
+                  {daysInHospital} hari × {formatCurrency(parseFloat(bedAssignment.dailyRate))}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Catatan (optional) */}
+          {bedAssignment?.notes && (
+            <div className="mt-4 border-t pt-4">
+              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+                Catatan
+              </p>
+              <p className="text-sm">{bedAssignment.notes}</p>
+            </div>
+          )}
+
+          {!bedAssignment && (
+            <p className="text-muted-foreground mt-4 border-t pt-4 text-center text-sm">
+              Pasien belum ditempatkan di kamar
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>
