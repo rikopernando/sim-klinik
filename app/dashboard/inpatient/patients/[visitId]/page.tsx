@@ -94,16 +94,16 @@ function PatientDetailPageContent() {
 
   if (isLoading) {
     return (
-      <div>
-        <div className="border-b">
-          <div className="container mx-auto max-w-5xl px-6 pt-6 pb-4">
+      <div className="min-h-screen bg-slate-50 dark:bg-zinc-900">
+        <div className="border-b bg-background">
+          <div className="container mx-auto max-w-5xl px-6 pt-8 pb-6">
             <div className="flex items-center justify-between gap-4">
               <Skeleton className="h-8 w-64" />
               <Skeleton className="h-9 w-24" />
             </div>
           </div>
         </div>
-        <div className="container mx-auto max-w-5xl space-y-6 px-6 py-6">
+        <div className="container mx-auto max-w-5xl space-y-6 px-6 py-8">
           <Skeleton className="h-10 w-80" />
           <Skeleton className="h-64 w-full" />
           <Skeleton className="h-48 w-full" />
@@ -127,14 +127,12 @@ function PatientDetailPageContent() {
   const statusConfig = VISIT_STATUS_DISPLAY[patientDetail.patient.status]
 
   return (
-    <div>
-      {/* Header — same pattern as PageHeader */}
-      <div className="border-b">
-        <div className="container mx-auto max-w-5xl px-6 pt-6 pb-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-900">
+      {/* Header */}
+      <div className="border-b bg-background">
+        <div className="container mx-auto max-w-5xl px-6 pt-8 pb-6">
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-start gap-3">
-              <span className="bg-primary mt-1 h-6 w-1 shrink-0 rounded-full" />
-              <div>
+            <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="text-2xl font-bold tracking-tight">
                     {patientDetail.patient.patientName}
@@ -184,14 +182,13 @@ function PatientDetailPageContent() {
                     </span>
                   </div>
                 )}
-              </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => router.back()}>
+              <Button variant="ghost" size="sm" onClick={() => router.back()}>
                 <IconArrowLeft className="mr-2 h-4 w-4" />
                 Kembali
               </Button>
-              <Button onClick={refresh} variant="outline" size="sm">
+              <Button onClick={refresh} variant="ghost" size="sm">
                 <IconRefresh className="mr-2 h-4 w-4" />
                 Refresh
               </Button>
@@ -201,7 +198,7 @@ function PatientDetailPageContent() {
       </div>
 
       {/* Page content */}
-      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-6">
+      <div className="container mx-auto max-w-5xl space-y-4 px-6 py-8">
         {/* Cancelled Visit Banner */}
         {isCancelled && (
           <Alert variant="destructive">
@@ -245,7 +242,7 @@ function PatientDetailPageContent() {
           </TabsList>
 
           {/* Tab 1: Ringkasan */}
-          <TabsContent value="summary" className="mt-4 space-y-6">
+          <TabsContent value="summary" className="mt-6 space-y-6">
             <PatientInfoCard data={patientDetail} />
             <BedAssignmentHistory
               visitId={visitId}
@@ -258,7 +255,7 @@ function PatientDetailPageContent() {
           </TabsContent>
 
           {/* Tab 2: Klinis */}
-          <TabsContent value="clinical" className="mt-4 space-y-6">
+          <TabsContent value="clinical" className="mt-6 space-y-6">
             {/* Vital Signs */}
             <Card>
               <CardHeader>
@@ -335,7 +332,7 @@ function PatientDetailPageContent() {
           </TabsContent>
 
           {/* Tab 3: Tindakan & Obat */}
-          <TabsContent value="treatments" className="mt-4 space-y-6">
+          <TabsContent value="treatments" className="mt-6 space-y-6">
             {/* Material Usage */}
             <Card>
               <CardHeader>
@@ -452,7 +449,7 @@ function PatientDetailPageContent() {
           </TabsContent>
 
           {/* Tab 4: Pemulangan */}
-          <TabsContent value="discharge" className="mt-4 space-y-6">
+          <TabsContent value="discharge" className="mt-6 space-y-6">
             {/* Discharge Summary */}
             <Card>
               <CardHeader>
