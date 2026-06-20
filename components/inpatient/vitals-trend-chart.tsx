@@ -1,8 +1,3 @@
-/**
- * Vitals Trend Chart Component
- * Displays vital signs trends over time using recharts
- */
-
 "use client"
 
 import { useState, useMemo } from "react"
@@ -20,16 +15,16 @@ import {
   ResponsiveContainer,
   ReferenceArea,
 } from "recharts"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
 import { VitalSigns } from "@/types/inpatient"
 import { formatDateTime } from "@/lib/utils/date"
+import { cn } from "@/lib/utils"
 
 interface VitalsTrendChartProps {
   vitals: VitalSigns[]
 }
 
 type DateRange = "24h" | "3d" | "7d" | "all"
+type ActiveMetric = "bp" | "pulse" | "temperature" | "rr" | "spo2"
 
 const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: "24h", label: "24 Jam" },
@@ -38,7 +33,14 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: "all", label: "Semua" },
 ]
 
-// Normal ranges for vital signs
+const METRIC_OPTIONS: { value: ActiveMetric; label: string }[] = [
+  { value: "bp", label: "Tekanan Darah" },
+  { value: "pulse", label: "Nadi" },
+  { value: "temperature", label: "Suhu" },
+  { value: "rr", label: "Pernapasan" },
+  { value: "spo2", label: "SpO₂" },
+]
+
 const NORMAL_RANGES = {
   temperature: { min: 36.1, max: 37.2 },
   systolicBP: { min: 90, max: 120 },
@@ -50,32 +52,18 @@ const NORMAL_RANGES = {
 
 export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
   const [dateRange, setDateRange] = useState<DateRange>("7d")
-  const [activeMetric, setActiveMetric] = useState<
-    "temperature" | "bp" | "pulse" | "rr" | "spo2" | "all"
-  >("all")
+  const [activeMetric, setActiveMetric] = useState<ActiveMetric>("bp")
 
-  // Filter data by date range
   const filteredData = useMemo(() => {
-    const now = new Date()
-    const sortedVitals = [...vitals].sort(
+    const sorted = [...vitals].sort(
       (a, b) => new Date(a.recordedAt).getTime() - new Date(b.recordedAt).getTime()
     )
-
-    if (dateRange === "all") {
-      return sortedVitals
-    }
-
-    const rangeMs = {
-      "24h": 24 * 60 * 60 * 1000,
-      "3d": 3 * 24 * 60 * 60 * 1000,
-      "7d": 7 * 24 * 60 * 60 * 1000,
-    }[dateRange]
-
-    const cutoffTime = now.getTime() - rangeMs
-    return sortedVitals.filter((vital) => new Date(vital.recordedAt).getTime() >= cutoffTime)
+    if (dateRange === "all") return sorted
+    const rangeMs = { "24h": 86_400_000, "3d": 259_200_000, "7d": 604_800_000 }[dateRange]
+    const cutoff = Date.now() - rangeMs
+    return sorted.filter((v) => new Date(v.recordedAt).getTime() >= cutoff)
   }, [vitals, dateRange])
 
-  // Transform data for recharts
   const chartData = useMemo(() => {
     return filteredData.map((vital) => ({
       timestamp: format(new Date(vital.recordedAt), "dd/MM HH:mm", { locale: localeId }),
@@ -91,41 +79,44 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
 
   if (vitals.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconActivity className="h-5 w-5" />
-            Tren Vital Signs
-          </CardTitle>
-          <CardDescription>Belum ada data vital signs yang tercatat</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <IconActivity className="text-muted-foreground/30 mb-3 h-10 w-10" />
+        <p className="text-muted-foreground text-sm">Belum ada data vital signs yang tercatat</p>
+      </div>
     )
   }
 
   const renderChart = () => {
     if (activeMetric === "temperature") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} />
-            <YAxis domain={[35, 40]} label={{ value: "°C", angle: -90, position: "insideLeft" }} />
+            <XAxis
+              dataKey="timestamp"
+              angle={-45}
+              textAnchor="end"
+              height={70}
+              tick={{ fontSize: 11 }}
+            />
+            <YAxis
+              domain={[35, 40]}
+              label={{ value: "°C", angle: -90, position: "insideLeft" }}
+              tick={{ fontSize: 11 }}
+            />
             <Tooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-background rounded-lg border p-2 shadow-sm">
-                      <p className="text-muted-foreground text-xs">
-                        {format(new Date(payload[0].payload.fullTimestamp), "dd MMM yyyy, HH:mm", {
-                          locale: localeId,
-                        })}
-                      </p>
-                      <p className="text-sm font-semibold">Suhu: {payload[0].value}°C</p>
-                    </div>
-                  )
-                }
-                return null
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="bg-background rounded-lg border p-2 shadow-sm">
+                    <p className="text-muted-foreground text-xs">
+                      {format(new Date(payload[0].payload.fullTimestamp), "dd MMM yyyy, HH:mm", {
+                        locale: localeId,
+                      })}
+                    </p>
+                    <p className="text-sm font-semibold">Suhu: {payload[0].value}°C</p>
+                  </div>
+                )
               }}
             />
             <Legend />
@@ -134,16 +125,15 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
               y2={NORMAL_RANGES.temperature.max}
               fill="#22c55e"
               fillOpacity={0.1}
-              label={{ value: "Normal", position: "top" }}
             />
             <Line
               type="monotone"
               dataKey="temperature"
               stroke="#ef4444"
               strokeWidth={2}
-              name="Suhu Tubuh (°C)"
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              name="Suhu (°C)"
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -152,28 +142,35 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
 
     if (activeMetric === "bp") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} />
+            <XAxis
+              dataKey="timestamp"
+              angle={-45}
+              textAnchor="end"
+              height={70}
+              tick={{ fontSize: 11 }}
+            />
             <YAxis
               domain={[40, 180]}
               label={{ value: "mmHg", angle: -90, position: "insideLeft" }}
+              tick={{ fontSize: 11 }}
             />
             <Tooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-background rounded-lg border p-2 shadow-sm">
-                      <p className="text-muted-foreground text-xs">
-                        {formatDateTime(payload[0].payload.fullTimestamp)}
-                      </p>
-                      <p className="text-sm font-semibold">Sistolik: {payload[0].value} mmHg</p>
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="bg-background rounded-lg border p-2 shadow-sm">
+                    <p className="text-muted-foreground text-xs">
+                      {formatDateTime(payload[0].payload.fullTimestamp)}
+                    </p>
+                    <p className="text-sm font-semibold">Sistolik: {payload[0].value} mmHg</p>
+                    {payload[1] && (
                       <p className="text-sm font-semibold">Diastolik: {payload[1].value} mmHg</p>
-                    </div>
-                  )
-                }
-                return null
+                    )}
+                  </div>
+                )
               }}
             />
             <Legend />
@@ -189,8 +186,8 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
               stroke="#3b82f6"
               strokeWidth={2}
               name="Sistolik (mmHg)"
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
             />
             <Line
               type="monotone"
@@ -198,8 +195,8 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
               stroke="#8b5cf6"
               strokeWidth={2}
               name="Diastolik (mmHg)"
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -208,27 +205,32 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
 
     if (activeMetric === "pulse") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} />
+            <XAxis
+              dataKey="timestamp"
+              angle={-45}
+              textAnchor="end"
+              height={70}
+              tick={{ fontSize: 11 }}
+            />
             <YAxis
               domain={[40, 140]}
               label={{ value: "bpm", angle: -90, position: "insideLeft" }}
+              tick={{ fontSize: 11 }}
             />
             <Tooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-background rounded-lg border p-2 shadow-sm">
-                      <p className="text-muted-foreground text-xs">
-                        {formatDateTime(payload[0].payload.fullTimestamp)}
-                      </p>
-                      <p className="text-sm font-semibold">Nadi: {payload[0].value} bpm</p>
-                    </div>
-                  )
-                }
-                return null
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="bg-background rounded-lg border p-2 shadow-sm">
+                    <p className="text-muted-foreground text-xs">
+                      {formatDateTime(payload[0].payload.fullTimestamp)}
+                    </p>
+                    <p className="text-sm font-semibold">Nadi: {payload[0].value} bpm</p>
+                  </div>
+                )
               }}
             />
             <Legend />
@@ -244,8 +246,8 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
               stroke="#f59e0b"
               strokeWidth={2}
               name="Nadi (bpm)"
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
@@ -254,27 +256,32 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
 
     if (activeMetric === "rr") {
       return (
-        <ResponsiveContainer width="100%" height={350}>
+        <ResponsiveContainer width="100%" height={300}>
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} />
+            <XAxis
+              dataKey="timestamp"
+              angle={-45}
+              textAnchor="end"
+              height={70}
+              tick={{ fontSize: 11 }}
+            />
             <YAxis
               domain={[8, 30]}
               label={{ value: "x/min", angle: -90, position: "insideLeft" }}
+              tick={{ fontSize: 11 }}
             />
             <Tooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-background rounded-lg border p-2 shadow-sm">
-                      <p className="text-muted-foreground text-xs">
-                        {formatDateTime(payload[0].payload.fullTimestamp)}
-                      </p>
-                      <p className="text-sm font-semibold">Pernapasan: {payload[0].value} x/min</p>
-                    </div>
-                  )
-                }
-                return null
+                if (!active || !payload?.length) return null
+                return (
+                  <div className="bg-background rounded-lg border p-2 shadow-sm">
+                    <p className="text-muted-foreground text-xs">
+                      {formatDateTime(payload[0].payload.fullTimestamp)}
+                    </p>
+                    <p className="text-sm font-semibold">RR: {payload[0].value} x/min</p>
+                  </div>
+                )
               }}
             />
             <Legend />
@@ -290,129 +297,59 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
               stroke="#06b6d4"
               strokeWidth={2}
               name="Pernapasan (x/min)"
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
+              dot={{ r: 3 }}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>
       )
     }
 
-    if (activeMetric === "spo2") {
-      return (
-        <ResponsiveContainer width="100%" height={350}>
-          <LineChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} />
-            <YAxis domain={[85, 100]} label={{ value: "%", angle: -90, position: "insideLeft" }} />
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="bg-background rounded-lg border p-2 shadow-sm">
-                      <p className="text-muted-foreground text-xs">
-                        {formatDateTime(payload[0].payload.fullTimestamp)}
-                      </p>
-                      <p className="text-sm font-semibold">SpO2: {payload[0].value}%</p>
-                    </div>
-                  )
-                }
-                return null
-              }}
-            />
-            <Legend />
-            <ReferenceArea
-              y1={NORMAL_RANGES.oxygenSaturation.min}
-              y2={NORMAL_RANGES.oxygenSaturation.max}
-              fill="#22c55e"
-              fillOpacity={0.1}
-            />
-            <Line
-              type="monotone"
-              dataKey="oxygenSaturation"
-              stroke="#10b981"
-              strokeWidth={2}
-              name="SpO2 (%)"
-              dot={{ r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      )
-    }
-
-    // All metrics in one chart
+    // spo2
     return (
-      <ResponsiveContainer width="100%" height={350}>
+      <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="timestamp" angle={-45} textAnchor="end" height={80} />
-          <YAxis yAxisId="left" />
-          <YAxis yAxisId="right" orientation="right" />
+          <XAxis
+            dataKey="timestamp"
+            angle={-45}
+            textAnchor="end"
+            height={70}
+            tick={{ fontSize: 11 }}
+          />
+          <YAxis
+            domain={[85, 100]}
+            label={{ value: "%", angle: -90, position: "insideLeft" }}
+            tick={{ fontSize: 11 }}
+          />
           <Tooltip
             content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                const data = payload[0].payload
-                return (
-                  <div className="bg-background rounded-lg border p-3 shadow-sm">
-                    <p className="text-muted-foreground mb-2 text-xs">
-                      {formatDateTime(payload[0].payload.fullTimestamp)}
-                    </p>
-                    {data.temperature && <p className="text-xs">Suhu: {data.temperature}°C</p>}
-                    {data.systolicBP && data.diastolicBP && (
-                      <p className="text-xs">
-                        TD: {data.systolicBP}/{data.diastolicBP} mmHg
-                      </p>
-                    )}
-                    {data.pulse && <p className="text-xs">Nadi: {data.pulse} bpm</p>}
-                    {data.respiratoryRate && (
-                      <p className="text-xs">RR: {data.respiratoryRate} x/min</p>
-                    )}
-                    {data.oxygenSaturation && (
-                      <p className="text-xs">SpO2: {data.oxygenSaturation}%</p>
-                    )}
-                  </div>
-                )
-              }
-              return null
+              if (!active || !payload?.length) return null
+              return (
+                <div className="bg-background rounded-lg border p-2 shadow-sm">
+                  <p className="text-muted-foreground text-xs">
+                    {formatDateTime(payload[0].payload.fullTimestamp)}
+                  </p>
+                  <p className="text-sm font-semibold">SpO₂: {payload[0].value}%</p>
+                </div>
+              )
             }}
           />
           <Legend />
-          <Line
-            yAxisId="left"
-            type="monotone"
-            dataKey="pulse"
-            stroke="#f59e0b"
-            strokeWidth={2}
-            name="Nadi"
-            dot={false}
+          <ReferenceArea
+            y1={NORMAL_RANGES.oxygenSaturation.min}
+            y2={NORMAL_RANGES.oxygenSaturation.max}
+            fill="#22c55e"
+            fillOpacity={0.1}
           />
           <Line
-            yAxisId="left"
-            type="monotone"
-            dataKey="systolicBP"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            name="Sistolik"
-            dot={false}
-          />
-          <Line
-            yAxisId="left"
             type="monotone"
             dataKey="oxygenSaturation"
             stroke="#10b981"
             strokeWidth={2}
-            name="SpO2"
-            dot={false}
-          />
-          <Line
-            yAxisId="right"
-            type="monotone"
-            dataKey="temperature"
-            stroke="#ef4444"
-            strokeWidth={2}
-            name="Suhu"
-            dot={false}
+            name="SpO₂ (%)"
+            dot={{ r: 3 }}
+            activeDot={{ r: 5 }}
           />
         </LineChart>
       </ResponsiveContainer>
@@ -420,82 +357,55 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <IconActivity className="h-5 w-5" />
-              Tren Vital Signs
-            </CardTitle>
-            <CardDescription>
-              Grafik perkembangan vital signs ({filteredData.length} data poin)
-            </CardDescription>
-          </div>
-        </div>
-
-        {/* Date Range Selector */}
-        <div className="flex flex-wrap gap-2 pt-4">
-          {DATE_RANGE_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              variant={dateRange === option.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDateRange(option.value)}
+    <div>
+      {/* Controls */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {/* Metric selector */}
+        <div className="flex gap-1 rounded-lg border p-0.5">
+          {METRIC_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setActiveMetric(opt.value)}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                activeMetric === opt.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
-              {option.label}
-            </Button>
+              {opt.label}
+            </button>
           ))}
         </div>
 
-        {/* Metric Selector */}
-        <div className="flex flex-wrap gap-2 pt-2">
-          <Button
-            variant={activeMetric === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveMetric("all")}
-          >
-            Semua
-          </Button>
-          <Button
-            variant={activeMetric === "temperature" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveMetric("temperature")}
-          >
-            Suhu
-          </Button>
-          <Button
-            variant={activeMetric === "bp" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveMetric("bp")}
-          >
-            Tekanan Darah
-          </Button>
-          <Button
-            variant={activeMetric === "pulse" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveMetric("pulse")}
-          >
-            Nadi
-          </Button>
-          <Button
-            variant={activeMetric === "rr" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveMetric("rr")}
-          >
-            Pernapasan
-          </Button>
-          <Button
-            variant={activeMetric === "spo2" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setActiveMetric("spo2")}
-          >
-            SpO2
-          </Button>
+        {/* Date range selector */}
+        <div className="flex gap-1 rounded-lg border p-0.5">
+          {DATE_RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setDateRange(opt.value)}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                dateRange === opt.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent>{renderChart()}</CardContent>
-    </Card>
+      {filteredData.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <p className="text-muted-foreground text-sm">
+            Tidak ada data untuk rentang waktu yang dipilih
+          </p>
+        </div>
+      ) : (
+        renderChart()
+      )}
+    </div>
   )
 }

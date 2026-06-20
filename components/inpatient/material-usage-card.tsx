@@ -7,7 +7,7 @@
 "use client"
 
 import { memo } from "react"
-import { IconTrash } from "@tabler/icons-react"
+import { IconTrash, IconMedicineSyrup } from "@tabler/icons-react"
 import {
   Table,
   TableBody,
@@ -33,7 +33,12 @@ interface MaterialUsageCardProps {
 
 // Memoized empty state component
 const EmptyState = memo(function EmptyState() {
-  return <div className="text-muted-foreground py-8 text-center">Belum ada penggunaan material</div>
+  return (
+    <div className="flex flex-col items-center justify-center py-10 text-center">
+      <IconMedicineSyrup className="text-muted-foreground/30 mb-3 h-10 w-10" />
+      <p className="text-muted-foreground text-sm">Belum ada penggunaan alat kesehatan</p>
+    </div>
+  )
 })
 
 // Memoized table row component
@@ -103,14 +108,28 @@ export const MaterialUsageCard = memo(function MaterialUsageCard({
     <>
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>Waktu Pakai</TableHead>
-            <TableHead>Nama Alat Kesehatan</TableHead>
-            <TableHead className="text-right">Jumlah</TableHead>
-            <TableHead className="text-right">Harga Satuan</TableHead>
-            <TableHead className="text-right">Total Harga</TableHead>
-            <TableHead>Digunakan Oleh</TableHead>
-            <TableHead>Catatan</TableHead>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Waktu Pakai
+            </TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Nama Alat Kesehatan
+            </TableHead>
+            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+              Jumlah
+            </TableHead>
+            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+              Harga Satuan
+            </TableHead>
+            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+              Total Harga
+            </TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Digunakan Oleh
+            </TableHead>
+            <TableHead className="text-xs font-semibold tracking-wider uppercase">
+              Catatan
+            </TableHead>
             <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>

@@ -1,8 +1,3 @@
-/**
- * Vitals History Table Component
- * Displays history of vital signs recordings with delete functionality
- */
-
 "use client"
 
 import { useState } from "react"
@@ -14,10 +9,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { VitalSigns } from "@/types/inpatient"
-import { IconTrash, IconAlertCircle } from "@tabler/icons-react"
+import { IconTrash, IconAlertCircle, IconHeartRateMonitor } from "@tabler/icons-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,10 +29,10 @@ import {
   getTemperatureStatus,
   getPulseStatus,
   getOxygenSaturationStatus,
-  getBMICategoryID,
 } from "@/lib/inpatient/vitals-utils"
 import { getErrorMessage } from "@/lib/utils/error"
 import { formatDateTime } from "@/lib/utils/date"
+import { cn } from "@/lib/utils"
 
 interface VitalsHistoryTableProps {
   vitals: VitalSigns[]
@@ -54,11 +48,8 @@ export function VitalsHistoryTable({
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const canDelete = (recordedAt: string) => {
-    const recorded = new Date(recordedAt)
-    const now = new Date()
-    const timeDiff = now.getTime() - recorded.getTime()
-    const oneHour = 3600000 // 1 hour in milliseconds
-    return timeDiff <= oneHour
+    const timeDiff = Date.now() - new Date(recordedAt).getTime()
+    return timeDiff <= 3_600_000 // 1 hour
   }
 
   const handleDelete = async (vitalId: string) => {
@@ -68,7 +59,6 @@ export function VitalsHistoryTable({
       toast.success("Data tanda vital berhasil dihapus")
       onRefresh?.()
     } catch (error) {
-      console.error("Error deleting vital signs:", error)
       toast.error(getErrorMessage(error))
     } finally {
       setDeletingId(null)
@@ -77,25 +67,37 @@ export function VitalsHistoryTable({
 
   if (vitals.length === 0) {
     return (
-      <div className="text-muted-foreground py-8 text-center">Belum ada rekaman tanda vital</div>
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <IconHeartRateMonitor className="text-muted-foreground/30 mb-3 h-10 w-10" />
+        <p className="text-muted-foreground text-sm">Belum ada rekaman tanda vital</p>
+      </div>
     )
   }
 
   return (
     <Table>
       <TableHeader>
-        <TableRow>
-          <TableHead>Waktu Rekam</TableHead>
-          <TableHead>Suhu (°C)</TableHead>
-          <TableHead>Tekanan Darah</TableHead>
-          <TableHead>Nadi (/mnt)</TableHead>
-          <TableHead>RR (/mnt)</TableHead>
-          <TableHead>SpO₂ (%)</TableHead>
-          <TableHead>Kesadaran</TableHead>
-          <TableHead>Skala Nyeri</TableHead>
-          <TableHead>BB/TB</TableHead>
-          <TableHead>Dicatat Oleh</TableHead>
-          <TableHead className="text-center">Aksi</TableHead>
+        <TableRow className="bg-muted/40 hover:bg-muted/40">
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Waktu / Oleh
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Suhu (°C)
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Tekanan Darah
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Nadi (/mnt)
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            RR (/mnt)
+          </TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">SpO₂ (%)</TableHead>
+          <TableHead className="text-xs font-semibold tracking-wider uppercase">
+            Skala Nyeri
+          </TableHead>
+          <TableHead className="w-[50px]"></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -103,148 +105,134 @@ export function VitalsHistoryTable({
           const tempStatus = getTemperatureStatus(vital.temperature)
           const pulseStatus = getPulseStatus(vital.pulse)
           const spo2Status = getOxygenSaturationStatus(vital.oxygenSaturation)
-          const bmiCategory = getBMICategoryID(vital.bmi)
 
           return (
             <TableRow key={vital.id}>
-              <TableCell className="font-medium whitespace-nowrap">
-                {formatDateTime(vital.recordedAt)}
+              {/* Waktu + Dicatat Oleh */}
+              <TableCell className="py-3">
+                <div className="text-sm font-medium whitespace-nowrap">
+                  {formatDateTime(vital.recordedAt)}
+                </div>
+                <div className="text-muted-foreground text-xs">{vital.recordedBy}</div>
               </TableCell>
 
-              {/* Temperature with status highlighting */}
-              <TableCell>
+              {/* Suhu */}
+              <TableCell className="py-3">
                 {vital.temperature ? (
                   <div className="flex items-center gap-1">
                     <span
-                      className={
-                        tempStatus === "normal"
-                          ? ""
-                          : tempStatus === "high"
-                            ? "font-semibold text-red-600"
-                            : "font-semibold text-blue-600"
-                      }
+                      className={cn(
+                        "text-sm",
+                        tempStatus === "high" && "font-semibold text-red-600",
+                        tempStatus === "low" && "font-semibold text-blue-600"
+                      )}
                     >
                       {vital.temperature}
                     </span>
                     {tempStatus !== "normal" && (
-                      <IconAlertCircle className="h-3 w-3 text-yellow-600" />
+                      <IconAlertCircle className="h-3 w-3 text-yellow-500" />
                     )}
                   </div>
                 ) : (
-                  "-"
+                  <span className="text-muted-foreground">—</span>
                 )}
               </TableCell>
 
-              {/* Blood Pressure */}
-              <TableCell>
-                {vital.bloodPressureSystolic && vital.bloodPressureDiastolic
-                  ? `${vital.bloodPressureSystolic}/${vital.bloodPressureDiastolic}`
-                  : "-"}
+              {/* Tekanan Darah */}
+              <TableCell className="py-3 text-sm">
+                {vital.bloodPressureSystolic && vital.bloodPressureDiastolic ? (
+                  `${vital.bloodPressureSystolic}/${vital.bloodPressureDiastolic}`
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
               </TableCell>
 
-              {/* Pulse with status highlighting */}
-              <TableCell>
+              {/* Nadi */}
+              <TableCell className="py-3">
                 {vital.pulse ? (
                   <div className="flex items-center gap-1">
                     <span
-                      className={
-                        pulseStatus === "normal"
-                          ? ""
-                          : pulseStatus === "high"
-                            ? "font-semibold text-red-600"
-                            : "font-semibold text-blue-600"
-                      }
+                      className={cn(
+                        "text-sm",
+                        pulseStatus === "high" && "font-semibold text-red-600",
+                        pulseStatus === "low" && "font-semibold text-blue-600"
+                      )}
                     >
                       {vital.pulse}
                     </span>
                     {pulseStatus !== "normal" && (
-                      <IconAlertCircle className="h-3 w-3 text-yellow-600" />
+                      <IconAlertCircle className="h-3 w-3 text-yellow-500" />
                     )}
                   </div>
                 ) : (
-                  "-"
+                  <span className="text-muted-foreground">—</span>
                 )}
               </TableCell>
 
-              {/* Respiratory Rate */}
-              <TableCell>{vital.respiratoryRate || "-"}</TableCell>
+              {/* RR */}
+              <TableCell className="py-3 text-sm">
+                {vital.respiratoryRate ?? <span className="text-muted-foreground">—</span>}
+              </TableCell>
 
-              {/* Oxygen Saturation with status highlighting */}
-              <TableCell>
+              {/* SpO₂ */}
+              <TableCell className="py-3">
                 {vital.oxygenSaturation ? (
                   <div className="flex items-center gap-1">
                     <span
-                      className={
-                        spo2Status === "normal"
-                          ? ""
-                          : spo2Status === "critical"
-                            ? "font-semibold text-red-600"
-                            : "font-semibold text-yellow-600"
-                      }
+                      className={cn(
+                        "text-sm",
+                        spo2Status === "critical" && "font-semibold text-red-600",
+                        spo2Status === "low" && "font-semibold text-yellow-600"
+                      )}
                     >
                       {vital.oxygenSaturation}%
                     </span>
                     {spo2Status !== "normal" && (
                       <IconAlertCircle
-                        className={`h-3 w-3 ${spo2Status === "critical" ? "text-red-600" : "text-yellow-600"}`}
+                        className={cn(
+                          "h-3 w-3",
+                          spo2Status === "critical" ? "text-red-500" : "text-yellow-500"
+                        )}
                       />
                     )}
                   </div>
                 ) : (
-                  "-"
+                  <span className="text-muted-foreground">—</span>
                 )}
               </TableCell>
 
-              {/* Consciousness */}
-              <TableCell>{vital.consciousness || "-"}</TableCell>
-
-              {/* Pain Scale */}
-              <TableCell>
+              {/* Skala Nyeri */}
+              <TableCell className="py-3">
                 {vital.painScale !== null ? (
-                  <Badge
-                    variant={
-                      vital.painScale <= 3
-                        ? "default"
-                        : vital.painScale <= 6
-                          ? "secondary"
-                          : "destructive"
-                    }
+                  <span
+                    className={cn(
+                      "font-mono text-sm font-semibold",
+                      vital.painScale >= 7
+                        ? "text-destructive"
+                        : vital.painScale >= 4
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-foreground"
+                    )}
                   >
                     {vital.painScale}/10
-                  </Badge>
+                  </span>
                 ) : (
-                  "-"
+                  <span className="text-muted-foreground">—</span>
                 )}
               </TableCell>
 
-              {/* Weight/Height/BMI */}
-              <TableCell>
-                {vital.weight && vital.height ? (
-                  <div className="text-sm">
-                    <div>
-                      {vital.weight} kg / {vital.height} cm
-                    </div>
-                    {vital.bmi && (
-                      <div className="text-muted-foreground text-xs">
-                        BMI: {vital.bmi} ({bmiCategory})
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  "-"
-                )}
-              </TableCell>
-
-              {/* Recorded By */}
-              <TableCell className="text-muted-foreground text-sm">{vital.recordedBy}</TableCell>
-
-              {/* Delete Action */}
-              <TableCell className="text-center">
+              {/* Delete */}
+              <TableCell className="py-3">
                 {canDelete(vital.recordedAt) && !isLocked && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" disabled={deletingId === vital.id}>
-                        <IconTrash className="h-4 w-4 text-red-600" />
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="hover:bg-destructive/10 hover:text-destructive h-8 w-8"
+                        disabled={deletingId === vital.id}
+                      >
+                        <IconTrash className="h-4 w-4" />
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>

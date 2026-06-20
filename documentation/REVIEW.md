@@ -125,6 +125,34 @@
 
 ---
 
+## Inpatient Detail Page — Direction C + Tab Content Overhaul
+
+### Files Changed
+
+| File | Change |
+| ---- | ------ |
+| `app/dashboard/inpatient/patients/[visitId]/page.tsx` | Direction C: `bg-slate-50` page bg, white header, ghost buttons, more breathing, underline tabs |
+| `components/inpatient/vitals-history-table.tsx` | Standard header; 11 → 8 cols (dropped BB/TB + Kesadaran, merged Waktu+Oleh); consistent empty state with icon; pain scale uses colored mono text not Badge |
+| `components/inpatient/material-usage-card.tsx` | Standard header; empty state with icon |
+| `components/inpatient/prescriptions-list.tsx` | Standard header; 11 → 7 cols (merged jenis/rute into Obat cell, dropped Harga Satuan); `window.confirm()` → AlertDialog; consistent empty state |
+| `components/inpatient/procedures-list.tsx` | Standard header; 9 → 6 cols (merged personel, notes into tindakan cell); `window.confirm()` → AlertDialog |
+| `components/inpatient/bed-assignment-history.tsx` | Full rewrite: colored left-border divs → clean table; Lucide icons removed; fixed double-Rp bug on past assignments; Aktif/Selesai badge in Status column |
+| `components/inpatient/cppt-entry-card.tsx` | Removed Card-in-Card nesting → flat `rounded-lg border p-4`; removed `border-l-4` colored borders; role shown only as soft outline Badge |
+| `components/inpatient/cppt-history.tsx` | Empty state with icon |
+| `components/inpatient/vitals-trend-chart.tsx` | Removed wrapping Card (was Card-in-Card); removed dual Y-axis "all" mode → 5 individual metric tabs; metric + date range selectors now compact pill groups instead of heavy Button rows |
+
+### What Improved
+
+- **Table standard applied everywhere** — all table headers now `bg-muted/40` + `text-xs font-semibold uppercase tracking-wider`, matching the patient list page
+- **Column counts reduced** — vitals 11→8, prescriptions 11→7, procedures 9→6; no more horizontal overflow
+- **Delete dialogs** — prescriptions and procedures replaced `window.confirm()` with proper AlertDialog (consistent with vitals and materials which already did this)
+- **Bed history** — goes from a heavy visual design (green/gray left-border cards) to a clean table; the Rp double-prefix bug on past assignments is fixed
+- **CPPT entries** — no longer Card-in-Card; role differentiation simplified to one soft outline Badge (was: icon + Badge + colored border = triple signaling)
+- **Vitals chart** — no longer wraps itself in a Card (was double-wrapped in page); the confusing dual-Y-axis "Semua" mode removed; metric selector is now a compact segment control
+- **Empty states** — all now have an icon, consistent across all 5 tables/lists
+
+---
+
 ## Inpatient Detail Page — Round 3 Design Refinements
 
 ### Files Changed

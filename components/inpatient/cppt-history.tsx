@@ -5,6 +5,7 @@
 
 "use client"
 
+import { IconNotes } from "@tabler/icons-react"
 import { CPPT } from "@/types/inpatient"
 import { CPPTEntryCard } from "./cppt-entry-card"
 
@@ -17,7 +18,10 @@ interface CPPTHistoryProps {
 export function CPPTHistory({ entries, onRefresh, isLocked = false }: CPPTHistoryProps) {
   if (entries.length === 0) {
     return (
-      <div className="text-muted-foreground py-8 text-center">Belum ada catatan CPPT tercatat</div>
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <IconNotes className="text-muted-foreground/30 mb-3 h-10 w-10" />
+        <p className="text-muted-foreground text-sm">Belum ada catatan CPPT</p>
+      </div>
     )
   }
 

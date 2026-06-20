@@ -1,22 +1,10 @@
-/**
- * CPPT Entry Card Component
- * Displays a single CPPT entry with role-based styling
- */
-
 "use client"
 
 import { useState } from "react"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { id as localeId } from "date-fns/locale"
-import {
-  IconUser,
-  IconStethoscope,
-  IconTrash,
-  IconChevronDown,
-  IconChevronUp,
-} from "@tabler/icons-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { IconTrash, IconChevronDown, IconChevronUp } from "@tabler/icons-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -44,11 +32,7 @@ export function CPPTEntryCard({ entry, onRefresh, isLocked = false }: CPPTEntryC
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const canDelete = (createdAt: string) => {
-    const created = new Date(createdAt)
-    const now = new Date()
-    const timeDiff = now.getTime() - created.getTime()
-    const oneHour = 3600000 // 1 hour in milliseconds
-    return timeDiff <= oneHour
+    return Date.now() - new Date(createdAt).getTime() <= 3_600_000
   }
 
   const handleDelete = async (cpptId: string) => {
@@ -73,117 +57,129 @@ export function CPPTEntryCard({ entry, onRefresh, isLocked = false }: CPPTEntryC
   const hasSOAP = entry.subjective || entry.objective || entry.assessment || entry.plan
 
   return (
-    <Card
-      className={`${
-        isDoctor
-          ? "border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20"
-          : "border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/20"
-      }`}
-    >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            {isDoctor ? (
-              <IconStethoscope className="h-5 w-5 text-blue-600" />
-            ) : (
-              <IconUser className="h-5 w-5 text-green-600" />
-            )}
-            <div>
-              <CardTitle className="text-base">
-                {entry.authorName || "Unknown User"}
-                <Badge variant={isDoctor ? "default" : "secondary"} className="ml-2">
-                  {isDoctor ? "Dokter" : "Perawat"}
-                </Badge>
-              </CardTitle>
-              <CardDescription className="text-xs">
-                {format(new Date(entry.createdAt), "dd MMM yyyy, HH:mm", { locale: localeId })}
-              </CardDescription>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            {hasSOAP && (
-              <Button variant="ghost" size="sm" onClick={() => setExpanded(!expanded)}>
-                {expanded ? (
-                  <IconChevronUp className="h-4 w-4" />
-                ) : (
-                  <IconChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            )}
-            {canDelete(entry.createdAt) && !isLocked && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="ghost" size="sm" disabled={deletingId === entry.id}>
-                    <IconTrash className="h-4 w-4 text-red-600" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Hapus Catatan CPPT?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Catatan CPPT yang dihapus tidak dapat dikembalikan. Tindakan ini hanya dapat
-                      dilakukan dalam 1 jam setelah dibuat.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Batal</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleDelete(entry.id)}>
-                      Hapus
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {/* SOAP Format for Doctors (Expandable) */}
-        {hasSOAP && expanded && (
-          <div className="space-y-3 border-t pt-3">
-            {entry.subjective && (
-              <div>
-                <p className="text-sm font-semibold text-blue-700">S - Subjective</p>
-                <p className="text-muted-foreground text-sm">{entry.subjective}</p>
-              </div>
-            )}
-            {entry.objective && (
-              <div>
-                <p className="text-sm font-semibold text-blue-700">O - Objective</p>
-                <p className="text-muted-foreground text-sm">{entry.objective}</p>
-              </div>
-            )}
-            {entry.assessment && (
-              <div>
-                <p className="text-sm font-semibold text-blue-700">A - Assessment</p>
-                <p className="text-muted-foreground text-sm">{entry.assessment}</p>
-              </div>
-            )}
-            {entry.plan && (
-              <div>
-                <p className="text-sm font-semibold text-blue-700">P - Plan</p>
-                <p className="text-muted-foreground text-sm">{entry.plan}</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Progress Note */}
+    <div className="bg-card rounded-lg border p-4">
+      {/* Header */}
+      <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm font-semibold">Catatan Perkembangan</p>
-          <p className="text-muted-foreground text-sm whitespace-pre-wrap">{entry.progressNote}</p>
-        </div>
-
-        {/* Instructions */}
-        {entry.instructions && (
-          <div className="border-t pt-3">
-            <p className="text-sm font-semibold">Instruksi Khusus</p>
-            <p className="text-muted-foreground text-sm whitespace-pre-wrap">
-              {entry.instructions}
-            </p>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold">{entry.authorName || "Unknown User"}</span>
+            <Badge
+              variant="outline"
+              className={
+                isDoctor
+                  ? "border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/20 dark:text-blue-300"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-300"
+              }
+            >
+              {isDoctor ? "Dokter" : "Perawat"}
+            </Badge>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            {format(new Date(entry.createdAt), "dd MMM yyyy, HH:mm", { locale: localeId })}
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          {hasSOAP && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setExpanded(!expanded)}
+              className="h-7 w-7 p-0"
+            >
+              {expanded ? (
+                <IconChevronUp className="h-4 w-4" />
+              ) : (
+                <IconChevronDown className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          {canDelete(entry.createdAt) && !isLocked && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="hover:bg-destructive/10 hover:text-destructive h-7 w-7 p-0"
+                  disabled={deletingId === entry.id}
+                >
+                  <IconTrash className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Hapus Catatan CPPT?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Catatan CPPT yang dihapus tidak dapat dikembalikan. Tindakan ini hanya dapat
+                    dilakukan dalam 1 jam setelah dibuat.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Batal</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleDelete(entry.id)}>
+                    Hapus
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
+      </div>
+
+      {/* SOAP (expandable) */}
+      {hasSOAP && expanded && (
+        <div className="mt-3 space-y-2 border-t pt-3">
+          {entry.subjective && (
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                S — Subjective
+              </p>
+              <p className="mt-0.5 text-sm">{entry.subjective}</p>
+            </div>
+          )}
+          {entry.objective && (
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                O — Objective
+              </p>
+              <p className="mt-0.5 text-sm">{entry.objective}</p>
+            </div>
+          )}
+          {entry.assessment && (
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                A — Assessment
+              </p>
+              <p className="mt-0.5 text-sm">{entry.assessment}</p>
+            </div>
+          )}
+          {entry.plan && (
+            <div>
+              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+                P — Plan
+              </p>
+              <p className="mt-0.5 text-sm">{entry.plan}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Progress Note */}
+      <div className="mt-3 border-t pt-3">
+        <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+          Catatan Perkembangan
+        </p>
+        <p className="mt-0.5 text-sm whitespace-pre-wrap">{entry.progressNote}</p>
+      </div>
+
+      {/* Instructions */}
+      {entry.instructions && (
+        <div className="mt-3 border-t pt-3">
+          <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
+            Instruksi Khusus
+          </p>
+          <p className="mt-0.5 text-sm whitespace-pre-wrap">{entry.instructions}</p>
+        </div>
+      )}
+    </div>
   )
 }

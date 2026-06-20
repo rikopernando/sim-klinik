@@ -51,15 +51,42 @@ const ROOM_TYPE_LABELS: Record<string, string> = {
 }
 
 const VISIT_STATUS_DISPLAY: Record<string, { label: string; className: string }> = {
-  registered: { label: "Terdaftar", className: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
-  waiting: { label: "Menunggu", className: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300" },
-  in_examination: { label: "Dalam Perawatan", className: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" },
-  examined: { label: "Selesai Diperiksa", className: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300" },
-  ready_for_billing: { label: "Siap Tagihan", className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300" },
-  billed: { label: "Sudah Ditagih", className: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300" },
-  paid: { label: "Lunas", className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" },
-  completed: { label: "Selesai", className: "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300" },
-  cancelled: { label: "Dibatalkan", className: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300" },
+  registered: {
+    label: "Terdaftar",
+    className: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+  },
+  waiting: {
+    label: "Menunggu",
+    className: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300",
+  },
+  in_examination: {
+    label: "Dalam Perawatan",
+    className: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+  },
+  examined: {
+    label: "Selesai Diperiksa",
+    className: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+  },
+  ready_for_billing: {
+    label: "Siap Tagihan",
+    className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+  },
+  billed: {
+    label: "Sudah Ditagih",
+    className: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
+  },
+  paid: {
+    label: "Lunas",
+    className: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  },
+  completed: {
+    label: "Selesai",
+    className: "bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300",
+  },
+  cancelled: {
+    label: "Dibatalkan",
+    className: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300",
+  },
 }
 
 export default function PatientDetailPage() {
@@ -95,7 +122,7 @@ function PatientDetailPageContent() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-zinc-900">
-        <div className="border-b bg-background">
+        <div className="bg-background border-b">
           <div className="container mx-auto max-w-5xl px-6 pt-8 pb-6">
             <div className="flex items-center justify-between gap-4">
               <Skeleton className="h-8 w-64" />
@@ -124,64 +151,66 @@ function PatientDetailPageContent() {
     )
   }
 
+  const { daysInHospital } = patientDetail
+  const isWarning =
+    daysInHospital >= LONG_STAY_WARNING_THRESHOLD && daysInHospital < LONG_STAY_CRITICAL_THRESHOLD
+  const isCritical = daysInHospital >= LONG_STAY_CRITICAL_THRESHOLD
   const statusConfig = VISIT_STATUS_DISPLAY[patientDetail.patient.status]
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-900">
       {/* Header */}
-      <div className="border-b bg-background">
+      <div className="bg-background border-b">
         <div className="container mx-auto max-w-5xl px-6 pt-8 pb-6">
           <div className="flex items-center justify-between gap-4">
             <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-2xl font-bold tracking-tight">
-                    {patientDetail.patient.patientName}
-                  </h1>
-                  {statusConfig && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        statusConfig.className
-                      )}
-                    >
-                      {statusConfig.label}
-                    </span>
-                  )}
-                </div>
-                <p className="text-muted-foreground mt-0.5 text-sm">
-                  {patientDetail.patient.mrNumber} • {patientDetail.patient.visitNumber}
-                </p>
-                {patientDetail.bedAssignment && (
-                  <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="text-muted-foreground text-xs">
-                      <span className="font-mono font-semibold text-foreground">
-                        {patientDetail.bedAssignment.roomNumber}
-                      </span>
-                      {" · Bed "}
-                      <span className="text-foreground">
-                        {patientDetail.bedAssignment.bedNumber}
-                      </span>
-                    </span>
-                    <span className="text-muted-foreground text-xs">·</span>
-                    <span className="text-muted-foreground text-xs">
-                      {ROOM_TYPE_LABELS[patientDetail.bedAssignment.roomType] ??
-                        patientDetail.bedAssignment.roomType}
-                    </span>
-                    <span className="text-muted-foreground text-xs">·</span>
-                    <span
-                      className={cn(
-                        "text-xs font-semibold",
-                        patientDetail.daysInHospital >= LONG_STAY_CRITICAL_THRESHOLD
-                          ? "text-destructive"
-                          : patientDetail.daysInHospital >= LONG_STAY_WARNING_THRESHOLD
-                            ? "text-amber-600 dark:text-amber-400"
-                            : "text-muted-foreground"
-                      )}
-                    >
-                      {patientDetail.daysInHospital} hari rawat
-                    </span>
-                  </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-2xl font-bold tracking-tight">
+                  {patientDetail.patient.patientName}
+                </h1>
+                {statusConfig && (
+                  <span
+                    className={cn(
+                      "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                      statusConfig.className
+                    )}
+                  >
+                    {statusConfig.label}
+                  </span>
                 )}
+              </div>
+              <p className="text-muted-foreground mt-0.5 text-sm">
+                {patientDetail.patient.mrNumber} • {patientDetail.patient.visitNumber}
+              </p>
+              {patientDetail.bedAssignment && (
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <span className="text-muted-foreground text-xs">
+                    <span className="text-foreground font-mono font-semibold">
+                      {patientDetail.bedAssignment.roomNumber}
+                    </span>
+                    {" · Bed "}
+                    <span className="text-foreground">{patientDetail.bedAssignment.bedNumber}</span>
+                  </span>
+                  <span className="text-muted-foreground text-xs">·</span>
+                  <span className="text-muted-foreground text-xs">
+                    {ROOM_TYPE_LABELS[patientDetail.bedAssignment.roomType] ??
+                      patientDetail.bedAssignment.roomType}
+                  </span>
+                  <span className="text-muted-foreground text-xs">·</span>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold",
+                      isCritical
+                        ? "text-destructive"
+                        : isWarning
+                          ? "text-amber-600 dark:text-amber-400"
+                          : "text-muted-foreground"
+                    )}
+                  >
+                    {daysInHospital} hari rawat
+                  </span>
+                </div>
+              )}
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => router.back()}>
@@ -234,7 +263,7 @@ function PatientDetailPageContent() {
               <TabsTrigger
                 key={value}
                 value={value}
-                className="rounded-none border-b-2 border-transparent px-4 pb-2.5 pt-0 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-b-primary data-[state=active]:border-t-transparent data-[state=active]:border-r-transparent data-[state=active]:border-l-transparent data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+                className="text-muted-foreground hover:text-foreground data-[state=active]:border-b-primary data-[state=active]:text-foreground rounded-none border-b-2 border-transparent px-4 pt-0 pb-2.5 text-sm font-medium shadow-none transition-colors data-[state=active]:border-t-transparent data-[state=active]:border-r-transparent data-[state=active]:border-l-transparent data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
                 {label}
               </TabsTrigger>
@@ -256,7 +285,6 @@ function PatientDetailPageContent() {
 
           {/* Tab 2: Klinis */}
           <TabsContent value="clinical" className="mt-6 space-y-6">
-            {/* Vital Signs */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -286,7 +314,6 @@ function PatientDetailPageContent() {
               </CardContent>
             </Card>
 
-            {/* CPPT */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -316,7 +343,6 @@ function PatientDetailPageContent() {
               </CardContent>
             </Card>
 
-            {/* Charts */}
             <Card>
               <CardHeader>
                 <CardTitle>Grafik & Analisis</CardTitle>
@@ -333,7 +359,6 @@ function PatientDetailPageContent() {
 
           {/* Tab 3: Tindakan & Obat */}
           <TabsContent value="treatments" className="mt-6 space-y-6">
-            {/* Material Usage */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -364,7 +389,6 @@ function PatientDetailPageContent() {
               </CardContent>
             </Card>
 
-            {/* Prescriptions */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -394,7 +418,6 @@ function PatientDetailPageContent() {
               </CardContent>
             </Card>
 
-            {/* Procedures */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -424,7 +447,6 @@ function PatientDetailPageContent() {
               </CardContent>
             </Card>
 
-            {/* Laboratory Orders */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -450,7 +472,6 @@ function PatientDetailPageContent() {
 
           {/* Tab 4: Pemulangan */}
           <TabsContent value="discharge" className="mt-6 space-y-6">
-            {/* Discharge Summary */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -485,7 +506,6 @@ function PatientDetailPageContent() {
               <DischargeSummaryCard dischargeSummary={patientDetail.dischargeSummary} />
             )}
 
-            {/* Complete Discharge */}
             {canFinishInpatient(patientDetail.patient.status as VisitStatus) &&
               hasPermission("discharge:write") && (
                 <CompleteDischargeDialog
@@ -495,7 +515,6 @@ function PatientDetailPageContent() {
                 />
               )}
 
-            {/* Final Discharge */}
             {patientDetail.dischargeSummary &&
               patientDetail.patient.status === "paid" &&
               hasPermission("discharge:write") && (
