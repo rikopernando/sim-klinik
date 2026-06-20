@@ -1,23 +1,17 @@
-/**
- * CPPT Timeline Component
- * Visual timeline representation of CPPT entries
- */
-
 "use client"
 
 import { useState, useMemo } from "react"
 import { format, formatDistanceToNow } from "date-fns"
 import { id as localeId } from "date-fns/locale"
 import {
-  IconStethoscope,
-  IconUser,
   IconClock,
   IconChevronDown,
   IconChevronUp,
+  IconNotes,
 } from "@tabler/icons-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { CPPT } from "@/types/inpatient"
 
 interface CPPTTimelineProps {
@@ -37,224 +31,214 @@ export function CPPTTimeline({ entries }: CPPTTimelineProps) {
   const [dateRange, setDateRange] = useState<DateRange>("7d")
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
-  // Filter entries by date range
   const filteredEntries = useMemo(() => {
-    const now = new Date()
-    const sortedEntries = [...entries].sort(
+    const sorted = [...entries].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )
-
-    if (dateRange === "all") {
-      return sortedEntries
-    }
-
+    if (dateRange === "all") return sorted
     const rangeMs = {
-      "24h": 24 * 60 * 60 * 1000,
-      "3d": 3 * 24 * 60 * 60 * 1000,
-      "7d": 7 * 24 * 60 * 60 * 1000,
+      "24h": 86_400_000,
+      "3d": 259_200_000,
+      "7d": 604_800_000,
     }[dateRange]
-
-    const cutoffTime = now.getTime() - rangeMs
-    return sortedEntries.filter((entry) => new Date(entry.createdAt).getTime() >= cutoffTime)
+    return sorted.filter(
+      (e) => new Date(e.createdAt).getTime() >= Date.now() - rangeMs
+    )
   }, [entries, dateRange])
 
   const toggleExpanded = (id: string) => {
     setExpandedIds((prev) => {
       const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
+      next.has(id) ? next.delete(id) : next.add(id)
       return next
     })
   }
 
   if (entries.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IconClock className="h-5 w-5" />
-            Timeline CPPT
-          </CardTitle>
-          <CardDescription>Belum ada catatan CPPT tercatat</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="flex flex-col items-center justify-center py-10 text-center">
+        <IconNotes className="text-muted-foreground/30 mb-3 h-10 w-10" />
+        <p className="text-muted-foreground text-sm">Belum ada catatan CPPT</p>
+      </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <IconClock className="h-5 w-5" />
-              Timeline CPPT
-            </CardTitle>
-            <CardDescription>
-              Riwayat catatan perkembangan pasien ({filteredEntries.length} entri)
-            </CardDescription>
-          </div>
-        </div>
-
-        {/* Date Range Selector */}
-        <div className="flex flex-wrap gap-2 pt-4">
-          {DATE_RANGE_OPTIONS.map((option) => (
-            <Button
-              key={option.value}
-              variant={dateRange === option.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDateRange(option.value)}
+    <div>
+      {/* Date range selector */}
+      <div className="mb-5 flex items-center justify-between">
+        <p className="text-muted-foreground text-sm">{filteredEntries.length} entri</p>
+        <div className="flex gap-1 rounded-lg border p-0.5">
+          {DATE_RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              onClick={() => setDateRange(opt.value)}
+              className={cn(
+                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                dateRange === opt.value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
             >
-              {option.label}
-            </Button>
+              {opt.label}
+            </button>
           ))}
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent>
-        {filteredEntries.length === 0 ? (
-          <div className="text-muted-foreground py-8 text-center">
-            Tidak ada data CPPT dalam rentang waktu ini
-          </div>
-        ) : (
-          <div className="relative">
-            {/* Timeline vertical line */}
-            <div className="bg-border absolute top-0 bottom-0 left-6 w-0.5" />
+      {filteredEntries.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <p className="text-muted-foreground text-sm">
+            Tidak ada data dalam rentang waktu ini
+          </p>
+        </div>
+      ) : (
+        <div className="relative">
+          {/* Timeline vertical line */}
+          <div className="bg-border absolute top-0 bottom-0 left-6 w-0.5" />
 
-            <div className="space-y-6">
-              {filteredEntries.map((entry) => {
-                const isDoctor = entry.authorRole === "doctor"
-                const hasSOAP =
-                  entry.subjective || entry.objective || entry.assessment || entry.plan
-                const isExpanded = expandedIds.has(entry.id)
+          <div className="space-y-4">
+            {filteredEntries.map((entry) => {
+              const isDoctor = entry.authorRole === "doctor"
+              const hasSOAP =
+                entry.subjective || entry.objective || entry.assessment || entry.plan
+              const isExpanded = expandedIds.has(entry.id)
 
-                return (
-                  <div key={entry.id} className="relative pl-14">
-                    {/* Timeline dot */}
-                    <div
-                      className={`border-background absolute top-2 left-4 h-5 w-5 rounded-full border-4 ${
-                        isDoctor ? "bg-blue-500" : "bg-green-500"
-                      }`}
-                    />
+              return (
+                <div key={entry.id} className="relative pl-14">
+                  {/* Timeline dot */}
+                  <div
+                    className={cn(
+                      "border-background absolute top-2.5 left-4 h-4 w-4 rounded-full border-4",
+                      isDoctor ? "bg-blue-500" : "bg-emerald-500"
+                    )}
+                  />
 
-                    <div
-                      className={`rounded-lg border p-4 ${
-                        isDoctor
-                          ? "border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20"
-                          : "border-l-4 border-l-green-500 bg-green-50/50 dark:bg-green-950/20"
-                      }`}
-                    >
-                      {/* Header */}
-                      <div className="mb-3 flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          {isDoctor ? (
-                            <IconStethoscope className="h-5 w-5 text-blue-600" />
-                          ) : (
-                            <IconUser className="h-5 w-5 text-green-600" />
-                          )}
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold">
-                                {entry.authorName || "Unknown User"}
-                              </p>
-                              <Badge
-                                variant={isDoctor ? "default" : "secondary"}
-                                className="text-xs"
-                              >
-                                {isDoctor ? "Dokter" : "Perawat"}
-                              </Badge>
-                            </div>
-                            <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                              <IconClock className="h-3 w-3" />
-                              <span>
-                                {format(new Date(entry.createdAt), "dd MMM yyyy, HH:mm", {
-                                  locale: localeId,
-                                })}
-                              </span>
-                              <span>•</span>
-                              <span>
-                                {formatDistanceToNow(new Date(entry.createdAt), {
-                                  addSuffix: true,
-                                  locale: localeId,
-                                })}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {hasSOAP && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleExpanded(entry.id)}
-                          >
-                            {isExpanded ? (
-                              <IconChevronUp className="h-4 w-4" />
-                            ) : (
-                              <IconChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                        )}
-                      </div>
-
-                      {/* SOAP (expandable) */}
-                      {hasSOAP && isExpanded && (
-                        <div className="mb-3 space-y-2 border-b pb-3">
-                          {entry.subjective && (
-                            <div>
-                              <p className="text-xs font-semibold text-blue-700">S - Subjective</p>
-                              <p className="text-muted-foreground text-xs">{entry.subjective}</p>
-                            </div>
-                          )}
-                          {entry.objective && (
-                            <div>
-                              <p className="text-xs font-semibold text-blue-700">O - Objective</p>
-                              <p className="text-muted-foreground text-xs">{entry.objective}</p>
-                            </div>
-                          )}
-                          {entry.assessment && (
-                            <div>
-                              <p className="text-xs font-semibold text-blue-700">A - Assessment</p>
-                              <p className="text-muted-foreground text-xs">{entry.assessment}</p>
-                            </div>
-                          )}
-                          {entry.plan && (
-                            <div>
-                              <p className="text-xs font-semibold text-blue-700">P - Plan</p>
-                              <p className="text-muted-foreground text-xs">{entry.plan}</p>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Progress Note */}
+                  <div className="rounded-lg border bg-card p-4">
+                    {/* Header */}
+                    <div className="flex items-start justify-between">
                       <div>
-                        <p className="mb-1 text-xs font-semibold">Catatan Perkembangan</p>
-                        <p className="text-muted-foreground text-xs whitespace-pre-wrap">
-                          {entry.progressNote}
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-semibold">
+                            {entry.authorName || "Unknown User"}
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-xs",
+                              isDoctor
+                                ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/20 dark:text-blue-300"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300"
+                            )}
+                          >
+                            {isDoctor ? "Dokter" : "Perawat"}
+                          </Badge>
+                        </div>
+                        <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-xs">
+                          <IconClock className="h-3 w-3" />
+                          <span>
+                            {format(new Date(entry.createdAt), "dd MMM yyyy, HH:mm", {
+                              locale: localeId,
+                            })}
+                          </span>
+                          <span>·</span>
+                          <span>
+                            {formatDistanceToNow(new Date(entry.createdAt), {
+                              addSuffix: true,
+                              locale: localeId,
+                            })}
+                          </span>
+                        </div>
                       </div>
 
-                      {/* Instructions */}
-                      {entry.instructions && (
-                        <div className="mt-3 border-t pt-3">
-                          <p className="mb-1 text-xs font-semibold">Instruksi Khusus</p>
-                          <p className="text-muted-foreground text-xs whitespace-pre-wrap">
-                            {entry.instructions}
-                          </p>
-                        </div>
+                      {hasSOAP && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 w-7 p-0"
+                          onClick={() => toggleExpanded(entry.id)}
+                        >
+                          {isExpanded ? (
+                            <IconChevronUp className="h-4 w-4" />
+                          ) : (
+                            <IconChevronDown className="h-4 w-4" />
+                          )}
+                        </Button>
                       )}
                     </div>
+
+                    {/* SOAP (expandable) */}
+                    {hasSOAP && isExpanded && (
+                      <div className="mt-3 space-y-2 border-t pt-3">
+                        {entry.subjective && (
+                          <div>
+                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              S — Subjective
+                            </p>
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                              {entry.subjective}
+                            </p>
+                          </div>
+                        )}
+                        {entry.objective && (
+                          <div>
+                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              O — Objective
+                            </p>
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                              {entry.objective}
+                            </p>
+                          </div>
+                        )}
+                        {entry.assessment && (
+                          <div>
+                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              A — Assessment
+                            </p>
+                            <p className="text-muted-foreground mt-0.5 text-xs">
+                              {entry.assessment}
+                            </p>
+                          </div>
+                        )}
+                        {entry.plan && (
+                          <div>
+                            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              P — Plan
+                            </p>
+                            <p className="text-muted-foreground mt-0.5 text-xs">{entry.plan}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Progress Note */}
+                    <div className="mt-3">
+                      <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                        Catatan Perkembangan
+                      </p>
+                      <p className="text-muted-foreground mt-0.5 text-xs whitespace-pre-wrap">
+                        {entry.progressNote}
+                      </p>
+                    </div>
+
+                    {/* Instructions */}
+                    {entry.instructions && (
+                      <div className="mt-3 border-t pt-3">
+                        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                          Instruksi Khusus
+                        </p>
+                        <p className="text-muted-foreground mt-0.5 text-xs whitespace-pre-wrap">
+                          {entry.instructions}
+                        </p>
+                      </div>
+                    )}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+              )
+            })}
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   )
 }

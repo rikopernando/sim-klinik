@@ -1,22 +1,7 @@
-/**
- * Discharge Summary Card Component
- * Displays the discharge summary (Resume Medis) information
- */
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import {
-  IconFileDescription,
-  IconStethoscope,
-  IconPill,
-  IconClipboardList,
-  IconApple,
-  IconActivity,
-  IconCalendar,
-  IconUser,
-  IconLock,
-} from "@tabler/icons-react"
+import { IconLock, IconCalendar } from "@tabler/icons-react"
 import { formatDate, formatDateTime } from "@/lib/utils/date"
 
 interface DischargeSummary {
@@ -41,228 +26,149 @@ interface DischargeSummaryCardProps {
   dischargeSummary: DischargeSummary
 }
 
-export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardProps) {
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-4">
-      {/* Header Card with Status */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <IconFileDescription className="h-5 w-5" />
-              Ringkasan Medis Pulang (Resume Medis)
-            </CardTitle>
-            <Badge variant="secondary" className="flex items-center gap-1">
-              <IconLock className="h-3 w-3" />
-              Visit Terkunci
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3">
-            <div className="flex items-start gap-3">
-              <IconUser className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Dibuat Oleh</p>
-                <p className="font-medium">
-                  {dischargeSummary.dischargedByName || dischargeSummary.dischargedBy}
-                </p>
-              </div>
-            </div>
+    <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wider">
+      {children}
+    </p>
+  )
+}
 
-            <div className="flex items-start gap-3">
-              <IconCalendar className="text-muted-foreground mt-0.5 h-4 w-4" />
-              <div className="flex-1 space-y-1">
-                <p className="text-muted-foreground text-sm">Tanggal & Waktu</p>
-                <p className="font-medium">{formatDateTime(dischargeSummary.dischargedAt)}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardProps) {
+  const hasRestrictions =
+    dischargeSummary.dietaryRestrictions || dischargeSummary.activityRestrictions
+  const hasFollowUp =
+    dischargeSummary.followUpDate || dischargeSummary.followUpInstructions
+  const hasProceduresOrMeds =
+    dischargeSummary.proceduresPerformed || dischargeSummary.medicationsOnDischarge
 
-      {/* Diagnosis Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <IconStethoscope className="h-5 w-5" />
-            Diagnosis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">Diagnosis Masuk</Badge>
-              </div>
+  return (
+    <Card>
+      {/* Compact metadata header */}
+      <CardHeader className="pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold">Ringkasan Medis Pulang</p>
+            <p className="text-muted-foreground text-xs">
+              {dischargeSummary.dischargedByName || dischargeSummary.dischargedBy} ·{" "}
+              {formatDateTime(dischargeSummary.dischargedAt)}
+            </p>
+          </div>
+          <Badge variant="secondary" className="flex items-center gap-1">
+            <IconLock className="h-3 w-3" />
+            Visit Terkunci
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        {/* Diagnosis */}
+        <div>
+          <SectionLabel>Diagnosis</SectionLabel>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-md bg-muted/40 p-3">
+              <p className="text-muted-foreground mb-1 text-xs">Masuk</p>
               <p className="text-sm leading-relaxed">{dischargeSummary.admissionDiagnosis}</p>
             </div>
-
-            <Separator />
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="default">Diagnosis Pulang</Badge>
-              </div>
-              <p className="text-sm leading-relaxed">{dischargeSummary.dischargeDiagnosis}</p>
+            <div className="rounded-md bg-muted/40 p-3">
+              <p className="text-muted-foreground mb-1 text-xs">Pulang</p>
+              <p className="text-sm font-medium leading-relaxed">
+                {dischargeSummary.dischargeDiagnosis}
+              </p>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Clinical Summary Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <IconClipboardList className="h-5 w-5" />
-            Ringkasan Klinis
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <Separator />
+
+        {/* Ringkasan Klinis */}
+        <div>
+          <SectionLabel>Ringkasan Klinis</SectionLabel>
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
             {dischargeSummary.clinicalSummary}
           </p>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Procedures & Medications Card */}
-      {(dischargeSummary.proceduresPerformed || dischargeSummary.medicationsOnDischarge) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <IconPill className="h-5 w-5" />
-              Tindakan & Obat
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
+        {hasProceduresOrMeds && (
+          <>
+            <Separator />
+            <div className="grid gap-4 sm:grid-cols-2">
               {dischargeSummary.proceduresPerformed && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">Tindakan yang Dilakukan</Badge>
-                  </div>
+                <div>
+                  <SectionLabel>Tindakan yang Dilakukan</SectionLabel>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {dischargeSummary.proceduresPerformed}
                   </p>
                 </div>
               )}
-
-              {dischargeSummary.proceduresPerformed && dischargeSummary.medicationsOnDischarge && (
-                <Separator />
-              )}
-
               {dischargeSummary.medicationsOnDischarge && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline">Obat untuk Dibawa Pulang</Badge>
-                  </div>
+                <div>
+                  <SectionLabel>Obat Dibawa Pulang</SectionLabel>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">
                     {dischargeSummary.medicationsOnDischarge}
                   </p>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </>
+        )}
 
-      {/* Discharge Instructions Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <IconClipboardList className="h-5 w-5" />
-            Instruksi Pulang
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+        <Separator />
+
+        {/* Instruksi Pulang */}
+        <div>
+          <SectionLabel>Instruksi Pulang</SectionLabel>
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
             {dischargeSummary.dischargeInstructions}
           </p>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Restrictions Card */}
-      {(dischargeSummary.dietaryRestrictions || dischargeSummary.activityRestrictions) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Pembatasan & Pantangan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
+        {hasRestrictions && (
+          <>
+            <Separator />
+            <div className="grid gap-4 sm:grid-cols-2">
               {dischargeSummary.dietaryRestrictions && (
-                <div className="flex items-start gap-3">
-                  <IconApple className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Pantangan Makanan</p>
-                    <p className="text-sm leading-relaxed">
-                      {dischargeSummary.dietaryRestrictions}
-                    </p>
-                  </div>
+                <div>
+                  <SectionLabel>Pantangan Makanan</SectionLabel>
+                  <p className="text-sm leading-relaxed">{dischargeSummary.dietaryRestrictions}</p>
                 </div>
               )}
-
-              {dischargeSummary.dietaryRestrictions && dischargeSummary.activityRestrictions && (
-                <Separator />
-              )}
-
               {dischargeSummary.activityRestrictions && (
-                <div className="flex items-start gap-3">
-                  <IconActivity className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Pembatasan Aktivitas</p>
-                    <p className="text-sm leading-relaxed">
-                      {dischargeSummary.activityRestrictions}
-                    </p>
-                  </div>
+                <div>
+                  <SectionLabel>Pembatasan Aktivitas</SectionLabel>
+                  <p className="text-sm leading-relaxed">
+                    {dischargeSummary.activityRestrictions}
+                  </p>
                 </div>
               )}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </>
+        )}
 
-      {/* Follow Up Card */}
-      {(dischargeSummary.followUpDate || dischargeSummary.followUpInstructions) && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <IconCalendar className="h-5 w-5" />
-              Rencana Kontrol
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4">
-              {dischargeSummary.followUpDate && (
-                <div className="flex items-start gap-3">
-                  <IconCalendar className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Tanggal Kontrol</p>
-                    <Badge variant="default" className="font-medium">
+        {hasFollowUp && (
+          <>
+            <Separator />
+            <div>
+              <SectionLabel>Rencana Kontrol</SectionLabel>
+              <div className="flex flex-wrap items-start gap-4">
+                {dischargeSummary.followUpDate && (
+                  <div className="flex items-center gap-1.5 rounded-md border px-3 py-2">
+                    <IconCalendar className="text-muted-foreground h-4 w-4" />
+                    <span className="text-sm font-medium">
                       {formatDate(dischargeSummary.followUpDate)}
-                    </Badge>
+                    </span>
                   </div>
-                </div>
-              )}
-
-              {dischargeSummary.followUpDate && dischargeSummary.followUpInstructions && (
-                <Separator />
-              )}
-
-              {dischargeSummary.followUpInstructions && (
-                <div className="flex items-start gap-3">
-                  <IconClipboardList className="text-muted-foreground mt-0.5 h-4 w-4" />
-                  <div className="flex-1 space-y-1">
-                    <p className="text-muted-foreground text-sm">Instruksi Kontrol</p>
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                      {dischargeSummary.followUpInstructions}
-                    </p>
-                  </div>
-                </div>
-              )}
+                )}
+                {dischargeSummary.followUpInstructions && (
+                  <p className="text-muted-foreground flex-1 text-sm leading-relaxed">
+                    {dischargeSummary.followUpInstructions}
+                  </p>
+                )}
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   )
 }
