@@ -16,7 +16,6 @@ import { usePermission } from "@/hooks/use-permission"
 import { PatientInfoCard } from "@/components/inpatient/patient-info-card"
 import { VitalsHistoryTable } from "@/components/inpatient/vitals-history-table"
 import { RecordVitalsDialog } from "@/components/inpatient/record-vitals-dialog"
-import { CPPTHistoryCard } from "@/components/inpatient/cppt-history-card"
 import { CPPTDialog } from "@/components/inpatient/cppt-dialog"
 import { MaterialUsageCard } from "@/components/inpatient/material-usage-card"
 import { RecordMaterialDialog } from "@/components/inpatient/record-material-dialog"
@@ -335,7 +334,7 @@ function PatientDetailPageContent() {
                 </div>
               </CardHeader>
               <CardContent>
-                <CPPTHistoryCard
+                <CPPTTimeline
                   entries={patientDetail.cpptEntries}
                   onRefresh={refresh}
                   isLocked={isLocked}
@@ -345,14 +344,11 @@ function PatientDetailPageContent() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Grafik & Analisis</CardTitle>
-                <CardDescription>
-                  Visualisasi tren vital signs dan timeline CPPT untuk analisis klinis
-                </CardDescription>
+                <CardTitle>Tren Vital Signs</CardTitle>
+                <CardDescription>Visualisasi perubahan tanda vital selama perawatan</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent>
                 <VitalsTrendChart vitals={patientDetail.vitals} />
-                <CPPTTimeline entries={patientDetail.cpptEntries} />
               </CardContent>
             </Card>
           </TabsContent>
@@ -472,38 +468,36 @@ function PatientDetailPageContent() {
 
           {/* Tab 4: Pemulangan */}
           <TabsContent value="discharge" className="mt-6 space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Ringkasan Medis Pulang</CardTitle>
-                    <CardDescription>
-                      {patientDetail.dischargeSummary
-                        ? "Resume medis telah dibuat dan visit telah terkunci"
-                        : "Resume medis diperlukan sebelum pasien dapat dipulangkan"}
-                    </CardDescription>
-                  </div>
-                  {isAbleToFillTheDischargeSummary && (
-                    <DischargeSummaryDialog
-                      visitId={visitId}
-                      patientName={patientDetail.patient.patientName}
-                      onSuccess={refresh}
-                    />
-                  )}
-                </div>
-              </CardHeader>
-              {!patientDetail.dischargeSummary && (
-                <CardContent>
-                  <p className="text-muted-foreground py-4 text-center text-sm">
-                    Ringkasan medis pulang belum dibuat. Dokter harus mengisi ringkasan medis
-                    sebelum pasien dapat dipulangkan.
-                  </p>
-                </CardContent>
-              )}
-            </Card>
-
-            {patientDetail.dischargeSummary && (
+            {patientDetail.dischargeSummary ? (
               <DischargeSummaryCard dischargeSummary={patientDetail.dischargeSummary} />
+            ) : (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Ringkasan Medis Pulang</CardTitle>
+                      <CardDescription>
+                        Resume medis diperlukan sebelum pasien dapat dipulangkan
+                      </CardDescription>
+                    </div>
+                    {isAbleToFillTheDischargeSummary && (
+                      <DischargeSummaryDialog
+                        visitId={visitId}
+                        patientName={patientDetail.patient.patientName}
+                        onSuccess={refresh}
+                      />
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <p className="text-muted-foreground text-sm">
+                      Ringkasan medis belum dibuat. Dokter harus mengisi ringkasan medis sebelum
+                      pasien dapat dipulangkan.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             )}
 
             {canFinishInpatient(patientDetail.patient.status as VisitStatus) &&
