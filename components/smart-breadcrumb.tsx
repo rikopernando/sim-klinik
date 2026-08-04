@@ -97,10 +97,7 @@ export function SmartBreadcrumb() {
         {breadcrumbItems.map((item, index) => (
           <div
             key={item.href}
-            className={cn(
-              "contents",
-              index < breadcrumbItems.length - 2 && "hidden sm:contents"
-            )}
+            className={cn("contents", index < breadcrumbItems.length - 2 && "hidden sm:contents")}
           >
             <BreadcrumbItem>
               {item.isLast ? (

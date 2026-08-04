@@ -28,7 +28,7 @@ interface DischargeSummaryCardProps {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-muted-foreground mb-2 text-xs font-semibold uppercase tracking-wider">
+    <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
       {children}
     </p>
   )
@@ -37,8 +37,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardProps) {
   const hasRestrictions =
     dischargeSummary.dietaryRestrictions || dischargeSummary.activityRestrictions
-  const hasFollowUp =
-    dischargeSummary.followUpDate || dischargeSummary.followUpInstructions
+  const hasFollowUp = dischargeSummary.followUpDate || dischargeSummary.followUpInstructions
   const hasProceduresOrMeds =
     dischargeSummary.proceduresPerformed || dischargeSummary.medicationsOnDischarge
 
@@ -66,13 +65,13 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
         <div>
           <SectionLabel>Diagnosis</SectionLabel>
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-md bg-muted/40 p-3">
+            <div className="bg-muted/40 rounded-md p-3">
               <p className="text-muted-foreground mb-1 text-xs">Masuk</p>
               <p className="text-sm leading-relaxed">{dischargeSummary.admissionDiagnosis}</p>
             </div>
-            <div className="rounded-md bg-muted/40 p-3">
+            <div className="bg-muted/40 rounded-md p-3">
               <p className="text-muted-foreground mb-1 text-xs">Pulang</p>
-              <p className="text-sm font-medium leading-relaxed">
+              <p className="text-sm leading-relaxed font-medium">
                 {dischargeSummary.dischargeDiagnosis}
               </p>
             </div>
@@ -136,9 +135,7 @@ export function DischargeSummaryCard({ dischargeSummary }: DischargeSummaryCardP
               {dischargeSummary.activityRestrictions && (
                 <div>
                   <SectionLabel>Pembatasan Aktivitas</SectionLabel>
-                  <p className="text-sm leading-relaxed">
-                    {dischargeSummary.activityRestrictions}
-                  </p>
+                  <p className="text-sm leading-relaxed">{dischargeSummary.activityRestrictions}</p>
                 </div>
               )}
             </div>

@@ -28,8 +28,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
   const { patient, bedAssignment, daysInHospital, totalRoomCost } = data
 
   const isWarning =
-    daysInHospital >= LONG_STAY_WARNING_THRESHOLD &&
-    daysInHospital < LONG_STAY_CRITICAL_THRESHOLD
+    daysInHospital >= LONG_STAY_WARNING_THRESHOLD && daysInHospital < LONG_STAY_CRITICAL_THRESHOLD
   const isCritical = daysInHospital >= LONG_STAY_CRITICAL_THRESHOLD
 
   return (
@@ -67,7 +66,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
             {patient.nik && (
               <div className="flex items-baseline justify-between gap-4">
                 <dt className="text-muted-foreground shrink-0 text-sm">NIK</dt>
-                <dd className="font-mono text-right text-sm font-medium">{patient.nik}</dd>
+                <dd className="text-right font-mono text-sm font-medium">{patient.nik}</dd>
               </div>
             )}
 
@@ -102,7 +101,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
           {/* Row 1: location facts */}
           <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3">
             <div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Tanggal Masuk
               </p>
               <p className="text-sm font-medium">
@@ -110,7 +109,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Kamar & Bed
               </p>
               {bedAssignment ? (
@@ -127,7 +126,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
               )}
             </div>
             <div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Tipe Ruangan
               </p>
               <p className="text-sm font-medium">
@@ -143,7 +142,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
           {/* Row 2: clinical numbers */}
           <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3">
             <div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Hari Rawat
               </p>
               <div className="flex items-baseline gap-1">
@@ -175,7 +174,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
               )}
             </div>
             <div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Tarif / Hari
               </p>
               <p className="text-sm font-medium">
@@ -183,7 +182,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Total Biaya
               </p>
               <p className="font-semibold">{formatCurrency(parseFloat(totalRoomCost))}</p>
@@ -198,7 +197,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
           {/* Catatan (optional) */}
           {bedAssignment?.notes && (
             <div className="mt-4 border-t pt-4">
-              <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
+              <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wider uppercase">
                 Catatan
               </p>
               <p className="text-sm">{bedAssignment.notes}</p>

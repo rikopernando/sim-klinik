@@ -12,13 +12,31 @@ import {
 } from "@/lib/constants/inpatient"
 
 const ROOM_TYPE_CONFIG: Record<string, { label: string; className: string }> = {
-  VIP: { label: "VIP", className: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300" },
-  "Class 1": { label: "Kelas 1", className: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" },
-  "Class 2": { label: "Kelas 2", className: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300" },
-  "Class 3": { label: "Kelas 3", className: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400" },
+  VIP: {
+    label: "VIP",
+    className: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300",
+  },
+  "Class 1": {
+    label: "Kelas 1",
+    className: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+  },
+  "Class 2": {
+    label: "Kelas 2",
+    className: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+  },
+  "Class 3": {
+    label: "Kelas 3",
+    className: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
+  },
   ICU: { label: "ICU", className: "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300" },
-  NICU: { label: "NICU", className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300" },
-  Isolation: { label: "Isolasi", className: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300" },
+  NICU: {
+    label: "NICU",
+    className: "bg-orange-50 text-orange-700 dark:bg-orange-950/40 dark:text-orange-300",
+  },
+  Isolation: {
+    label: "Isolasi",
+    className: "bg-yellow-50 text-yellow-700 dark:bg-yellow-950/40 dark:text-yellow-300",
+  },
 }
 
 function MobilePatientCard({
@@ -39,7 +57,7 @@ function MobilePatientCard({
   return (
     <div
       onClick={() => onClick(patient.visitId)}
-      className="cursor-pointer px-6 py-4 transition-colors hover:bg-muted/30 active:bg-muted/50"
+      className="hover:bg-muted/30 active:bg-muted/50 cursor-pointer px-6 py-4 transition-colors"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -49,7 +67,7 @@ function MobilePatientCard({
         <div className="shrink-0 text-right">
           <span
             className={cn(
-              "font-mono text-2xl font-bold leading-none",
+              "font-mono text-2xl leading-none font-bold",
               isCritical
                 ? "text-destructive"
                 : isWarning
@@ -105,7 +123,9 @@ function PatientListTableComponent({ patients }: PatientListTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40">
-              <TableHead className="text-xs font-semibold tracking-wider uppercase">No. RM</TableHead>
+              <TableHead className="text-xs font-semibold tracking-wider uppercase">
+                No. RM
+              </TableHead>
               <TableHead className="text-xs font-semibold tracking-wider uppercase">
                 Nama Pasien
               </TableHead>

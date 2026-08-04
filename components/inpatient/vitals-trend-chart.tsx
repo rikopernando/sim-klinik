@@ -17,7 +17,6 @@ import {
 } from "recharts"
 import { VitalSigns } from "@/types/inpatient"
 import { formatDateTime } from "@/lib/utils/date"
-import { cn } from "@/lib/utils"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface VitalsTrendChartProps {

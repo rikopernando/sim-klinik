@@ -8,7 +8,7 @@
 import { useState } from "react"
 import { startOfDay, format } from "date-fns"
 import { id as idLocale } from "date-fns/locale"
-import { IconFlask, IconRefresh } from "@tabler/icons-react"
+import { IconRefresh } from "@tabler/icons-react"
 import { PageGuard } from "@/components/auth/page-guard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
