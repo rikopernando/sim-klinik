@@ -6,10 +6,10 @@
  */
 
 import { NextResponse } from "next/server"
-import { gt } from "drizzle-orm"
+import { gt, and, inArray, isNull } from "drizzle-orm"
 
 import { db } from "@/db"
-import { rooms } from "@/db/schema/inpatient"
+import { rooms, bedAssignments } from "@/db/schema/inpatient"
 import { ResponseApi, ResponseError } from "@/types/api"
 import HTTP_STATUS_CODES from "@/lib/constants/http"
 import { withRBAC } from "@/lib/rbac/middleware"
@@ -24,10 +24,35 @@ export const GET = withRBAC(
         .where(gt(rooms.availableBeds, 0))
         .orderBy(rooms.roomNumber)
 
-      const response: ResponseApi<typeof availableRooms> = {
+      const roomIds = availableRooms.map((room) => room.id)
+
+      // Fetch currently occupied bed numbers for those rooms
+      const activeAssignments = roomIds.length
+        ? await db
+            .select({
+              roomId: bedAssignments.roomId,
+              bedNumber: bedAssignments.bedNumber,
+            })
+            .from(bedAssignments)
+            .where(
+              and(inArray(bedAssignments.roomId, roomIds), isNull(bedAssignments.dischargedAt))
+            )
+        : []
+
+      const occupiedBedsByRoom = new Map<string, string[]>()
+      for (const { roomId, bedNumber } of activeAssignments) {
+        occupiedBedsByRoom.set(roomId, [...(occupiedBedsByRoom.get(roomId) ?? []), bedNumber])
+      }
+
+      const roomsWithOccupiedBeds = availableRooms.map((room) => ({
+        ...room,
+        occupiedBedNumbers: occupiedBedsByRoom.get(room.id) ?? [],
+      }))
+
+      const response: ResponseApi<typeof roomsWithOccupiedBeds> = {
         status: HTTP_STATUS_CODES.OK,
         message: "Available Rooms fetched successfully",
-        data: availableRooms,
+        data: roomsWithOccupiedBeds,
       }
 
       return NextResponse.json(response, { status: HTTP_STATUS_CODES.OK })

@@ -132,15 +132,25 @@ export function AssignBedDialog({
     }
   }
 
+  // Beds already occupied in the selected room
+  const occupiedBedNumbers = useMemo(() => {
+    return new Set(selectedRoom?.occupiedBedNumbers ?? [])
+  }, [selectedRoom])
+
   // Validation
   const isValidBedNumber = useMemo(() => {
     if (!bedNumber.trim()) return false
     if (!selectedRoom) return true // Can't validate without room
 
-    // Bed number should be between 1 and bedCount
+    // Bed number should be between 1 and bedCount, and not already occupied
     const bedNum = parseInt(bedNumber)
-    return !isNaN(bedNum) && bedNum >= 1 && bedNum <= selectedRoom.bedCount
-  }, [bedNumber, selectedRoom])
+    return (
+      !isNaN(bedNum) &&
+      bedNum >= 1 &&
+      bedNum <= selectedRoom.bedCount &&
+      !occupiedBedNumbers.has(bedNumber)
+    )
+  }, [bedNumber, selectedRoom, occupiedBedNumbers])
 
   const isValid = selectedVisit && selectedRoomId && bedNumber.trim() && isValidBedNumber
 
@@ -337,16 +347,22 @@ export function AssignBedDialog({
                       <SelectValue placeholder="Pilih nomor bed" />
                     </SelectTrigger>
                     <SelectContent>
-                      {bedOptions.map((bed) => (
-                        <SelectItem key={bed} value={bed}>
-                          Bed {bed}
-                        </SelectItem>
-                      ))}
+                      {bedOptions.map((bed) => {
+                        const isOccupied = occupiedBedNumbers.has(bed)
+                        return (
+                          <SelectItem key={bed} value={bed} disabled={isOccupied}>
+                            Bed {bed}
+                            {isOccupied ? " (Terisi)" : ""}
+                          </SelectItem>
+                        )
+                      })}
                     </SelectContent>
                   </Select>
                   {bedNumber && !isValidBedNumber && selectedRoom && (
                     <p className="text-destructive text-xs">
-                      Nomor bed harus antara 1 dan {selectedRoom.bedCount}
+                      {occupiedBedNumbers.has(bedNumber)
+                        ? `Bed ${bedNumber} sudah terisi, silakan pilih bed lain`
+                        : `Nomor bed harus antara 1 dan ${selectedRoom.bedCount}`}
                     </p>
                   )}
                   {selectedRoom && (

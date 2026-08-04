@@ -70,6 +70,8 @@ export interface Room {
   isActive: string
   createdAt: string
   updatedAt: string
+  /** Bed numbers currently occupied in this room (only populated by /api/inpatient/available-rooms) */
+  occupiedBedNumbers?: string[]
 }
 
 /**
