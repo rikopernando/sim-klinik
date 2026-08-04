@@ -6,21 +6,22 @@
 "use client"
 
 import { useState } from "react"
-import { IconFlask, IconPlus, IconArrowLeft, IconCheck } from "@tabler/icons-react"
+import { IconFlask, IconPlus, IconArrowLeft } from "@tabler/icons-react"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { useCreateLabOrder } from "@/hooks/use-create-lab-order"
 import type { LabTest, CreateLabOrderInput } from "@/types/lab"
 
 import { LabTestCatalog } from "./lab-test-catalog"
 import { LabOrderForm } from "./lab-order-form"
+import { FormStepIndicator } from "../patients/form-step-indicator"
 
 interface CreateLabOrderDialogProps {
   visitId: string
@@ -28,6 +29,11 @@ interface CreateLabOrderDialogProps {
   patientName?: string
   onSuccess?: () => void
 }
+
+const STEPS = [
+  { number: 1, label: "Pilih Tes", description: "Cari dan pilih pemeriksaan" },
+  { number: 2, label: "Detail Order", description: "Indikasi klinis & urgensi" },
+]
 
 export function CreateLabOrderDialog({
   visitId,
@@ -80,58 +86,30 @@ export function CreateLabOrderDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
           Order
         </Button>
-      </DialogTrigger>
+      </ResponsiveDialogTrigger>
 
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[800px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <ResponsiveDialogContent className="sm:max-w-[800px]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
             <IconFlask className="h-5 w-5" />
             Order Laboratorium & Radiologi
-          </DialogTitle>
+          </ResponsiveDialogTitle>
           {patientName && (
-            <DialogDescription>
+            <ResponsiveDialogDescription>
               Pasien: <strong>{patientName}</strong>
-            </DialogDescription>
+            </ResponsiveDialogDescription>
           )}
-        </DialogHeader>
+        </ResponsiveDialogHeader>
 
         {/* Step Indicator */}
-        <div className="flex items-center gap-2 py-4">
-          <div className="flex flex-1 items-center gap-2">
-            <div
-              className={`bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium`}
-            >
-              {step === 1 ? "1" : <IconCheck className="h-4 w-4" />}
-            </div>
-            <div>
-              <p className="text-sm font-medium">Pilih Tes</p>
-              <p className="text-muted-foreground text-xs">Cari dan pilih pemeriksaan</p>
-            </div>
-          </div>
-
-          <div className="flex-1">
-            <div className="bg-border h-px w-[80%]" />
-          </div>
-
-          <div className="flex flex-1 items-center gap-2">
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium ${
-                step === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-              }`}
-            >
-              2
-            </div>
-            <div>
-              <p className="text-sm font-medium">Detail Order</p>
-              <p className="text-muted-foreground text-xs">Indikasi klinis & urgensi</p>
-            </div>
-          </div>
+        <div className="my-4 md:my-0">
+          <FormStepIndicator steps={STEPS} currentStep={step} />
         </div>
 
         {/* Step Content */}
@@ -162,7 +140,7 @@ export function CreateLabOrderDialog({
             />
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

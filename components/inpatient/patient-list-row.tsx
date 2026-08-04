@@ -75,7 +75,7 @@ function PatientListRowComponent({ patient, onClick }: PatientListRowProps) {
           <span className="text-muted-foreground text-xs">Bed {patient.bedNumber}</span>
         </div>
       </TableCell>
-      <TableCell className="py-3">
+      <TableCell className="hidden py-3 sm:table-cell">
         <span
           className={cn(
             "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
@@ -85,7 +85,7 @@ function PatientListRowComponent({ patient, onClick }: PatientListRowProps) {
           {roomType.label}
         </span>
       </TableCell>
-      <TableCell className="text-muted-foreground py-3 text-sm">
+      <TableCell className="text-muted-foreground hidden py-3 text-sm md:table-cell">
         {patient.admissionDate
           ? format(new Date(patient.admissionDate), "dd MMM yyyy", { locale: localeId })
           : "—"}
@@ -104,7 +104,7 @@ function PatientListRowComponent({ patient, onClick }: PatientListRowProps) {
           {days} hari
         </span>
       </TableCell>
-      <TableCell className="py-3">
+      <TableCell className="hidden py-3 sm:table-cell">
         <Button
           onClick={(e) => {
             e.stopPropagation()

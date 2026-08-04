@@ -9,15 +9,15 @@
 
 import { useState, useCallback } from "react"
 import { IconCheck, IconAlertCircle } from "@tabler/icons-react"
+import { DialogFooter } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
@@ -97,23 +97,25 @@ export function CompleteDischargeDialog({
   const hasItems = summary && summary.totalItems > 0
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogTrigger asChild>
         <div className="flex justify-start">
           <Button variant="default" size="lg">
             <IconCheck className="mr-2 h-5 w-5" />
             Selesai Rawat Inap
           </Button>
         </div>
-      </DialogTrigger>
+      </ResponsiveDialogTrigger>
 
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">Selesaikan Rawat Inap</DialogTitle>
-          <DialogDescription>
+      <ResponsiveDialogContent className="sm:max-w-[700px]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
+            Selesaikan Rawat Inap
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Pasien: <strong>{patientName}</strong>
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-4">
           {/* Information Alert */}
@@ -178,7 +180,7 @@ export function CompleteDischargeDialog({
             {isCreating ? "Memproses..." : "Selesaikan Rawat Inap"}
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

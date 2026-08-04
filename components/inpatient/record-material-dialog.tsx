@@ -9,15 +9,15 @@
 import { useState, useEffect } from "react"
 import { IconPackage, IconPlus } from "@tabler/icons-react"
 
+import { DialogFooter } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { useMaterialForm } from "@/hooks/use-material-form"
 import { FieldGroup } from "@/components/ui/field"
@@ -64,24 +64,24 @@ export function RecordMaterialDialog({
   }, [open, resetForm])
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
           Catat Material
         </Button>
-      </DialogTrigger>
+      </ResponsiveDialogTrigger>
 
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <ResponsiveDialogContent className="max-w-2xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
             <IconPackage className="h-5 w-5" />
             Catat Penggunaan Material
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Pasien: <strong>{patientName}</strong>
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FieldGroup className="gap-4">
@@ -120,7 +120,7 @@ export function RecordMaterialDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

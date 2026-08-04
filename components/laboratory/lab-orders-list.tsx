@@ -167,7 +167,11 @@ export const LabOrdersList = forwardRef<LabOrdersListRef, LabOrdersListProps>(
     }
 
     const renderOrderDetailDialog = (orderId: string) => {
-      return <OrderDetailDialog orderId={orderId} />
+      return (
+        <div className="flex-1">
+          <OrderDetailDialog orderId={orderId} />
+        </div>
+      )
     }
 
     const renderCancelButton = (orderId: string, orderNumber: string) => {
@@ -183,9 +187,9 @@ export const LabOrdersList = forwardRef<LabOrdersListRef, LabOrdersListProps>(
         >
           <AlertDialogTrigger asChild>
             <Button
-              variant="ghost"
+              variant="destructive"
               size="sm"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="flex-1"
               onClick={() => setCancellingOrderId(orderId)}
             >
               <IconX className="mr-1 h-3 w-3" />
@@ -232,9 +236,9 @@ export const LabOrdersList = forwardRef<LabOrdersListRef, LabOrdersListProps>(
       <div className="space-y-3">
         {orders.map((order) => (
           <Card key={order.id} className="hover:bg-accent/50 p-4 transition-colors">
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
               <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <h4 className="font-semibold">{order.test?.name || "Test Unknown"}</h4>
                   <LabBadge departement={order.test?.department || "LAB"} />
                   {order.urgency && order.urgency !== "routine" && (
@@ -289,15 +293,19 @@ export const LabOrdersList = forwardRef<LabOrdersListRef, LabOrdersListProps>(
                 )}
               </div>
 
-              <div className="space-y-2 text-right">
-                {getStatusBadge(order.status)}
-                <p className="text-primary text-sm font-semibold">
-                  {formatCurrency(parseFloat(order.price))}
-                </p>
-                {order.test?.tatHours && order.status === "ordered" && (
-                  <p className="text-muted-foreground text-xs">TAT: {order.test.tatHours}h</p>
-                )}
-                <div className="flex items-center justify-end gap-1">
+              <div className="flex flex-col justify-between gap-3 md:items-center md:items-end md:justify-start md:text-right">
+                <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1.5">
+                  {getStatusBadge(order.status)}
+                  <p className="text-primary text-sm font-semibold">
+                    {formatCurrency(parseFloat(order.price))}
+                  </p>
+                  {order.test?.tatHours && order.status === "ordered" && (
+                    <p className="text-muted-foreground hidden text-xs sm:block">
+                      TAT: {order.test.tatHours}h
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
                   {order.status === "ordered" &&
                     renderCancelButton(order.id, order.orderNumber || "-")}
                   {renderOrderDetailDialog(order.id)}

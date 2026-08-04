@@ -11,15 +11,15 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Loader2, MoveHorizontalIcon } from "lucide-react"
 
+import { DialogFooter } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { Field, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field"
 import { Textarea } from "@/components/ui/textarea"
@@ -97,25 +97,25 @@ export function TransferBedDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         {trigger || (
           <Button variant="outline">
             <MoveHorizontalIcon className="h-4 w-4" />
             Transfer Bed
           </Button>
         )}
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Transfer Bed Pasien</DialogTitle>
-          <DialogDescription>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Transfer Bed Pasien</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Transfer {patientName}
             {currentRoomNumber &&
               currentBedNumber &&
               ` dari Kamar ${currentRoomNumber} Bed ${currentBedNumber}`}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FieldGroup>
@@ -197,7 +197,7 @@ export function TransferBedDialog({
             {/* Transfer Reason */}
             <Field>
               <FieldLabel htmlFor="transferReason">
-                Alasan Transfer <span className="text-destructive">*</span>*
+                Alasan Transfer <span className="text-destructive">*</span>
               </FieldLabel>
               <Controller
                 control={form.control}
@@ -230,7 +230,7 @@ export function TransferBedDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

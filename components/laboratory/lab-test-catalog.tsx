@@ -173,8 +173,8 @@ export function LabTestCatalog({ onSelectTest, selectedTestId }: LabTestCatalogP
               }`}
               onClick={() => onSelectTest(test)}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 space-y-1">
+              <div className="flex flex-col items-start justify-between gap-2 md:flex-row md:gap-4">
+                <div className="w-full flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold">{test.name}</h4>
                     {selectedTestId === test.id && (
@@ -199,10 +199,11 @@ export function LabTestCatalog({ onSelectTest, selectedTestId }: LabTestCatalogP
                     </p>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="flex flex-row items-center gap-2 text-left md:flex-col md:text-right">
                   <p className="text-primary font-semibold">
                     {formatCurrency(parseFloat(test.price))}
                   </p>
+                  <span className="block md:hidden">•</span>
                   {test.tatHours && (
                     <p className="text-muted-foreground text-xs">TAT: {test.tatHours}h</p>
                   )}

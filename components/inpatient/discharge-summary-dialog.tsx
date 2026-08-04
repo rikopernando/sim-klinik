@@ -14,15 +14,15 @@ import z from "zod"
 import { IconFileDescription } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
+import { DialogFooter } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { dischargeSummarySchema } from "@/lib/inpatient/validation"
@@ -95,20 +95,20 @@ export function DischargeSummaryDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         <Button>
           <IconFileDescription className="mr-2 h-4 w-4" />
           Isi Ringkasan Medis Pulang
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle>Ringkasan Medis Pulang (Resume Medis)</DialogTitle>
-          <DialogDescription>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="sm:max-w-[700px]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Ringkasan Medis Pulang (Resume Medis)</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Pasien: <strong>{patientName}</strong>
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Admission Diagnosis */}
@@ -308,7 +308,7 @@ export function DischargeSummaryDialog({
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

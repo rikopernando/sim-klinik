@@ -35,25 +35,11 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!visit) {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: "Visit not found",
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error("Visit not found")
         }
 
         if (visit.visitType !== "inpatient") {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: "Only inpatient visits can be assigned a bed",
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error("Only inpatient visits can be assigned a bed")
         }
 
         // 2. Check if visit already has an active bed assignment
@@ -69,14 +55,9 @@ export const POST = withRBAC(
           .limit(1)
 
         if (existingAssignment) {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: "Patient already has an active bed assignment, please discharge it first.",
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error(
+            "Patient already has an active bed assignment, please discharge it first."
+          )
         }
 
         // 3. Verify room exists and has available beds
@@ -87,38 +68,17 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!room) {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: "Room not found",
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error("Room not found")
         }
 
         if (room.availableBeds <= 0) {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: "Room has no available beds",
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error("Room has no available beds")
         }
 
         // 4. Validate bed number
         const bedNum = parseInt(validatedData.bedNumber)
         if (isNaN(bedNum) || bedNum < 1 || bedNum > room.bedCount) {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: "Bed number is invalid",
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error("Bed number is invalid")
         }
 
         // 5. Check if bed is already occupied
@@ -135,14 +95,7 @@ export const POST = withRBAC(
           .limit(1)
 
         if (occupiedBed) {
-          const response: ResponseError<unknown> = {
-            error: {},
-            message: `Bed ${validatedData.bedNumber} already filled`,
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          }
-          return NextResponse.json(response, {
-            status: HTTP_STATUS_CODES.BAD_REQUEST,
-          })
+          throw new Error(`Bed ${validatedData.bedNumber} already filled`)
         }
 
         // 6. Create bed assignment
@@ -194,7 +147,7 @@ export const POST = withRBAC(
         }
 
         return NextResponse.json(response, {
-          status: HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR,
+          status: HTTP_STATUS_CODES.BAD_REQUEST,
         })
       }
 

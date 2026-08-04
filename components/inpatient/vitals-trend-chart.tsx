@@ -18,6 +18,7 @@ import {
 import { VitalSigns } from "@/types/inpatient"
 import { formatDateTime } from "@/lib/utils/date"
 import { cn } from "@/lib/utils"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 interface VitalsTrendChartProps {
   vitals: VitalSigns[]
@@ -359,42 +360,28 @@ export function VitalsTrendChart({ vitals }: VitalsTrendChartProps) {
   return (
     <div>
       {/* Controls */}
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 space-y-2">
         {/* Metric selector */}
-        <div className="flex gap-1 rounded-lg border p-0.5">
-          {METRIC_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setActiveMetric(opt.value)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                activeMetric === opt.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={activeMetric} onValueChange={(v) => setActiveMetric(v as ActiveMetric)}>
+          <TabsList className="flex h-auto w-fit justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden">
+            {METRIC_OPTIONS.map((opt) => (
+              <TabsTrigger key={opt.value} value={opt.value} className="flex-none text-xs">
+                {opt.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
 
         {/* Date range selector */}
-        <div className="flex gap-1 rounded-lg border p-0.5">
-          {DATE_RANGE_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => setDateRange(opt.value)}
-              className={cn(
-                "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                dateRange === opt.value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
+        <Tabs value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
+          <TabsList className="flex h-auto w-fit justify-start overflow-x-auto [&::-webkit-scrollbar]:hidden">
+            {DATE_RANGE_OPTIONS.map((opt) => (
+              <TabsTrigger key={opt.value} value={opt.value} className="flex-none text-xs">
+                {opt.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {filteredData.length === 0 ? (

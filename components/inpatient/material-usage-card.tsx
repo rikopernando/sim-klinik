@@ -58,14 +58,16 @@ const MaterialRow = memo(function MaterialRow({
       <TableCell className="font-medium">{formatDateTime(material.usedAt)}</TableCell>
       <TableCell>{material.materialName}</TableCell>
       <TableCell className="text-right">{material.quantity}</TableCell>
-      <TableCell className="text-right">
+      <TableCell className="hidden text-right sm:table-cell">
         {formatCurrency(parseFloat(material.unitPrice ?? "0"))}
       </TableCell>
       <TableCell className="text-right font-medium">
         {formatCurrency(parseFloat(material.totalPrice))}
       </TableCell>
-      <TableCell className="text-muted-foreground text-sm">{material.usedBy || "-"}</TableCell>
-      <TableCell className="text-muted-foreground max-w-xs truncate text-sm">
+      <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
+        {material.usedBy || "-"}
+      </TableCell>
+      <TableCell className="text-muted-foreground hidden max-w-xs truncate text-sm md:table-cell">
         {material.notes || "-"}
       </TableCell>
       <TableCell>
@@ -106,56 +108,60 @@ export const MaterialUsageCard = memo(function MaterialUsageCard({
 
   return (
     <>
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-muted/40 hover:bg-muted/40">
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">
-              Waktu Pakai
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">
-              Nama Alat Kesehatan
-            </TableHead>
-            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-              Jumlah
-            </TableHead>
-            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-              Harga Satuan
-            </TableHead>
-            <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-              Total Harga
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">
-              Digunakan Oleh
-            </TableHead>
-            <TableHead className="text-xs font-semibold tracking-wider uppercase">
-              Catatan
-            </TableHead>
-            <TableHead className="w-[50px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {materials.map((material) => (
-            <MaterialRow
-              key={material.id}
-              material={material}
-              canDelete={canDelete(material.usedAt)}
-              onDeleteClick={handleDeleteClick}
-              isLocked={isLocked}
-            />
-          ))}
-        </TableBody>
-        <TableFooter>
-          <TableRow>
-            <TableCell colSpan={4} className="text-right font-semibold">
-              Total Biaya
-            </TableCell>
-            <TableCell className="text-right text-lg font-bold">
-              Rp {new Intl.NumberFormat("id-ID").format(parseFloat(totalCost))}
-            </TableCell>
-            <TableCell colSpan={3} />
-          </TableRow>
-        </TableFooter>
-      </Table>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/40 hover:bg-muted/40">
+              <TableHead className="text-xs font-semibold tracking-wider uppercase">
+                Waktu Pakai
+              </TableHead>
+              <TableHead className="text-xs font-semibold tracking-wider uppercase">
+                Nama Alat Kesehatan
+              </TableHead>
+              <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+                Jumlah
+              </TableHead>
+              <TableHead className="hidden text-right text-xs font-semibold tracking-wider uppercase sm:table-cell">
+                Harga Satuan
+              </TableHead>
+              <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+                Total Harga
+              </TableHead>
+              <TableHead className="hidden text-xs font-semibold tracking-wider uppercase md:table-cell">
+                Digunakan Oleh
+              </TableHead>
+              <TableHead className="hidden text-xs font-semibold tracking-wider uppercase md:table-cell">
+                Catatan
+              </TableHead>
+              <TableHead className="w-[50px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {materials.map((material) => (
+              <MaterialRow
+                key={material.id}
+                material={material}
+                canDelete={canDelete(material.usedAt)}
+                onDeleteClick={handleDeleteClick}
+                isLocked={isLocked}
+              />
+            ))}
+          </TableBody>
+          <TableFooter>
+            <TableRow>
+              <TableCell colSpan={3} className="text-right font-semibold">
+                Total Biaya
+              </TableCell>
+              <TableCell className="hidden sm:table-cell" />
+              <TableCell className="text-right text-lg font-bold">
+                Rp {new Intl.NumberFormat("id-ID").format(parseFloat(totalCost))}
+              </TableCell>
+              <TableCell className="hidden md:table-cell" colSpan={2} />
+              <TableCell />
+            </TableRow>
+          </TableFooter>
+        </Table>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <DeleteMaterialDialog

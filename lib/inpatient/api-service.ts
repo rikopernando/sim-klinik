@@ -495,20 +495,29 @@ export async function getCPPTEntries(visitId: string) {
     )
     .orderBy(desc(medicalRecords.createdAt))
 
-  // Transform results to include author name and map to CPPT format for backward compatibility
+  // Transform results to MedicalRecord format with author name
   return results.map((result) => ({
     id: result.medicalRecord.id,
     visitId: result.medicalRecord.visitId,
     authorId: result.medicalRecord.authorId,
     authorRole: result.medicalRecord.authorRole,
-    subjective: result.medicalRecord.soapSubjective,
-    objective: result.medicalRecord.soapObjective,
-    assessment: result.medicalRecord.soapAssessment,
-    plan: result.medicalRecord.soapPlan,
-    progressNote: result.medicalRecord.progressNote || "",
-    instructions: result.medicalRecord.instructions,
-    createdAt: result.medicalRecord.createdAt.toISOString(),
     authorName: result.author?.name || result.author?.email || "Unknown User",
+    recordType: result.medicalRecord.recordType,
+    soapSubjective: result.medicalRecord.soapSubjective,
+    soapObjective: result.medicalRecord.soapObjective,
+    soapAssessment: result.medicalRecord.soapAssessment,
+    soapPlan: result.medicalRecord.soapPlan,
+    progressNote: result.medicalRecord.progressNote,
+    instructions: result.medicalRecord.instructions,
+    physicalExam: result.medicalRecord.physicalExam,
+    laboratoryResults: result.medicalRecord.laboratoryResults,
+    radiologyResults: result.medicalRecord.radiologyResults,
+    isLocked: result.medicalRecord.isLocked,
+    isDraft: result.medicalRecord.isDraft,
+    lockedAt: result.medicalRecord.lockedAt?.toISOString() ?? null,
+    lockedBy: result.medicalRecord.lockedBy,
+    createdAt: result.medicalRecord.createdAt.toISOString(),
+    updatedAt: result.medicalRecord.updatedAt.toISOString(),
   }))
 }
 

@@ -12,15 +12,15 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { IconNotes, IconPlus } from "@tabler/icons-react"
 
+import { DialogFooter } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { AutocompleteTextarea } from "@/components/ui/autocomplete-textarea"
@@ -86,24 +86,24 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
           Tambah CPPT
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="max-w-3xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
             <IconNotes className="h-5 w-5" />
             Catatan Perkembangan Pasien Terintegrasi (CPPT)
-          </DialogTitle>
-          <DialogDescription>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Catat perkembangan pasien untuk <strong>{patientName}</strong> •{" "}
             {isDoctor ? "Format SOAP (Dokter)" : "Catatan Perawat"}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FieldGroup>
@@ -270,7 +270,7 @@ export function CPPTDialog({ visitId, patientName, onSuccess }: CPPTDialogProps)
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

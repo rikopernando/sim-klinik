@@ -12,15 +12,15 @@ import { z } from "zod"
 import { toast } from "sonner"
 import { IconHeartRateMonitor, IconPlus } from "@tabler/icons-react"
 
+import { DialogFooter } from "@/components/ui/dialog"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -78,10 +78,9 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
 
   const handleSubmit = async (data: VitalSignsFormData) => {
     try {
-      // recordedBy will be set by the API using the session user ID
       await recordVitalSigns({
         visitId,
-        recordedBy: "", // Will be overridden by API
+        recordedBy: "",
         ...data,
       })
 
@@ -96,24 +95,26 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         <Button>
           <IconPlus className="mr-2 h-4 w-4" />
           Catat Tanda Vital
         </Button>
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="max-w-2xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex items-center gap-2">
             <IconHeartRateMonitor className="h-5 w-5" />
             Catat Tanda Vital
-          </DialogTitle>
-          <DialogDescription>Catat tanda vital untuk {patientName}</DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            Catat tanda vital untuk {patientName}
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <FieldGroup className="grid grid-cols-2 gap-4">
+          <FieldGroup className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Temperature */}
             <Field>
               <FieldLabel htmlFor="temperature">Suhu Tubuh (°C)</FieldLabel>
@@ -332,7 +333,7 @@ export function RecordVitalsDialog({ visitId, patientName, onSuccess }: RecordVi
             </Button>
           </DialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

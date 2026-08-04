@@ -100,7 +100,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
         </CardHeader>
         <CardContent>
           {/* Row 1: location facts */}
-          <div className="grid grid-cols-3 gap-4 pb-4">
+          <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3">
             <div>
               <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
                 Tanggal Masuk
@@ -141,7 +141,7 @@ export function PatientInfoCard({ data }: PatientInfoCardProps) {
           <Separator />
 
           {/* Row 2: clinical numbers */}
-          <div className="grid grid-cols-3 gap-4 pt-4">
+          <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3">
             <div>
               <p className="text-muted-foreground mb-1 text-xs font-medium uppercase tracking-wider">
                 Hari Rawat

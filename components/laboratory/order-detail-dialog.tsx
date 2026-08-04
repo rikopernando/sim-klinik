@@ -20,13 +20,13 @@ import {
   IconUser,
 } from "@tabler/icons-react"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -34,6 +34,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useLabOrder } from "@/hooks/use-lab-order"
 import type { LabOrderWithRelations } from "@/types/lab"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 import { ResultDisplay } from "./result-display"
 import AttachmentSection from "./lab-attachment"
@@ -171,6 +172,7 @@ export function OrderDetailDialog({
   open: controlledOpen,
   onOpenChange,
 }: OrderDetailDialogProps) {
+  const isMobile = useIsMobile()
   const [internalOpen, setInternalOpen] = useState(false)
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen
   const setOpen = onOpenChange || setInternalOpen
@@ -200,23 +202,25 @@ export function OrderDetailDialog({
   }, [order?.urgency])
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
+    <ResponsiveDialog open={open} onOpenChange={setOpen}>
+      <ResponsiveDialogTrigger asChild>
         {trigger || (
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" className="w-full">
             <IconEye className="mr-2 h-4 w-4" />
             Lihat Detail
           </Button>
         )}
-      </DialogTrigger>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[700px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="sm:max-w-[700px]">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle className="flex gap-2 md:items-center">
             <IconFileText className="h-5 w-5" />
             Detail Order Laboratorium
-          </DialogTitle>
-          <DialogDescription>Informasi lengkap order dan hasil pemeriksaan</DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            Informasi lengkap order dan hasil pemeriksaan
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         {loading ? (
           <div className="space-y-4">
@@ -233,18 +237,25 @@ export function OrderDetailDialog({
             {/* Order Header */}
             <div className="bg-muted/50 rounded-lg border p-4">
               <div className="space-y-3">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:gap-0">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col items-baseline gap-2 md:flex-row md:items-center">
                       <h3 className="text-lg font-semibold">
                         {order.test?.name || "Test Unknown"}
                       </h3>
-                      <LabBadge departement={order.test?.department || "LAB"} />
+                      {!isMobile && <LabBadge departement={order.test?.department || "LAB"} />}
                       {urgencyBadge}
                     </div>
                     <p className="text-muted-foreground font-mono text-sm">{order.orderNumber}</p>
                   </div>
-                  <StatusBadge status={order.status} />
+                  {isMobile ? (
+                    <div className="flex gap-3">
+                      <LabBadge departement={order.test?.department || "LAB"} />
+                      <StatusBadge status={order.status} />
+                    </div>
+                  ) : (
+                    <StatusBadge status={order.status} />
+                  )}
                 </div>
 
                 <Separator />
@@ -397,7 +408,7 @@ export function OrderDetailDialog({
             </div>
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

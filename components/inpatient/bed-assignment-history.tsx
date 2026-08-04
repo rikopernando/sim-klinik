@@ -51,7 +51,7 @@ export function BedAssignmentHistory({
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between">
+        <div className="flex flex-col items-start gap-2 md:flex-row md:justify-between">
           <div>
             <CardTitle>Riwayat Bed</CardTitle>
             <CardDescription>
@@ -60,9 +60,9 @@ export function BedAssignmentHistory({
                 : `${history.length} riwayat penempatan`}
             </CardDescription>
           </div>
-          <div className="flex items-start gap-4">
+          <div className="flex w-full justify-between gap-4 md:justify-end">
             {history.length > 0 && (
-              <div className="text-right">
+              <div className="text-left md:text-right">
                 <p className="text-muted-foreground text-xs">Total Biaya Kamar</p>
                 <p className="text-base font-bold">{formatCurrency(totalCost)}</p>
               </div>
@@ -89,80 +89,84 @@ export function BedAssignmentHistory({
         </CardContent>
       ) : (
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/40 hover:bg-muted/40">
-                <TableHead className="pl-6 text-xs font-semibold tracking-wider uppercase">
-                  Status
-                </TableHead>
-                <TableHead className="text-xs font-semibold tracking-wider uppercase">
-                  Kamar / Bed
-                </TableHead>
-                <TableHead className="text-xs font-semibold tracking-wider uppercase">
-                  Tipe
-                </TableHead>
-                <TableHead className="text-xs font-semibold tracking-wider uppercase">
-                  Masuk
-                </TableHead>
-                <TableHead className="text-xs font-semibold tracking-wider uppercase">
-                  Keluar
-                </TableHead>
-                <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-                  Hari
-                </TableHead>
-                <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
-                  Total
-                </TableHead>
-                <TableHead className="pr-6 text-xs font-semibold tracking-wider uppercase">
-                  Oleh
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.map((item) => {
-                const isActive = !item.dischargedAt
-                return (
-                  <TableRow key={item.id}>
-                    <TableCell className="py-3 pl-6">
-                      {isActive ? (
-                        <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
-                          Aktif
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Selesai</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="py-3">
-                      <div className="flex items-center gap-1.5">
-                        <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold">
-                          {item.roomNumber}
-                        </span>
-                        <span className="text-muted-foreground text-xs">Bed {item.bedNumber}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-3 text-sm">
-                      {ROOM_TYPE_LABELS[item.roomType] ?? item.roomType}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground py-3 text-sm whitespace-nowrap">
-                      {formatDate(item.assignedAt)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground py-3 text-sm whitespace-nowrap">
-                      {item.dischargedAt ? formatDate(item.dischargedAt) : "—"}
-                    </TableCell>
-                    <TableCell className="py-3 text-right font-mono text-sm font-semibold">
-                      {item.days}
-                    </TableCell>
-                    <TableCell className="py-3 text-right text-sm font-medium">
-                      {formatCurrency(parseFloat(item.totalCost))}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground py-3 pr-6 text-sm">
-                      {item.assignedByName ?? "—"}
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                  <TableHead className="pl-6 text-xs font-semibold tracking-wider uppercase">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wider uppercase">
+                    Kamar / Bed
+                  </TableHead>
+                  <TableHead className="hidden text-xs font-semibold tracking-wider uppercase sm:table-cell">
+                    Tipe
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold tracking-wider uppercase">
+                    Masuk
+                  </TableHead>
+                  <TableHead className="hidden text-xs font-semibold tracking-wider uppercase md:table-cell">
+                    Keluar
+                  </TableHead>
+                  <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+                    Hari
+                  </TableHead>
+                  <TableHead className="text-right text-xs font-semibold tracking-wider uppercase">
+                    Total
+                  </TableHead>
+                  <TableHead className="hidden pr-6 text-xs font-semibold tracking-wider uppercase md:table-cell">
+                    Oleh
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {history.map((item) => {
+                  const isActive = !item.dischargedAt
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell className="py-3 pl-6">
+                        {isActive ? (
+                          <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                            Aktif
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary">Selesai</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-muted rounded px-1.5 py-0.5 font-mono text-xs font-semibold">
+                            {item.roomNumber}
+                          </span>
+                          <span className="text-muted-foreground text-xs">
+                            Bed {item.bedNumber}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden py-3 text-sm sm:table-cell">
+                        {ROOM_TYPE_LABELS[item.roomType] ?? item.roomType}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground py-3 text-sm whitespace-nowrap">
+                        {formatDate(item.assignedAt)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground hidden py-3 text-sm whitespace-nowrap md:table-cell">
+                        {item.dischargedAt ? formatDate(item.dischargedAt) : "—"}
+                      </TableCell>
+                      <TableCell className="py-3 text-right font-mono text-sm font-semibold">
+                        {item.days}
+                      </TableCell>
+                      <TableCell className="py-3 text-right text-sm font-medium">
+                        {formatCurrency(parseFloat(item.totalCost))}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground hidden py-3 pr-6 text-sm md:table-cell">
+                        {item.assignedByName ?? "—"}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       )}
     </Card>

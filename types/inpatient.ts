@@ -596,7 +596,7 @@ export interface PatientDetail {
   totalRoomCost: string
   vitals: VitalSigns[]
   medicalRecords: MedicalRecord[] // Replaces cpptEntries - now includes all medical documentation
-  cpptEntries: CPPT[] // Deprecated: Use medicalRecords filtered by recordType='progress_note'
+  cpptEntries: MedicalRecord[] // Progress notes (recordType='progress_note')
   materials: MaterialUsage[]
   totalMaterialCost: string
   prescriptions: InpatientPrescription[]

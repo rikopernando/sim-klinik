@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { Home } from "lucide-react"
+import { cn } from "@/lib/utils"
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -94,7 +95,13 @@ export function SmartBreadcrumb() {
     <Breadcrumb>
       <BreadcrumbList>
         {breadcrumbItems.map((item, index) => (
-          <div key={item.href} className="contents">
+          <div
+            key={item.href}
+            className={cn(
+              "contents",
+              index < breadcrumbItems.length - 2 && "hidden sm:contents"
+            )}
+          >
             <BreadcrumbItem>
               {item.isLast ? (
                 <BreadcrumbPage>{item.label}</BreadcrumbPage>

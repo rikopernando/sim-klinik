@@ -166,4 +166,32 @@
 
 - **Tab underline fixed** — The base shadcn `TabsTrigger` has `border border-transparent` on all 4 sides. Changing `data-[state=active]:border-primary` (all sides) → `data-[state=active]:border-b-primary` (bottom only) eliminates the box outline. Active tab now shows a single clean underline.
 - **Informasi Pasien compact dl** — Removed 6 icon imports and the verbose icon+label+value row pattern (2 DOM lines per field). Replaced with a `<dl>` where each entry is `<dt className="text-muted-foreground shrink-0 text-sm">` left-aligned and `<dd className="text-right text-sm font-medium">` right-aligned. NIK rendered in `font-mono`. Left card now matches the right card's height, the two-column layout looks balanced.
+
+---
+
+## Inpatient Mobile/Tablet Polish — Phase 6
+
+### Files Changed
+
+| File | Change |
+| ---- | ------ |
+| `components/ui/responsive-dialog.tsx` | **New file.** Compound component wrapping Dialog (desktop) ↔ Drawer/bottom-sheet (mobile) using `useIsMobile()`. Exports `ResponsiveDialog`, `ResponsiveDialogTrigger`, `ResponsiveDialogContent`, `ResponsiveDialogHeader`, `ResponsiveDialogTitle`, `ResponsiveDialogDescription`. |
+| `components/smart-breadcrumb.tsx` | Added `cn` import. Middle breadcrumb items (all except last 2) get `hidden sm:contents` — on mobile only parent + current page show, eliminating the two-line wrap. |
+| `app/dashboard/inpatient/patients/[visitId]/page.tsx` | TabsList: replaced `overflow-x-auto` with `flex-wrap` so 4 tabs wrap 2×2 on mobile. TabsTrigger: added `basis-1/2 justify-center sm:basis-auto sm:justify-start`. All 7 CardHeader inner divs: replaced `flex items-center justify-between` with `flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between` so action buttons drop below the title on narrow screens. |
+| `components/inpatient/record-vitals-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/cppt-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/record-material-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/create-prescription-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/create-procedure-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/discharge-summary-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/complete-discharge-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/inpatient/final-discharge-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+| `components/laboratory/create-lab-order-dialog.tsx` | Dialog → `ResponsiveDialog` (bottom sheet on mobile). |
+
+### What Improved
+
+- **Breadcrumb no longer wraps** — On a 4-segment path (Dashboard / Rawat Inap / Daftar Pasien / Detail Pasien), mobile now shows only "Daftar Pasien / Detail Pasien". Middle segments are hidden below `sm`.
+- **Tabs 2×2 grid on mobile** — The 4 detail-page tabs (Ringkasan / Klinis / Tindakan & Obat / Pemulangan) wrap into two rows of two on mobile instead of requiring horizontal scroll.
+- **Card headers stack on mobile** — Every CardHeader action button (Catat Tanda Vital, Tambah CPPT, etc.) drops below its title on narrow screens, preventing overflow.
+- **All inpatient dialogs are bottom sheets on mobile** — 9 dialogs updated via `ResponsiveDialog`. On desktop they remain standard centered dialogs; on mobile they slide up from the bottom (vaul drawer), which is the native mobile modal pattern. `DialogFooter` is reused as-is inside both modes since it's just a styled div.
 - **Pemulangan in Card** — The free-standing `h2` + naked `div` was inconsistent with all other tabs using `Card > CardHeader > CardTitle`. Replaced with a single Card: header always shows title + description, empty state renders as `CardContent` text, `DischargeSummaryCard` renders below when present.

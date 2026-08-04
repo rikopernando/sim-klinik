@@ -3,7 +3,13 @@
 import { useState, useMemo } from "react"
 import { format, formatDistanceToNow } from "date-fns"
 import { id as localeId } from "date-fns/locale"
-import { IconClock, IconChevronDown, IconChevronUp, IconNotes, IconTrash } from "@tabler/icons-react"
+import {
+  IconClock,
+  IconChevronDown,
+  IconChevronUp,
+  IconNotes,
+  IconTrash,
+} from "@tabler/icons-react"
 import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -19,10 +25,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import { cn } from "@/lib/utils"
 import { deleteCPPTEntry } from "@/lib/services/inpatient.service"
-import { CPPT } from "@/types/inpatient"
+import type { MedicalRecord } from "@/types/inpatient"
 
 interface CPPTTimelineProps {
-  entries: CPPT[]
+  entries: MedicalRecord[]
   onRefresh?: () => void
   isLocked?: boolean
 }
@@ -36,8 +42,7 @@ const DATE_RANGE_OPTIONS: { value: DateRange; label: string }[] = [
   { value: "all", label: "Semua" },
 ]
 
-const canDelete = (createdAt: string) =>
-  Date.now() - new Date(createdAt).getTime() <= 3_600_000
+const canDelete = (createdAt: string) => Date.now() - new Date(createdAt).getTime() <= 3_600_000
 
 export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimelineProps) {
   const [dateRange, setDateRange] = useState<DateRange>("7d")
@@ -117,34 +122,35 @@ export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimel
 
         {filteredEntries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <p className="text-muted-foreground text-sm">
-              Tidak ada data dalam rentang waktu ini
-            </p>
+            <p className="text-muted-foreground text-sm">Tidak ada data dalam rentang waktu ini</p>
           </div>
         ) : (
           <div className="relative">
             {/* Timeline vertical line */}
-            <div className="bg-border absolute top-0 bottom-0 left-6 w-0.5" />
+            <div className="bg-border absolute top-0 bottom-0 left-4 w-0.5 sm:left-6" />
 
             <div className="space-y-4">
               {filteredEntries.map((entry) => {
                 const isDoctor = entry.authorRole === "doctor"
                 const hasSOAP =
-                  entry.subjective || entry.objective || entry.assessment || entry.plan
+                  entry.soapSubjective ||
+                  entry.soapObjective ||
+                  entry.soapAssessment ||
+                  entry.soapPlan
                 const isExpanded = expandedIds.has(entry.id)
                 const showDelete = canDelete(entry.createdAt) && !isLocked
 
                 return (
-                  <div key={entry.id} className="relative pl-14">
+                  <div key={entry.id} className="relative pl-10 sm:pl-14">
                     {/* Timeline dot */}
                     <div
                       className={cn(
-                        "border-background absolute top-2.5 left-4 h-4 w-4 rounded-full border-4",
+                        "border-background absolute top-2.5 left-2 h-4 w-4 rounded-full border-4 sm:left-4",
                         isDoctor ? "bg-blue-500" : "bg-emerald-500"
                       )}
                     />
 
-                    <div className="rounded-lg border bg-card p-4">
+                    <div className="bg-card rounded-lg border p-4">
                       {/* Header */}
                       <div className="flex items-start justify-between">
                         <div>
@@ -165,14 +171,14 @@ export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimel
                             </Badge>
                           </div>
                           <div className="text-muted-foreground mt-0.5 flex items-center gap-1.5 text-xs">
-                            <IconClock className="h-3 w-3" />
+                            <IconClock className="size-4" />
                             <span>
                               {format(new Date(entry.createdAt), "dd MMM yyyy, HH:mm", {
                                 locale: localeId,
                               })}
                             </span>
-                            <span>·</span>
-                            <span>
+                            <span className="hidden md:block">·</span>
+                            <span className="hidden md:block">
                               {formatDistanceToNow(new Date(entry.createdAt), {
                                 addSuffix: true,
                                 locale: localeId,
@@ -212,42 +218,44 @@ export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimel
                       {/* SOAP (expandable) */}
                       {hasSOAP && isExpanded && (
                         <div className="mt-3 space-y-2 border-t pt-3">
-                          {entry.subjective && (
+                          {entry.soapSubjective && (
                             <div>
-                              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                                 S — Subjective
                               </p>
                               <p className="text-muted-foreground mt-0.5 text-xs">
-                                {entry.subjective}
+                                {entry.soapSubjective}
                               </p>
                             </div>
                           )}
-                          {entry.objective && (
+                          {entry.soapObjective && (
                             <div>
-                              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                                 O — Objective
                               </p>
                               <p className="text-muted-foreground mt-0.5 text-xs">
-                                {entry.objective}
+                                {entry.soapObjective}
                               </p>
                             </div>
                           )}
-                          {entry.assessment && (
+                          {entry.soapAssessment && (
                             <div>
-                              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                                 A — Assessment
                               </p>
                               <p className="text-muted-foreground mt-0.5 text-xs">
-                                {entry.assessment}
+                                {entry.soapAssessment}
                               </p>
                             </div>
                           )}
-                          {entry.plan && (
+                          {entry.soapPlan && (
                             <div>
-                              <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                              <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                                 P — Plan
                               </p>
-                              <p className="text-muted-foreground mt-0.5 text-xs">{entry.plan}</p>
+                              <p className="text-muted-foreground mt-0.5 text-xs">
+                                {entry.soapPlan}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -255,7 +263,7 @@ export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimel
 
                       {/* Progress Note */}
                       <div className="mt-3">
-                        <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                        <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                           Catatan Perkembangan
                         </p>
                         <p className="text-muted-foreground mt-0.5 text-xs whitespace-pre-wrap">
@@ -266,7 +274,7 @@ export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimel
                       {/* Instructions */}
                       {entry.instructions && (
                         <div className="mt-3 border-t pt-3">
-                          <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wider">
+                          <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
                             Instruksi Khusus
                           </p>
                           <p className="text-muted-foreground mt-0.5 text-xs whitespace-pre-wrap">
@@ -288,8 +296,8 @@ export function CPPTTimeline({ entries, onRefresh, isLocked = false }: CPPTTimel
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Catatan CPPT?</AlertDialogTitle>
             <AlertDialogDescription>
-              Catatan CPPT yang dihapus tidak dapat dikembalikan. Tindakan ini hanya dapat
-              dilakukan dalam 1 jam setelah dibuat.
+              Catatan CPPT yang dihapus tidak dapat dikembalikan. Tindakan ini hanya dapat dilakukan
+              dalam 1 jam setelah dibuat.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

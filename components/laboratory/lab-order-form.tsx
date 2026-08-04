@@ -67,7 +67,7 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
       {/* Selected Test Info */}
       <Card className="bg-accent/50 p-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col items-start justify-between gap-2 md:flex-row md:gap-4">
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
               <IconFlask className="text-primary h-4 w-4" />
@@ -90,7 +90,7 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
               </p>
             )}
             {selectedTest.instructions && (
-              <div className="mt-2 rounded-md border border-blue-200 bg-blue-50 p-2 dark:border-blue-900 dark:bg-blue-950/20">
+              <div className="mt-2 hidden rounded-md border border-blue-200 bg-blue-50 p-2 md:block dark:border-blue-900 dark:bg-blue-950/20">
                 <div className="flex gap-2">
                   <IconInfoCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
                   <p className="text-xs text-blue-900 dark:text-blue-100">
@@ -100,14 +100,25 @@ export function LabOrderForm({ selectedTest, onSubmit, onBack, isSubmitting }: L
               </div>
             )}
           </div>
-          <div className="text-right">
+          <div className="flex flex-row items-center gap-2 text-left md:flex-col md:text-right">
             <p className="text-primary text-lg font-semibold">
               {formatCurrency(parseFloat(selectedTest.price))}
             </p>
+            <span className="block md:hidden">•</span>
             {selectedTest.tatHours && (
               <p className="text-muted-foreground text-xs">Estimasi: {selectedTest.tatHours} jam</p>
             )}
           </div>
+          {selectedTest.instructions && (
+            <div className="mt-0 block rounded-md border border-blue-200 bg-blue-50 p-2 md:hidden dark:border-blue-900 dark:bg-blue-950/20">
+              <div className="flex gap-2">
+                <IconInfoCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400" />
+                <p className="text-xs text-blue-900 dark:text-blue-100">
+                  <span className="font-medium">Instruksi:</span> {selectedTest.instructions}
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

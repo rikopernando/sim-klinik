@@ -2,14 +2,13 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { PageGuard } from "@/components/auth/page-guard"
-import { IconArrowLeft, IconRefresh } from "@tabler/icons-react"
+import { IconArrowLeft, IconRefresh, IconBan } from "@tabler/icons-react"
 import { cn } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { usePatientDetail } from "@/hooks/use-patient-detail"
 import { usePermission } from "@/hooks/use-permission"
@@ -164,7 +163,7 @@ function PatientDetailPageContent() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-2xl font-bold tracking-tight">
+                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
                   {patientDetail.patient.patientName}
                 </h1>
                 {statusConfig && (
@@ -213,12 +212,12 @@ function PatientDetailPageContent() {
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                <IconArrowLeft className="mr-2 h-4 w-4" />
-                Kembali
+                <IconArrowLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Kembali</span>
               </Button>
               <Button onClick={refresh} variant="ghost" size="sm">
-                <IconRefresh className="mr-2 h-4 w-4" />
-                Refresh
+                <IconRefresh className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Refresh</span>
               </Button>
             </div>
           </div>
@@ -230,10 +229,10 @@ function PatientDetailPageContent() {
         {/* Cancelled Visit Banner */}
         {isCancelled && (
           <Alert variant="destructive">
-            <AlertDescription className="flex items-center gap-2">
-              <Badge variant="destructive">Dibatalkan</Badge>
-              Kunjungan rawat inap ini telah dibatalkan. Data hanya dapat dilihat dan tidak dapat
-              diubah.
+            <IconBan className="h-4 w-4" />
+            <AlertTitle>Kunjungan Dibatalkan</AlertTitle>
+            <AlertDescription>
+              Data pasien hanya dapat dilihat dan tidak dapat diubah.
             </AlertDescription>
           </Alert>
         )}
@@ -250,7 +249,7 @@ function PatientDetailPageContent() {
 
         {/* Tabs */}
         <Tabs defaultValue="summary">
-          <TabsList className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none border-b bg-transparent p-0">
+          <TabsList className="h-auto w-full justify-start gap-0 overflow-x-auto rounded-none border-b bg-transparent p-0 [&::-webkit-scrollbar]:hidden">
             {(
               [
                 { value: "summary", label: "Ringkasan" },
@@ -286,7 +285,7 @@ function PatientDetailPageContent() {
           <TabsContent value="clinical" className="mt-6 space-y-6">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>Riwayat Tanda Vital</CardTitle>
                     <CardDescription>
@@ -315,7 +314,7 @@ function PatientDetailPageContent() {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>CPPT</CardTitle>
                     <CardDescription>
@@ -345,7 +344,9 @@ function PatientDetailPageContent() {
             <Card>
               <CardHeader>
                 <CardTitle>Tren Vital Signs</CardTitle>
-                <CardDescription>Visualisasi perubahan tanda vital selama perawatan</CardDescription>
+                <CardDescription>
+                  Visualisasi perubahan tanda vital selama perawatan
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <VitalsTrendChart vitals={patientDetail.vitals} />
@@ -357,7 +358,7 @@ function PatientDetailPageContent() {
           <TabsContent value="treatments" className="mt-6 space-y-6">
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>Penggunaan Alat Kesehatan</CardTitle>
                     <CardDescription>
@@ -387,7 +388,7 @@ function PatientDetailPageContent() {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>Resep Obat</CardTitle>
                     <CardDescription>
@@ -416,7 +417,7 @@ function PatientDetailPageContent() {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>Tindakan Medis</CardTitle>
                     <CardDescription>
@@ -445,7 +446,7 @@ function PatientDetailPageContent() {
 
             <Card>
               <CardHeader>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <CardTitle>Pemeriksaan Laboratorium & Radiologi</CardTitle>
                     <CardDescription>Order pemeriksaan penunjang diagnostik</CardDescription>
@@ -473,7 +474,7 @@ function PatientDetailPageContent() {
             ) : (
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <CardTitle>Ringkasan Medis Pulang</CardTitle>
                       <CardDescription>
