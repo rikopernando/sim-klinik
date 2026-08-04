@@ -103,7 +103,7 @@ export async function checkVisitLocked(visitId: string): Promise<string | null> 
   const [visit] = await db.select().from(visits).where(eq(visits.id, visitId)).limit(1)
 
   if (!visit) {
-    return "Visit not found"
+    return "Visit tidak ditemukan"
   }
 
   // If visit is billed, it's locked

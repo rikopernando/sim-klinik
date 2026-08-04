@@ -47,11 +47,11 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!visit) {
-          throw new Error("Visit not found")
+          throw new Error("Visit tidak ditemukan")
         }
 
         if (visit.visitType !== "inpatient") {
-          throw new Error("Only inpatient visits can be transferred")
+          throw new Error("Hanya visit rawat inap yang dapat ditransfer")
         }
 
         // 2. Find current active bed assignment
@@ -73,7 +73,7 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!currentAssignment) {
-          throw new Error("Patient does not have an active bed assignment")
+          throw new Error("Pasien tidak memiliki alokasi bed aktif")
         }
 
         // 3. Verify new room exists and has available beds
@@ -84,17 +84,17 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!newRoom) {
-          throw new Error("New room not found")
+          throw new Error("Kamar baru tidak ditemukan")
         }
 
         if (newRoom.availableBeds <= 0) {
-          throw new Error("New room has no available beds")
+          throw new Error("Kamar baru tidak memiliki bed yang tersedia")
         }
 
         // 4. Validate new bed number
         const newBedNum = parseInt(validatedData.newBedNumber)
         if (isNaN(newBedNum) || newBedNum < 1 || newBedNum > newRoom.bedCount) {
-          throw new Error("New bed number is invalid")
+          throw new Error("Nomor bed baru tidak valid")
         }
 
         // 5. Check if new bed is already occupied
@@ -111,7 +111,7 @@ export const POST = withRBAC(
           .limit(1)
 
         if (occupiedBed) {
-          throw new Error(`Bed ${validatedData.newBedNumber} in the new room is already occupied`)
+          throw new Error(`Bed ${validatedData.newBedNumber} di kamar baru sudah terisi`)
         }
 
         // 6. Close current bed assignment (set dischargedAt)
@@ -177,7 +177,7 @@ export const POST = withRBAC(
       }
 
       // Handle business logic errors
-      const errorMessage = error instanceof Error ? error.message : "Failed to transfer bed"
+      const errorMessage = error instanceof Error ? error.message : "Gagal mentransfer bed"
       const response: ResponseError<unknown> = {
         error: errorMessage,
         message: errorMessage,

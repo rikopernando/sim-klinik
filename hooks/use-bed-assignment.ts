@@ -32,7 +32,9 @@ export function useBedAssignment(options: UseBedAssignmentOptions = {}): UseBedA
         toast.success("Bed berhasil dialokasikan")
         onSuccess?.()
       } catch (error) {
-        toast.error("Gagal mengalokasikan bed")
+        toast.error("Gagal mengalokasikan bed", {
+          description: error instanceof Error ? error.message : "Terjadi kesalahan",
+        })
         onError?.(error as Error)
         console.error("Error assigning bed:", error)
       } finally {

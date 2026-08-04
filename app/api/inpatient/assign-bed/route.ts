@@ -35,11 +35,11 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!visit) {
-          throw new Error("Visit not found")
+          throw new Error("Visit tidak ditemukan")
         }
 
         if (visit.visitType !== "inpatient") {
-          throw new Error("Only inpatient visits can be assigned a bed")
+          throw new Error("Hanya visit rawat inap yang dapat dialokasikan bed")
         }
 
         // 2. Check if visit already has an active bed assignment
@@ -56,7 +56,7 @@ export const POST = withRBAC(
 
         if (existingAssignment) {
           throw new Error(
-            "Patient already has an active bed assignment, please discharge it first."
+            "Pasien sudah memiliki alokasi bed aktif, mohon pulangkan terlebih dahulu."
           )
         }
 
@@ -68,17 +68,17 @@ export const POST = withRBAC(
           .limit(1)
 
         if (!room) {
-          throw new Error("Room not found")
+          throw new Error("Kamar tidak ditemukan")
         }
 
         if (room.availableBeds <= 0) {
-          throw new Error("Room has no available beds")
+          throw new Error("Kamar tidak memiliki bed yang tersedia")
         }
 
         // 4. Validate bed number
         const bedNum = parseInt(validatedData.bedNumber)
         if (isNaN(bedNum) || bedNum < 1 || bedNum > room.bedCount) {
-          throw new Error("Bed number is invalid")
+          throw new Error("Nomor bed tidak valid")
         }
 
         // 5. Check if bed is already occupied
@@ -95,7 +95,7 @@ export const POST = withRBAC(
           .limit(1)
 
         if (occupiedBed) {
-          throw new Error(`Bed ${validatedData.bedNumber} already filled`)
+          throw new Error(`Bed ${validatedData.bedNumber} sudah terisi`)
         }
 
         // 6. Create bed assignment
@@ -152,7 +152,7 @@ export const POST = withRBAC(
       }
 
       // Handle business logic errors
-      const errorMessage = error instanceof Error ? error.message : "Failed to assign bed"
+      const errorMessage = error instanceof Error ? error.message : "Gagal mengalokasikan bed"
       const response: ResponseError<unknown> = {
         error: errorMessage,
         message: errorMessage,

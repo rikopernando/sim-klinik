@@ -32,7 +32,9 @@ export function useBedTransfer(options: UseBedTransferOptions = {}): UseBedTrans
         toast.success("Bed berhasil ditransfer")
         onSuccess?.()
       } catch (error) {
-        toast.error("Gagal transfer bed")
+        toast.error("Gagal transfer bed", {
+          description: error instanceof Error ? error.message : "Terjadi kesalahan",
+        })
         onError?.(error as Error)
         console.error("Error transferring bed:", error)
       } finally {
